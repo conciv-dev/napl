@@ -1,0 +1,16 @@
+name: init-existing-hook-preserved
+description: >
+  When a project already has a .git/hooks/pre-commit hook, napl init never
+  overwrites it: it leaves the file byte-for-byte intact and prints a notice telling
+  the user to add the "napl status" line themselves.
+setup:
+  .git/HEAD: "ref: refs/heads/main\n"
+  .git/hooks/pre-commit: "#!/bin/sh\nnpm run lint\n"
+run: [init]
+expect:
+  exitCode: 0
+  stdoutContains:
+    - "leaving it untouched; add \"napl status\" to it to gate commits on drift"
+  files:
+    .git/hooks/pre-commit:
+      content: "#!/bin/sh\nnpm run lint\n"

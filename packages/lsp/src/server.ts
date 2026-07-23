@@ -466,10 +466,15 @@ async function computeDiagnostics(root: string, relPath: string, text: string): 
 
   const firstLine = { start: { line: 0, character: 0 }, end: { line: 0, character: 3 } };
   if (entry.status === 'DRIFT') {
+    const driftTarget = entry.detail.includes(':') ? entry.detail.slice(0, entry.detail.indexOf(':')) : entry.detail;
     diagnostics.push({
       severity: DiagnosticSeverity.Error,
       range: firstLine,
-      message: `DRIFT: generated file ${entry.driftFile ?? entry.detail} was edited — it no longer matches the prompt. Run \`napl gen\` to regenerate.`,
+      message:
+        `DRIFT: generated file ${entry.driftFile ?? entry.detail} was edited — it no longer matches the prompt. ` +
+        `Resolve: (1) napl reconcile ${entry.module} to fold the edit into your prompt (coming soon); ` +
+        `(2) napl gen ${driftTarget} --module ${entry.module} --force to discard the edit; ` +
+        `(3) edit the prompt to describe the change, then napl gen ${driftTarget}.`,
       source: 'napl',
     });
   } else if (entry.status === 'prompt-stale') {

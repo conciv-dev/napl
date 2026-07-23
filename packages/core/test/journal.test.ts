@@ -8,6 +8,7 @@ import {
   filePatch,
   nextGenNumber,
   readJournal,
+  reconstructFileContent,
 } from '../src/core/journal.js';
 import type { JournalEntry } from '../src/core/journal.js';
 
@@ -32,6 +33,33 @@ beforeEach(async () => {
 
 afterEach(async () => {
   await rm(dir, { recursive: true, force: true });
+});
+
+describe('reconstructFileContent', () => {
+  function withPatch(gen: number, path: string, before: string | null, after: string): JournalEntry {
+    return {
+      gen,
+      timestamp: `t${gen}`,
+      module: 'demo',
+      target: 'react',
+      promptHash: `h${gen}`,
+      promptDiff: '',
+      mode: 'full',
+      files: [{ path, patch: filePatch(before, after), hashBefore: null, hashAfter: 'x' }],
+    };
+  }
+
+  it('replays patches oldest-to-newest to rebuild the last recorded content', () => {
+    const entries = [
+      withPatch(1, 'a.ts', null, 'line one\nline two\n'),
+      withPatch(2, 'a.ts', 'line one\nline two\n', 'line one\nline TWO\nline three\n'),
+    ];
+    expect(reconstructFileContent(entries, 'a.ts')).toBe('line one\nline TWO\nline three\n');
+  });
+
+  it('returns null when the file never appears in the journal', () => {
+    expect(reconstructFileContent([withPatch(1, 'a.ts', null, 'x\n')], 'b.ts')).toBeNull();
+  });
 });
 
 describe('filePatch', () => {

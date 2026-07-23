@@ -3,7 +3,7 @@ import { appendFile, mkdir, readFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { z } from 'zod';
 import type { BlameSourceEntry } from './blame.js';
-import { unifiedDiff } from './text-diff.js';
+import { applyUnifiedPatch, unifiedDiff } from './text-diff.js';
 
 export const journalFileSchema = z.object({
   path: z.string().min(1),
@@ -66,6 +66,17 @@ export function nextGenNumber(entries: readonly JournalEntry[]): number {
     if (entry.gen > max) max = entry.gen;
   }
   return max + 1;
+}
+
+export function reconstructFileContent(entries: readonly JournalEntry[], filePath: string): string | null {
+  const ordered = [...entries].sort((a, b) => a.gen - b.gen);
+  let content: string | null = null;
+  for (const entry of ordered) {
+    const file = entry.files.find((candidate) => candidate.path === filePath);
+    if (file === undefined) continue;
+    content = applyUnifiedPatch(content ?? '', file.patch);
+  }
+  return content;
 }
 
 export function fileHistory(entries: readonly JournalEntry[], filePath: string): BlameSourceEntry[] {

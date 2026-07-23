@@ -1,7 +1,9 @@
 name: init-idempotent
 description: >
-  Running napl init again over an existing .napl leaves lock.json, map.json and
-  the example prompt untouched, reporting each as "exists" instead of "create".
+  Running napl init again over a fully initialized project (lock, map, example,
+  per-target guard docs, .claude/settings.json with the deny rule, and a .git with
+  an existing pre-commit hook) is a no-op: every artifact reports "exists"/unchanged,
+  the settings file is already denying edits, and the existing hook is left untouched.
 setup:
   .napl/lock.json: |
     {
@@ -20,12 +22,35 @@ setup:
     targets: [typescript]
     ---
     Greet a person by name.
+  .napl/src/typescript/AGENTS.md: "guard\n"
+  .napl/src/typescript/CLAUDE.md: "guard\n"
+  .napl/src/react/AGENTS.md: "guard\n"
+  .napl/src/react/CLAUDE.md: "guard\n"
+  .claude/settings.json: |
+    {
+      "permissions": {
+        "deny": [
+          "Edit(/.napl/src/**)"
+        ]
+      }
+    }
+  .git/HEAD: "ref: refs/heads/main\n"
+  .git/hooks/pre-commit: "#!/bin/sh\necho custom hook\n"
 run: [init]
 expect:
   exitCode: 0
   stdout:
     - "exists  {{CWD}}/.napl/lock.json"
     - "exists  {{CWD}}/.napl/map.json"
+    - "exists  {{CWD}}/.napl/src/typescript/AGENTS.md"
+    - "exists  {{CWD}}/.napl/src/typescript/CLAUDE.md"
+    - "exists  {{CWD}}/.napl/src/react/AGENTS.md"
+    - "exists  {{CWD}}/.napl/src/react/CLAUDE.md"
     - "exists  {{CWD}}/examples/greeting.napl"
+    - "exists  {{CWD}}/.claude/settings.json already denies edits to .napl/src/**"
+    - 're:^exists  .*/\.git/hooks/pre-commit — leaving it untouched'
     - 're:^initialized\. Next:'
     - "gen runs a coding agent that writes the source directly, then derives the IR and attribution."
+  files:
+    .git/hooks/pre-commit:
+      content: "#!/bin/sh\necho custom hook\n"

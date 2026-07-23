@@ -99,6 +99,36 @@ export function unifiedDiff(before: string, after: string, context = 3): string 
   return formatUnified(lcsOps(toLines(before), toLines(after)), context);
 }
 
+export function applyUnifiedPatch(before: string, patch: string): string {
+  const hunks = parseHunks(patch);
+  if (hunks.length === 0) return before;
+  const beforeLines = toLines(before);
+  const result: string[] = [];
+  let oldIdx = 0;
+  for (const hunk of hunks) {
+    const copyUntil = hunk.oldStart - 1;
+    while (oldIdx < copyUntil && oldIdx < beforeLines.length) {
+      result.push(beforeLines[oldIdx]);
+      oldIdx += 1;
+    }
+    for (const line of hunk.lines) {
+      if (line.kind === ' ') {
+        result.push(oldIdx < beforeLines.length ? beforeLines[oldIdx] : line.text);
+        oldIdx += 1;
+      } else if (line.kind === '-') {
+        oldIdx += 1;
+      } else {
+        result.push(line.text);
+      }
+    }
+  }
+  while (oldIdx < beforeLines.length) {
+    result.push(beforeLines[oldIdx]);
+    oldIdx += 1;
+  }
+  return result.length === 0 ? '' : `${result.join('\n')}\n`;
+}
+
 const HUNK_HEADER = /^@@ -(\d+),(\d+) \+(\d+),(\d+) @@/;
 
 export function parseHunks(diff: string): Hunk[] {

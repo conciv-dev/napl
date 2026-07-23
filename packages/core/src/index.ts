@@ -2,6 +2,8 @@ export * from './core/agent.js';
 export * from './core/attribution-schema.js';
 export * from './core/blame.js';
 export * from './core/body-lines.js';
+export * from './core/drift.js';
+export * from './core/guard.js';
 export * from './core/exec.js';
 export * from './core/frontmatter.js';
 export * from './core/gen-lock.js';

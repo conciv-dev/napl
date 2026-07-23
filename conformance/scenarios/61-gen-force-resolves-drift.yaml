@@ -1,0 +1,87 @@
+name: gen-force-resolves-drift
+description: >
+  --force is resolution #2: it bypasses the drift block on a hand-edited locked
+  file, unlocks it, re-runs the agent so the prompt wins, re-derives artifacts,
+  and re-locks the file 0444 — leaving the tree clean again.
+setup:
+  .napl/lock.json: |
+    {
+      "model": "claude-sonnet-5",
+      "backend": "claude-cli"
+    }
+  examples/greeting.napl: |
+    ---
+    module: greeting
+    deps: []
+    targets: [typescript]
+    tests: []
+    ---
+    Greet a person by name.
+  .napl/src/typescript/greet.ts: "export const greet = (name: string): string => `HELLO, ${name}!`;\n"
+  .napl/map.json: |
+    {
+      "version": 2,
+      "prompts": {
+        "examples/greeting.napl": {
+          "module": "greeting",
+          "promptHash": "a89eecb1f31e12e98001c16dfa96c74cc9edfc11e24a4abcd54cfb2258c5d3e3",
+          "declaredTargets": [
+            "typescript"
+          ],
+          "targets": {
+            "typescript": {
+              "promptHashAtGen": "a89eecb1f31e12e98001c16dfa96c74cc9edfc11e24a4abcd54cfb2258c5d3e3",
+              "files": [
+                ".napl/src/typescript/greet.ts"
+              ]
+            }
+          }
+        }
+      },
+      "files": {
+        ".napl/src/typescript/greet.ts": {
+          "target": "typescript",
+          "hash": "ba0fff9dc431972a2488987562dbf68bc99b9c991a3cdc7506f64eff6a703545",
+          "prompts": [
+            "examples/greeting.napl"
+          ]
+        }
+      }
+    }
+script:
+  agent:
+    - files:
+        greet.ts: "export const greet = (name: string): string => `Hello, ${name}!`;\n"
+      output: "discarded the hand edit; regenerated from the prompt under --force"
+  ir:
+    - |
+      ```yaml
+      module: greeting
+      deps: []
+      types: []
+      functions: []
+      tests: []
+      ```
+  attribution:
+    - |
+      ```yaml
+      - promptLines: [1, 1]
+        file: greet.ts
+        lines: [1, 1]
+        note: "builds the greeting string"
+      ```
+  ml:
+    - |
+      ```yaml
+      []
+      ```
+run: [gen, typescript, --force]
+expect:
+  exitCode: 0
+  stdoutContains:
+    - "gen     greeting (typescript)"
+    - "generated 1, skipped 0"
+  files:
+    .napl/src/typescript/greet.ts:
+      mode: "0444"
+      content: "export const greet = (name: string): string => `Hello, ${name}!`;\n"

@@ -1,5 +1,28 @@
 import { describe, expect, it } from 'vitest';
-import { parseHunks, toLines, unifiedDiff } from '../src/core/text-diff.js';
+import { applyUnifiedPatch, parseHunks, toLines, unifiedDiff } from '../src/core/text-diff.js';
+
+describe('applyUnifiedPatch', () => {
+  it('reconstructs content by applying a creation patch to empty', () => {
+    const patch = unifiedDiff('', 'a\nb\n');
+    expect(applyUnifiedPatch('', patch)).toBe('a\nb\n');
+  });
+
+  it('round-trips a modification patch', () => {
+    const before = 'one\ntwo\nthree\n';
+    const after = 'one\nTWO\nthree\n';
+    expect(applyUnifiedPatch(before, unifiedDiff(before, after))).toBe(after);
+  });
+
+  it('returns the input unchanged for an empty patch', () => {
+    expect(applyUnifiedPatch('x\n', '')).toBe('x\n');
+  });
+
+  it('handles multi-hunk edits', () => {
+    const before = 'a\nb\nc\nd\ne\nf\ng\nh\n';
+    const after = 'A\nb\nc\nd\ne\nf\ng\nH\n';
+    expect(applyUnifiedPatch(before, unifiedDiff(before, after))).toBe(after);
+  });
+});
 
 describe('toLines', () => {
   it('drops a single trailing newline and splits', () => {

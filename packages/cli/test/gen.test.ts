@@ -298,10 +298,12 @@ function recordingAgent(tasks: string[]): AgentRunner {
   };
 }
 
+const SEED_SRC = 'export const greet = (n: string) => `Hello, ${n}!`;\n';
+
 async function seedPriorGen(): Promise<void> {
   const targetDir = join(root, '.napl', 'src', 'typescript');
   await mkdir(targetDir, { recursive: true });
-  await writeFile(join(targetDir, 'greeting.ts'), 'export const greet = (n: string) => `Hello, ${n}!`;\n', 'utf8');
+  await writeFile(join(targetDir, 'greeting.ts'), SEED_SRC, 'utf8');
   const map = emptyMap();
   recordAttribution(map, {
     rel: 'examples/greeting.napl',
@@ -309,7 +311,7 @@ async function seedPriorGen(): Promise<void> {
     promptHash: contentHash(PROMPT),
     target: 'typescript',
     declaredTargets: ['typescript'],
-    files: [{ filePath: '.napl/src/typescript/greeting.ts', hash: contentHash('seed') }],
+    files: [{ filePath: '.napl/src/typescript/greeting.ts', hash: contentHash(SEED_SRC) }],
   });
   await writeMap(join(root, '.napl', 'map.json'), map);
   await mkdir(join(root, '.napl', 'prompts-at-gen'), { recursive: true });

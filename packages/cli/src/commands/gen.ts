@@ -13,6 +13,8 @@ import { parseFrontmatter } from '@napl/core';
 import { acquireGenLock } from '@napl/core';
 import { contentHash } from '@napl/core';
 import { diffBodyLines, incrementalUnlockList, selectIntersectingEntries } from '@napl/core';
+import { detectGenDrift, formatGenDriftReport } from '@napl/core';
+import { writeGuardFiles } from '@napl/core';
 import { validateIr } from '@napl/core';
 import type { LlmClient } from '@napl/core';
 import { appendJournalEntry, filePatch, nextGenNumber, readJournal } from '@napl/core';
@@ -511,6 +513,7 @@ async function runGenLocked(options: GenOptions, paths: ReturnType<typeof resolv
   const attributionDir = join(paths.naplDir, 'attribution');
   const mlDir = join(paths.naplDir, 'mapl');
   await mkdir(targetDir, { recursive: true });
+  await writeGuardFiles(targetDir);
 
   const filter: SnapshotFilter = makeFilter(
     adapter.attributionExcludeDirs,
@@ -527,6 +530,17 @@ async function runGenLocked(options: GenOptions, paths: ReturnType<typeof resolv
   const journaledPaths = new Set<string>();
   for (const entry of existingJournal) {
     for (const file of entry.files) journaledPaths.add(file.path);
+  }
+
+  if (!force) {
+    const drifts = await detectGenDrift({ root, target, map, journal: existingJournal, moduleScope: options.module });
+    if (drifts.length > 0) {
+      log?.(formatGenDriftReport(drifts, target));
+      const count = drifts.reduce((sum, drift) => sum + drift.files.length, 0);
+      throw new Error(
+        `gen blocked: ${count} generated file(s) across ${drifts.length} module(s) have drifted from their prompts for target '${target}'. Resolve the drift shown above, or pass --force to discard the edits and regenerate.`,
+      );
+    }
   }
 
   const generated: string[] = [];

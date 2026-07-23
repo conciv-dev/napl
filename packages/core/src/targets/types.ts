@@ -33,5 +33,5 @@ export const BASE_AGENT_TOOLS = [
 ];
 
 export const BASE_EXCLUDE_DIRS = ['node_modules', 'dist', '.git', 'build', 'coverage', '.vite'];
-export const BASE_EXCLUDE_FILES = ['package-lock.json'];
+export const BASE_EXCLUDE_FILES = ['package-lock.json', 'AGENTS.md', 'CLAUDE.md'];
 export const BASE_EXCLUDE_SUFFIXES = ['.tsbuildinfo', '.d.ts'];
