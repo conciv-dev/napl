@@ -1,0 +1,26 @@
+[
+  {
+    "input": "",
+    "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "input": "x",
+    "hash": "2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881"
+  },
+  {
+    "input": "hello",
+    "hash": "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+  },
+  {
+    "input": "world",
+    "hash": "486ea46224d1bb4fb680f34f7c9ad96a8f24ec88be73ea8e5a6c65260e9cb8a7"
+  },
+  {
+    "input": "a\nb\nc\n",
+    "hash": "880553fca8fcea94e325ee2cfb48e5a985cc797f39a14cc6d3cedecfeb2ae4d2"
+  },
+  {
+    "input": "unicode: café 🤖",
+    "hash": "0cdf26b0c000e1e0d2e8f3ae416870c9483890961b2ddfb702d8f65d7a3b8c6d"
+  }
+]

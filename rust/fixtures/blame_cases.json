@@ -1,0 +1,108 @@
+[
+  {
+    "entries": [
+      {
+        "gen": 1,
+        "timestamp": "ts1",
+        "module": "demo",
+        "patch": "@@ -0,0 +1,3 @@\n+A\n+B\n+C"
+      }
+    ],
+    "content": "A\nB\nC\n",
+    "gens": [
+      1,
+      1,
+      1
+    ]
+  },
+  {
+    "entries": [
+      {
+        "gen": 1,
+        "timestamp": "ts1",
+        "module": "demo",
+        "patch": "@@ -0,0 +1,3 @@\n+A\n+B\n+C"
+      },
+      {
+        "gen": 3,
+        "timestamp": "ts3",
+        "module": "demo",
+        "patch": "@@ -1,3 +1,3 @@\n A\n-B\n+B2\n C"
+      }
+    ],
+    "content": "A\nB2\nC\n",
+    "gens": [
+      1,
+      3,
+      1
+    ]
+  },
+  {
+    "entries": [
+      {
+        "gen": 1,
+        "timestamp": "ts1",
+        "module": "demo",
+        "patch": "@@ -0,0 +1,1 @@\n+A"
+      },
+      {
+        "gen": 2,
+        "timestamp": "ts2",
+        "module": "demo",
+        "patch": "@@ -1,1 +1,2 @@\n A\n+B"
+      }
+    ],
+    "content": "A\nB\n",
+    "gens": [
+      1,
+      2
+    ]
+  },
+  {
+    "entries": [
+      {
+        "gen": 1,
+        "timestamp": "ts1",
+        "module": "demo",
+        "patch": "@@ -0,0 +1,2 @@\n+A\n+B"
+      },
+      {
+        "gen": 2,
+        "timestamp": "ts2",
+        "module": "demo",
+        "patch": "@@ -1,2 +1,3 @@\n+X\n A\n B"
+      }
+    ],
+    "content": "X\nA\nB\n",
+    "gens": [
+      2,
+      1,
+      1
+    ]
+  },
+  {
+    "entries": [
+      {
+        "gen": 1,
+        "timestamp": "ts1",
+        "module": "demo",
+        "patch": "@@ -0,0 +1,5 @@\n+a\n+b\n+c\n+d\n+e"
+      },
+      {
+        "gen": 3,
+        "timestamp": "ts3",
+        "module": "demo",
+        "patch": "@@ -1,5 +1,6 @@\n a\n-b\n+B\n c\n d\n-e\n+E\n+f"
+      }
+    ],
+    "content": "a\nB\nc\nd\nE\nf\n",
+    "gens": [
+      1,
+      3,
+      1,
+      1,
+      3,
+      3
+    ]
+  }
+]

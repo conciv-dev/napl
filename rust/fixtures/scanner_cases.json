@@ -1,0 +1,362 @@
+[
+  {
+    "doc": "---\nmodule: auth/session\ndeps: [auth/tokens, auth/users]\ntargets: [typescript]\n---\n# Session\n\nManage sessions. See @auth/tokens and @auth/users for details.\nRefreshes via @auth/session.\n",
+    "frontmatter": {
+      "present": true,
+      "span": {
+        "start": {
+          "line": 1,
+          "character": 0
+        },
+        "end": {
+          "line": 3,
+          "character": 21
+        }
+      }
+    },
+    "body": {
+      "present": true,
+      "span": {
+        "start": {
+          "line": 5,
+          "character": 0
+        },
+        "end": {
+          "line": 9,
+          "character": 0
+        }
+      }
+    },
+    "moduleValue": {
+      "value": "auth/session",
+      "span": {
+        "start": {
+          "line": 1,
+          "character": 8
+        },
+        "end": {
+          "line": 1,
+          "character": 20
+        }
+      }
+    },
+    "deps": [
+      {
+        "value": "auth/tokens",
+        "source": "deps",
+        "span": {
+          "start": {
+            "line": 2,
+            "character": 7
+          },
+          "end": {
+            "line": 2,
+            "character": 18
+          }
+        }
+      },
+      {
+        "value": "auth/users",
+        "source": "deps",
+        "span": {
+          "start": {
+            "line": 2,
+            "character": 20
+          },
+          "end": {
+            "line": 2,
+            "character": 30
+          }
+        }
+      }
+    ],
+    "refs": [
+      {
+        "module": "auth/tokens",
+        "span": {
+          "start": {
+            "line": 7,
+            "character": 21
+          },
+          "end": {
+            "line": 7,
+            "character": 33
+          }
+        }
+      },
+      {
+        "module": "auth/users",
+        "span": {
+          "start": {
+            "line": 7,
+            "character": 38
+          },
+          "end": {
+            "line": 7,
+            "character": 49
+          }
+        }
+      },
+      {
+        "module": "auth/session",
+        "span": {
+          "start": {
+            "line": 8,
+            "character": 14
+          },
+          "end": {
+            "line": 8,
+            "character": 27
+          }
+        }
+      }
+    ]
+  },
+  {
+    "doc": "---\nmodule: a\ndeps:\n  - one\n  - \"two/x\"\nextends: base\n---\nbody\n",
+    "frontmatter": {
+      "present": true,
+      "span": {
+        "start": {
+          "line": 1,
+          "character": 0
+        },
+        "end": {
+          "line": 5,
+          "character": 13
+        }
+      }
+    },
+    "body": {
+      "present": true,
+      "span": {
+        "start": {
+          "line": 7,
+          "character": 0
+        },
+        "end": {
+          "line": 8,
+          "character": 0
+        }
+      }
+    },
+    "moduleValue": {
+      "value": "a",
+      "span": {
+        "start": {
+          "line": 1,
+          "character": 8
+        },
+        "end": {
+          "line": 1,
+          "character": 9
+        }
+      }
+    },
+    "deps": [
+      {
+        "value": "one",
+        "source": "deps",
+        "span": {
+          "start": {
+            "line": 3,
+            "character": 4
+          },
+          "end": {
+            "line": 3,
+            "character": 7
+          }
+        }
+      },
+      {
+        "value": "two/x",
+        "source": "deps",
+        "span": {
+          "start": {
+            "line": 4,
+            "character": 5
+          },
+          "end": {
+            "line": 4,
+            "character": 10
+          }
+        }
+      },
+      {
+        "value": "base",
+        "source": "extends",
+        "span": {
+          "start": {
+            "line": 5,
+            "character": 9
+          },
+          "end": {
+            "line": 5,
+            "character": 13
+          }
+        }
+      }
+    ],
+    "refs": []
+  },
+  {
+    "doc": "---\nmodule: greeting\ndeps: []\n---\nbody\n",
+    "frontmatter": {
+      "present": true,
+      "span": {
+        "start": {
+          "line": 1,
+          "character": 0
+        },
+        "end": {
+          "line": 2,
+          "character": 8
+        }
+      }
+    },
+    "body": {
+      "present": true,
+      "span": {
+        "start": {
+          "line": 4,
+          "character": 0
+        },
+        "end": {
+          "line": 5,
+          "character": 0
+        }
+      }
+    },
+    "moduleValue": {
+      "value": "greeting",
+      "span": {
+        "start": {
+          "line": 1,
+          "character": 8
+        },
+        "end": {
+          "line": 1,
+          "character": 16
+        }
+      }
+    },
+    "deps": [],
+    "refs": []
+  },
+  {
+    "doc": "---\nmodule: m\n---\n😀😀@auth/x\n",
+    "frontmatter": {
+      "present": true,
+      "span": {
+        "start": {
+          "line": 1,
+          "character": 0
+        },
+        "end": {
+          "line": 1,
+          "character": 9
+        }
+      }
+    },
+    "body": {
+      "present": true,
+      "span": {
+        "start": {
+          "line": 3,
+          "character": 0
+        },
+        "end": {
+          "line": 4,
+          "character": 0
+        }
+      }
+    },
+    "moduleValue": {
+      "value": "m",
+      "span": {
+        "start": {
+          "line": 1,
+          "character": 8
+        },
+        "end": {
+          "line": 1,
+          "character": 9
+        }
+      }
+    },
+    "deps": [],
+    "refs": [
+      {
+        "module": "auth/x",
+        "span": {
+          "start": {
+            "line": 3,
+            "character": 4
+          },
+          "end": {
+            "line": 3,
+            "character": 11
+          }
+        }
+      }
+    ]
+  },
+  {
+    "doc": "---\nmodule: m\n---\né@x/y\n",
+    "frontmatter": {
+      "present": true,
+      "span": {
+        "start": {
+          "line": 1,
+          "character": 0
+        },
+        "end": {
+          "line": 1,
+          "character": 9
+        }
+      }
+    },
+    "body": {
+      "present": true,
+      "span": {
+        "start": {
+          "line": 3,
+          "character": 0
+        },
+        "end": {
+          "line": 4,
+          "character": 0
+        }
+      }
+    },
+    "moduleValue": {
+      "value": "m",
+      "span": {
+        "start": {
+          "line": 1,
+          "character": 8
+        },
+        "end": {
+          "line": 1,
+          "character": 9
+        }
+      }
+    },
+    "deps": [],
+    "refs": [
+      {
+        "module": "x/y",
+        "span": {
+          "start": {
+            "line": 3,
+            "character": 1
+          },
+          "end": {
+            "line": 3,
+            "character": 5
+          }
+        }
+      }
+    ]
+  }
+]

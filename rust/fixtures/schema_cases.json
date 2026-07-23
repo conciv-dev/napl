@@ -1,0 +1,380 @@
+[
+  {
+    "schema": "attribution",
+    "input": {
+      "module": "greeting",
+      "target": "typescript",
+      "entries": [
+        {
+          "promptLines": [
+            2,
+            2
+          ],
+          "file": "g.ts",
+          "lines": [
+            1,
+            3
+          ],
+          "note": "x"
+        }
+      ]
+    },
+    "accepts": true
+  },
+  {
+    "schema": "attribution",
+    "input": {
+      "module": "m",
+      "target": "t",
+      "entries": [
+        {
+          "promptLines": [
+            1,
+            1
+          ],
+          "lines": [
+            1,
+            1
+          ],
+          "note": "x"
+        }
+      ]
+    },
+    "accepts": false
+  },
+  {
+    "schema": "attribution",
+    "input": {
+      "module": "m",
+      "target": "t",
+      "entries": [
+        {
+          "promptLines": [
+            1,
+            1
+          ],
+          "file": "a.ts",
+          "lines": [
+            1.5,
+            2
+          ],
+          "note": "x"
+        }
+      ]
+    },
+    "accepts": false
+  },
+  {
+    "schema": "attribution",
+    "input": {
+      "module": "",
+      "target": "t",
+      "entries": []
+    },
+    "accepts": false
+  },
+  {
+    "schema": "attribution",
+    "input": {
+      "target": "t",
+      "entries": []
+    },
+    "accepts": false
+  },
+  {
+    "schema": "attribution_entries",
+    "input": [
+      {
+        "promptLines": [
+          8
+        ],
+        "file": "a.ts",
+        "lines": 3,
+        "note": "single"
+      }
+    ],
+    "accepts": true
+  },
+  {
+    "schema": "attribution_entries",
+    "input": [
+      {
+        "promptLines": "nope",
+        "file": "a",
+        "lines": [
+          1,
+          2
+        ]
+      }
+    ],
+    "accepts": false
+  },
+  {
+    "schema": "attribution_entries",
+    "input": {},
+    "accepts": true
+  },
+  {
+    "schema": "ml",
+    "input": {
+      "module": "todo",
+      "target": "react",
+      "entries": [
+        {
+          "promptLines": 18,
+          "kind": "ambiguity",
+          "message": "x",
+          "reasoning": "y"
+        }
+      ]
+    },
+    "accepts": true
+  },
+  {
+    "schema": "ml",
+    "input": {
+      "module": "m",
+      "target": "react"
+    },
+    "accepts": true
+  },
+  {
+    "schema": "ml",
+    "input": {
+      "module": "m",
+      "target": "react",
+      "entries": [
+        {
+          "promptLines": [
+            1,
+            1
+          ],
+          "kind": "ambiguity",
+          "message": "x"
+        }
+      ]
+    },
+    "accepts": true
+  },
+  {
+    "schema": "ml",
+    "input": {
+      "module": "m",
+      "target": "react",
+      "entries": [
+        {
+          "promptLines": [
+            1,
+            1
+          ],
+          "kind": "assumption",
+          "message": "x"
+        }
+      ]
+    },
+    "accepts": true
+  },
+  {
+    "schema": "ml",
+    "input": {
+      "module": "m",
+      "target": "react",
+      "entries": [
+        {
+          "promptLines": [
+            1,
+            1
+          ],
+          "kind": "note",
+          "message": "x"
+        }
+      ]
+    },
+    "accepts": true
+  },
+  {
+    "schema": "ml",
+    "input": {
+      "module": "m",
+      "target": "react",
+      "entries": [
+        {
+          "promptLines": [
+            1,
+            1
+          ],
+          "kind": "no-op",
+          "message": "x"
+        }
+      ]
+    },
+    "accepts": true
+  },
+  {
+    "schema": "ml",
+    "input": {
+      "module": "m",
+      "target": "react",
+      "entries": [
+        {
+          "promptLines": [
+            1,
+            1
+          ],
+          "kind": "bogus",
+          "message": "x"
+        }
+      ]
+    },
+    "accepts": false
+  },
+  {
+    "schema": "ml",
+    "input": {
+      "module": "m",
+      "target": "react",
+      "entries": [
+        {
+          "promptLines": [
+            1,
+            1
+          ],
+          "kind": "note",
+          "message": ""
+        }
+      ]
+    },
+    "accepts": false
+  },
+  {
+    "schema": "ir",
+    "input": {
+      "module": "greeting",
+      "functions": [
+        {
+          "name": "greet",
+          "signature": "s",
+          "behavior": "b"
+        }
+      ]
+    },
+    "accepts": true
+  },
+  {
+    "schema": "ir",
+    "input": {
+      "functions": []
+    },
+    "accepts": false
+  },
+  {
+    "schema": "ir",
+    "input": {
+      "module": "x",
+      "functions": [
+        {
+          "name": "f"
+        }
+      ]
+    },
+    "accepts": false
+  },
+  {
+    "schema": "ir",
+    "input": {
+      "module": ""
+    },
+    "accepts": false
+  },
+  {
+    "schema": "lock",
+    "input": {
+      "model": "claude-sonnet-5"
+    },
+    "accepts": true
+  },
+  {
+    "schema": "lock",
+    "input": {
+      "model": "claude-sonnet-5",
+      "backend": "anthropic-api"
+    },
+    "accepts": true
+  },
+  {
+    "schema": "lock",
+    "input": {
+      "model": "x",
+      "backend": "openai"
+    },
+    "accepts": false
+  },
+  {
+    "schema": "lock",
+    "input": {
+      "model": "m",
+      "promptAliases": [
+        ".🧑",
+        ".🤠"
+      ]
+    },
+    "accepts": true
+  },
+  {
+    "schema": "lock",
+    "input": {
+      "model": "m",
+      "promptAliases": [
+        "🧑"
+      ]
+    },
+    "accepts": false
+  },
+  {
+    "schema": "lock",
+    "input": {
+      "model": "m",
+      "promptAliases": [
+        ".abc"
+      ]
+    },
+    "accepts": false
+  },
+  {
+    "schema": "lock",
+    "input": {
+      "model": "m",
+      "promptAliases": [
+        ".👨‍💻"
+      ]
+    },
+    "accepts": false
+  },
+  {
+    "schema": "map",
+    "input": {
+      "version": 2,
+      "prompts": {
+        "a.napl": {
+          "module": "m",
+          "promptHash": "h"
+        }
+      }
+    },
+    "accepts": true
+  },
+  {
+    "schema": "map",
+    "input": {
+      "version": 2
+    },
+    "accepts": true
+  },
+  {
+    "schema": "map",
+    "input": {
+      "version": 3
+    },
+    "accepts": false
+  }
+]
