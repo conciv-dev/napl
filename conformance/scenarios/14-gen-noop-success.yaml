@@ -1,0 +1,115 @@
+name: gen-noop-success
+description: >
+  The prompt changed but the agent makes no source edits AND the machine layer
+  records a valid no-op entry explaining why: gen succeeds, the module is advanced
+  to the new prompt hash, and the .mapl carries the no-op note.
+setup:
+  .napl/lock.json: |
+    {
+      "model": "claude-sonnet-5",
+      "backend": "claude-cli"
+    }
+  examples/greeting.napl: |
+    ---
+    module: greeting
+    deps: []
+    targets: [typescript]
+    tests: []
+    ---
+    Greet a person by name, loudly.
+  .napl/src/typescript/greet.ts: "export const greet = (name: string): string => `Hello, ${name}!`;\n"
+  .napl/prompts-at-gen/greeting.md: |
+    Greet a person by name.
+  .napl/attribution/greeting.yaml: |
+    module: greeting
+    target: typescript
+    entries:
+      - promptLines: [1, 1]
+        file: greet.ts
+        lines: [1, 1]
+        note: builds the greeting string
+  .napl/map.json: |
+    {
+      "version": 2,
+      "prompts": {
+        "examples/greeting.napl": {
+          "module": "greeting",
+          "promptHash": "a89eecb1f31e12e98001c16dfa96c74cc9edfc11e24a4abcd54cfb2258c5d3e3",
+          "declaredTargets": [
+            "typescript"
+          ],
+          "targets": {
+            "typescript": {
+              "promptHashAtGen": "a89eecb1f31e12e98001c16dfa96c74cc9edfc11e24a4abcd54cfb2258c5d3e3",
+              "files": [
+                ".napl/src/typescript/greet.ts"
+              ]
+            }
+          }
+        }
+      },
+      "files": {
+        ".napl/src/typescript/greet.ts": {
+          "target": "typescript",
+          "hash": "ba0fff9dc431972a2488987562dbf68bc99b9c991a3cdc7506f64eff6a703545",
+          "prompts": [
+            "examples/greeting.napl"
+          ]
+        }
+      }
+    }
+script:
+  agent:
+    - files: {}
+      output: "The requirement is already satisfied by the existing code; I made no source changes."
+  ir:
+    - |
+      ```yaml
+      module: greeting
+      deps: []
+      types: []
+      functions: []
+      tests: []
+      ```
+  attribution:
+    - |
+      ```yaml
+      - promptLines: [1, 1]
+        file: greet.ts
+        lines: [1, 1]
+        note: "builds the greeting string"
+      ```
+  ml:
+    - |
+      ```yaml
+      - promptLines: [1, 1]
+        kind: no-op
+        message: "requirement already satisfied by existing code"
+        reasoning: "the greeting is already emphatic enough; no edit was needed"
+      ```
+run: [gen, typescript]
+expect:
+  exitCode: 0
+  stdoutContains:
+    - "mode: INCREMENTAL"
+    - "prompt changed but the agent made no source edits — retrying once"
+    - "no-op: prompt changed but the agent produced no edits"
+    - "generated 1, skipped 0"
+  agentInputs:
+    - index: 1
+      contains:
+        - "CRITICAL"
+  files:
+    .napl/src/typescript/greet.ts:
+      mode: "0444"
+    .napl/mapl/greeting.mapl:
+      content: |
+        module: greeting
+        target: typescript
+        entries:
+          - promptLines:
+              - 1
+              - 1
+            kind: no-op
+            message: requirement already satisfied by existing code
+            reasoning: the greeting is already emphatic enough; no edit was needed

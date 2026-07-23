@@ -1,0 +1,7 @@
+name: build-deprecated
+description: napl build is deprecated and prints a notice pointing at gen, exiting 0.
+run: [build]
+expect:
+  exitCode: 0
+  stdout:
+    - "napl build is deprecated. Generation now works directly from prompts — the coding agent writes source, and the IR is derived afterwards. Run \"napl gen <target>\" instead."

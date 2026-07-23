@@ -1,0 +1,29 @@
+name: status-prompt-stale-never
+description: >
+  A prompt that was never generated (absent from map.json) is reported as
+  prompt-stale with detail "never generated"; this is not an error, so exit 0.
+setup:
+  .napl/lock.json: |
+    {
+      "model": "claude-sonnet-5",
+      "backend": "claude-cli"
+    }
+  .napl/map.json: |
+    {
+      "version": 2,
+      "prompts": {},
+      "files": {}
+    }
+  examples/greeting.napl: |
+    ---
+    module: greeting
+    deps: []
+    targets: [typescript]
+    tests: []
+    ---
+    Greet a person by name.
+run: [status]
+expect:
+  exitCode: 0
+  stdout:
+    - "prompt-stale examples/greeting.napl (never generated)"

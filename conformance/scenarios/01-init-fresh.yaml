@@ -1,0 +1,28 @@
+name: init-fresh
+description: >
+  napl init on an empty directory creates the .napl layout, a default lock.json
+  (claude-sonnet-5 / claude-cli, no promptAliases), an empty map.json, and the
+  example greeting.napl prompt.
+run: [init]
+expect:
+  exitCode: 0
+  stdout:
+    - "create  {{CWD}}/.napl/lock.json (model: claude-sonnet-5, backend: claude-cli)"
+    - "create  {{CWD}}/.napl/map.json"
+    - "create  {{CWD}}/examples/greeting.napl"
+    - 're:^initialized\. Next: edit a \*\.napl prompt'
+    - "gen runs a coding agent that writes the source directly, then derives the IR and attribution."
+  files:
+    .napl/lock.json:
+      content: |
+        {
+          "model": "claude-sonnet-5",
+          "backend": "claude-cli"
+        }
+    .napl/map.json:
+      content: |
+        {
+          "version": 2,
+          "prompts": {},
+          "files": {}
+        }

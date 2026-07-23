@@ -1,0 +1,87 @@
+name: gen-ml-kinds
+description: >
+  The machine-layer derivation round-trips every entry kind (ambiguity,
+  assumption, note) through the .mapl file exactly, including optional suggestion.
+setup:
+  .napl/lock.json: |
+    {
+      "model": "claude-sonnet-5",
+      "backend": "claude-cli"
+    }
+  examples/greeting.napl: |
+    ---
+    module: greeting
+    deps: []
+    targets: [typescript]
+    tests: []
+    ---
+    Greet a person by name, loudly.
+script:
+  agent:
+    - files:
+        greet.ts: "export const greet = (name: string): string => `HELLO, ${name}!`;\n"
+      output: "implemented the greeting module"
+  ir:
+    - |
+      ```yaml
+      module: greeting
+      deps: []
+      types: []
+      functions: []
+      tests: []
+      ```
+  attribution:
+    - |
+      ```yaml
+      - promptLines: [1, 1]
+        file: greet.ts
+        lines: [1, 1]
+        note: "builds the greeting string"
+      ```
+  ml:
+    - |
+      ```yaml
+      - promptLines: [1, 1]
+        kind: ambiguity
+        message: "\"loudly\" is vague"
+        reasoning: "unclear whether to uppercase, add punctuation, or both"
+        suggestion: "state the exact emphasis, e.g. all caps"
+      - promptLines: [1, 1]
+        kind: assumption
+        message: "assumed uppercase greeting"
+        reasoning: "chose to uppercase the whole message"
+      - promptLines: [1, 1]
+        kind: note
+        message: "single-file implementation"
+        reasoning: "kept the module to one source file"
+      ```
+run: [gen, typescript]
+expect:
+  exitCode: 0
+  stdoutContains:
+    - "generated 1, skipped 0"
+  files:
+    .napl/mapl/greeting.mapl:
+      content: |
+        module: greeting
+        target: typescript
+        entries:
+          - promptLines:
+              - 1
+              - 1
+            kind: ambiguity
+            message: '"loudly" is vague'
+            reasoning: unclear whether to uppercase, add punctuation, or both
+            suggestion: state the exact emphasis, e.g. all caps
+          - promptLines:
+              - 1
+              - 1
+            kind: assumption
+            message: assumed uppercase greeting
+            reasoning: chose to uppercase the whole message
+          - promptLines:
+              - 1
+              - 1
+            kind: note
+            message: single-file implementation
+            reasoning: kept the module to one source file

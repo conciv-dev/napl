@@ -13,7 +13,8 @@
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
-    "check": "turbo run build typecheck test"
+    "check": "turbo run build typecheck test",
+    "conformance": "turbo run conformance"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",

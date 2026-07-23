@@ -1,0 +1,105 @@
+name: gen-noop-fail
+description: >
+  The prompt changed, the agent makes no source edits, and the machine layer
+  produces NO no-op entry: gen FAILS non-zero, the module is left stale
+  (promptHashAtGen unchanged), and the source file is not re-locked.
+setup:
+  .napl/lock.json: |
+    {
+      "model": "claude-sonnet-5",
+      "backend": "claude-cli"
+    }
+  examples/greeting.napl: |
+    ---
+    module: greeting
+    deps: []
+    targets: [typescript]
+    tests: []
+    ---
+    Greet a person by name, loudly.
+  .napl/src/typescript/greet.ts: "export const greet = (name: string): string => `Hello, ${name}!`;\n"
+  .napl/prompts-at-gen/greeting.md: |
+    Greet a person by name.
+  .napl/attribution/greeting.yaml: |
+    module: greeting
+    target: typescript
+    entries:
+      - promptLines: [1, 1]
+        file: greet.ts
+        lines: [1, 1]
+        note: builds the greeting string
+  .napl/map.json: |
+    {
+      "version": 2,
+      "prompts": {
+        "examples/greeting.napl": {
+          "module": "greeting",
+          "promptHash": "a89eecb1f31e12e98001c16dfa96c74cc9edfc11e24a4abcd54cfb2258c5d3e3",
+          "declaredTargets": [
+            "typescript"
+          ],
+          "targets": {
+            "typescript": {
+              "promptHashAtGen": "a89eecb1f31e12e98001c16dfa96c74cc9edfc11e24a4abcd54cfb2258c5d3e3",
+              "files": [
+                ".napl/src/typescript/greet.ts"
+              ]
+            }
+          }
+        }
+      },
+      "files": {
+        ".napl/src/typescript/greet.ts": {
+          "target": "typescript",
+          "hash": "ba0fff9dc431972a2488987562dbf68bc99b9c991a3cdc7506f64eff6a703545",
+          "prompts": [
+            "examples/greeting.napl"
+          ]
+        }
+      }
+    }
+script:
+  agent:
+    - files: {}
+      output: "I made no source changes."
+  ir:
+    - |
+      ```yaml
+      module: greeting
+      deps: []
+      types: []
+      functions: []
+      tests: []
+      ```
+  attribution:
+    - |
+      ```yaml
+      - promptLines: [1, 1]
+        file: greet.ts
+        lines: [1, 1]
+        note: "builds the greeting string"
+      ```
+  ml:
+    - |
+      ```yaml
+      - promptLines: [1, 1]
+        kind: note
+        message: "nothing to add"
+        reasoning: "no no-op entry is emitted here"
+      ```
+run: [gen, typescript]
+expect:
+  exitCode: 1
+  stdoutContains:
+    - "FAILED no-op check for 'greeting' (typescript); module left stale, promptHashAtGen not updated"
+  stderrContains:
+    - "napl: gen failed for module 'greeting' (typescript): the prompt changed but the coding agent made no source edits, and the machine layer produced no \"no-op\" entry explaining why nothing changed."
+  files:
+    .napl/src/typescript/greet.ts:
+      mode: "0644"
+    .napl/mapl/greeting.mapl:
+      contains:
+        - "kind: note"
+    .napl/map.json:
+      contains:
+        - "\"promptHashAtGen\": \"a89eecb1f31e12e98001c16dfa96c74cc9edfc11e24a4abcd54cfb2258c5d3e3\""

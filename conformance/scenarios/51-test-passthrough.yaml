@@ -1,0 +1,18 @@
+name: test-passthrough
+description: >
+  napl test <target> runs the target's test command without regenerating and
+  passes its output and exit code straight through.
+setup:
+  .napl/lock.json: |
+    {
+      "model": "claude-sonnet-5",
+      "backend": "claude-cli"
+    }
+testOutput: "Test Files  1 passed (1)"
+testExit: 0
+run: [test, typescript]
+expect:
+  exitCode: 0
+  stdout:
+    - "running npx vitest run (in {{CWD}}/.napl/src/typescript)"
+    - "Test Files  1 passed (1)"

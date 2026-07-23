@@ -278,6 +278,29 @@ register a new adapter in `packages/core/src/targets/registry.ts`. `typescript`
 (vitest) and `react`
 (Vite + React + TypeScript, vitest + @testing-library/react + jsdom) ship today.
 
+## Conformance
+
+`conformance/` is a language-agnostic golden-fixture suite that freezes the
+toolchain's **observable** behavior — exact stdout/stderr, exit codes, and the
+byte content of every state file (`map.json`, `journal.jsonl`, `.mapl`,
+attribution, IR) for 30 end-to-end scenarios covering `init`, `gen` (happy path,
+attribution gate, no-op rule, incremental, `--force`, `--module`, gen-lock
+contention), the full `status` matrix, `blame`, emoji aliases, and error paths.
+
+Each scenario (`conformance/scenarios/*.yaml`) runs the **real built CLI** in a
+fresh temp dir. A stub `claude` (and `npx`) placed first on `PATH`
+(`conformance/fake-claude/`) makes the coding agent, the derived-artifact
+completions, and the test command deterministic and offline. Timestamps are
+pinned via a `NAPL_FIXED_NOW` env override read only at the CLI entry; absolute
+paths are normalized to `{{CWD}}`.
+
+```bash
+corepack pnpm turbo run conformance   # run the whole corpus against the current CLI
+```
+
+This corpus is the **acceptance gate for the upcoming Rust rewrite**: the port
+must execute these same fixtures unchanged and match them byte-for-byte.
+
 ## Development
 
 This is a pnpm + [turborepo](https://turborepo.dev) monorepo. Node >= 22 and

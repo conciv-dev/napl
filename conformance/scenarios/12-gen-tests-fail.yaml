@@ -1,0 +1,47 @@
+name: gen-tests-fail
+description: >
+  When the target test command never passes, gen invokes the agent three times,
+  then fails loudly with a non-zero exit; no map.json is written and the source
+  file is left unlocked.
+setup:
+  .napl/lock.json: |
+    {
+      "model": "claude-sonnet-5",
+      "backend": "claude-cli"
+    }
+  examples/greeting.napl: |
+    ---
+    module: greeting
+    deps: []
+    targets: [typescript]
+    tests: []
+    ---
+    Greet a person by name.
+testExit: 1
+testOutput: "FAIL greet.test.ts > tests never pass"
+script:
+  agent:
+    - files:
+        greet.ts: "export const greet = (name: string): string => `Hello, ${name}!`;\n"
+      output: "attempted implementation"
+run: [gen, typescript]
+expect:
+  exitCode: 1
+  stdout:
+    - "gen     greeting (typescript)"
+    - "  mode: full (no prior successful gen for this target)"
+    - "  attempt 1/3: running coding agent"
+    - "  attempt 1/3: tests failed"
+    - "  attempt 2/3: running coding agent"
+    - "  attempt 2/3: tests failed"
+    - "  attempt 3/3: running coding agent"
+    - "  attempt 3/3: tests failed"
+  stderr:
+    - "napl: code generation failed for module 'greeting' (typescript) after 3 attempts."
+  files:
+    .napl/map.json:
+      absent: true
+    .napl/gen.lock:
+      absent: true
+    .napl/src/typescript/greet.ts:
+      mode: "0644"

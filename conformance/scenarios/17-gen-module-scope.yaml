@@ -1,0 +1,67 @@
+name: gen-module-scope
+description: >
+  --module scopes the run to a single module by name; other prompts are skipped
+  entirely (not even counted), and no artifacts are produced for them.
+setup:
+  .napl/lock.json: |
+    {
+      "model": "claude-sonnet-5",
+      "backend": "claude-cli"
+    }
+  examples/greeting.napl: |
+    ---
+    module: greeting
+    deps: []
+    targets: [typescript]
+    tests: []
+    ---
+    Greet a person by name.
+  examples/farewell.napl: |
+    ---
+    module: farewell
+    deps: []
+    targets: [typescript]
+    tests: []
+    ---
+    Say goodbye to a person by name.
+script:
+  agent:
+    - files:
+        greet.ts: "export const greet = (name: string): string => `Hello, ${name}!`;\n"
+      output: "implemented greeting only"
+  ir:
+    - |
+      ```yaml
+      module: greeting
+      deps: []
+      types: []
+      functions: []
+      tests: []
+      ```
+  attribution:
+    - |
+      ```yaml
+      - promptLines: [1, 1]
+        file: greet.ts
+        lines: [1, 1]
+        note: "builds the greeting string"
+      ```
+  ml:
+    - |
+      ```yaml
+      []
+      ```
+run: [gen, typescript, --module, greeting]
+expect:
+  exitCode: 0
+  stdoutContains:
+    - "gen     greeting (typescript)"
+    - "generated 1, skipped 0"
+  files:
+    .napl/attribution/greeting.yaml:
+      contains:
+        - "module: greeting"
+    .napl/attribution/farewell.yaml:
+      absent: true
+    .napl/src/typescript/greet.ts:
+      mode: "0444"

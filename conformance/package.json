@@ -1,0 +1,23 @@
+{
+  "name": "@napl/conformance",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Language-agnostic golden-fixture conformance corpus: freezes the napl toolchain's observable behavior as the acceptance gate for the Rust port.",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "conformance": "node --experimental-strip-types runner/cli.ts",
+    "dump": "node --experimental-strip-types runner/cli.ts dump",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "yaml": "^2.9.0"
+  },
+  "devDependencies": {
+    "@napl/cli": "workspace:*",
+    "@types/node": "^26.1.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}

@@ -1,0 +1,21 @@
+name: blame-file
+description: >
+  napl blame reconstructs per-line ancestry across three gens by replaying the
+  journal patches oldest-to-newest: each current line is attributed to the gen
+  that last touched it.
+setup:
+  .napl/src/typescript/greet.ts: |
+    export const greet = (name) => `Hi, ${name}`;
+    export const shout = (name) => `HI, ${name}`;
+    export const wave = () => 'bye';
+  .napl/journal.jsonl: |
+    {"gen":1,"timestamp":"2026-07-20T00:00:00.000Z","module":"greeting","target":"typescript","promptHash":"h1","promptDiff":"","mode":"full","files":[{"path":".napl/src/typescript/greet.ts","patch":"@@ -0,0 +1,1 @@\n+export const greet = (name) => `Hi, ${name}`;","hashBefore":null,"hashAfter":"h1a"}]}
+    {"gen":2,"timestamp":"2026-07-21T00:00:00.000Z","module":"greeting","target":"typescript","promptHash":"h2","promptDiff":"@@ -1,1 +1,2 @@\n Greet.\n+Also shout.","mode":"incremental","files":[{"path":".napl/src/typescript/greet.ts","patch":"@@ -1,1 +1,2 @@\n export const greet = (name) => `Hi, ${name}`;\n+export const shout = (name) => `HI, ${name}`;","hashBefore":"h1a","hashAfter":"h2a"}]}
+    {"gen":3,"timestamp":"2026-07-22T00:00:00.000Z","module":"greeting","target":"typescript","promptHash":"h3","promptDiff":"@@ -2,1 +2,2 @@\n Also shout.\n+Also wave.","mode":"incremental","files":[{"path":".napl/src/typescript/greet.ts","patch":"@@ -2,1 +2,2 @@\n export const shout = (name) => `HI, ${name}`;\n+export const wave = () => 'bye';","hashBefore":"h2a","hashAfter":"h3a"}]}
+run: [blame, .napl/src/typescript/greet.ts]
+expect:
+  exitCode: 0
+  stdout:
+    - "gen #1  2026-07-20T00:00:00.000Z  greeting  export const greet = (name) => `Hi, ${name}`;"
+    - "gen #2  2026-07-21T00:00:00.000Z  greeting  export const shout = (name) => `HI, ${name}`;"
+    - "gen #3  2026-07-22T00:00:00.000Z  greeting  export const wave = () => 'bye';"

@@ -1,0 +1,31 @@
+name: init-idempotent
+description: >
+  Running napl init again over an existing .napl leaves lock.json, map.json and
+  the example prompt untouched, reporting each as "exists" instead of "create".
+setup:
+  .napl/lock.json: |
+    {
+      "model": "claude-sonnet-5",
+      "backend": "claude-cli"
+    }
+  .napl/map.json: |
+    {
+      "version": 2,
+      "prompts": {},
+      "files": {}
+    }
+  examples/greeting.napl: |
+    ---
+    module: greeting
+    targets: [typescript]
+    ---
+    Greet a person by name.
+run: [init]
+expect:
+  exitCode: 0
+  stdout:
+    - "exists  {{CWD}}/.napl/lock.json"
+    - "exists  {{CWD}}/.napl/map.json"
+    - "exists  {{CWD}}/examples/greeting.napl"
+    - 're:^initialized\. Next:'
+    - "gen runs a coding agent that writes the source directly, then derives the IR and attribution."

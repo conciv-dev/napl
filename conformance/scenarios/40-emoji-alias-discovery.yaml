@@ -1,0 +1,62 @@
+name: emoji-alias-discovery
+description: >
+  A prompt spelled with the person-emoji alias (greeting.🧑) is discovered and
+  generated; per the mirror rule the machine file is written as greeting.🤖 (not
+  .mapl), and map.json records the actual emoji filename.
+setup:
+  .napl/lock.json: |
+    {
+      "model": "claude-sonnet-5",
+      "backend": "claude-cli"
+    }
+  examples/greeting.🧑: |
+    ---
+    module: greeting
+    deps: []
+    targets: [typescript]
+    tests: []
+    ---
+    Greet a person by name.
+script:
+  agent:
+    - files:
+        greet.ts: "export const greet = (name: string): string => `Hello, ${name}!`;\n"
+      output: "implemented the greeting module"
+  ir:
+    - |
+      ```yaml
+      module: greeting
+      deps: []
+      types: []
+      functions: []
+      tests: []
+      ```
+  attribution:
+    - |
+      ```yaml
+      - promptLines: [1, 1]
+        file: greet.ts
+        lines: [1, 1]
+        note: "builds the greeting string"
+      ```
+  ml:
+    - |
+      ```yaml
+      []
+      ```
+run: [gen, typescript]
+expect:
+  exitCode: 0
+  stdoutContains:
+    - "gen     greeting (typescript)"
+    - "generated 1, skipped 0"
+  files:
+    .napl/mapl/greeting.🤖:
+      contains:
+        - "module: greeting"
+    .napl/mapl/greeting.mapl:
+      absent: true
+    .napl/map.json:
+      contains:
+        - "\"examples/greeting.🧑\""
+        - "\".napl/src/typescript/greet.ts\""

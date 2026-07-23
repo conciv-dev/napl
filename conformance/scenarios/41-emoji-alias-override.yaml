@@ -1,0 +1,41 @@
+name: emoji-alias-override
+description: >
+  A promptAliases override in lock.json restricts prompt discovery to the listed
+  aliases: only keep.🧑 is a prompt; a .🧓 file (a default alias, but not in the
+  override) and a ZWJ-sequence filename (👨‍💻, always excluded) are both ignored.
+setup:
+  .napl/lock.json: |
+    {
+      "model": "claude-sonnet-5",
+      "backend": "claude-cli",
+      "promptAliases": [".🧑"]
+    }
+  examples/keep.🧑: |
+    ---
+    module: keep
+    deps: []
+    targets: [typescript]
+    tests: []
+    ---
+    A discovered prompt.
+  examples/ignore.🧓: |
+    ---
+    module: ignore
+    deps: []
+    targets: [typescript]
+    tests: []
+    ---
+    Not discovered under the override.
+  examples/zwj.👨‍💻: |
+    ---
+    module: zwj
+    deps: []
+    targets: [typescript]
+    tests: []
+    ---
+    A ZWJ filename that is never a prompt.
+run: [status]
+expect:
+  exitCode: 0
+  stdout:
+    - "prompt-stale examples/keep.🧑 (never generated)"

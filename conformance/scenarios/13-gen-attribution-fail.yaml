@@ -1,0 +1,78 @@
+name: gen-attribution-fail
+description: >
+  Tests pass but attribution derivation stays invalid across all three attempts:
+  gen fails non-zero, leaves the file unlocked, writes no attribution file, and
+  marks the target unattributed in map.json.
+setup:
+  .napl/lock.json: |
+    {
+      "model": "claude-sonnet-5",
+      "backend": "claude-cli"
+    }
+  examples/greeting.napl: |
+    ---
+    module: greeting
+    deps: []
+    targets: [typescript]
+    tests: []
+    ---
+    Greet a person by name.
+script:
+  agent:
+    - files:
+        greet.ts: "export const greet = (name: string): string => `Hello, ${name}!`;\n"
+      output: "implemented the greeting module"
+  ir:
+    - |
+      ```yaml
+      module: greeting
+      deps: []
+      types: []
+      functions: []
+      tests: []
+      ```
+  attribution:
+    - |
+      ```yaml
+      - promptLines: nonsense
+        file: greet.ts
+        lines: [1, 1]
+      ```
+run: [gen, typescript]
+expect:
+  exitCode: 1
+  stdoutContains:
+    - "attribution attempt 1/3 failed"
+    - "attribution attempt 2/3 failed"
+    - "attribution attempt 3/3 failed"
+    - "FAILED attribution for 'greeting' (typescript); files left unlocked, target marked unattributed"
+  stderrContains:
+    - "napl: gen failed for module 'greeting' (typescript): required prompt attribution could not be derived after 3 attempts."
+  files:
+    .napl/attribution/greeting.yaml:
+      absent: true
+    .napl/src/typescript/greet.ts:
+      mode: "0644"
+    .napl/map.json:
+      content: |
+        {
+          "version": 2,
+          "prompts": {
+            "examples/greeting.napl": {
+              "module": "greeting",
+              "promptHash": "a89eecb1f31e12e98001c16dfa96c74cc9edfc11e24a4abcd54cfb2258c5d3e3",
+              "declaredTargets": [
+                "typescript"
+              ],
+              "targets": {
+                "typescript": {
+                  "files": [
+                    ".napl/src/typescript/greet.ts"
+                  ],
+                  "unattributed": true
+                }
+              }
+            }
+          },
+          "files": {}
+        }

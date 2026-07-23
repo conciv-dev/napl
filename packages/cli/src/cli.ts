@@ -70,7 +70,7 @@ program
       full: opts.full ?? false,
       module: opts.module,
       log: (m) => console.log(m),
-      now: () => new Date().toISOString(),
+      now: () => process.env.NAPL_FIXED_NOW ?? new Date().toISOString(),
     });
     console.log(`generated ${result.generated.length}, skipped ${result.skipped.length}`);
   });

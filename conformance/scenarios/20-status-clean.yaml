@@ -1,0 +1,54 @@
+name: status-clean
+description: >
+  With a locked file whose hash matches the map and a prompt whose hash matches
+  promptHashAtGen, status reports the prompt as clean and exits 0.
+setup:
+  .napl/lock.json: |
+    {
+      "model": "claude-sonnet-5",
+      "backend": "claude-cli"
+    }
+  examples/greeting.napl: |
+    ---
+    module: greeting
+    deps: []
+    targets: [typescript]
+    tests: []
+    ---
+    Greet a person by name.
+  .napl/src/typescript/greet.ts: "export const greet = (name: string): string => `Hello, ${name}!`;\n"
+  .napl/map.json: |
+    {
+      "version": 2,
+      "prompts": {
+        "examples/greeting.napl": {
+          "module": "greeting",
+          "promptHash": "a89eecb1f31e12e98001c16dfa96c74cc9edfc11e24a4abcd54cfb2258c5d3e3",
+          "declaredTargets": [
+            "typescript"
+          ],
+          "targets": {
+            "typescript": {
+              "promptHashAtGen": "a89eecb1f31e12e98001c16dfa96c74cc9edfc11e24a4abcd54cfb2258c5d3e3",
+              "files": [
+                ".napl/src/typescript/greet.ts"
+              ]
+            }
+          }
+        }
+      },
+      "files": {
+        ".napl/src/typescript/greet.ts": {
+          "target": "typescript",
+          "hash": "ba0fff9dc431972a2488987562dbf68bc99b9c991a3cdc7506f64eff6a703545",
+          "prompts": [
+            "examples/greeting.napl"
+          ]
+        }
+      }
+    }
+run: [status]
+expect:
+  exitCode: 0
+  stdout:
+    - "clean        examples/greeting.napl"

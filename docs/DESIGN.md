@@ -202,6 +202,27 @@ Free-form inverse compilation (guessing a prompt from arbitrary code with no bas
 - First target: TypeScript; Swift as agnosticism proof later
 - Identity: renamed to **NAPL** ("NAPL Ain't a Programming Language"). Canonical extensions are now `.napl` (human) and `.mapl` (machine); hidden state lives in `.napl/` with machine notes under `.napl/mapl/`; the CLI binary and npm scope are `napl` / `@napl/*`.
 
+## Conformance (the port gate)
+
+`conformance/` (`@napl/conformance`, unpublished) is a declarative golden-fixture
+corpus that freezes the toolchain's observable contract: for each scenario it
+pins exit code, exact stdout/stderr (with `{{CWD}}` path normalization and
+`re:`-marked regex lines), and the full byte content / file mode of the small
+state files (`map.json`, `journal.jsonl`, `.napl/attribution/*`, `.napl/mapl/*`,
+`.napl/ir/*`, `lock.json`). Scenarios run the **actual built CLI** end-to-end in a
+throwaway temp dir; determinism comes from a stub `claude`/`npx` on `PATH`
+(`conformance/fake-claude/`, driven by a per-scenario script), a `NAPL_FIXED_NOW`
+clock override injected only at the CLI entry, and a runner (`conformance/runner/`)
+that spawns the binary, normalizes volatile values, and diffs against
+expectations. The gen-lock contention case seeds the lock with the runner's own
+live pid so the collision is reproducible.
+
+This suite is the **acceptance gate for the Rust rewrite**. The port is expected
+to run the same `conformance/scenarios/*.yaml` fixtures through an equivalent
+runner and reproduce every pinned value byte-for-byte; any divergence is a port
+bug. Nondeterminism discovered while building the corpus (anything that could not
+be pinned) is therefore a first-class portability finding, not a test nuisance.
+
 ## Key Assumptions to Validate
 
 - [ ] Prompt + tests carry enough intent that regen with a newer model preserves behavior — write 5 modules, regen with two models, diff via tests

@@ -1,0 +1,46 @@
+name: status-unattributed
+description: >
+  A target flagged unattributed in the map (generated files exist but attribution
+  derivation failed) is reported unattributed and exits 1 until a later gen clears it.
+setup:
+  .napl/lock.json: |
+    {
+      "model": "claude-sonnet-5",
+      "backend": "claude-cli"
+    }
+  examples/greeting.napl: |
+    ---
+    module: greeting
+    deps: []
+    targets: [typescript]
+    tests: []
+    ---
+    Greet a person by name.
+  .napl/src/typescript/greet.ts: "export const greet = (name: string): string => `Hello, ${name}!`;\n"
+  .napl/map.json: |
+    {
+      "version": 2,
+      "prompts": {
+        "examples/greeting.napl": {
+          "module": "greeting",
+          "promptHash": "a89eecb1f31e12e98001c16dfa96c74cc9edfc11e24a4abcd54cfb2258c5d3e3",
+          "declaredTargets": [
+            "typescript"
+          ],
+          "targets": {
+            "typescript": {
+              "files": [
+                ".napl/src/typescript/greet.ts"
+              ],
+              "unattributed": true
+            }
+          }
+        }
+      },
+      "files": {}
+    }
+run: [status]
+expect:
+  exitCode: 1
+  stdout:
+    - "unattributed examples/greeting.napl (generated files lack prompt attribution — run napl gen typescript --force)"

@@ -1,0 +1,16 @@
+name: frontmatter-invalid
+description: >
+  A prompt whose YAML frontmatter is malformed makes status fail with a clear
+  error and a non-zero exit rather than silently ignoring the file.
+setup:
+  examples/broken.napl: |
+    ---
+    module: [unterminated
+    targets: typescript
+    ---
+    This prompt has invalid YAML frontmatter.
+run: [status]
+expect:
+  exitCode: 1
+  stderrContains:
+    - "napl: invalid YAML frontmatter"

@@ -1,0 +1,19 @@
+name: journal-corrupt-line
+description: >
+  A corrupt (non-JSON) journal line is skipped with a warning while the valid
+  entries around it are still used to reconstruct blame.
+setup:
+  .napl/src/typescript/greet.ts: |
+    export const greet = () => 'hi';
+    export const bye = () => 'bye';
+  .napl/journal.jsonl: |
+    {"gen":1,"timestamp":"2026-07-20T00:00:00.000Z","module":"greeting","target":"typescript","promptHash":"h1","promptDiff":"","mode":"full","files":[{"path":".napl/src/typescript/greet.ts","patch":"@@ -0,0 +1,1 @@\n+export const greet = () => 'hi';","hashBefore":null,"hashAfter":"h1a"}]}
+    this line is not valid json and must be skipped
+    {"gen":2,"timestamp":"2026-07-21T00:00:00.000Z","module":"greeting","target":"typescript","promptHash":"h2","promptDiff":"","mode":"incremental","files":[{"path":".napl/src/typescript/greet.ts","patch":"@@ -1,1 +1,2 @@\n export const greet = () => 'hi';\n+export const bye = () => 'bye';","hashBefore":"h1a","hashAfter":"h2a"}]}
+run: [blame, .napl/src/typescript/greet.ts]
+expect:
+  exitCode: 0
+  stdout:
+    - "journal: skipping corrupt line 2 (invalid JSON)"
+    - "gen #1  2026-07-20T00:00:00.000Z  greeting  export const greet = () => 'hi';"
+    - "gen #2  2026-07-21T00:00:00.000Z  greeting  export const bye = () => 'bye';"

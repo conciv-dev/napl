@@ -1,0 +1,7 @@
+name: version
+description: napl --version prints the CLI version and exits 0.
+run: ["--version"]
+expect:
+  exitCode: 0
+  stdout:
+    - "0.1.0"

@@ -1,0 +1,129 @@
+#!/usr/bin/env node
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+
+function fail(message) {
+  process.stderr.write(`fake-claude: ${message}\n`);
+  process.exit(1);
+}
+
+function readStdin() {
+  try {
+    return readFileSync(0, 'utf8');
+  } catch {
+    return '';
+  }
+}
+
+function loadScript() {
+  const path = process.env.NAPL_FAKE_CLAUDE_SCRIPT;
+  if (path === undefined || path === '') fail('NAPL_FAKE_CLAUDE_SCRIPT is not set');
+  if (!existsSync(path)) fail(`script file not found: ${path}`);
+  try {
+    return JSON.parse(readFileSync(path, 'utf8'));
+  } catch (error) {
+    fail(`could not parse script file: ${error.message}`);
+  }
+}
+
+function readState() {
+  const path = process.env.NAPL_FAKE_CLAUDE_STATE;
+  if (path === undefined || path === '' || !existsSync(path)) {
+    return { agent: 0, ir: 0, attr: 0, ml: 0 };
+  }
+  try {
+    return { agent: 0, ir: 0, attr: 0, ml: 0, ...JSON.parse(readFileSync(path, 'utf8')) };
+  } catch {
+    return { agent: 0, ir: 0, attr: 0, ml: 0 };
+  }
+}
+
+function writeState(state) {
+  const path = process.env.NAPL_FAKE_CLAUDE_STATE;
+  if (path === undefined || path === '') return;
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, JSON.stringify(state), 'utf8');
+}
+
+function pick(list, index, kind) {
+  if (!Array.isArray(list) || list.length === 0) {
+    fail(`no scripted ${kind} responses in the script file`);
+  }
+  return list[Math.min(index, list.length - 1)];
+}
+
+function argValue(argv, flag) {
+  const index = argv.indexOf(flag);
+  if (index < 0 || index + 1 >= argv.length) return '';
+  return argv[index + 1];
+}
+
+function captureAgentInput(index, task) {
+  const dir = process.env.NAPL_FAKE_CLAUDE_CAPTURE;
+  if (dir === undefined || dir === '') return;
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, `agent-input-${index + 1}.txt`), task, 'utf8');
+}
+
+function applyFileOps(files) {
+  if (files === undefined || files === null) return;
+  const cwd = process.cwd();
+  for (const [rel, spec] of Object.entries(files)) {
+    const abs = join(cwd, rel);
+    if (spec === null || (typeof spec === 'object' && spec.delete === true)) {
+      rmSync(abs, { force: true });
+      continue;
+    }
+    const content = typeof spec === 'string' ? spec : String(spec.content ?? '');
+    mkdirSync(dirname(abs), { recursive: true });
+    writeFileSync(abs, content, 'utf8');
+  }
+}
+
+function runAgent(script, state) {
+  const step = pick(script.agent, state.agent, 'agent');
+  const task = readStdin();
+  captureAgentInput(state.agent, task);
+  applyFileOps(step.files);
+  state.agent += 1;
+  writeState(state);
+  process.stdout.write(typeof step.output === 'string' ? step.output : 'agent done');
+  process.exit(typeof step.code === 'number' ? step.code : 0);
+}
+
+function runLlm(script, state, system) {
+  let kind;
+  let list;
+  if (system.includes('intermediate representation')) {
+    kind = 'ir';
+    list = script.ir;
+  } else if (system.includes('MACHINE LAYER')) {
+    kind = 'ml';
+    list = script.ml;
+  } else {
+    kind = 'attr';
+    list = script.attribution;
+  }
+  const response = pick(list, state[kind], kind);
+  state[kind] += 1;
+  writeState(state);
+  process.stdout.write(response);
+  process.exit(0);
+}
+
+function main() {
+  const argv = process.argv.slice(2);
+  if (argv.includes('--version')) {
+    process.stdout.write('1.0.0 (fake-claude conformance stub)\n');
+    process.exit(0);
+  }
+  const script = loadScript();
+  const state = readState();
+  if (argv.includes('--permission-mode')) {
+    runAgent(script, state);
+    return;
+  }
+  runLlm(script, state, argValue(argv, '--system-prompt'));
+}
+
+main();

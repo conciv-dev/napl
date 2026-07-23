@@ -1,0 +1,31 @@
+name: gen-lock-contention
+description: >
+  When .napl/gen.lock is held by another live process, gen fails fast without
+  invoking the agent and leaves the existing lock untouched. The runner seeds the
+  lock with its own (live, different) pid so the contention is deterministic.
+setup:
+  .napl/lock.json: |
+    {
+      "model": "claude-sonnet-5",
+      "backend": "claude-cli"
+    }
+  .napl/gen.lock: |
+    {{RUNNER_PID}}
+  examples/greeting.napl: |
+    ---
+    module: greeting
+    deps: []
+    targets: [typescript]
+    tests: []
+    ---
+    Greet a person by name.
+run: [gen, typescript]
+expect:
+  exitCode: 1
+  stderr:
+    - "napl: another napl gen is already running (pid {{RUNNER_PID}}); the lock {{CWD}}/.napl/gen.lock is held. Wait for it to finish or remove the lock if the process is gone."
+  agentInputs: []
+  files:
+    .napl/gen.lock:
+      content: |
+        {{RUNNER_PID}}

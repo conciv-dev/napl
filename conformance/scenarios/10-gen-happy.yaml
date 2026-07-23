@@ -1,0 +1,140 @@
+name: gen-happy
+description: >
+  A full gen happy path: the fake coding agent writes one source file, the faked
+  test command passes, IR/attribution/machine-layer derivations succeed, the file
+  is locked 0444, and map.json / journal / attribution / mapl are written exactly.
+setup:
+  .napl/lock.json: |
+    {
+      "model": "claude-sonnet-5",
+      "backend": "claude-cli"
+    }
+  examples/greeting.napl: |
+    ---
+    module: greeting
+    deps: []
+    targets: [typescript]
+    tests: []
+    ---
+    Greet a person by name.
+script:
+  agent:
+    - files:
+        greet.ts: "export const greet = (name: string): string => `Hello, ${name}!`;\n"
+      output: "implemented the greeting module"
+  ir:
+    - |
+      ```yaml
+      module: greeting
+      deps: []
+      types: []
+      functions:
+        - name: greet
+          signature: "greet(name: string): string"
+          behavior: "Returns the string Hello, name!"
+      tests: []
+      ```
+  attribution:
+    - |
+      ```yaml
+      - promptLines: [1, 1]
+        file: greet.ts
+        lines: [1, 1]
+        note: "builds the greeting string"
+      ```
+  ml:
+    - |
+      ```yaml
+      []
+      ```
+run: [gen, typescript]
+expect:
+  exitCode: 0
+  stdout:
+    - "gen     greeting (typescript)"
+    - "  mode: full (no prior successful gen for this target)"
+    - "  attempt 1/3: running coding agent"
+    - "  attempt 1/3: tests passed"
+    - "  attribution attempt 1/3: 1 mapping(s) valid"
+    - "  machine-layer attempt 1/2: 0 entr(ies) valid"
+    - "  attributed 1 file(s) to greeting"
+    - "  attribution: 1 mapping(s) -> .napl/attribution/greeting.yaml"
+    - "  machine layer: 0 entr(ies) -> .napl/mapl/greeting.mapl"
+    - "  journal: gen #1 recorded (1 file patch(es)) -> .napl/journal.jsonl"
+    - "generated 1, skipped 0"
+  agentInputs:
+    - index: 0
+      contains:
+        - "You are a coding agent implementing the module \"greeting\""
+        - "Greet a person by name."
+  files:
+    .napl/src/typescript/greet.ts:
+      mode: "0444"
+      content: "export const greet = (name: string): string => `Hello, ${name}!`;\n"
+    .napl/gen.lock:
+      absent: true
+    .napl/prompts-at-gen/greeting.md:
+      content: |
+        Greet a person by name.
+    .napl/attribution/greeting.yaml:
+      content: |
+        module: greeting
+        target: typescript
+        entries:
+          - promptLines:
+              - 1
+              - 1
+            file: greet.ts
+            lines:
+              - 1
+              - 1
+            note: builds the greeting string
+    .napl/ir/greeting.yaml:
+      content: |
+        module: greeting
+        deps: []
+        types: []
+        functions:
+          - name: greet
+            signature: "greet(name: string): string"
+            behavior: Returns the string Hello, name!
+        tests: []
+    .napl/mapl/greeting.mapl:
+      content: |
+        module: greeting
+        target: typescript
+        entries: []
+    .napl/journal.jsonl:
+      content: |
+        {"gen":1,"timestamp":"2026-07-23T00:00:00.000Z","module":"greeting","target":"typescript","promptHash":"a89eecb1f31e12e98001c16dfa96c74cc9edfc11e24a4abcd54cfb2258c5d3e3","promptDiff":"","mode":"full","files":[{"path":".napl/src/typescript/greet.ts","patch":"@@ -0,0 +1,1 @@\n+export const greet = (name: string): string => `Hello, ${name}!`;","hashBefore":null,"hashAfter":"ba0fff9dc431972a2488987562dbf68bc99b9c991a3cdc7506f64eff6a703545"}]}
+    .napl/map.json:
+      content: |
+        {
+          "version": 2,
+          "prompts": {
+            "examples/greeting.napl": {
+              "module": "greeting",
+              "promptHash": "a89eecb1f31e12e98001c16dfa96c74cc9edfc11e24a4abcd54cfb2258c5d3e3",
+              "declaredTargets": [
+                "typescript"
+              ],
+              "targets": {
+                "typescript": {
+                  "promptHashAtGen": "a89eecb1f31e12e98001c16dfa96c74cc9edfc11e24a4abcd54cfb2258c5d3e3",
+                  "files": [
+                    ".napl/src/typescript/greet.ts"
+                  ]
+                }
+              }
+            }
+          },
+          "files": {
+            ".napl/src/typescript/greet.ts": {
+              "target": "typescript",
+              "hash": "ba0fff9dc431972a2488987562dbf68bc99b9c991a3cdc7506f64eff6a703545",
+              "prompts": [
+                "examples/greeting.napl"
+              ]
+            }
+          }
+        }

@@ -1,0 +1,26 @@
+name: blame-gen
+description: >
+  napl blame --gen N prints a single gen's summary: module, target, mode, the
+  prompt edit hunk, and the files it touched.
+setup:
+  .napl/src/typescript/greet.ts: |
+    export const greet = (name) => `Hi, ${name}`;
+    export const shout = (name) => `HI, ${name}`;
+    export const wave = () => 'bye';
+  .napl/journal.jsonl: |
+    {"gen":1,"timestamp":"2026-07-20T00:00:00.000Z","module":"greeting","target":"typescript","promptHash":"h1","promptDiff":"","mode":"full","files":[{"path":".napl/src/typescript/greet.ts","patch":"@@ -0,0 +1,1 @@\n+export const greet = (name) => `Hi, ${name}`;","hashBefore":null,"hashAfter":"h1a"}]}
+    {"gen":2,"timestamp":"2026-07-21T00:00:00.000Z","module":"greeting","target":"typescript","promptHash":"h2","promptDiff":"@@ -1,1 +1,2 @@\n Greet.\n+Also shout.","mode":"incremental","files":[{"path":".napl/src/typescript/greet.ts","patch":"@@ -1,1 +1,2 @@\n export const greet = (name) => `Hi, ${name}`;\n+export const shout = (name) => `HI, ${name}`;","hashBefore":"h1a","hashAfter":"h2a"}]}
+    {"gen":3,"timestamp":"2026-07-22T00:00:00.000Z","module":"greeting","target":"typescript","promptHash":"h3","promptDiff":"@@ -2,1 +2,2 @@\n Also shout.\n+Also wave.","mode":"incremental","files":[{"path":".napl/src/typescript/greet.ts","patch":"@@ -2,1 +2,2 @@\n export const shout = (name) => `HI, ${name}`;\n+export const wave = () => 'bye';","hashBefore":"h2a","hashAfter":"h3a"}]}
+run: [blame, --gen, "2"]
+expect:
+  exitCode: 0
+  stdout:
+    - "gen #2  2026-07-21T00:00:00.000Z  greeting (typescript)  mode: incremental"
+    - ""
+    - "prompt edit:"
+    - "  @@ -1,1 +1,2 @@"
+    - "   Greet."
+    - "  +Also shout."
+    - ""
+    - "files touched:"
+    - "  .napl/src/typescript/greet.ts"
