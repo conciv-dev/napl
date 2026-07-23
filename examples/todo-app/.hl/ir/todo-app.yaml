@@ -1,0 +1,81 @@
+module: todo-app
+deps: []
+types:
+  - name: Todo
+    description: A todo item with unique id, text content, and done (completed)
+      boolean flag.
+  - name: Filter
+    description: Enumeration of visibility filter modes for the todo list; one of
+      "all", "active", "completed".
+functions:
+  - name: App
+    signature: () -> UI component (root application view)
+    behavior: >
+      Renders the full todo application: title, text input for adding todos,
+      filter control, list of todos filtered by current filter selection, and a
+      remaining-items counter. Owns the todo collection and current filter as
+      state. Adding a todo appends a new item (auto-generated unique id, given
+      text, done=false) to the collection. Toggling a todo by id flips its done
+      flag. Deleting a todo by id removes it from the collection. The visible
+      list is derived by applying the current filter (all/active/completed) to
+      the full collection; the remaining count is always the count of not-done
+      todos across the full collection, independent of the active filter.
+  - name: TodoInput
+    signature: "(onAdd: (text: string) -> void) -> UI component"
+    behavior: >
+      Renders a text input bound to local draft text. On Enter key press, trims
+      the draft; if the trimmed text is non-empty, invokes onAdd with the
+      trimmed text and clears the input; if empty/whitespace-only, does nothing
+      (input retains its content, no add occurs).
+  - name: TodoList
+    signature: "(todos: Todo[], onToggle: (id: string) -> void, onDelete: (id:
+      string) -> void) -> UI component"
+    behavior: >
+      Renders the given todos as a list, one item per todo, in the given order.
+      Delegates toggle and delete actions per-item to the provided callbacks
+      with the todo's id.
+  - name: TodoItem
+    signature: "(todo: Todo, onToggle: (id: string) -> void, onDelete: (id: string)
+      -> void) -> UI component"
+    behavior: >
+      Renders a single todo row: a checkbox reflecting todo.done (invokes
+      onToggle(todo.id) when changed), the todo text (styled with a
+      strikethrough/"done" indicator when todo.done is true, accessible label
+      "Toggle {text}" on checkbox), and a delete control (accessible label
+      "Delete {text}") that invokes onDelete(todo.id) when activated.
+  - name: FilterControl
+    signature: "(filter: Filter, onFilterChange: (filter: Filter) -> void) -> UI
+      component"
+    behavior: >
+      Renders three selectable controls labeled "All", "Active", "Completed"
+      corresponding to the three Filter values. The control matching the current
+      filter value is visually marked as active/selected. Activating a control
+      invokes onFilterChange with its corresponding filter value.
+tests:
+  - name: adds a todo on Enter, trims whitespace, and clears the input
+    given: user types "  Buy milk  " into the todo input and presses Enter
+    expect: a todo with text "Buy milk" (trimmed) appears in the list, and the input
+      is cleared to empty
+  - name: ignores empty or whitespace-only input
+    given: user types "   " (whitespace only) into the todo input and presses Enter
+    expect: no todo item is added to the list
+  - name: toggles a todo's done state and shows strikethrough
+    given: a todo "Walk the dog" exists and is not done
+    expect: clicking its toggle checkbox marks it done (text gets "done" styling,
+      checkbox checked); clicking again reverts it to not done (styling and
+      checkbox state clear)
+  - name: deletes a todo
+    given: a todo "Read a book" exists in the list
+    expect: clicking its delete control removes the todo so its text no longer appears
+  - name: filters todos between All, Active, and Completed and indicates the active
+      filter
+    given: two todos exist, "Active task" (not done) and "Done task" (marked done);
+      All filter is selected by default
+    expect: All is marked as the active filter initially; selecting Active shows
+      only "Active task" and marks Active as the active filter; selecting
+      Completed shows only "Done task" and marks Completed as the active filter;
+      selecting All shows both todos again
+  - name: shows a remaining-items counter for active todos
+    given: the list starts empty, then two todos are added, then one is marked done
+    expect: counter reads "0 items left" when empty, "2 items left" after adding two
+      not-done todos, and "1 items left" after one of them is marked done

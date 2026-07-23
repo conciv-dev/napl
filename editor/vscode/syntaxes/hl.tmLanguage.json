@@ -1,0 +1,35 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Human Language",
+  "scopeName": "source.hl",
+  "patterns": [
+    { "include": "#frontmatter" },
+    { "include": "#module-ref" },
+    { "include": "#body" }
+  ],
+  "repository": {
+    "frontmatter": {
+      "begin": "\\A(-{3})[ \\t]*$",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.frontmatter.begin.hl" }
+      },
+      "end": "^(-{3})[ \\t]*$",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.frontmatter.end.hl" }
+      },
+      "contentName": "meta.embedded.block.yaml",
+      "patterns": [
+        { "include": "source.yaml" }
+      ]
+    },
+    "module-ref": {
+      "match": "@[A-Za-z0-9_/-]+",
+      "name": "entity.name.namespace.hl"
+    },
+    "body": {
+      "patterns": [
+        { "include": "text.html.markdown" }
+      ]
+    }
+  }
+}

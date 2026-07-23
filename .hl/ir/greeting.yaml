@@ -1,0 +1,23 @@
+module: greeting
+deps: []
+types: []
+functions:
+  - name: greet
+    signature: "greet(name: string) -> string"
+    behavior: >
+      Trims leading and trailing whitespace from name. If trimmed name is empty,
+      throws an error. Otherwise returns greeting string in form "Hello,
+      <trimmed name>!".
+tests:
+  - name: returns a friendly greeting
+    given: name = "Alice"
+    expect: returns "Hello, Alice!"
+  - name: trims leading and trailing whitespace
+    given: name = "  Bob  "
+    expect: returns "Hello, Bob!"
+  - name: rejects an empty name
+    given: name = ""
+    expect: throws an error
+  - name: rejects a whitespace-only name
+    given: name = "   "
+    expect: throws an error

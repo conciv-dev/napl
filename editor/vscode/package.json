@@ -1,0 +1,71 @@
+{
+  "name": "human-language",
+  "displayName": "Human Language",
+  "description": "Syntax highlighting and language server for human-language (.hl) prompt files.",
+  "version": "0.1.0",
+  "publisher": "human-language",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onLanguage:hl"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "hl",
+        "aliases": [
+          "Human Language",
+          "hl"
+        ],
+        "extensions": [
+          ".hl"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "hl",
+        "scopeName": "source.hl",
+        "path": "./syntaxes/hl.tmLanguage.json",
+        "embeddedLanguages": {
+          "meta.embedded.block.yaml": "yaml"
+        }
+      }
+    ],
+    "configuration": {
+      "title": "Human Language",
+      "properties": {
+        "humanLanguage.genOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically run a diff-scoped incremental gen when a .hl prompt file is saved."
+        },
+        "humanLanguage.cliPath": {
+          "type": "string",
+          "default": "hl",
+          "description": "Path to the hl CLI used for gen-on-save. Either a command on PATH (default \"hl\") or an absolute path to the CLI's dist entry (e.g. .../dist/cli.js)."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "package": "npx @vscode/vsce package --no-dependencies --allow-missing-repository"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "@types/vscode": "^1.75.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^7.0.2"
+  }
+}

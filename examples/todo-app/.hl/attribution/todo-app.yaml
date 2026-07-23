@@ -1,0 +1,195 @@
+module: todo-app
+target: react
+entries:
+  - promptLines:
+      - 5
+      - 7
+    file: src/TodoInput.tsx
+    lines:
+      - 11
+      - 21
+    note: Enter key handler adds trimmed todo, ignores empty, clears input
+  - promptLines:
+      - 5
+      - 7
+    file: src/App.tsx
+    lines:
+      - 32
+      - 34
+    note: handleAdd appends new todo
+  - promptLines:
+      - 5
+      - 7
+    file: src/App.test.tsx
+    lines:
+      - 16
+      - 24
+    note: "test: add on Enter, trim whitespace, clear input"
+  - promptLines:
+      - 5
+      - 7
+    file: src/App.test.tsx
+    lines:
+      - 26
+      - 33
+    note: "test: ignores empty/whitespace-only input"
+  - promptLines:
+      - 8
+      - 9
+    file: src/TodoItem.tsx
+    lines:
+      - 12
+      - 18
+    note: checkbox toggles done, strikethrough class applied to text
+  - promptLines:
+      - 8
+      - 9
+    file: src/App.tsx
+    lines:
+      - 36
+      - 40
+    note: handleToggle flips done state
+  - promptLines:
+      - 8
+      - 9
+    file: src/index.css
+    lines:
+      - 76
+      - 79
+    note: line-through style for done todo text
+  - promptLines:
+      - 8
+      - 9
+    file: src/App.test.tsx
+    lines:
+      - 35
+      - 53
+    note: "test: toggles done state and strikethrough class"
+  - promptLines:
+      - 10
+      - 10
+    file: src/TodoItem.tsx
+    lines:
+      - 19
+      - 21
+    note: delete button removes todo
+  - promptLines:
+      - 10
+      - 10
+    file: src/App.tsx
+    lines:
+      - 42
+      - 44
+    note: handleDelete filters todo out of list
+  - promptLines:
+      - 10
+      - 10
+    file: src/App.test.tsx
+    lines:
+      - 55
+      - 65
+    note: "test: deletes a todo"
+  - promptLines:
+      - 11
+      - 12
+    file: src/FilterControl.tsx
+    lines:
+      - 8
+      - 29
+    note: filter buttons for All/Active/Completed with active class indicator
+  - promptLines:
+      - 11
+      - 12
+    file: src/App.tsx
+    lines:
+      - 15
+      - 23
+    note: filterTodos applies selected filter
+  - promptLines:
+      - 11
+      - 12
+    file: src/App.tsx
+    lines:
+      - 25
+      - 30
+    note: filter state and derived visibleTodos
+  - promptLines:
+      - 11
+      - 12
+    file: src/index.css
+    lines:
+      - 43
+      - 56
+    note: styling for filter buttons and active indicator
+  - promptLines:
+      - 11
+      - 12
+    file: src/App.test.tsx
+    lines:
+      - 67
+      - 95
+    note: "test: filters todos and indicates active filter"
+  - promptLines:
+      - 11
+      - 12
+    file: src/types.ts
+    lines:
+      - 7
+      - 7
+    note: Filter type definition
+  - promptLines:
+      - 13
+      - 14
+    file: src/App.tsx
+    lines:
+      - 30
+      - 30
+    note: remainingCount computed from non-done todos
+  - promptLines:
+      - 13
+      - 14
+    file: src/App.tsx
+    lines:
+      - 52
+      - 52
+    note: remaining count rendered as 'N items left'
+  - promptLines:
+      - 13
+      - 14
+    file: src/index.css
+    lines:
+      - 81
+      - 86
+    note: styling for remaining-count text
+  - promptLines:
+      - 13
+      - 14
+    file: src/App.test.tsx
+    lines:
+      - 97
+      - 109
+    note: "test: remaining-items counter updates"
+  - promptLines:
+      - 15
+      - 15
+    file: src/index.css
+    lines:
+      - 1
+      - 87
+    note: overall clean minimal styling
+  - promptLines:
+      - 1
+      - 3
+    file: src/App.tsx
+    lines:
+      - 46
+      - 54
+    note: single-page app root layout with title
+  - promptLines:
+      - 1
+      - 3
+    file: index.html
+    lines:
+      - 1
+      - 12
+    note: single-page app HTML shell

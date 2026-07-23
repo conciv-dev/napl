@@ -1,0 +1,20 @@
+---
+module: todo-app
+deps: []
+targets: [react]
+---
+# Todo App
+
+A single-page todo list application.
+
+- Add a todo by typing into a text input and pressing Enter. Adding trims
+  surrounding whitespace and ignores empty input. The input clears after a todo
+  is added.
+- Each todo has a checkbox that toggles its done state. A done todo shows its
+  text with a line-through strikethrough style.
+- Each todo has a delete button that removes it from the list.
+- A filter control switches the visible todos between All, Active (not done),
+  and Completed (done). The active filter is visually indicated.
+- A remaining-items counter shows how many todos are still active (not done),
+  for example "2 items left".
+- The styling is clean and minimal.

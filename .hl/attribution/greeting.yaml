@@ -1,0 +1,59 @@
+module: greeting
+target: typescript
+entries:
+  - promptLines:
+      - 3
+      - 4
+    file: src/greeting.ts
+    lines:
+      - 1
+      - 1
+    note: greet function signature taking name, returning string
+  - promptLines:
+      - 6
+      - 6
+    file: src/greeting.ts
+    lines:
+      - 6
+      - 6
+    note: builds Hello, <name>! message
+  - promptLines:
+      - 6
+      - 6
+    file: src/greeting.test.ts
+    lines:
+      - 5
+      - 7
+    note: tests basic greeting form
+  - promptLines:
+      - 7
+      - 7
+    file: src/greeting.ts
+    lines:
+      - 2
+      - 2
+    note: trims whitespace from name
+  - promptLines:
+      - 7
+      - 7
+    file: src/greeting.test.ts
+    lines:
+      - 9
+      - 11
+    note: tests trimming of leading/trailing whitespace
+  - promptLines:
+      - 8
+      - 8
+    file: src/greeting.ts
+    lines:
+      - 3
+      - 5
+    note: throws error on empty/whitespace-only name
+  - promptLines:
+      - 8
+      - 8
+    file: src/greeting.test.ts
+    lines:
+      - 13
+      - 19
+    note: tests rejection of empty and whitespace-only names

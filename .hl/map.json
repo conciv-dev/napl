@@ -1,0 +1,61 @@
+{
+  "version": 2,
+  "prompts": {
+    "examples/greeting.hl": {
+      "module": "greeting",
+      "promptHash": "443f0123d4ff15853a5db10a68caabbe3def50cf6a1a6f3a45a765d7b21dae75",
+      "declaredTargets": [
+        "typescript"
+      ],
+      "targets": {
+        "typescript": {
+          "promptHashAtGen": "443f0123d4ff15853a5db10a68caabbe3def50cf6a1a6f3a45a765d7b21dae75",
+          "files": [
+            ".hl/src/typescript/package.json",
+            ".hl/src/typescript/src/greeting.test.ts",
+            ".hl/src/typescript/src/greeting.ts",
+            ".hl/src/typescript/tsconfig.json",
+            ".hl/src/typescript/vitest.config.ts"
+          ]
+        }
+      }
+    }
+  },
+  "files": {
+    ".hl/src/typescript/package.json": {
+      "target": "typescript",
+      "hash": "039802cb0ea43e50e1ed9075689a8af985bba3285a107d63864775aae4cb469d",
+      "prompts": [
+        "examples/greeting.hl"
+      ]
+    },
+    ".hl/src/typescript/src/greeting.test.ts": {
+      "target": "typescript",
+      "hash": "5f8acc89d6245e13e8a24e483204fe9e41b6d8e120c9dc3bfb798c8e18b3c8d4",
+      "prompts": [
+        "examples/greeting.hl"
+      ]
+    },
+    ".hl/src/typescript/src/greeting.ts": {
+      "target": "typescript",
+      "hash": "601018e6eb4c66a811f03d3d1b2433cea9814e182e08896720bba9b1bdd3c15f",
+      "prompts": [
+        "examples/greeting.hl"
+      ]
+    },
+    ".hl/src/typescript/tsconfig.json": {
+      "target": "typescript",
+      "hash": "8004cc6311ac28b448638414bcd61b1f773b36f22dbe4c2c91f730b0aca0c655",
+      "prompts": [
+        "examples/greeting.hl"
+      ]
+    },
+    ".hl/src/typescript/vitest.config.ts": {
+      "target": "typescript",
+      "hash": "aa7858f05b2261348f1502fa076550b0930672e0df3f054a22e8a8d9b68fb32e",
+      "prompts": [
+        "examples/greeting.hl"
+      ]
+    }
+  }
+}

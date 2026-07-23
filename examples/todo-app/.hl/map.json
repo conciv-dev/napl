@@ -1,0 +1,141 @@
+{
+  "version": 2,
+  "prompts": {
+    "todo-app.hl": {
+      "module": "todo-app",
+      "promptHash": "83c8e7634b6bcedf534b8214206a1b126abfc9604e662038bc5abf8a08671538",
+      "declaredTargets": [
+        "react"
+      ],
+      "targets": {
+        "react": {
+          "promptHashAtGen": "83c8e7634b6bcedf534b8214206a1b126abfc9604e662038bc5abf8a08671538",
+          "files": [
+            ".hl/src/react/index.html",
+            ".hl/src/react/package.json",
+            ".hl/src/react/src/App.test.tsx",
+            ".hl/src/react/src/App.tsx",
+            ".hl/src/react/src/FilterControl.tsx",
+            ".hl/src/react/src/TodoInput.tsx",
+            ".hl/src/react/src/TodoItem.tsx",
+            ".hl/src/react/src/TodoList.tsx",
+            ".hl/src/react/src/index.css",
+            ".hl/src/react/src/main.tsx",
+            ".hl/src/react/src/setupTests.ts",
+            ".hl/src/react/src/types.ts",
+            ".hl/src/react/tsconfig.json",
+            ".hl/src/react/tsconfig.node.json",
+            ".hl/src/react/vite.config.ts"
+          ]
+        }
+      }
+    }
+  },
+  "files": {
+    ".hl/src/react/index.html": {
+      "target": "react",
+      "hash": "92464515e35fa4b91ad61239a90a463bb3b4fbd14e8ec63df61985da59adfe55",
+      "prompts": [
+        "todo-app.hl"
+      ]
+    },
+    ".hl/src/react/package.json": {
+      "target": "react",
+      "hash": "d390758302798b8cf84df6bf2aab1f1b070626b4a9619a097cc19e6151831755",
+      "prompts": [
+        "todo-app.hl"
+      ]
+    },
+    ".hl/src/react/src/App.test.tsx": {
+      "target": "react",
+      "hash": "9a060cf02c9cf4c38c828a5bff1e108efa0a4ff682960669f1460b116a3d71e2",
+      "prompts": [
+        "todo-app.hl"
+      ]
+    },
+    ".hl/src/react/src/App.tsx": {
+      "target": "react",
+      "hash": "eb5f07bc2909806b958e65d6357f9339a711676a3c077598ad4a4b81f40ec052",
+      "prompts": [
+        "todo-app.hl"
+      ]
+    },
+    ".hl/src/react/src/FilterControl.tsx": {
+      "target": "react",
+      "hash": "1930c29a704492df0e380fae661314fc315ac92d83204b65944a890466333ebb",
+      "prompts": [
+        "todo-app.hl"
+      ]
+    },
+    ".hl/src/react/src/TodoInput.tsx": {
+      "target": "react",
+      "hash": "ec026102f520a9b72d4a531ebb0751dd11954a0979ba5a139f4a8b745c11d157",
+      "prompts": [
+        "todo-app.hl"
+      ]
+    },
+    ".hl/src/react/src/TodoItem.tsx": {
+      "target": "react",
+      "hash": "75c73cba30e4054d383944d44d095930d672105560a63ef1f4b8a3c1002ef3ff",
+      "prompts": [
+        "todo-app.hl"
+      ]
+    },
+    ".hl/src/react/src/TodoList.tsx": {
+      "target": "react",
+      "hash": "6a51a9ecdacda8b75d6045934097757fe0b9e7fd68217328f60fe53db355352c",
+      "prompts": [
+        "todo-app.hl"
+      ]
+    },
+    ".hl/src/react/src/index.css": {
+      "target": "react",
+      "hash": "89e1386c9a9bdb777d4192793fa80b22d496725af4d508959807783cb5472030",
+      "prompts": [
+        "todo-app.hl"
+      ]
+    },
+    ".hl/src/react/src/main.tsx": {
+      "target": "react",
+      "hash": "1c4f062c1b1cc8cf37e6184d06bed81cab7949574fd514f60305d786c96651e9",
+      "prompts": [
+        "todo-app.hl"
+      ]
+    },
+    ".hl/src/react/src/setupTests.ts": {
+      "target": "react",
+      "hash": "90ec9100c29e008c3d9194acd818e2cfa6dc6e177154bc8e10c5959aa35619ed",
+      "prompts": [
+        "todo-app.hl"
+      ]
+    },
+    ".hl/src/react/src/types.ts": {
+      "target": "react",
+      "hash": "8dd337278d621f07eb3c684e87c119f787d5768f36728a7b3a701475637df41a",
+      "prompts": [
+        "todo-app.hl"
+      ]
+    },
+    ".hl/src/react/tsconfig.json": {
+      "target": "react",
+      "hash": "2fe8419f74d92a339b00fdaca7be187df9c99b8e69fa3e0bcf2a9ab7d94695d6",
+      "prompts": [
+        "todo-app.hl"
+      ]
+    },
+    ".hl/src/react/tsconfig.node.json": {
+      "target": "react",
+      "hash": "9e2abb169ea87b7190613a1d4da57ca608463a453bd4231fa3aeee5e308370dd",
+      "prompts": [
+        "todo-app.hl"
+      ]
+    },
+    ".hl/src/react/vite.config.ts": {
+      "target": "react",
+      "hash": "b55ad7cc41a5c2582db46d78772f6103601720b6e00739a5177e35ec4adba7ab",
+      "prompts": [
+        "todo-app.hl"
+      ]
+    }
+  }
+}
