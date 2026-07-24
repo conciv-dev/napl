@@ -1,0 +1,16 @@
+module: schemas_ordered_map
+target: rust
+entries:
+  - promptLines:
+      - 13
+      - 18
+    kind: ambiguity
+    message: Prompt says leave workspace root manifest alone, but a new member crate normally must be registered in the root Cargo.toml to be picked up by `cargo test` from the workspace root.
+    reasoning: The prompt instructs not to touch anything outside schemas_ordered_map/ and to leave the root manifest owned by the toolchain untouched, yet also requires `cargo test` to pass from the workspace root. If the root manifest uses explicit `members` (rather than a wildcard/glob that already covers new subdirectories), the new crate would not be included in the workspace build without editing that file. The diff provided only shows lib.rs, not Cargo.toml or any root manifest change, so it's unclear how this was reconciled — likely the workspace already glob-matches subdirectories, but this was assumed rather than confirmed against the actual root manifest content.
+    suggestion: Clarify whether the workspace root manifest already auto-discovers new member crates (e.g. via a `members = ["*"]` glob) or whether adding the new crate path to `members` is permitted as the one necessary exception to 'touch nothing outside schemas_ordered_map/'.
+  - promptLines:
+      - 16
+      - 17
+    kind: note
+    message: Only src/lib.rs was shown in the change list; schemas_ordered_map/Cargo.toml's contents (dependencies, edition, package name) were not visible to confirm correctness.
+    reasoning: The prompt requires a new Cargo.toml with package name schemas_ordered_map and serde/serde_json dependencies. The provided change listing only includes lib.rs, so the crate's manifest content (versions, feature flags like serde's 'derive' — explicitly noted by the agent as not needed) could not be independently verified from the given diff, only asserted by the agent's final message.

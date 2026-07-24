@@ -28,6 +28,13 @@ This module maps between the absolute line numbers of a `.napl` prompt document
 and the 1-based line numbers of its prose **body** — the text that follows the
 YAML frontmatter. It is pure: no I/O, no dependencies.
 
+## Where this code lives
+
+The working directory is a Cargo workspace whose root manifest is owned by the
+toolchain — leave it alone. Create this module as its own member crate in a
+subdirectory named `body_lines/`: `body_lines/Cargo.toml` (package name
+`body_lines`) and `body_lines/src/lib.rs`. Touch nothing outside `body_lines/`.
+
 ## Splitting a document into lines
 
 Everywhere in this module a document is split into lines on the newline

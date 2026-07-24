@@ -1,0 +1,24 @@
+module: scanner
+target: rust
+entries:
+  - promptLines:
+      - 59
+      - 101
+    kind: assumption
+    message: Non-key, non-list-item lines inside an open block list don't reset it
+    reasoning: "The prompt says a key line clears block-list state and a matching `- item` line is consumed, but never says what happens to the block-list state when a frontmatter line is neither (e.g. a blank line, or a malformed dash with no following space). The agent's scan_frontmatter only clears block_state on a key-line match; any other non-matching line silently leaves the previously opened block-list state active, so a later valid `- item` line further down would still be attributed to that same deps/extends source. This was not verified against a worked example in the prompt.\n"
+    suggestion: "State explicitly whether a non-key, non-list-item line (blank or malformed) inside an open block list closes the list or is simply skipped/ignored.\n"
+  - promptLines:
+      - 83
+      - 85
+    kind: assumption
+    message: Inline list `]` search assumes the closing bracket follows the opening one
+    reasoning: "The prompt only specifies the \"no closing `]`\" fallback (use the string's end), but doesn't address the case where a `]` character exists before the first `[` (e.g. stray bracket in earlier text on the same line). The agent's parse_inline_list uses rfind(']') but only accepts it as the close if its byte index is greater than the open bracket's, otherwise falling back to the end of the string — an assumption not stated in the prompt.\n"
+    suggestion: 'Clarify: "the last `]` after the first `[`" (rather than just "the last `]`") to remove doubt about a `]` occurring earlier in the line.
+'
+  - promptLines:
+      - 62
+      - 67
+    kind: note
+    message: Key regex is ASCII-only; matched against byte indexing safely since key chars are single-byte
+    reasoning: The key-matching implementation walks the line byte-by-byte and slices `line[key.len()+1..]` for the remainder after the colon. This is safe only because the key charset (A–Z, a–z, 0–9, `_`, `-`) and the colon are all single-byte ASCII, so byte length equals UTF-16/char length for that prefix — consistent with the prompt's charset restriction, just noting the implementation detail relies on it holding.

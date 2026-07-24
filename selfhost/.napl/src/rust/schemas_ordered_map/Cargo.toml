@@ -1,0 +1,10 @@
+[package]
+name = "schemas_ordered_map"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1" }
+
+[dev-dependencies]
+serde_json = "1"

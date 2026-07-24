@@ -1,0 +1,57 @@
+module: guard
+deps: []
+types:
+  - name: SettingsMergeAction
+    description: Enum with variants Create (no settings file existed; one should be created), Update (file existed and gained the deny rule), Unchanged (file already had the deny rule), and Manual (file could not be safely merged, e.g. invalid JSON or unexpected shape). Supports equality and copy.
+  - name: SettingsMergeResult
+    description: "Struct with fields: action (SettingsMergeAction), content (optional string — new file content to write, present for Create/Update, absent for Unchanged/Manual), added (list of deny-rule strings that were newly added, empty unless action is Create or Update). Supports equality."
+functions:
+  - name: claude_settings_snippet
+    signature: () -> String
+    behavior: "Returns the content for a fresh .claude/settings.json install: a JSON object { permissions: { deny: NAPL_DENY_RULES } }, pretty-printed with two-space indentation, followed by a trailing newline. Pure, no I/O, deterministic."
+  - name: merge_claude_settings
+    signature: "(existing: Option<&str>) -> SettingsMergeResult"
+    behavior: "Merges NAPL_DENY_RULES into an existing (or absent) Claude settings JSON document without clobbering unrelated data. If existing is None: returns Create with content = claude_settings_snippet() and added = full NAPL_DENY_RULES list. If existing is Some but fails to parse as JSON, or parses to a non-object root: returns Manual with content None and added empty. Otherwise reads the root's 'permissions' key — absent treated as empty object, object used as-is, any other type yields Manual. Reads that object's 'deny' key — absent treated as empty array, array used as-is, any other type yields Manual. Appends each rule from NAPL_DENY_RULES not already present in the deny array, tracking which were added. If none were added, returns Unchanged with content None and added empty. Otherwise writes the updated deny array back into permissions, permissions back into root, pretty-prints the whole root with two-space indentation plus trailing newline, and returns Update with that content and the added list. Preserves all unrelated top-level keys and unrelated permission entries (e.g. an existing 'allow' list) unchanged in the output. Pure function, no I/O."
+tests:
+  - name: guard_doc_is_pinned
+    given: GUARD_DOC constant
+    expect: equals the exact pinned doc string ending in a trailing newline
+  - name: guard_file_names_are_pinned
+    given: GUARD_FILE_NAMES constant
+    expect: equals ["AGENTS.md", "CLAUDE.md"] in that order
+  - name: pre_commit_hook_is_pinned
+    given: PRE_COMMIT_HOOK constant
+    expect: equals the exact pinned sh script with tab-indented lines and trailing newline
+  - name: pre_commit_hook_line_is_pinned
+    given: PRE_COMMIT_HOOK_LINE constant
+    expect: equals "napl status"
+  - name: napl_deny_rules_are_pinned
+    given: NAPL_DENY_RULES constant
+    expect: equals a single-element list ["Edit(/.napl/src/**)"]
+  - name: snippet_matches_pinned_string
+    given: call to claude_settings_snippet()
+    expect: returns the exact pinned pretty-printed JSON snippet with trailing newline
+  - name: merge_with_no_existing_content_creates
+    given: merge_claude_settings(None)
+    expect: action is Create, content equals the settings snippet, added equals ["Edit(/.napl/src/**)"]
+  - name: merge_with_snippet_already_present_is_unchanged
+    given: merge_claude_settings(Some(<the pinned snippet>))
+    expect: action is Unchanged, content is None, added is empty
+  - name: merge_preserves_unrelated_keys_and_allow_list
+    given: "existing content '{ \"other\": true, \"permissions\": { \"allow\": [\"Read\"] } }'"
+    expect: "action is Update; content contains \"other\": true, contains \"allow\", contains Edit(/.napl/src/**), ends with '}' followed by a newline; added equals [\"Edit(/.napl/src/**)\"]"
+  - name: merge_invalid_json_is_manual
+    given: existing content "not json"
+    expect: action is Manual, content is None, added is empty
+  - name: merge_non_object_root_is_manual
+    given: existing content "[1,2,3]"
+    expect: action is Manual
+  - name: merge_non_object_permissions_is_manual
+    given: "existing content '{\"permissions\": 5}'"
+    expect: action is Manual
+  - name: merge_non_array_deny_is_manual
+    given: "existing content '{\"permissions\": {\"deny\": 5}}'"
+    expect: action is Manual
+  - name: merge_missing_permissions_treats_as_empty_object
+    given: "existing content '{\"foo\": \"bar\"}'"
+    expect: 'action is Update; content contains Edit(/.napl/src/**) and contains "foo": "bar"'

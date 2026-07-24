@@ -1,0 +1,235 @@
+module: targets
+target: rust
+entries:
+  - promptLines:
+      - 1
+      - 8
+    file: targets/src/lib.rs
+    lines:
+      - 1
+      - 1
+    note: module header/generated marker
+  - promptLines:
+      - 19
+      - 21
+    file: targets/src/lib.rs
+    lines:
+      - 3
+      - 8
+    note: TestRunCommand struct with command/args fields, derives Eq/Clone
+  - promptLines:
+      - 22
+      - 24
+    file: targets/src/lib.rs
+    lines:
+      - 10
+      - 15
+    note: TargetAdapter name field
+  - promptLines:
+      - 24
+      - 24
+    file: targets/src/lib.rs
+    lines:
+      - 15
+      - 15
+    note: idiom_guidance field
+  - promptLines:
+      - 25
+      - 25
+    file: targets/src/lib.rs
+    lines:
+      - 16
+      - 16
+    note: agent_tools field
+  - promptLines:
+      - 26
+      - 27
+    file: targets/src/lib.rs
+    lines:
+      - 17
+      - 17
+    note: attribution_exclude_dirs field
+  - promptLines:
+      - 28
+      - 28
+    file: targets/src/lib.rs
+    lines:
+      - 18
+      - 18
+    note: attribution_exclude_files field
+  - promptLines:
+      - 29
+      - 31
+    file: targets/src/lib.rs
+    lines:
+      - 19
+      - 19
+    note: attribution_exclude_root_files field
+  - promptLines:
+      - 32
+      - 32
+    file: targets/src/lib.rs
+    lines:
+      - 20
+      - 20
+    note: attribution_exclude_suffixes field
+  - promptLines:
+      - 33
+      - 33
+    file: targets/src/lib.rs
+    lines:
+      - 21
+      - 21
+    note: test_command_label field
+  - promptLines:
+      - 34
+      - 34
+    file: targets/src/lib.rs
+    lines:
+      - 22
+      - 22
+    note: test_run field
+  - promptLines:
+      - 35
+      - 36
+    file: targets/src/lib.rs
+    lines:
+      - 23
+      - 23
+    note: workspace_layout field
+  - promptLines:
+      - 38
+      - 40
+    file: targets/src/lib.rs
+    lines:
+      - 26
+      - 33
+    note: test_command method returns cloned test_run ignoring target_dir
+  - promptLines:
+      - 44
+      - 45
+    file: targets/src/lib.rs
+    lines:
+      - 118
+      - 121
+    note: list_targets returns registry order names
+  - promptLines:
+      - 46
+      - 48
+    file: targets/src/lib.rs
+    lines:
+      - 123
+      - 127
+    note: starter_targets subset
+  - promptLines:
+      - 49
+      - 53
+    file: targets/src/lib.rs
+    lines:
+      - 129
+      - 141
+    note: get_adapter lookup with formatted unknown-target error
+  - promptLines:
+      - 57
+      - 63
+    file: targets/src/lib.rs
+    lines:
+      - 39
+      - 71
+    note: typescript adapter definition
+  - promptLines:
+      - 64
+      - 66
+    file: targets/src/lib.rs
+    lines:
+      - 73
+      - 83
+    note: react adapter derived from typescript, adds vite.config.js exclude
+  - promptLines:
+      - 67
+      - 75
+    file: targets/src/lib.rs
+    lines:
+      - 85
+      - 112
+    note: rust adapter definition including workspace idiom guidance
+  - promptLines:
+      - 114
+      - 116
+    file: targets/src/lib.rs
+    lines:
+      - 114
+      - 116
+    note: registry() builds ordered vec of the three adapters
+  - promptLines:
+      - 79
+      - 87
+    file: targets/src/lib.rs
+    lines:
+      - 145
+      - 155
+    note: workspace_manifest_toml renders deterministic workspace TOML
+  - promptLines:
+      - 83
+      - 87
+    file: targets/src/lib.rs
+    lines:
+      - 281
+      - 304
+    note: tests for workspace manifest members/determinism/empty case
+  - promptLines:
+      - 44
+      - 45
+    file: targets/src/lib.rs
+    lines:
+      - 162
+      - 164
+    note: test asserting registry order
+  - promptLines:
+      - 46
+      - 48
+    file: targets/src/lib.rs
+    lines:
+      - 166
+      - 175
+    note: test asserting starter subset
+  - promptLines:
+      - 49
+      - 53
+    file: targets/src/lib.rs
+    lines:
+      - 184
+      - 189
+    note: test asserting unknown target error message
+  - promptLines:
+      - 57
+      - 63
+    file: targets/src/lib.rs
+    lines:
+      - 192
+      - 219
+    note: test asserting typescript adapter shape
+  - promptLines:
+      - 64
+      - 66
+    file: targets/src/lib.rs
+    lines:
+      - 222
+      - 246
+    note: test asserting react adapter shape
+  - promptLines:
+      - 67
+      - 75
+    file: targets/src/lib.rs
+    lines:
+      - 249
+      - 271
+    note: test asserting rust adapter shape and Cargo WORKSPACE mention
+  - promptLines:
+      - 38
+      - 40
+    file: targets/src/lib.rs
+    lines:
+      - 274
+      - 278
+    note: test that test_command ignores target_dir argument

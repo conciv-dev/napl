@@ -2,23 +2,16 @@ module: body_lines
 target: rust
 entries:
   - promptLines:
-      - 1
-      - 52
+      - 9
+      - 12
     kind: assumption
-    message: Prompt doesn't specify implementation language or crate structure.
-    reasoning: The prompt describes behavior only (pure module, no I/O/dependencies) without naming a language. The agent inferred Rust and scaffolded a standalone crate (Cargo.toml + src/lib.rs) with a public PromptBody struct and two pub fns, matching an existing napl-generated-code convention. This is a reasonable choice given the header comment style but is not explicitly stated in the prompt body.
-    suggestion: State the target language and whether this is a standalone crate/module or part of a larger package.
+    message: Assumed the workspace root Cargo.toml already auto-discovers members (e.g. via a glob), so no edit to the root manifest was needed to register the new crate.
+    reasoning: "The prompt says the root manifest is \"owned by the toolchain — leave it alone\" and to \"touch nothing outside body_lines/\", but a new member crate typically must be listed in the workspace's `[workspace.members]` array to be built as part of the workspace. The agent's reported change set doesn't show any root Cargo.toml edit, implying it assumed the root manifest already picks up new crates automatically (e.g. `members = [\"*\"]`). If that assumption is wrong, the crate may not actually be wired into the workspace build.\n"
+    suggestion: 'Clarify whether the root Cargo.toml already globs in new member crates, or whether this task is expected to also add an entry there (and if so, note that as an exception to "leave it alone").
+'
   - promptLines:
-      - 21
-      - 23
-    kind: assumption
-    message: Field types (usize vs i64/u64) for body_start_line and lines chosen by agent.
-    reasoning: Prompt says body_start_line is a 0-based document line index but doesn't specify its integer type; agent used usize. Reasonable since it's always non-negative, but the prompt leaves numeric typing entirely to the implementer.
-    suggestion: Optionally note expected types/ranges for body_start_line if precision matters downstream.
-  - promptLines:
-      - 39
-      - 44
+      - 9
+      - 12
     kind: note
-    message: body_line_for_doc_line return type (Option<u64>) and overflow-safety handled via checked arithmetic.
-    reasoning: Prompt requires doc_line be a signed 64-bit integer that may be negative or out of range, and implies the function must not panic on extreme values, but never explicitly says 'must not panic' or specifies the return type for the body line number. The agent used checked_sub/checked_add and returned Option<u64>, and added tests for i64::MIN/MAX, correctly inferring the safety requirement from context.
-    suggestion: Explicitly state 'must not panic on any input, including i64::MIN/MAX' and specify the return type (e.g. Option<u64>) if that precision matters.
+    message: Reported change set lists only src/lib.rs, not body_lines/Cargo.toml, even though the final message claims both were created.
+    reasoning: 'The final message states "body_lines crate done: `body_lines/Cargo.toml` + `body_lines/src/lib.rs`", but the numbered change list provided only shows the contents of lib.rs. This is likely just an omission in what was surfaced for review rather than a real gap, but it means the Cargo.toml contents (package name, edition, dependencies) were not independently verifiable from the given change listing.'

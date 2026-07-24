@@ -35,19 +35,21 @@ depth and corpus size.
 
 | Module | LOC | Unit tests | External crates | Self-host status |
 | --- | ---: | ---: | --- | --- |
-| `body_lines` | 111 | 5 | — | **done** (pilot, 5/5) |
-| `extensions` | 141 | 7 | — | **done** (this slice) |
-| `hash` | 44 | 4 | `sha2`, `hex` | **done** (this slice) |
-| `parse_output` | 39 | 3 | — | **done** (this slice) |
-| `text_diff` | 392 | 11 | — | **done** (this slice) |
-| `drift` | 184 | 3 | — | queued |
-| `scanner` | 634 | 12 | — | queued |
-| `targets` | 272 | 6 | — | queued |
-| `guard` | 189 | 5 | `serde` | queued |
-| `schemas::frontmatter` | 180 | 6 | — | queued |
-| `schemas::ir` | 123 | 6 | — | queued |
-| `schemas::line_range` | 159 | 8 | — | queued |
-| `schemas::ordered_map` | 163 | 4 | — | queued |
+| `body_lines` | 111 | 5 | — | **done** (pilot, re-genned as workspace member in slice 2, 5/5) |
+| `extensions` | 141 | 7 | — | **done** (slice 1) |
+| `hash` | 44 | 4 | `sha2`, `hex` | **done** (slice 1) |
+| `parse_output` | 39 | 3 | — | **done** (slice 1) |
+| `text_diff` | 392 | 11 | — | **done** (slice 1) |
+| `drift` | 184 | 3 | — | **done** (slice 2, 3/3) |
+| `scanner` | 634 | 12 | — | **done** (slice 2, 12/12) |
+| `targets` | 272 | 6 | — | **done** (slice 2, 9/9 — corpus grew with the workspace fields) |
+| `guard` | 189 | 5 | `serde` | **done** (slice 2, 5/5) |
+| `schemas::frontmatter` | 180 | 6 | — | **done** (slice 2, 6/6) |
+| `schemas::ir` | 123 | 6 | — | **done** (slice 2, 6/6) |
+| `schemas::line_range` | 159 | 8 | — | **done** (slice 2, 8/8) |
+| `schemas::ordered_map` | 163 | 4 | — | **done** (slice 2, 4/4) |
+
+Wave 1 is fully self-hosted: **13/13 modules**, 83 equivalence cases green.
 
 ### Wave 2 — depends only on wave 1
 
@@ -121,16 +123,24 @@ prompt drives a passing generation.
 
 - *(empty)* — no wave-1 module has failed to converge yet.
 
-## Layout note (multi-module friction — see docs/selfhost.md)
+## Layout note (RESOLVED in slice 2 — Cargo workspace)
 
 The stage0 gen target dir is fixed at `.napl/src/rust/` per target, and generated
-files are locked `0444`. The pilot put `body_lines` **at the crate root**. New
-modules therefore land as **nested package crates** in subdirectories
-(`.napl/src/rust/<module>/`) so no gen ever edits a locked file it does not own.
-Cargo silently ignores a nested package from the root, which is why this composes
-without a workspace manifest — and also why the in-gen `cargo test` gate only
-covers the root crate. The shared equivalence harness is the real cross-module
-gate. Roadmap: make the target dir a Cargo workspace so all modules are uniform
-members and the in-gen gate covers every module.
+files are locked `0444`. The pilot put `body_lines` **at the crate root**, and
+slice 1 landed later modules as **nested package crates** in subdirectories — a
+layout that composed only because Cargo silently ignores a nested package from the
+root, which also meant the in-gen `cargo test` gate covered only the root crate.
+
+Slice 2 replaced this with a real **Cargo workspace**. The rust target adapter now
+carries `workspace_layout = true` and an `attribution_exclude_root_files` list;
+the toolchain writes and owns the workspace root `Cargo.toml` (a virtual
+`[workspace]` manifest listing every member crate), refreshing it on each gen so a
+new module is added as a member before its `cargo test` runs. The root manifest is
+treated like the guard files (AGENTS.md/CLAUDE.md): toolchain-owned, excluded from
+attribution (root-level only — per-module `Cargo.toml` files stay attributed), not
+locked, not drift-checked. Every module — `body_lines` included — is now a uniform
+member crate at `.napl/src/rust/<module>/`, and the in-gen `cargo test` runs at the
+workspace root, covering **all 13 members** in one gate. The shared equivalence
+harness (`selfhost/equivalence/`) remains the behavioral cross-module gate.
 </content>
 </invoke>

@@ -4,8 +4,20 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-body_lines = { path = "../.napl/src/rust" }
+body_lines = { path = "../.napl/src/rust/body_lines" }
 extensions = { path = "../.napl/src/rust/extensions" }
 hash = { path = "../.napl/src/rust/hash" }
 parse_output = { path = "../.napl/src/rust/parse_output" }
 text_diff = { path = "../.napl/src/rust/text_diff" }
+schemas_ordered_map = { path = "../.napl/src/rust/schemas_ordered_map" }
+schemas_line_range = { path = "../.napl/src/rust/schemas_line_range" }
+schemas_ir = { path = "../.napl/src/rust/schemas_ir" }
+schemas_frontmatter = { path = "../.napl/src/rust/schemas_frontmatter" }
+drift = { path = "../.napl/src/rust/drift" }
+guard = { path = "../.napl/src/rust/guard" }
+targets = { path = "../.napl/src/rust/targets" }
+scanner = { path = "../.napl/src/rust/scanner" }
+
+[dev-dependencies]
+serde_json = "1"
+serde_yaml = "0.9"

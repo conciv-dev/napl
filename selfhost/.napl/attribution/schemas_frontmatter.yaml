@@ -1,0 +1,219 @@
+module: schemas_frontmatter
+target: rust
+entries:
+  - promptLines:
+      - 1
+      - 6
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 5
+      - 9
+    note: serde/serde_yaml deps, empty-mapping default helper
+  - promptLines:
+      - 21
+      - 23
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 11
+      - 18
+    note: PromptTest struct with given/expect defaulting to empty mapping
+  - promptLines:
+      - 24
+      - 26
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 20
+      - 29
+    note: Frontmatter struct with defaulted list fields
+  - promptLines:
+      - 27
+      - 28
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 31
+      - 35
+    note: ParsedPrompt struct
+  - promptLines:
+      - 39
+      - 41
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 37
+      - 43
+    note: error enum for missing frontmatter/invalid yaml/empty module/bad test field
+  - promptLines:
+      - 39
+      - 41
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 45
+      - 61
+    note: Display/Error impls for FrontmatterError
+  - promptLines:
+      - 32
+      - 37
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 63
+      - 91
+    note: split_delimiters implements opening/closing --- delimiter scan
+  - promptLines:
+      - 39
+      - 41
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 64
+      - 67
+    note: missing opening delimiter is an error
+  - promptLines:
+      - 39
+      - 41
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 86
+      - 89
+    note: no closing --- line found is an error
+  - promptLines:
+      - 58
+      - 61
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 93
+      - 100
+    note: strip_leading_blank_line removes single leading blank line from body
+  - promptLines:
+      - 48
+      - 49
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 102
+      - 103
+    note: split off yaml/body, missing frontmatter is error
+  - promptLines:
+      - 50
+      - 51
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 105
+      - 115
+    note: empty/null yaml treated as empty mapping
+  - promptLines:
+      - 52
+      - 53
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 117
+      - 118
+    note: deserialize mapping into Frontmatter with defaults
+  - promptLines:
+      - 54
+      - 55
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 120
+      - 122
+    note: require non-empty module string
+  - promptLines:
+      - 56
+      - 57
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 124
+      - 137
+    note: validate given/expect are YAML mappings per test
+  - promptLines:
+      - 58
+      - 61
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 139
+      - 139
+    note: apply body cleanup
+  - promptLines:
+      - 102
+      - 103
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 141
+      - 141
+    note: return ParsedPrompt on success
+  - promptLines:
+      - 65
+      - 81
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 149
+      - 173
+    note: worked example test - full frontmatter with test case
+  - promptLines:
+      - 82
+      - 83
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 176
+      - 185
+    note: minimal frontmatter with defaults test
+  - promptLines:
+      - 21
+      - 23
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 187
+      - 195
+    note: given/expect default to empty mapping test
+  - promptLines:
+      - 84
+      - 85
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 197
+      - 216
+    note: rejects missing frontmatter, missing module, empty module tests
+  - promptLines:
+      - 39
+      - 41
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 218
+      - 223
+    note: rejects missing closing delimiter test
+  - promptLines:
+      - 56
+      - 57
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 225
+      - 243
+    note: rejects non-mapping given/expect tests
+  - promptLines:
+      - 86
+      - 87
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 245
+      - 250
+    note: strips single leading blank line test
+  - promptLines:
+      - 58
+      - 61
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 252
+      - 257
+    note: does not strip body without leading blank line test
+  - promptLines:
+      - 33
+      - 34
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 259
+      - 265
+    note: CRLF line ending handling test
+  - promptLines:
+      - 50
+      - 51
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 267
+      - 272
+    note: empty yaml block still requires module test

@@ -1,0 +1,24 @@
+module: targets
+target: rust
+entries:
+  - promptLines:
+      - 57
+      - 63
+    kind: assumption
+    message: Exact agent_tools list for typescript left to implementer's judgment.
+    reasoning: "Prompt says \"agent tools include `Read` (and the usual npm/npx/node/file tools)\" without enumerating them. Agent assumed Write, Edit, Bash(npm:*), Bash(npx:*), Bash(node:*) as the concrete set. Tests only assert `Read` is present, so this exact list isn't verified against the prompt's intent.\n"
+    suggestion: "agent tools: Read, Write, Edit, Bash(npm:*), Bash(npx:*), Bash(node:*)."
+  - promptLines:
+      - 67
+      - 75
+    kind: assumption
+    message: Exact agent_tools list for rust, and universal exclude files, left implicit.
+    reasoning: "Prompt says agent tools \"include `Read` and `Bash(cargo:*)` (and rustc/rustfmt/file tools)\" and must not include `Bash(npx:*)` — agent chose Write, Edit, Bash(cargo:*), Bash(rustc:*), Bash(rustfmt:*). Also, attribution_exclude_files for rust ends up with AGENTS.md/CLAUDE.md added alongside Cargo.lock, mirroring typescript's universal excludes, but the prompt's rust bullet only explicitly calls out `Cargo.lock`. Not asserted by tests either way, so it's a silent extrapolation from the typescript spec.\n"
+    suggestion: List rust's exact agent_tools and attribution_exclude_files explicitly, as done for typescript.
+  - promptLines:
+      - 70
+      - 70
+    kind: assumption
+    message: rust attribution_exclude_dirs beyond 'target' assumed to include '.git'.
+    reasoning: "Prompt says \"attribution excludes dirs including `target`\" — open-ended wording (\"including\") let the agent add `.git` too, matching typescript's dir excludes. Not verified by any test, so it's a guess at intended scope.\n"
+    suggestion: State the full attribution_exclude_dirs list for rust, e.g. ['target', '.git'].

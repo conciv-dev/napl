@@ -1,0 +1,106 @@
+# Drift model and the guided drift report
+
+This module owns the pure data types describing generated-file *drift* (a locked
+generated file edited or deleted by hand) and the formatter that turns a list of
+drifts into the exact guided report the CLI prints before it blocks a `napl gen`.
+It is pure: no I/O and no dependencies on other project modules. The actual
+detection lives elsewhere; this module is the types plus the pinned report text.
+
+## Where this code lives
+
+The working directory is a Cargo workspace whose root manifest is written and
+owned by the toolchain — leave it alone. Create this module as its own member
+crate in a subdirectory named `drift/`: `drift/Cargo.toml` (package name `drift`)
+and `drift/src/lib.rs`. Touch nothing outside `drift/`. Ensure `cargo test`
+passes from the workspace root before finishing.
+
+## The types
+
+- `DriftReason`, an enum with two variants: `Edited` (the file was edited by hand)
+  and `Missing` (the locked file was deleted). Support equality/copy.
+- `DriftedFile`, a struct with these public fields: `file` (a `String`, the path
+  relative to the project root); `reason` (a `DriftReason`); `expected_hash`, an
+  `Option<String>` (the hash recorded in the map, if known); `actual_hash`, an
+  `Option<String>` (the hash of the current on-disk content, if present);
+  `baseline`, an `Option<String>` (the journal-reconstructed baseline content, if
+  recoverable); `current`, an `Option<String>` (the current on-disk content, if
+  present); and `diff`, an `Option<String>` (the baseline-to-current unified diff,
+  if computable). Support equality.
+- `ModuleDrift`, a struct with public fields `module` (`String`), `prompt_file`
+  (`String`), `target` (`String`), and `files` (a `Vec<DriftedFile>`). Support
+  equality.
+
+## The report — `format_gen_drift_report(drifts, target)`
+
+Given a slice of `ModuleDrift` and the target name, produce a single `String`.
+Build it as a list of lines joined by newline characters, in this exact form.
+
+The report opens with one line, then a blank line:
+
+    BLOCKED  drift detected — cannot run 'napl gen <target>' while generated files have hand edits that are not reflected in any prompt.
+
+(substitute the target name for `<target>`), followed by an empty line.
+
+Then, for each `ModuleDrift` in order, emit a header line:
+
+    ​  module <module> (<target>) — <count> file(s) drifted (from <prompt_file>):
+
+where `<count>` is the number of drifted files and the line begins with two
+spaces. Follow it with one block per drifted file (see below). After the file
+blocks, emit an empty line, then the resolutions block:
+
+    ​  Resolve it one of three ways:
+    ​    1) napl reconcile <module>  — fold this edit back into your prompt
+    ​    2) napl gen <target> --module <module> --force  — discard the edit, the prompt wins
+    ​    3) edit the prompt to describe the change, then napl gen <target>
+
+(the "Resolve" line indented two spaces; each numbered line indented four spaces;
+note the two spaces before `— fold` and before `— discard`). Then an empty line.
+
+### A drifted file block
+
+For a file whose reason is `Missing`, emit:
+
+    ​    <file> (missing — the locked file was deleted)
+
+indented four spaces; and, only when `expected_hash` is present, a following line
+
+    ​      recorded hash: <hash>
+
+indented six spaces.
+
+For a file whose reason is `Edited`, emit first:
+
+    ​    <file> (edited by hand)
+
+indented four spaces. Then, when `diff` is present and not blank (not empty or
+only whitespace), emit
+
+    ​      recorded baseline -> current:
+
+indented six spaces, followed by the diff text with every one of its lines
+indented six spaces. Otherwise (no diff, or a blank diff), emit these three lines,
+each indented six spaces:
+
+    ​      baseline content is not recoverable from the journal (pre-journal state); comparing hashes only:
+    ​      recorded: <expected_hash or (none)>
+    ​      current:  <actual_hash or (none)>
+
+where a missing `expected_hash`/`actual_hash` renders as the literal `(none)`.
+Note the spacing: `recorded: ` has one space after the colon and `current:  ` has
+two, so the two hash values line up.
+
+## Worked behavior to reproduce exactly
+
+- A single edited file `.napl/src/typescript/greet.ts` for module `greeting`
+  (prompt `examples/greeting.napl`, target `typescript`) with a non-empty diff
+  produces a report containing `drift detected`, `module greeting (typescript)`,
+  `.napl/src/typescript/greet.ts (edited by hand)`, `recorded baseline -> current:`,
+  `1) napl reconcile greeting`, `2) napl gen typescript --module greeting --force`,
+  and `3) edit the prompt to describe the change, then napl gen typescript`.
+- The same edited file with no diff and `expected_hash` = `aaa`, `actual_hash` =
+  `bbb` produces a report containing `comparing hashes only`, `recorded: aaa`, and
+  `current:  bbb` (two spaces before `bbb`).
+- A missing file `gone.ts` with `expected_hash` = `h` produces a report
+  containing `gone.ts (missing — the locked file was deleted)` and
+  `recorded hash: h`.

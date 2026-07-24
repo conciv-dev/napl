@@ -1,0 +1,16 @@
+module: schemas_frontmatter
+target: rust
+entries:
+  - promptLines:
+      - 54
+      - 55
+    kind: assumption
+    message: Missing `module` key and empty `module` value surface as different error variants.
+    reasoning: "Prompt states both 'no module key' and 'module set to \"\"' are simply 'an error' without saying whether they must share an error variant. The agent implemented `EmptyModule` only for the explicit empty-string case (checked after deserialization) while a missing `module` key fails earlier during serde's struct deserialization and surfaces as `InvalidYaml` (since `module: String` has no `#[serde(default)]`). The agent's own test `rejects_missing_module_key` confirms it expects `InvalidYaml(_)`, not a distinct 'missing module' variant. This is a reasonable reading of 'non-empty string' as a type+content constraint, but the prompt doesn't say the two cases should produce visibly different error kinds."
+    suggestion: State explicitly whether a missing `module` key and an empty `module` value should map to the same error variant or may differ, e.g. 'both cases must return FrontmatterError::EmptyModule' or 'either case may surface as a YAML deserialization error.'
+  - promptLines:
+      - 10
+      - 15
+    kind: note
+    message: No visible change to `schemas_frontmatter/Cargo.toml`, though the prompt requires it.
+    reasoning: The prompt requires creating `schemas_frontmatter/Cargo.toml` with package name `schemas_frontmatter` as part of this module. Only `schemas_frontmatter/src/lib.rs` appears in the recorded changes. The agent's final message claims the whole workspace builds and tests pass ('cargo test' green, 13 tests), which is only possible if a valid Cargo.toml exists, so it was presumably created or already present but not captured in the diff shown here.

@@ -1,0 +1,147 @@
+module: schemas_ir
+target: rust
+entries:
+  - promptLines:
+      - 23
+      - 23
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 7
+      - 11
+    note: IrType struct fields
+  - promptLines:
+      - 24
+      - 24
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 13
+      - 18
+    note: IrFunction struct fields
+  - promptLines:
+      - 25
+      - 27
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 20
+      - 31
+    note: IrTest struct with default empty-object given/expect
+  - promptLines:
+      - 28
+      - 31
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 33
+      - 44
+    note: Ir struct with defaulted list fields
+  - promptLines:
+      - 21
+      - 21
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 7
+      - 7
+    note: derive Deserialize + equality on IrType
+  - promptLines:
+      - 21
+      - 21
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 13
+      - 13
+    note: derive Deserialize + equality on IrFunction
+  - promptLines:
+      - 21
+      - 21
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 24
+      - 24
+    note: derive Deserialize + equality on IrTest
+  - promptLines:
+      - 21
+      - 21
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 33
+      - 33
+    note: derive Deserialize + equality on Ir
+  - promptLines:
+      - 35
+      - 36
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 72
+      - 74
+    note: validate_ir signature and deserialize step
+  - promptLines:
+      - 38
+      - 41
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 73
+      - 74
+    note: deserialize rejects wrong-shaped/missing required fields
+  - promptLines:
+      - 42
+      - 43
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 76
+      - 78
+    note: reject empty/missing module
+  - promptLines:
+      - 44
+      - 46
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 68
+      - 93
+    note: enforce given/expect must be object or string
+  - promptLines:
+      - 36
+      - 36
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 46
+      - 66
+    note: error type, never panics, implements Display/Error
+  - promptLines:
+      - 50
+      - 53
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 104
+      - 120
+    note: worked example - minimal function validates
+  - promptLines:
+      - 54
+      - 56
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 123
+      - 142
+    note: worked example - missing/empty module and incomplete function rejected
+  - promptLines:
+      - 57
+      - 58
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 145
+      - 152
+    note: worked example - expect string preserved
+  - promptLines:
+      - 59
+      - 60
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 155
+      - 163
+    note: worked example - given defaults to empty object
+  - promptLines:
+      - 6
+      - 8
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 3
+      - 4
+    note: serde/serde_json dependency usage, Value for given/expect

@@ -1,0 +1,63 @@
+module: targets
+deps: []
+types:
+  - name: TestRunCommand
+    description: "A test invocation record with fields `command` (executable name) and `args` (list of argument strings). Supports equality comparison and cloning.\n"
+  - name: TargetAdapter
+    description: "Per-language target adapter describing everything the toolchain needs to generate, test, and attribute code for one target language/runtime. Fields: `name` (the target's identifier, also its source subdirectory name); `idiom_guidance` (prose injected into the coding-agent task describing idiomatic conventions for the target); `agent_tools` (list of tool names/patterns the coding agent is permitted to use); `attribution_exclude_dirs` (directory names excluded from attribution snapshots); `attribution_exclude_files` (file names excluded everywhere in the target); `attribution_exclude_root_files` (file names excluded only at the target-directory root, for a toolchain-owned root file whose same-named per-module siblings remain attributed); `attribution_exclude_suffixes` (file suffixes excluded from attribution); `test_command_label` (human-facing label for the test command); `test_run` (the TestRunCommand that gates generation); `workspace_layout` (true when the target directory is a workspace of per-module member crates/packages, false when it is a single package rooted at the target directory).\n"
+functions:
+  - name: TargetAdapter.test_command
+    signature: "test_command(adapter: TargetAdapter, target_dir: String) -> TestRunCommand"
+    behavior: "Returns the adapter's fixed test invocation. The command is determined solely by the adapter; `target_dir` is accepted for interface consistency but does not affect the result. Always succeeds; equivalent to reading `adapter.test_run`.\n"
+  - name: list_targets
+    signature: list_targets() -> List<String>
+    behavior: 'Returns the names of all registered targets in fixed registry order: ["typescript", "react", "rust"]. Pure, deterministic, no arguments.
+'
+  - name: starter_targets
+    signature: starter_targets() -> List<String>
+    behavior: 'Returns the names of targets whose guard directory is pre-created by `napl init`: ["typescript", "react"]. This is always a subset of list_targets(); "rust" is deliberately excluded (usable but not pre-scaffolded).
+'
+  - name: get_adapter
+    signature: "get_adapter(name: String) -> Result<TargetAdapter, String>"
+    behavior: "Looks up the registered adapter whose `name` equals the given string. On success returns the matching TargetAdapter. On failure (name not in the registry) returns an error string of the exact form \"unknown target '<name>'. Available targets: typescript, react, rust\", where the available-targets list reflects list_targets() joined by \", \". Does not panic.\n"
+  - name: workspace_manifest_toml
+    signature: "workspace_manifest_toml(members: List<String>) -> String"
+    behavior: 'Renders a deterministic Cargo workspace root manifest (TOML text) for a Cargo-workspace target. Input is a slice of member crate directory names, assumed already sorted by the caller; output is not responsible for sorting. The result contains a `[workspace]` table with `resolver = "2"` and a `members` array with each member name rendered as a quoted string on its own line, in the given order. The same input slice always produces byte-identical output (no timestamps, randomness, or environment-dependent content). For an empty slice, the `members` array is rendered empty (opening bracket, no entries, closing bracket on its own line).
+'
+tests:
+  - name: list_targets_is_registry_order
+    given: no input
+    expect: list_targets() == ['typescript', 'react', 'rust']
+  - name: starter_targets_is_subset
+    given: no input
+    expect: "starter_targets() == ['typescript', 'react']; every starter name is present in list_targets(); 'rust' is not in starter_targets().\n"
+  - name: get_adapter_returns_known_targets
+    given: names 'typescript', 'react', 'rust'
+    expect: "get_adapter returns an adapter whose `name` field matches the requested name, for each.\n"
+  - name: get_adapter_errors_on_unknown_target
+    given: name 'cobol'
+    expect: "get_adapter returns an error string containing \"unknown target 'cobol'\" and containing \"typescript, react, rust\".\n"
+  - name: typescript_adapter_shape
+    given: get_adapter('typescript')
+    expect: 'test_command_label == "npx vitest run"; test_run == {command: "npx", args: ["vitest", "run"]}; agent_tools contains "Read"; attribution_exclude_dirs contains node_modules, dist, .git, build, coverage, .vite; attribution_exclude_files contains package-lock.json, AGENTS.md, CLAUDE.md but not vite.config.js; attribution_exclude_suffixes contains .tsbuildinfo and .d.ts; workspace_layout is false; attribution_exclude_root_files is empty.
+'
+  - name: react_adapter_shape
+    given: get_adapter('react')
+    expect: 'test_command_label == "npx vitest run"; test_run == {command: "npx", args: ["vitest", "run"]}; agent_tools contains "Read"; attribution_exclude_dirs contains node_modules, dist, .git, build, coverage, .vite; attribution_exclude_files contains package-lock.json, AGENTS.md, CLAUDE.md, and vite.config.js; workspace_layout is false; attribution_exclude_root_files is empty.
+'
+  - name: rust_adapter_shape
+    given: get_adapter('rust')
+    expect: 'test_command_label == "cargo test"; test_run == {command: "cargo", args: ["test"]}; agent_tools contains "Read" and "Bash(cargo:*)" but not "Bash(npx:*)"; attribution_exclude_dirs contains "target"; attribution_exclude_files contains "Cargo.lock"; attribution_exclude_root_files contains "Cargo.toml"; workspace_layout is true; idiom_guidance contains "Cargo WORKSPACE".
+'
+  - name: test_command_ignores_target_dir_argument
+    given: rust adapter; target_dir arguments "anything" and ""
+    expect: test_command(target_dir) == adapter.test_run for any target_dir value
+  - name: workspace_manifest_toml_lists_members
+    given: members = ['body_lines', 'extensions', 'hash']
+    expect: "Output contains \"[workspace]\", 'resolver = \"2\"', and lines '\"body_lines\",', '\"extensions\",', '\"hash\",'.\n"
+  - name: workspace_manifest_toml_is_deterministic
+    given: members = ['a', 'b'], called twice
+    expect: both calls return byte-identical strings
+  - name: workspace_manifest_toml_empty_members
+    given: members = []
+    expect: Output contains an empty members array rendered as "members = [\n]" (opening line, no member entries, closing "]" line).

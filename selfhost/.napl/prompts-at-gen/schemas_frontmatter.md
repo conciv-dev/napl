@@ -1,0 +1,87 @@
+# Prompt frontmatter parsing
+
+This module parses a NAPL prompt file into a validated YAML frontmatter block and
+the prose body that follows it. It is pure: no I/O and no dependencies on other
+project modules. Bring in `serde` and `serde_yaml` (the free-form `given`/`expect`
+fields of a test are held as `serde_yaml::Value`).
+
+## Where this code lives
+
+The working directory is a Cargo workspace whose root manifest is written and
+owned by the toolchain — leave it alone. Create this module as its own member
+crate in a subdirectory named `schemas_frontmatter/`:
+`schemas_frontmatter/Cargo.toml` (package name `schemas_frontmatter`) and
+`schemas_frontmatter/src/lib.rs`. Touch nothing outside `schemas_frontmatter/`.
+Ensure `cargo test` passes from the workspace root before finishing.
+
+## The types
+
+All derive `serde::Deserialize` where noted and support equality comparison:
+
+- `PromptTest` with a public string field `name`, and two public fields `given`
+  and `expect`, each a `serde_yaml::Value`. When `given` or `expect` is omitted it
+  defaults to an **empty YAML mapping** (an empty object), not null.
+- `Frontmatter` with a public string field `module`, and three list fields that
+  each default to empty when omitted: `deps` (strings), `targets` (strings), and
+  `tests` (a list of `PromptTest`).
+- `ParsedPrompt` with two public fields: `frontmatter` (a `Frontmatter`) and
+  `body` (a `String`).
+
+## The delimiter split
+
+A prompt file must begin with a YAML frontmatter block fenced by `---` lines. The
+opening delimiter is the literal `---` followed by a line ending (`\n` or `\r\n`)
+at the very start of the file. The closing delimiter is a line ending, then `---`,
+then an optional trailing line ending — i.e. the next line that is exactly `---`.
+Everything between the two delimiters is the YAML text; everything after the
+closing delimiter (and its one consumed trailing line ending) is the raw body.
+
+If the file does not start with a valid opening delimiter, or no closing `---`
+line is found, parsing fails with an error (a returned error value, never a
+panic).
+
+## Parsing and validation — `parse_frontmatter(raw)`
+
+`parse_frontmatter` takes the raw file text and returns a `ParsedPrompt` on
+success or an error on failure. It:
+
+1. Splits off the YAML text and body as above; a missing frontmatter block is an
+   error.
+2. Parses the YAML text. A completely empty/null YAML block is treated as an empty
+   mapping.
+3. Deserializes the mapping into a `Frontmatter`, applying the field defaults
+   above.
+4. Requires `module` to be a non-empty string: a frontmatter block with no
+   `module` key, or with `module` set to `""`, is an error.
+5. Requires every test case's `given` and `expect` to each be a YAML **mapping**;
+   any other YAML type there is an error.
+6. Cleans the body by removing a single leading blank line: if the body begins
+   with whitespace that runs up to and including a newline, drop everything up to
+   and including that newline. A body that does not start with a blank line is
+   left unchanged.
+
+## Worked behavior to reproduce exactly
+
+- The document
+
+      ---
+      module: auth/session
+      deps: [auth/tokens]
+      targets: [typescript]
+      tests:
+        - name: expired token rejected
+          given: { token: expired }
+          expect: { error: SESSION_EXPIRED }
+      ---
+      Manage user sessions. Sessions expire after 30 minutes.
+
+  parses to `module` = `auth/session`, `deps` = `[auth/tokens]`, `targets` =
+  `[typescript]`, one test named `expired token rejected` whose `given` maps
+  `token` to `expired` and whose `expect` maps `error` to `SESSION_EXPIRED`, and a
+  body beginning `Manage user sessions.`.
+- `---\nmodule: solo\n---\nBody here.\n` parses with empty `deps`/`targets`/
+  `tests` and body exactly `Body here.\n`.
+- `no frontmatter here` is rejected; `---\ndeps: []\n---\nbody` (no module) is
+  rejected; `---\nmodule: ""\n---\nbody` (empty module) is rejected.
+- `---\nmodule: m\n---\n\nActual body.\n` parses to a body of exactly
+  `Actual body.\n` (the one blank line after the closing delimiter is stripped).

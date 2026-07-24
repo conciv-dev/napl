@@ -653,10 +653,12 @@ fn run_gen_locked(
     let target_dir = paths.src_dir.join(target);
     std::fs::create_dir_all(&target_dir)?;
     write_guard_files(&target_dir)?;
+    refresh_workspace_manifest(&target_dir, &adapter, None)?;
 
     let filter: SnapshotFilter = make_filter(
         &adapter.attribution_exclude_dirs,
         &adapter.attribution_exclude_files,
+        &adapter.attribution_exclude_root_files,
         &adapter.attribution_exclude_suffixes,
     );
     let mut map = read_map(&paths.map_path)?;
@@ -727,6 +729,7 @@ fn run_gen_locked(
             .collect();
 
         println!("gen     {module} ({target})");
+        refresh_workspace_manifest(&target_dir, &adapter, Some(&module))?;
         let builder = build_task_builder(root, paths, args, &rel, &frontmatter, &body, deps, &map);
 
         unlock_files(root, &builder.unlock);
@@ -1080,5 +1083,51 @@ fn write_guard_files(target_dir: &Path) -> CliResult<()> {
     for name in napl_core::guard::GUARD_FILE_NAMES {
         fsutil::write(&target_dir.join(name), napl_core::guard::GUARD_DOC)?;
     }
+    Ok(())
+}
+
+/// The immediate subdirectories of `target_dir` that are member crates (contain
+/// a `Cargo.toml`), sorted.
+fn member_crate_dirs(target_dir: &Path) -> Vec<String> {
+    let mut members: Vec<String> = Vec::new();
+    let Ok(entries) = std::fs::read_dir(target_dir) else {
+        return members;
+    };
+    for entry in entries.flatten() {
+        if entry.file_type().map(|t| t.is_dir()).unwrap_or(false)
+            && entry.path().join("Cargo.toml").is_file()
+        {
+            members.push(entry.file_name().to_string_lossy().into_owned());
+        }
+    }
+    members.sort();
+    members
+}
+
+/// Refresh the toolchain-owned workspace root manifest for a Cargo-workspace
+/// target. Members are every existing member crate directory plus (when a gen is
+/// about to run) the current module's directory, so the in-gen `cargo test` gate
+/// at the workspace root covers every module and no member crate is ever an
+/// orphan. A no-op for single-package targets.
+fn refresh_workspace_manifest(
+    target_dir: &Path,
+    adapter: &TargetAdapter,
+    current_module: Option<&str>,
+) -> CliResult<()> {
+    if !adapter.workspace_layout {
+        return Ok(());
+    }
+    let mut members = member_crate_dirs(target_dir);
+    if let Some(module) = current_module {
+        if !members.iter().any(|m| m == module) {
+            members.push(module.to_string());
+        }
+    }
+    members.sort();
+    members.dedup();
+    fsutil::write(
+        &target_dir.join("Cargo.toml"),
+        &napl_core::targets::workspace_manifest_toml(&members),
+    )?;
     Ok(())
 }

@@ -218,3 +218,105 @@ more breadth (waves 2–3, then the `napl-cli` I/O phase) and two tractable tool
 improvements the friction surfaced: a workspace layout for the rust target, and
 signature/type contracts in the prompt where a caller depends on them — not a
 missing capability in the loop itself.
+
+## Scale-out — slice 2
+
+Slice 2 does two things: it closes slice 1's layout gap by making the rust target a
+**Cargo workspace**, and it finishes wave 1 by generating the remaining eight
+`napl-core` leaves. Wave 1 is now fully self-hosted: **13/13 modules, 83
+equivalence cases green**, escape-hatch list still empty.
+
+### The workspace layout (toolchain change)
+
+Slice 1's nested-crate layout composed only because Cargo ignores a nested package
+from the root, which meant the in-gen `cargo test` gate covered only the root
+crate — the nested modules escaped it. Slice 2 replaces that with a real workspace:
+
+- The rust target adapter (`napl-core/src/targets.rs`) gained `workspace_layout:
+  bool` and `attribution_exclude_root_files: Vec<String>`, plus a pure
+  `workspace_manifest_toml(members)` renderer. The rust idiom guidance now tells
+  the coding agent to write its module as a member crate in a subdirectory named
+  after the module and to leave the workspace-root `Cargo.toml` alone.
+- The gen loop (`napl-cli/src/cmd_gen.rs`) refreshes the toolchain-owned workspace
+  root `Cargo.toml` before each module's attempts, listing every existing member
+  crate directory plus the current module — so the member is registered *before*
+  its `cargo test` runs (no orphan-workspace error) and the in-gen gate at the
+  workspace root covers **every** member.
+- **Ownership.** The root manifest is treated exactly like the guard files: written
+  by the toolchain, excluded from attribution, not locked, not drift-checked,
+  regenerated on every gen. To keep per-module `Cargo.toml` files attributed while
+  excluding only the root one, the snapshot filter gained a root-only exclusion
+  (`make_filter`'s new `exclude_root_files`, applied only at the walked tree's
+  root). This is the clean split the campaign's attribution/locking rules require.
+- **Conformance.** Scenario `74-gen-rust-target` was updated for the workspace
+  layout (the fake agent writes `adder/src/lib.rs`; the toolchain writes the
+  workspace root manifest; attribution maps `adder/src/lib.rs`). All 40 scenarios
+  pass; the other 39 are byte-identical.
+
+### The body_lines migration — the call made
+
+`body_lines` was the one module that had to move (root crate → member crate); the
+other four slice-1 modules were already in subdirectories. The choice was between a
+mechanical move (rewrite map/attribution paths and hashes by hand) and a **clean
+regen through the toolchain**. Regen won: it rebuilds map, attribution, IR, machine
+layer, and journal from the toolchain's own mechanisms rather than hand-editing
+hashes, and it re-proves the new layout on the "first" module. The only hand-work
+was deletion (removing the old root-crate files and resetting `body_lines`' derived
+state so gen treats it fresh) — no fabricated hashes. `body_lines` re-genned as a
+member crate on attempt 1, `napl status` is clean for all modules, and the
+workspace-root `cargo test` runs all members green.
+
+### Modules generated this slice
+
+Eight wave-1 leaves, each `napl gen rust --module <m>`, each **converged on attempt
+1 of 3**, fully attributed, locked, drift-clean:
+
+| Module | Prompt approach | Attempts | Equivalence |
+| --- | --- | ---: | --- |
+| `schemas::ordered_map` | insertion-order map; methods + serde-map round-trip; worked ordering examples | 1/3 | **4/4** |
+| `schemas::line_range` | lenient deserializer (scalar / `[n]` / `[a,b]`), `>= 1` integer rule, integral-float accept | 1/3 | **8/8** |
+| `schemas::ir` | serde types + `validate_ir` (non-empty module, object-or-string contracts, required function fields) | 1/3 | **6/6** |
+| `schemas::frontmatter` | strict `---` delimiter split, field defaults, leading-blank-line body cleanup; `serde_yaml` values | 1/3 | **6/6** |
+| `drift` | pinned guided-report text described line-by-line (indent, the two-space `current:  ` alignment, the three resolutions) | 1/3 | **3/3** |
+| `guard` | pinned guard strings + the settings-merge state machine (Create/Update/Unchanged/Manual) with byte-exact snippet | 1/3 | **5/5** |
+| `targets` | the target registry: three adapters, the workspace fields, `workspace_manifest_toml`, the unknown-target error text | 1/3 | **9/9** |
+| `scanner` | the UTF-16 span model spelled out (BMP = 1 unit, astral = 2), the frontmatter/deps/refs scan, resolver precedence, every worked span | 1/3 | **12/12** |
+
+The `drift`, `targets`, and `guard` equivalence tests include the byte-exact
+user-facing strings their hand-written corpora pin (the drift report lines, the
+adapter labels and unknown-target error, the settings snippet). The `schemas::*`
+tests are serialize/deserialize round-trips over the exact hand-written vectors.
+
+### Prompt under-specification — what surfaced
+
+- **`scanner`** named its scan entry point `scan` where the hand-written module
+  names it `scan_document`. Behaviorally identical; the harness bridges the naming
+  difference with a `use scanner::scan as scan_document` alias — the same class of
+  finding as the pilot's `Option<u64>`/`Option<usize>`: prose under-specifies the
+  exact public name, and the equivalence gate stays behavioral. Every span value
+  matched on the first attempt regardless.
+- The machine layer kept flagging genuine open choices (error type names, ownership
+  of returned strings) in the `.mapl` files rather than hiding divergence.
+
+### Escape-hatch list
+
+Still **empty** — every wave-1 leaf attempted (13/13) converged on attempt 1.
+
+### Wave-2 readiness
+
+Wave 1 is a complete, self-hosted base. The natural next batch is the wave-2 leaves
+whose intra-crate deps are now all generated: `blame` (→ `text_diff`),
+`schemas::lock` (→ `extensions`), `schemas::attribution`/`schemas::ml`
+(→ `line_range`), `schemas::map` (→ `ordered_map`), and `reverse` (→ `body_lines`,
+`schemas`). The workspace layout means each lands as one more member with the
+in-gen gate already covering it; the only new wiring is intra-crate path-deps
+between generated member crates when a wave-2 prompt depends on a wave-1 one.
+
+### Verdict
+
+The workspace change closed the one real structural gap slice 1 left open: the
+in-gen `cargo test` now gates every module, not just the root. With that in place,
+eight more behavior-only prompts — including the 634-LOC UTF-16 `scanner` and the
+string-pinned `drift`/`targets`/`guard` — drove stage0 to behaviorally equivalent
+Rust on the first attempt each, across 53 new corpus cases (83 total). Wave 1 self-
+hosts end to end.

@@ -1,0 +1,22 @@
+module: schemas_ir
+target: rust
+entries:
+  - promptLines:
+      - 21
+      - 21
+    kind: assumption
+    message: IrTest/Ir only derive PartialEq, not Eq, since they hold serde_json::Value.
+    reasoning: Prompt says all types 'support equality comparison' without specifying PartialEq vs Eq. IrType/IrFunction (pure Strings) derive PartialEq+Eq, but IrTest/Ir contain serde_json::Value, which has no Eq impl, so only PartialEq could be derived for them. Agent assumed this relaxation was acceptable rather than flagging a conflict.
+    suggestion: Note that types containing serde_json::Value need only derive PartialEq (Value has no Eq), while pure-string types should derive both PartialEq and Eq.
+  - promptLines:
+      - 21
+      - 21
+    kind: assumption
+    message: Added Debug and Clone derives beyond what prompt required.
+    reasoning: Prompt only asked for Deserialize and equality comparison. Agent additionally derived Debug and Clone on all types for ergonomics (e.g. test assertions, error messages), which is a reasonable but unrequested addition.
+  - promptLines:
+      - 36
+      - 47
+    kind: assumption
+    message: Error type shape (enum with Deserialize/EmptyModule/InvalidTestValue variants) was invented, not specified.
+    reasoning: Prompt only requires validate_ir return 'an error on failure (an error value, never a panic)' without specifying its structure. Agent designed a custom IrValidationError enum with Display/Error impls and a field name in InvalidTestValue; a different but equally valid error shape (e.g. a single String error) could have been chosen instead.

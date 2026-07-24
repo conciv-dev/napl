@@ -1,0 +1,48 @@
+module: schemas_ir
+deps: []
+types:
+  - name: IrType
+    description: Struct with string fields name and description; supports equality; deserializable from JSON.
+  - name: IrFunction
+    description: Struct with string fields name, signature, and behavior; all required with no defaults; supports equality; deserializable from JSON.
+  - name: IrTest
+    description: Struct with string field name, and given/expect fields holding arbitrary JSON values; given and expect each default to an empty JSON object ({}) when omitted from input; supports equality; deserializable from JSON.
+  - name: Ir
+    description: Struct with string field module, and list fields deps (strings), types (IrType), functions (IrFunction), and tests (IrTest); all four list fields default to empty when omitted; supports equality; deserializable from JSON.
+  - name: IrValidationError
+    description: Error type returned by validate_ir on failure; variants cover deserialization failure (with message), empty/missing module, and a test's given or expect field having an invalid JSON type (with the test name and field name); implements standard error/display formatting; supports equality.
+functions:
+  - name: validate_ir
+    signature: "validate_ir(value: JSON value) -> Result<Ir, IrValidationError>"
+    behavior: "Parses an arbitrary JSON value into an Ir. Precondition: value is any JSON value. Step 1: deserializes value into Ir shape; fails with a Deserialize error if fields have wrong type/shape, e.g. a function entry missing required signature or behavior fields is rejected. Step 2: requires module to be a non-empty string; missing module or module set to \"\" fails with an EmptyModule error. Step 3: requires every test's given and expect fields to each be either a JSON object or a JSON string; any other JSON type (number, boolean, array, null) fails with an InvalidTestValue error naming the test and field. Returns Ok(Ir) with module, deps, types, functions, and tests populated (missing given/expect on a test default to empty JSON object) when all checks pass. Never panics; all failures returned as an error value."
+tests:
+  - name: validates_minimal_function
+    given: '{ "module": "greeting", "functions": [{ "name": "greet", "signature": "greet(name): string", "behavior": "returns Hello" }] }'
+    expect: Ok(Ir) with module == "greeting", deps/types/tests empty, functions has length 1, functions[0].name == "greet"
+  - name: rejects_missing_module
+    given: '{ "functions": [] }'
+    expect: Err(...)
+  - name: rejects_empty_module
+    given: '{ "module": "", "functions": [] }'
+    expect: Err(IrValidationError::EmptyModule)
+  - name: rejects_incomplete_function
+    given: '{ "module": "x", "functions": [{ "name": "f" }] }'
+    expect: Err(...) because signature and behavior are missing
+  - name: test_expect_string_is_preserved
+    given: '{ "module": "m", "tests": [{ "name": "a", "given": { "x": 1 }, "expect": "ok" }] }'
+    expect: Ok(Ir) where tests[0].expect == JSON string "ok"
+  - name: test_given_defaults_to_empty_object
+    given: '{ "module": "m", "tests": [{ "name": "a" }] }'
+    expect: Ok(Ir) where tests[0].given == {} and tests[0].expect == {}
+  - name: rejects_non_object_non_string_given
+    given: '{ "module": "m", "tests": [{ "name": "a", "given": 42, "expect": "ok" }] }'
+    expect: Err(...) because given is a number
+  - name: rejects_non_object_non_string_expect
+    given: '{ "module": "m", "tests": [{ "name": "a", "given": {}, "expect": [1, 2] }] }'
+    expect: Err(...) because expect is an array
+  - name: rejects_null_given
+    given: '{ "module": "m", "tests": [{ "name": "a", "given": null, "expect": "ok" }] }'
+    expect: Err(...) because given is null
+  - name: rejects_boolean_expect
+    given: '{ "module": "m", "tests": [{ "name": "a", "given": {}, "expect": true }] }'
+    expect: Err(...) because expect is a boolean

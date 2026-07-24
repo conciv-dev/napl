@@ -1,0 +1,165 @@
+# Prompt span scanner
+
+This module scans a NAPL prompt document into structured tokens with precise
+source spans: the frontmatter and body regions, the frontmatter keys, the
+`module:` value, the `deps`/`extends` entries, and the `@module/ref` mentions in
+the body. It also resolves the navigation target under a given position. It is
+pure: no I/O and no dependencies on other project modules.
+
+## Where this code lives
+
+The working directory is a Cargo workspace whose root manifest is written and
+owned by the toolchain — leave it alone. Create this module as its own member
+crate in a subdirectory named `scanner/`: `scanner/Cargo.toml` (package name
+`scanner`) and `scanner/src/lib.rs`. Touch nothing outside `scanner/`. Ensure
+`cargo test` passes from the workspace root before finishing.
+
+## The position model — read this carefully
+
+Positions are **zero-based**. A `Position` has a `line` and a `character`, both
+`usize`. `line` counts lines from 0. `character` is **a count of UTF-16 code
+units**, not bytes and not Unicode scalar values. So a character in the Basic
+Multilingual Plane (for example `é`, U+00E9) counts as **1** unit even though it
+is several UTF-8 bytes, while an astral character (for example the emoji 😀,
+U+1F600) counts as **2** UTF-16 units. Every column number below is a UTF-16
+offset within its line.
+
+Split the document into lines on `\n`, stripping a single trailing `\r` from each
+resulting segment (so CRLF and LF behave the same). A trailing newline therefore
+yields a final empty line.
+
+## The types
+
+- `Position { line: usize, character: usize }` and `Span { start: Position, end:
+  Position }` (an inclusive-in-spirit span). Support equality/copy.
+- `RegionSpan { present: bool, span: Option<Span> }` — a region that may be absent.
+- `FrontmatterKeyToken { key: String, key_span: Span }`.
+- `ModuleValueToken { value: String, span: Span }`.
+- `DepSource`, an enum with variants `Deps` and `Extends` (equality/copy).
+- `DepToken { value: String, span: Span, source: DepSource }`.
+- `RefToken { module: String, span: Span }`.
+- `ScanResult { frontmatter: RegionSpan, body: RegionSpan, keys: Vec<FrontmatterKeyToken>, module_value: Option<ModuleValueToken>, deps: Vec<DepToken>, refs: Vec<RefToken> }`.
+- `Target`, an enum with variants `ModuleValue { module: String, span: Span }`,
+  `Dep { module: String, span: Span, source: DepSource }`, and `Ref { module:
+  String, span: Span }` (equality).
+
+## Detecting the frontmatter
+
+There is a frontmatter block when the first line, compared after trimming trailing
+whitespace, is exactly `---`, and some later line (searching from line 1 onward),
+also trimmed at its end, is exactly `---` — that later line is the closing
+delimiter. The inner frontmatter lines are lines 1 through `close - 1`.
+
+The frontmatter `RegionSpan` is present with a span from `(1, 0)` to
+`(close - 1, <UTF-16 length of that last inner line>)`. If there are no inner
+lines (the closing delimiter is on line 1), the span is `(1, 0)`–`(1, 0)`.
+
+## Scanning the frontmatter lines
+
+Walk the inner lines in order, tracking whether the previous key opened a
+block-style list.
+
+**Keys.** A line is a key line when it matches `^[A-Za-z0-9_-]+:` — a run of one
+or more of the characters A–Z, a–z, 0–9, `_`, `-`, then a colon. The key is that
+run; record a `FrontmatterKeyToken` whose `key_span` runs from `(i, 0)` to
+`(i, <UTF-16 length of key>)`. Let `key_end_char` be `<UTF-16 length of key> + 1`
+(the column just past the colon). Encountering any key line clears the
+block-list state.
+
+**A scalar value after a key** (used for `module:` and for a single-value
+`deps:`/`extends:`): take the text after the colon, measure its leading
+whitespace in UTF-16 units, and trim it. If empty, there is no value token.
+Otherwise the value starts at `key_end_char + <leading whitespace units>`; strip a
+single pair of matching surrounding ASCII quotes (`'` or `"`) if present, which
+shifts the start by 1 more unit; the value span runs from that start to
+start `+ <UTF-16 length of the unquoted value>`.
+
+**`module:`** produces the `module_value` (`ModuleValueToken`) using the scalar
+rule above.
+
+**`deps:` and `extends:`** produce `DepToken`s with `source` `Deps` or `Extends`
+respectively:
+
+- If the text after the colon, trimmed, begins with `[`, it is an **inline list**.
+  Take the substring between the first `[` and the last `]` (or to the end if no
+  closing `]`). The base column is `key_end_char` plus the UTF-16 offset of that
+  `[` within the after-colon text, plus 1. Split the inner text into items on
+  commas — an item is a maximal run of characters that are none of `,`, `[`, `]` —
+  trim each item's trailing whitespace, skip empties, strip surrounding quotes,
+  and emit a `DepToken` whose start column is the base column plus the item's
+  UTF-16 offset within the inner text (plus 1 if quotes were stripped) and whose
+  end column is start `+ <UTF-16 length of the value>`.
+- If the text after the colon is empty, remember this key as an open block list
+  for the following lines.
+- Otherwise it is a single scalar dep value (the scalar rule above).
+
+**Block list items.** While a block list is open, a line matching `^(\s*)-\s+(.*)$`
+(some indentation, a dash, at least one space, then the rest) is a list item. Its
+value starts at column `<indent UTF-16 units> + 1 + <number of spaces after the
+dash>`; trim the rest, strip surrounding quotes (shifting the start by 1 if
+stripped), and emit a `DepToken` for it with the remembered source. A dash with no
+following space is not a list item.
+
+## Regions: the body
+
+If a frontmatter block was found, the body begins at line `close + 1`. When that
+line exists, the body `RegionSpan` is present with a span from `(close + 1, 0)` to
+`(<last line index>, <UTF-16 length of the last line>)`; when it does not exist
+(nothing after the closing delimiter), the body is absent. When there is no
+frontmatter at all, the body is present whenever there is at least one line, with a
+span from `(0, 0)` to `(<last line index>, <UTF-16 length of last line>)`.
+
+## Scanning refs
+
+Scan for `@`-references starting at the body: from line `close + 1` when there is
+frontmatter, or from line 0 otherwise (references inside the frontmatter are not
+collected). On each scanned line, an `@` begins a reference when it is followed by
+one or more reference characters (A–Z, a–z, 0–9, `_`, `/`, `-`). The reference's
+`module` is the run of reference characters after the `@`. Its span runs from the
+`@`'s UTF-16 column to that column plus the UTF-16 length of the whole `@name`
+token (the `@` included). A bare `@` with no following reference character is not a
+reference.
+
+## Resolving a position — `find_target_at_position(scan, position)`
+
+Return the token whose span contains `position`, testing in this precedence: the
+module value first, then each dep in order, then each ref in order. A span contains
+a position when the position is not before the span's start nor after its end
+(inclusive on both ends, accounting for line and then character). Return nothing
+when no token contains the position.
+
+## The reference document and worked spans
+
+Several cases use this document (call it the main document):
+
+    ---
+    module: auth/session
+    deps: [auth/tokens, auth/users]
+    targets: [typescript]
+    ---
+    # Session
+
+    Manage sessions. See @auth/tokens and @auth/users for details.
+    Refreshes via @auth/session.
+
+For it, reproduce exactly: the module value `auth/session` spans `(1,8)`–`(1,20)`;
+the two deps are `auth/tokens` and `auth/users`, both source `Deps`, with the
+first spanning `(2,7)`–`(2,18)` and the second starting at `(2,20)` and ending at
+`(2,30)`; the body refs are `auth/tokens`, `auth/users`, `auth/session`, with the
+first spanning `(7,21)`–`(7,33)`; the frontmatter region starts at `(1,0)` and
+ends on line 3; the body region is present and starts on line 5. Resolving
+position `(1,10)` yields the module value `auth/session`; `(2,10)` yields the dep
+`auth/tokens`; `(7,25)` yields the ref `auth/tokens`; `(5,0)` yields nothing.
+
+For the block-list document `---\nmodule: a\ndeps:\n  - one\n  - "two/x"\nextends:
+base\n---\nbody\n`, the deps are, labelled by source, `deps:one`, `deps:two/x`,
+`extends:base`, with `one` spanning `(3,4)`–`(3,7)`, `two/x` starting at `(4,5)`,
+and `base` starting at `(5,9)`.
+
+For `---\nmodule: greeting\ndeps: []\n---\nbody\n`, there are no deps and the
+module value is `greeting`.
+
+For `---\nmodule: m\n---\n😀😀@auth/x\n` (two astral emoji before the `@`), there is
+one ref `auth/x` starting at `(3,4)` (each emoji is 2 UTF-16 units) and ending at
+`(3,11)`. For `---\nmodule: m\n---\né@x/y\n` (one BMP `é` before the `@`), the ref
+starts at `(3,1)` (`é` is 1 UTF-16 unit).

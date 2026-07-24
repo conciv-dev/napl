@@ -1,0 +1,131 @@
+module: schemas_line_range
+target: rust
+entries:
+  - promptLines:
+      - 19
+      - 22
+    file: schemas_line_range/src/lib.rs
+    lines:
+      - 6
+      - 17
+    note: LineRange struct with start/end fields, new(), derive equality/copy
+  - promptLines:
+      - 26
+      - 28
+    file: schemas_line_range/src/lib.rs
+    lines:
+      - 111
+      - 118
+    note: Deserialize impl entry point
+  - promptLines:
+      - 29
+      - 29
+    file: schemas_line_range/src/lib.rs
+    lines:
+      - 47
+      - 53
+    note: bare u64 number becomes n..=n
+  - promptLines:
+      - 29
+      - 29
+    file: schemas_line_range/src/lib.rs
+    lines:
+      - 67
+      - 75
+    note: bare float number becomes n..=n
+  - promptLines:
+      - 30
+      - 30
+    file: schemas_line_range/src/lib.rs
+    lines:
+      - 93
+      - 97
+    note: one-element array becomes n..=n
+  - promptLines:
+      - 31
+      - 31
+    file: schemas_line_range/src/lib.rs
+    lines:
+      - 98
+      - 103
+    note: two-element array becomes start..=end
+  - promptLines:
+      - 33
+      - 40
+    file: schemas_line_range/src/lib.rs
+    lines:
+      - 19
+      - 36
+    note: number_to_line validates integer and >=1, accepts whole floats
+  - promptLines:
+      - 36
+      - 37
+    file: schemas_line_range/src/lib.rs
+    lines:
+      - 21
+      - 23
+    note: reject zero (u64 branch)
+  - promptLines:
+      - 36
+      - 37
+    file: schemas_line_range/src/lib.rs
+    lines:
+      - 29
+      - 31
+    note: reject zero (float branch)
+  - promptLines:
+      - 36
+      - 37
+    file: schemas_line_range/src/lib.rs
+    lines:
+      - 59
+      - 65
+    note: reject negative i64 (covers 0 boundary via visit_u64)
+  - promptLines:
+      - 38
+      - 40
+    file: schemas_line_range/src/lib.rs
+    lines:
+      - 25
+      - 32
+    note: reject nonzero fractional part, accept whole-valued float
+  - promptLines:
+      - 41
+      - 42
+    file: schemas_line_range/src/lib.rs
+    lines:
+      - 92
+      - 107
+    note: reject arrays with !=1,2 elements
+  - promptLines:
+      - 43
+      - 44
+    file: schemas_line_range/src/lib.rs
+    lines:
+      - 83
+      - 90
+    note: reject non-number elements in array
+  - promptLines:
+      - 43
+      - 44
+    file: schemas_line_range/src/lib.rs
+    lines:
+      - 116
+      - 116
+    note: deserialize_any lets visitor reject strings/bools/objects via missing visit_* overrides
+  - promptLines:
+      - 46
+      - 48
+    file: schemas_line_range/src/lib.rs
+    lines:
+      - 19
+      - 36
+    note: errors returned via Result, not panics
+  - promptLines:
+      - 26
+      - 48
+    file: schemas_line_range/src/lib.rs
+    lines:
+      - 128
+      - 208
+    note: unit tests covering accepted/rejected input shapes

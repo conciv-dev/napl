@@ -1,22 +1,6 @@
 {
   "version": 2,
   "prompts": {
-    "body_lines.napl": {
-      "module": "body_lines",
-      "promptHash": "eb0d5bdd945034c80de4f1c19cb798c2de8153010d64a8e5ef33036a99059934",
-      "declaredTargets": [
-        "rust"
-      ],
-      "targets": {
-        "rust": {
-          "promptHashAtGen": "eb0d5bdd945034c80de4f1c19cb798c2de8153010d64a8e5ef33036a99059934",
-          "files": [
-            ".napl/src/rust/Cargo.toml",
-            ".napl/src/rust/src/lib.rs"
-          ]
-        }
-      }
-    },
     "extensions.napl": {
       "module": "extensions",
       "promptHash": "53b3004a36ec7d3e18f21eccb7133d6620a90346ccabac373e809fc5de8cb56b",
@@ -80,23 +64,153 @@
           ]
         }
       }
+    },
+    "body_lines.napl": {
+      "module": "body_lines",
+      "promptHash": "f5bfbff4e852f6a907e7e28ebfba093137b0e7624f33e7a605d3caae5eeb65c4",
+      "declaredTargets": [
+        "rust"
+      ],
+      "targets": {
+        "rust": {
+          "promptHashAtGen": "f5bfbff4e852f6a907e7e28ebfba093137b0e7624f33e7a605d3caae5eeb65c4",
+          "files": [
+            ".napl/src/rust/body_lines/Cargo.toml",
+            ".napl/src/rust/body_lines/src/lib.rs"
+          ]
+        }
+      }
+    },
+    "schemas_ordered_map.napl": {
+      "module": "schemas_ordered_map",
+      "promptHash": "4973abaa008fa2130ccfd3cd7a25f1d4cc0aa9f8e4035b90b1c48b6a7ba3e707",
+      "declaredTargets": [
+        "rust"
+      ],
+      "targets": {
+        "rust": {
+          "promptHashAtGen": "4973abaa008fa2130ccfd3cd7a25f1d4cc0aa9f8e4035b90b1c48b6a7ba3e707",
+          "files": [
+            ".napl/src/rust/schemas_ordered_map/Cargo.toml",
+            ".napl/src/rust/schemas_ordered_map/src/lib.rs"
+          ]
+        }
+      }
+    },
+    "schemas_line_range.napl": {
+      "module": "schemas_line_range",
+      "promptHash": "b64ad0a0e88a52c81bf16816622897c86e0e7f491113ae444b0dfe2cce55312f",
+      "declaredTargets": [
+        "rust"
+      ],
+      "targets": {
+        "rust": {
+          "promptHashAtGen": "b64ad0a0e88a52c81bf16816622897c86e0e7f491113ae444b0dfe2cce55312f",
+          "files": [
+            ".napl/src/rust/schemas_line_range/Cargo.toml",
+            ".napl/src/rust/schemas_line_range/src/lib.rs"
+          ]
+        }
+      }
+    },
+    "schemas_ir.napl": {
+      "module": "schemas_ir",
+      "promptHash": "9774858515e616c6840e4f9e49eaa8a4ee19d5868be410cf6701a71df61feeeb",
+      "declaredTargets": [
+        "rust"
+      ],
+      "targets": {
+        "rust": {
+          "promptHashAtGen": "9774858515e616c6840e4f9e49eaa8a4ee19d5868be410cf6701a71df61feeeb",
+          "files": [
+            ".napl/src/rust/schemas_ir/Cargo.toml",
+            ".napl/src/rust/schemas_ir/src/lib.rs"
+          ]
+        }
+      }
+    },
+    "schemas_frontmatter.napl": {
+      "module": "schemas_frontmatter",
+      "promptHash": "174a5adc2d3f1decc3c9e9cd830357181a4913004d843f82533cbec7dd5bfea9",
+      "declaredTargets": [
+        "rust"
+      ],
+      "targets": {
+        "rust": {
+          "promptHashAtGen": "174a5adc2d3f1decc3c9e9cd830357181a4913004d843f82533cbec7dd5bfea9",
+          "files": [
+            ".napl/src/rust/schemas_frontmatter/Cargo.toml",
+            ".napl/src/rust/schemas_frontmatter/src/lib.rs"
+          ]
+        }
+      }
+    },
+    "drift.napl": {
+      "module": "drift",
+      "promptHash": "291ef28967c7e57871c6cdbd15cfcf8d9fbf08993defcfd78d86cab0415f84f5",
+      "declaredTargets": [
+        "rust"
+      ],
+      "targets": {
+        "rust": {
+          "promptHashAtGen": "291ef28967c7e57871c6cdbd15cfcf8d9fbf08993defcfd78d86cab0415f84f5",
+          "files": [
+            ".napl/src/rust/drift/Cargo.toml",
+            ".napl/src/rust/drift/src/lib.rs"
+          ]
+        }
+      }
+    },
+    "guard.napl": {
+      "module": "guard",
+      "promptHash": "f90cbfb6b9bd0ebef3d6ce5c300d17ed9c8225cfee6e67e17a07222e1e5c071d",
+      "declaredTargets": [
+        "rust"
+      ],
+      "targets": {
+        "rust": {
+          "promptHashAtGen": "f90cbfb6b9bd0ebef3d6ce5c300d17ed9c8225cfee6e67e17a07222e1e5c071d",
+          "files": [
+            ".napl/src/rust/guard/Cargo.toml",
+            ".napl/src/rust/guard/src/lib.rs"
+          ]
+        }
+      }
+    },
+    "targets.napl": {
+      "module": "targets",
+      "promptHash": "ee1c036d337878f247a878e50bac1f1e2b03efe38054bb967363aee21cbb194e",
+      "declaredTargets": [
+        "rust"
+      ],
+      "targets": {
+        "rust": {
+          "promptHashAtGen": "ee1c036d337878f247a878e50bac1f1e2b03efe38054bb967363aee21cbb194e",
+          "files": [
+            ".napl/src/rust/targets/Cargo.toml",
+            ".napl/src/rust/targets/src/lib.rs"
+          ]
+        }
+      }
+    },
+    "scanner.napl": {
+      "module": "scanner",
+      "promptHash": "2cc1cdc421bebc56913433d93fbd3892c3c7a60802b3045f7a01961e03b4b180",
+      "declaredTargets": [
+        "rust"
+      ],
+      "targets": {
+        "rust": {
+          "promptHashAtGen": "2cc1cdc421bebc56913433d93fbd3892c3c7a60802b3045f7a01961e03b4b180",
+          "files": [
+            ".napl/src/rust/scanner/Cargo.toml",
+            ".napl/src/rust/scanner/src/lib.rs"
+          ]
+        }
+      }
     }
   },
   "files": {
-    ".napl/src/rust/Cargo.toml": {
-      "target": "rust",
-      "hash": "7302381f7961450e37ab09dd41049cd1e08d66c84cd84c3b571eb3f72db41d58",
-      "prompts": [
-        "body_lines.napl"
-      ]
-    },
-    ".napl/src/rust/src/lib.rs": {
-      "target": "rust",
-      "hash": "6953db4bae90a68d73f5722f7ca47b3b3606771cd74b768afa96c0531a0590fb",
-      "prompts": [
-        "body_lines.napl"
-      ]
-    },
     ".napl/src/rust/extensions/Cargo.toml": {
       "target": "rust",
       "hash": "1e5450cfc6f881b6b27bb47aaf68f388c4666df1bae946cf664d60599e874c8a",
@@ -151,6 +265,132 @@
       "hash": "707c356b93434f1a3ccfb24c84e736d45f9d62b7e65c6bc89ad361999dbfdee3",
       "prompts": [
         "text_diff.napl"
+      ]
+    },
+    ".napl/src/rust/body_lines/Cargo.toml": {
+      "target": "rust",
+      "hash": "87760cbe55d962b4b0b139e09e641322f83515f10d3afcf62374f9da3716cb4a",
+      "prompts": [
+        "body_lines.napl"
+      ]
+    },
+    ".napl/src/rust/body_lines/src/lib.rs": {
+      "target": "rust",
+      "hash": "c86e862fb84101f03bdf766d93af963e0c8660c1aceae7019cff861c2db427b2",
+      "prompts": [
+        "body_lines.napl"
+      ]
+    },
+    ".napl/src/rust/schemas_ordered_map/Cargo.toml": {
+      "target": "rust",
+      "hash": "98fadd96d5624c447be9890873322b43a2fb3032ef80fba7730439fe879a3688",
+      "prompts": [
+        "schemas_ordered_map.napl"
+      ]
+    },
+    ".napl/src/rust/schemas_ordered_map/src/lib.rs": {
+      "target": "rust",
+      "hash": "e8d1e86ccd222b4164de126c3d77699f4fba253480fda19f7ff6a3e1a8b0061f",
+      "prompts": [
+        "schemas_ordered_map.napl"
+      ]
+    },
+    ".napl/src/rust/schemas_line_range/Cargo.toml": {
+      "target": "rust",
+      "hash": "2c1699e86b59fffb19909bf31723ff1ccbacffce0da84e1e1542c1a6d6b193c5",
+      "prompts": [
+        "schemas_line_range.napl"
+      ]
+    },
+    ".napl/src/rust/schemas_line_range/src/lib.rs": {
+      "target": "rust",
+      "hash": "fac45be6f26f4a7933383140262a3bade91ee3f126ecc2fdb0afed00b8b869bf",
+      "prompts": [
+        "schemas_line_range.napl"
+      ]
+    },
+    ".napl/src/rust/schemas_ir/Cargo.toml": {
+      "target": "rust",
+      "hash": "ae47654b9b96fdef57c354d75c56bcb0d7c5e39739e21640458c46eddb4fc1c4",
+      "prompts": [
+        "schemas_ir.napl"
+      ]
+    },
+    ".napl/src/rust/schemas_ir/src/lib.rs": {
+      "target": "rust",
+      "hash": "186aa20fc64e075209ee598403a224b62daeab0ebaedf54db1d5499efd5d1bec",
+      "prompts": [
+        "schemas_ir.napl"
+      ]
+    },
+    ".napl/src/rust/schemas_frontmatter/Cargo.toml": {
+      "target": "rust",
+      "hash": "305fdbf4d8c246f91e73e2a228c690cfbcdee2e9e2cf21649456c3fb6ef4ce68",
+      "prompts": [
+        "schemas_frontmatter.napl"
+      ]
+    },
+    ".napl/src/rust/schemas_frontmatter/src/lib.rs": {
+      "target": "rust",
+      "hash": "af76ef7b620450b6b3b1586f06bb80ee977b819d7e351f849031a11cac90e090",
+      "prompts": [
+        "schemas_frontmatter.napl"
+      ]
+    },
+    ".napl/src/rust/drift/Cargo.toml": {
+      "target": "rust",
+      "hash": "e0bf5ae5e5a46a2dcc15a0c5c5bd5d4f313d5c16a0f11f4d907b4ffca017507b",
+      "prompts": [
+        "drift.napl"
+      ]
+    },
+    ".napl/src/rust/drift/src/lib.rs": {
+      "target": "rust",
+      "hash": "ca76b4db3f732a0bb89d62cb839836dc811e65b64f1ff1c3f2e9597c13e9de13",
+      "prompts": [
+        "drift.napl"
+      ]
+    },
+    ".napl/src/rust/guard/Cargo.toml": {
+      "target": "rust",
+      "hash": "c048f679ef562f17572917bd5924c554da6b6fd57c480ebb51af43ab7db339de",
+      "prompts": [
+        "guard.napl"
+      ]
+    },
+    ".napl/src/rust/guard/src/lib.rs": {
+      "target": "rust",
+      "hash": "f5ad3f996759a3531dac5213fd5395eefa6af9b0ec3a84cc4676abf4ef24c013",
+      "prompts": [
+        "guard.napl"
+      ]
+    },
+    ".napl/src/rust/targets/Cargo.toml": {
+      "target": "rust",
+      "hash": "344936b81784a55fc49b63b54cc2f7546bc1e8e84f3c91bb95b42a987ad3e02d",
+      "prompts": [
+        "targets.napl"
+      ]
+    },
+    ".napl/src/rust/targets/src/lib.rs": {
+      "target": "rust",
+      "hash": "21ff9ce3f478019e09e028e0c72c306a4e119d22d99bebe6ceb7caec63ca7594",
+      "prompts": [
+        "targets.napl"
+      ]
+    },
+    ".napl/src/rust/scanner/Cargo.toml": {
+      "target": "rust",
+      "hash": "636d525277d854d86478de5cdc08c30b4336b89c296f0ca7a342ca3546225608",
+      "prompts": [
+        "scanner.napl"
+      ]
+    },
+    ".napl/src/rust/scanner/src/lib.rs": {
+      "target": "rust",
+      "hash": "da8a04a9fdea2c5fef9b2e0b29c6ce815b6072faac88ad942dcb90c623813226",
+      "prompts": [
+        "scanner.napl"
       ]
     }
   }
