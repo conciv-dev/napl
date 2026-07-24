@@ -538,3 +538,134 @@ pure `napl-core` crate now self-hosts, composed on generated siblings by path, w
 no toolchain change and conformance byte-identical. What remains is the stage1
 swap-in (a bounded adapter layer the equivalence gate already specifies) and the
 I/O phases.
+
+## Stage1 swap-in — DONE (the shipping binary now runs generated `napl-core`)
+
+**The shipping `napl` binary now executes the NAPL-generated `napl-core` modules,
+not the hand-written ones**, gated byte-identical against the stage0 binary. The
+hand-written module bodies are deleted; each `napl-core` module is a thin adapter
+over its generated crate. **151 adapter LOC replaced 3,719 LOC of hand-written
+implementation** (the hand-written unit corpora stay in place as the in-crate
+regression net — 181 `napl-core` unit tests now run against the adapters).
+
+### Workspace-membership call
+
+The generated crates were **left as members of the `selfhost/.napl/src/rust/`
+workspace and pulled in as plain cross-workspace path-deps** from
+`napl-core/Cargo.toml` (e.g. `path = "../../../selfhost/.napl/src/rust/blame"`).
+They were **not** added to the `rust/` cargo workspace. This is the cleanest split
+given the campaign's rules:
+
+- `selfhost/` stays byte-untouched — the generated tree keeps its own virtual
+  `[workspace]` manifest, its `0444` locks, and its drift guard; nothing there was
+  edited (verified: `napl status` in `selfhost/` is clean, 23/23 modules).
+- Because the generated crates are dependencies and not workspace members,
+  `cargo clippy --workspace` lints only the three hand-written crates plus the
+  adapters — it does **not** lint the locked generated code (correct: it is not
+  ours to lint).
+- The 14 generated crate names that collide with a `napl-core` top-level module
+  name (`blame`, `body_lines`, `drift`, `extensions`, `guard`, `hash`,
+  `incremental`, `parse_output`, `prompts`, `reverse`, `scanner`, `targets`,
+  `text_diff`, `yaml`) are pulled in under a `gen_*` package alias to avoid the
+  module-vs-extern-crate name clash; the 9 `schemas_*` crates need no alias.
+
+`napl-cli` and `napl-lsp` required **zero edits** — `napl-core`'s public surface
+(the `lib.rs` module tree, every re-exported type, every function signature, and
+the shared `SchemaError`) is preserved exactly. That is the proof this is a true,
+reversible swap.
+
+### Adapter seam catalog
+
+Every divergence the equivalence harness mapped, and how the adapter bridges it:
+
+| Module | Seam | Bridge |
+| --- | --- | --- |
+| `scanner` | generated entry point is `scan`; callers expect `scan_document` | `pub use gen_scanner::scan as scan_document` |
+| `extensions` | generated `CURATED_PROMPT_ALIASES`; callers use `DEFAULT_PROMPT_ALIASES` | re-export under the old name |
+| `extensions` | `prompt_extensions`/`is_prompt_file` take `Option<&[&str]>` (gen) vs `Option<&[String]>` (callers) | wrapper collects `&[String]` → `Vec<&str>` |
+| `extensions` | `machine_extensions` returns `Vec<&'static str>` (gen) vs `Vec<String>` | wrapper maps to owned `String`s |
+| `schemas::attribution` | own `AttributionError` | `map_err` → `SchemaError::Deserialize` |
+| `schemas::ir` | own `IrValidationError` | `map_err` → `SchemaError::Deserialize` |
+| `schemas::ml` | own `MlError` | `map_err` → `SchemaError::Deserialize` |
+| `schemas::lock` | own `LockError` | `map_err` → `SchemaError::Deserialize` |
+| `schemas::map` | parse error is a `String` | `map_err(SchemaError::Deserialize)` |
+| `schemas::frontmatter` | own `FrontmatterError` **and** reworded Display text | per-variant map to the exact `SchemaError` message text the CLI contract pins (see escape-hatch discussion) |
+
+The consumers (`napl-cli/src/error.rs`, `napl-lsp/src/classify.rs`) destructure
+`SchemaError::Deserialize(m) | SchemaError::Validation(m) => m`, using only the
+inner message string, so collapsing all generated schema errors onto
+`SchemaError::Deserialize` is observably identical. The much-advertised
+`Option<u64>` vs `Option<usize>` `body_lines` seam **no longer exists** — the
+re-genned `body_lines` crate already returns `Option<usize>`; that module is a
+straight re-export.
+
+Test-scope-only imports the re-export adapters can't provide (types the original
+module bodies imported and the kept unit tests reach through `use super::*`) are
+re-added under `#[cfg(test)]`: `reverse` (`AttributionEntry`, `LineRange`),
+`schemas::attribution`/`schemas::ml` (`LineRange`), `schemas::lock`
+(`default_prompt_aliases`), and `scanner`'s test-local `pos`/`span` helpers.
+
+### Per-module swap status
+
+**22 of 23 modules run generated code; 1 is on the escape-hatch list.**
+
+Swapped in (generated crate behind the adapter): `blame`, `body_lines`, `drift`,
+`extensions`, `guard`, `hash`, `incremental`, `parse_output`, `prompts`,
+`reverse`, `scanner`, `targets`, `text_diff`, `yaml`, and the schemas
+`attribution`, `frontmatter`, `ir`, `line_range`, `lock`, `map`, `ml`,
+`ordered_map`.
+
+`schemas::frontmatter` is swapped **with an error-message seam bridge** rather
+than escape-hatched, because escape-hatching it would cascade: the generated
+`prompts` crate composes on `schemas_frontmatter::Frontmatter`, so reverting
+`napl-core`'s canonical `Frontmatter` to a hand-written type would create a type
+schism at `build_agent_task`. The bridge maps each `FrontmatterError` variant to
+the hand-written message text (e.g. `InvalidYaml(e)` →
+`"invalid YAML frontmatter: {e}"`) that conformance scenario
+`50-frontmatter-invalid` pins (`napl: invalid YAML frontmatter`).
+
+### Escape-hatch list
+
+- **`schemas::journal`** — the generated `read_journal_str` emits corrupt-line
+  **warning strings** (`"line 2: expected ident …"` / `"line N: journal entry
+  failed validation"`) that differ from the hand-written / CLI-contract format
+  (`"skipping corrupt line 2 (invalid JSON)"`), which conformance scenario
+  `34-journal-corrupt-line` pins byte-for-byte. The equivalence gate only compares
+  `(entries, warnings.len())`, never the warning text, so this divergence lives
+  **outside the adapter spec** — a genuine observable behavioral gap, not a seam.
+  Per the escape-hatch rule the hand-written body was restored; the generated
+  `schemas_journal` crate stays fully equivalence-green (8/8) and drift-clean,
+  simply not wired into the shipping binary. Reconstructing the warning text in the
+  adapter would mean re-parsing and re-classifying each line — reimplementation,
+  not conversion — and `schemas_journal` has no generated dependents, so the
+  escape-hatch is clean and cascades nowhere. Exact failing case: a journal with a
+  non-JSON line 2, expected stdout `journal: skipping corrupt line 2 (invalid
+  JSON)`, generated actual `line 2: expected ident at line 1 column 2`.
+
+### Gate results
+
+1. `cargo test --workspace` — **220 pass, 0 fail** (181 `napl-core` unit +
+   18 `napl-cli` + 16 `napl-lsp` + 5 `cross_check` integration), the hand-written
+   corpora now running against the adapters.
+2. `cargo clippy --workspace --all-targets` — **clean** (adapters only; generated
+   crates are not workspace members and are not linted).
+3. `cargo build --release` — green; the `napl` symlink already targets it.
+4. **Conformance — 40/40 BYTE-IDENTICAL** with the stage0 binary. This is the
+   phase-1 fixpoint gate, met end to end.
+5. `selfhost/` — `napl status` clean, 23/23 modules; the generated tree is
+   byte-untouched.
+6. Equivalence harness — **189/189**, untouched.
+
+Sanity: `napl --version` → `0.1.0`; `napl init` + fresh `napl status` in a temp
+dir behave identically.
+
+### Verdict — phase 1 fixpoint reached
+
+The observable contract of the CLI is reproduced **byte-for-byte by a binary whose
+pure core is generated from prose**, with 22 of 23 `napl-core` modules running
+generated code and a single, honestly-recorded escape-hatch (`schemas::journal`,
+a warning-text divergence the equivalence gate never claimed to cover). The swap is
+mechanical and reversible: `napl-cli`/`napl-lsp` are unedited, the hand-written
+unit corpora ride along as the regression net, and reverting is deleting the
+adapters. The stage1 core is proven; the I/O crates (`cmd_*`, the LSP server) are
+the next frontier.

@@ -1,15 +1,6 @@
-//! SHA-256 content hashing, hex-encoded to match the TS `contentHash`.
+//! Stage1 adapter over the NAPL-generated `hash` crate.
 
-use sha2::{Digest, Sha256};
-
-/// Lowercase hex-encoded SHA-256 of the UTF-8 bytes of `content`, identical to
-/// the TypeScript `createHash('sha256').update(content, 'utf8').digest('hex')`.
-#[must_use]
-pub fn content_hash(content: &str) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(content.as_bytes());
-    hex::encode(hasher.finalize())
-}
+pub use gen_hash::content_hash;
 
 #[cfg(test)]
 mod tests {

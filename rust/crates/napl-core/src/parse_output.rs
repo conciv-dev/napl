@@ -1,21 +1,6 @@
-//! Extraction of fenced YAML from an LLM response, mirroring `extractYaml`.
+//! Stage1 adapter over the NAPL-generated `parse_output` crate.
 
-/// Extract the first fenced code block's contents (```` ```yaml ````/```` ```yml ````/
-/// bare ```` ``` ````), trimmed; otherwise the whole text, trimmed. Mirrors the
-/// regex `/```(?:ya?ml)?[^\n]*\n([\s\S]*?)```/i`.
-#[must_use]
-pub fn extract_yaml(text: &str) -> String {
-    if let Some(fence_start) = text.find("```") {
-        let after_fence = &text[fence_start + 3..];
-        if let Some(nl) = after_fence.find('\n') {
-            let content_start = &after_fence[nl + 1..];
-            if let Some(close) = content_start.find("```") {
-                return content_start[..close].trim().to_string();
-            }
-        }
-    }
-    text.trim().to_string()
-}
+pub use gen_parse_output::extract_yaml;
 
 #[cfg(test)]
 mod tests {

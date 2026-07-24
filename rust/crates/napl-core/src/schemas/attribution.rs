@@ -1,72 +1,24 @@
-//! Attribution schema: prompt-line to file-line mappings.
+//! Stage1 adapter over the NAPL-generated `schemas_attribution` crate. The
+//! generated crate surfaces its own `AttributionError`; the wrappers map it to
+//! the shared `SchemaError` the callers expect.
 
-use serde::Deserialize;
+use super::SchemaError;
 
-use super::line_range::LineRange;
-use super::{require_non_empty, SchemaError};
+pub use schemas_attribution::{entries_at_body_line, Attribution, AttributionEntry};
 
-/// One prompt-lines to file-lines mapping entry.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct AttributionEntry {
-    #[serde(rename = "promptLines")]
-    pub prompt_lines: LineRange,
-    pub file: String,
-    pub lines: LineRange,
-    #[serde(default)]
-    pub note: String,
-}
+#[cfg(test)]
+use super::LineRange;
 
-/// A full attribution document for one module/target pair.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct Attribution {
-    pub module: String,
-    pub target: String,
-    #[serde(default)]
-    pub entries: Vec<AttributionEntry>,
-}
-
-fn validate_entry(entry: &AttributionEntry) -> Result<(), SchemaError> {
-    require_non_empty(&entry.file, "attribution entry file")
-}
-
-/// Validate an attribution document, mirroring `validateAttribution`.
 pub fn validate_attribution(value: serde_json::Value) -> Result<Attribution, SchemaError> {
-    let attribution: Attribution =
-        serde_json::from_value(value).map_err(|e| SchemaError::Deserialize(e.to_string()))?;
-    require_non_empty(&attribution.module, "module")?;
-    require_non_empty(&attribution.target, "target")?;
-    for entry in &attribution.entries {
-        validate_entry(entry)?;
-    }
-    Ok(attribution)
+    schemas_attribution::validate_attribution(value)
+        .map_err(|e| SchemaError::Deserialize(e.to_string()))
 }
 
-/// Parse a list of attribution entries, treating a non-list as empty, mirroring
-/// `parseAttributionEntries`.
 pub fn parse_attribution_entries(
     value: serde_json::Value,
 ) -> Result<Vec<AttributionEntry>, SchemaError> {
-    if !value.is_array() {
-        return Ok(Vec::new());
-    }
-    let entries: Vec<AttributionEntry> =
-        serde_json::from_value(value).map_err(|e| SchemaError::Deserialize(e.to_string()))?;
-    for entry in &entries {
-        validate_entry(entry)?;
-    }
-    Ok(entries)
-}
-
-/// Return every entry whose prompt range contains `body_line`.
-#[must_use]
-pub fn entries_at_body_line(attribution: &Attribution, body_line: u32) -> Vec<&AttributionEntry> {
-    attribution
-        .entries
-        .iter()
-        .filter(|entry| {
-            body_line >= entry.prompt_lines.start && body_line <= entry.prompt_lines.end
-        })
-        .collect()
+    schemas_attribution::parse_attribution_entries(value)
+        .map_err(|e| SchemaError::Deserialize(e.to_string()))
 }
 
 #[cfg(test)]

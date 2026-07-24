@@ -1,65 +1,6 @@
-//! Frontmatter/body line-offset math: mapping absolute document lines to
-//! body-relative 1-based lines and back. Identical to the TS `body-lines`.
+//! Stage1 adapter over the NAPL-generated `body_lines` crate.
 
-fn split_lines(text: &str) -> Vec<String> {
-    text.split('\n')
-        .map(|seg| seg.strip_suffix('\r').unwrap_or(seg).to_string())
-        .collect()
-}
-
-/// The body of a prompt file together with the absolute document line index at
-/// which it starts (0 when there is no frontmatter).
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct PromptBody {
-    pub body_start_line: usize,
-    pub lines: Vec<String>,
-}
-
-/// Port of `promptBodyLines`: locate the body after a `---` delimited
-/// frontmatter block, or treat the whole document as the body.
-#[must_use]
-pub fn prompt_body_lines(raw: &str) -> PromptBody {
-    let lines = split_lines(raw);
-    let has_frontmatter = lines.first().is_some_and(|l| l.trim_end() == "---");
-    if has_frontmatter {
-        for i in 1..lines.len() {
-            if lines[i].trim_end() == "---" {
-                let body_start_line = i + 1;
-                let body = lines[body_start_line..].to_vec();
-                return PromptBody {
-                    body_start_line,
-                    lines: body,
-                };
-            }
-        }
-    }
-    PromptBody {
-        body_start_line: 0,
-        lines,
-    }
-}
-
-/// Map an absolute document line (0-based, matching the TS caller convention)
-/// to a 1-based body line, or `None` when it falls outside the body.
-#[must_use]
-pub fn body_line_for_doc_line(body: &PromptBody, doc_line: i64) -> Option<usize> {
-    let body_line = doc_line - i64::try_from(body.body_start_line).ok()? + 1;
-    if body_line < 1 || body_line > i64::try_from(body.lines.len()).ok()? {
-        return None;
-    }
-    usize::try_from(body_line).ok()
-}
-
-/// Number lines 1-based for the model prompt, mirroring `numberLines`.
-#[must_use]
-pub fn number_lines(lines: &[String]) -> String {
-    lines
-        .iter()
-        .enumerate()
-        .map(|(index, line)| format!("{}: {line}", index + 1))
-        .collect::<Vec<_>>()
-        .join("\n")
-}
+pub use gen_body_lines::{body_line_for_doc_line, number_lines, prompt_body_lines, PromptBody};
 
 #[cfg(test)]
 mod tests {

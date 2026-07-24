@@ -3,6 +3,10 @@
 //! Validation error *messages* intentionally differ from the TypeScript zod
 //! text, but the **acceptance set matches**: every value the zod schemas accept
 //! or reject, these types accept or reject identically.
+//!
+//! Stage1: each submodule is a thin adapter over its NAPL-generated crate. The
+//! generated crates surface their own error enums; the adapters map them to the
+//! shared [`SchemaError`] the callers expect.
 
 mod attribution;
 mod frontmatter;
@@ -47,14 +51,4 @@ pub enum SchemaError {
     /// A value parsed structurally but failed a semantic constraint.
     #[error("validation failed: {0}")]
     Validation(String),
-}
-
-pub(crate) fn require_non_empty(value: &str, field: &str) -> Result<(), SchemaError> {
-    if value.is_empty() {
-        Err(SchemaError::Validation(format!(
-            "{field} must not be empty"
-        )))
-    } else {
-        Ok(())
-    }
 }

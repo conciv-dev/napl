@@ -24,6 +24,27 @@ filesystems, subprocesses, and a JSON-RPC loop; their "corpus" is the conformanc
 suite and the LSP integration tests, not per-function unit vectors. They are a
 **later phase** and are inventoried here only for completeness.
 
+## Stage1 swap-in status (SHIPPING)
+
+Phase 1 is not just self-hosted in the harness — it is **swapped in**: the shipping
+`napl` binary now runs the generated crates. `napl-core`'s hand-written module
+bodies are deleted and replaced by thin adapters over the generated crates
+(cross-workspace path-deps; `selfhost/` untouched). **22 of 23 modules run
+generated code; conformance is 40/40 byte-identical.** Every "done" below is now
+**swapped-in**, with one exception on the escape-hatch list:
+
+- **`schemas::journal` — escape-hatch (hand-written body restored).** Generated
+  `read_journal_str` emits corrupt-line warning text that diverges from what
+  conformance `34-journal-corrupt-line` pins; the equivalence gate only checks
+  `(entries, warnings.len())`, so this is a real observable gap outside the adapter
+  spec. Generated `schemas_journal` stays equivalence-green (8/8), just not wired
+  into the binary. (`schemas::frontmatter` was NOT escape-hatched — its
+  `FrontmatterError` is bridged to the pinned message text in the adapter, because
+  the generated `prompts` crate composes on `schemas_frontmatter::Frontmatter`.)
+
+See `selfhost.md` → "Stage1 swap-in — DONE" for the workspace-membership call, the
+adapter seam catalog, and the full gate numbers.
+
 ## Phase 1 — `napl-core` (pure; the active campaign)
 
 Waves are dependency layers. Wave 1 = pure leaves with **no intra-crate
@@ -82,7 +103,7 @@ generated wave-1/2 crate(s) it builds on.
 
 | Module | LOC | Unit tests | Builds on (generated crate) | Self-host status |
 | --- | ---: | ---: | --- | --- |
-| `schemas::journal` | 228 | 8 | `blame`, `text_diff` | **done** (slice 4, 8/8 — path-deps generated `blame` + `text_diff`) |
+| `schemas::journal` | 228 | 8 | `blame`, `text_diff` | **done** (slice 4, 8/8) — **escape-hatch at stage1 swap-in** (warning-text divergence; hand-written body ships) |
 | `incremental` | 235 | 2 | `schemas_attribution`, `schemas_line_range` | **done** (slice 4, 3/3 — 2 corpus + 1 composition case) |
 | `yaml` | 535 | 9 | `schemas_attribution`, `schemas_ir`, `schemas_ml`, `schemas_line_range` | **done** (slice 4, 9/9 — byte-exact block goldens) |
 | `prompts` | 523 | 7 | `schemas_attribution`, `schemas_frontmatter`, `schemas_line_range`, `targets` | **done** (slice 4, 14/14 — 7 corpus + 7 byte-exact pins) |
@@ -90,9 +111,10 @@ generated wave-1/2 crate(s) it builds on.
 `lib.rs` (23 LOC, 0 tests) is a pure re-export root and is not a self-host unit.
 
 **Phase 1 (`napl-core`) is COMPLETE: 23/23 modules, 189 equivalence cases green,
-escape-hatch list still empty, every module converged on attempt 1.** The pure
-crate now self-hosts end to end; see `selfhost.md` slice 4 for the stage1 swap-in
-plan.
+every module converged on attempt 1** — and now **SWAPPED IN**: the shipping binary
+runs generated code for 22 of 23 modules, conformance 40/40 byte-identical, with
+`schemas::journal` on the stage1 escape-hatch (warning-text divergence). See
+`selfhost.md` → "Stage1 swap-in — DONE".
 
 ## Phase 2 — `napl-cli` (I/O orchestration; later)
 
@@ -153,8 +175,15 @@ Modules that stay hand-written because current stage0 + prompt cannot reproduce
 their behavior under the equivalence gate. A module leaves the list only when its
 prompt drives a passing generation.
 
-- *(empty)* — no `napl-core` module has failed to converge (23/23 on attempt 1;
-  phase 1 complete).
+- **Generation:** *(empty)* — no `napl-core` module has failed to converge (23/23
+  on attempt 1; phase 1 complete).
+- **Stage1 swap-in:** `schemas::journal` — the generated `read_journal_str`'s
+  corrupt-line **warning text** diverges from the format conformance
+  `34-journal-corrupt-line` pins byte-for-byte (the equivalence gate only compares
+  `(entries, warnings.len())`, never the text). Hand-written body restored in the
+  shipping binary; generated `schemas_journal` remains equivalence-green and
+  drift-clean. This is a message-format gap, not a logic gap, and it cascades
+  nowhere (no generated crate depends on `schemas_journal`).
 
 ## Layout note (RESOLVED in slice 2 — Cargo workspace)
 

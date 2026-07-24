@@ -1,126 +1,32 @@
-//! Prompt frontmatter: strict `---` delimiter parsing plus YAML schema.
-
-use serde::Deserialize;
+//! Stage1 adapter over the NAPL-generated `schemas_frontmatter` crate. The
+//! generated `FrontmatterError` is mapped, variant by variant, to the exact
+//! `SchemaError` message text the CLI's observable contract depends on (the
+//! generated crate's own Display strings reword them, which the conformance
+//! corpus pins — this mapping is the error-enum seam bridge).
 
 use super::SchemaError;
 
-fn default_record() -> serde_yaml::Value {
-    serde_yaml::Value::Mapping(serde_yaml::Mapping::new())
-}
+pub use schemas_frontmatter::{Frontmatter, ParsedPrompt, PromptTest};
 
-/// A single prompt test case in the frontmatter.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
-pub struct PromptTest {
-    pub name: String,
-    #[serde(default = "default_record")]
-    pub given: serde_yaml::Value,
-    #[serde(default = "default_record")]
-    pub expect: serde_yaml::Value,
-}
-
-/// The parsed frontmatter block.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
-pub struct Frontmatter {
-    pub module: String,
-    #[serde(default)]
-    pub deps: Vec<String>,
-    #[serde(default)]
-    pub targets: Vec<String>,
-    #[serde(default)]
-    pub tests: Vec<PromptTest>,
-}
-
-/// A prompt file split into its validated frontmatter and body.
-#[derive(Debug, Clone, PartialEq)]
-pub struct ParsedPrompt {
-    pub frontmatter: Frontmatter,
-    pub body: String,
-}
-
-/// Match the strict opening `^---\r?\n` and the closing `\r?\n---\r?\n?`,
-/// returning `(yaml_text, body)`. Mirrors the TS `FRONTMATTER_RE`.
-fn split_delimited(raw: &str) -> Option<(&str, &str)> {
-    let after_open = raw
-        .strip_prefix("---\r\n")
-        .or_else(|| raw.strip_prefix("---\n"))?;
-    let bytes = after_open.as_bytes();
-    let mut i = 0;
-    while i < after_open.len() {
-        if bytes[i] == b'\n' && after_open[i + 1..].starts_with("---") {
-            let sep_start = if i > 0 && bytes[i - 1] == b'\r' {
-                i - 1
-            } else {
-                i
-            };
-            let mut j = i + 1 + 3;
-            if j < after_open.len() && bytes[j] == b'\r' {
-                j += 1;
-            }
-            if j < after_open.len() && bytes[j] == b'\n' {
-                j += 1;
-            }
-            return Some((&after_open[..sep_start], &after_open[j..]));
-        }
-        i += 1;
-    }
-    None
-}
-
-/// Remove a single leading blank line, mirroring `body.replace(/^\s*\n/, '')`.
-fn strip_leading_blank(body: &str) -> String {
-    let ws_end: usize = body
-        .char_indices()
-        .take_while(|(_, c)| c.is_whitespace())
-        .map(|(i, c)| i + c.len_utf8())
-        .last()
-        .unwrap_or(0);
-    let leading = &body[..ws_end];
-    match leading.rfind('\n') {
-        Some(nl) => body[nl + 1..].to_string(),
-        None => body.to_string(),
-    }
-}
-
-fn validate_record(value: &serde_yaml::Value, field: &str) -> Result<(), SchemaError> {
-    if value.is_mapping() {
-        Ok(())
-    } else {
-        Err(SchemaError::Validation(format!(
-            "{field} must be a mapping"
-        )))
-    }
-}
-
-/// Parse a prompt file into frontmatter + body, mirroring `parseFrontmatter`.
 pub fn parse_frontmatter(raw: &str) -> Result<ParsedPrompt, SchemaError> {
-    let Some((yaml_text, body)) = split_delimited(raw) else {
-        return Err(SchemaError::Validation(
+    schemas_frontmatter::parse_frontmatter(raw).map_err(frontmatter_error_to_schema)
+}
+
+fn frontmatter_error_to_schema(error: schemas_frontmatter::FrontmatterError) -> SchemaError {
+    use schemas_frontmatter::FrontmatterError as E;
+    match error {
+        E::MissingFrontmatter => SchemaError::Validation(
             "missing YAML frontmatter: a prompt file must start with a --- delimited block"
                 .to_string(),
-        ));
-    };
-    let value: serde_yaml::Value = serde_yaml::from_str(yaml_text)
-        .map_err(|e| SchemaError::Deserialize(format!("invalid YAML frontmatter: {e}")))?;
-    let value = if value.is_null() {
-        default_record()
-    } else {
-        value
-    };
-    let frontmatter: Frontmatter = serde_yaml::from_value(value)
-        .map_err(|e| SchemaError::Deserialize(format!("invalid frontmatter: {e}")))?;
-    if frontmatter.module.is_empty() {
-        return Err(SchemaError::Validation(
-            "module must not be empty".to_string(),
-        ));
+        ),
+        E::InvalidYaml(inner) => {
+            SchemaError::Deserialize(format!("invalid YAML frontmatter: {inner}"))
+        }
+        E::EmptyModule => SchemaError::Validation("module must not be empty".to_string()),
+        E::InvalidTestField { field, .. } => {
+            SchemaError::Validation(format!("{field} must be a mapping"))
+        }
     }
-    for test in &frontmatter.tests {
-        validate_record(&test.given, "given")?;
-        validate_record(&test.expect, "expect")?;
-    }
-    Ok(ParsedPrompt {
-        frontmatter,
-        body: strip_leading_blank(body),
-    })
 }
 
 #[cfg(test)]

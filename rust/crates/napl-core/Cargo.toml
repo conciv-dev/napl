@@ -9,9 +9,31 @@ rust-version.workspace = true
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_yaml = { workspace = true }
-sha2 = { workspace = true }
-hex = { workspace = true }
 thiserror = { workspace = true }
+
+gen_blame = { package = "blame", path = "../../../selfhost/.napl/src/rust/blame" }
+gen_body_lines = { package = "body_lines", path = "../../../selfhost/.napl/src/rust/body_lines" }
+gen_drift = { package = "drift", path = "../../../selfhost/.napl/src/rust/drift" }
+gen_extensions = { package = "extensions", path = "../../../selfhost/.napl/src/rust/extensions" }
+gen_guard = { package = "guard", path = "../../../selfhost/.napl/src/rust/guard" }
+gen_hash = { package = "hash", path = "../../../selfhost/.napl/src/rust/hash" }
+gen_incremental = { package = "incremental", path = "../../../selfhost/.napl/src/rust/incremental" }
+gen_parse_output = { package = "parse_output", path = "../../../selfhost/.napl/src/rust/parse_output" }
+gen_prompts = { package = "prompts", path = "../../../selfhost/.napl/src/rust/prompts" }
+gen_reverse = { package = "reverse", path = "../../../selfhost/.napl/src/rust/reverse" }
+gen_scanner = { package = "scanner", path = "../../../selfhost/.napl/src/rust/scanner" }
+gen_targets = { package = "targets", path = "../../../selfhost/.napl/src/rust/targets" }
+gen_text_diff = { package = "text_diff", path = "../../../selfhost/.napl/src/rust/text_diff" }
+gen_yaml = { package = "yaml", path = "../../../selfhost/.napl/src/rust/yaml" }
+
+schemas_attribution = { path = "../../../selfhost/.napl/src/rust/schemas_attribution" }
+schemas_frontmatter = { path = "../../../selfhost/.napl/src/rust/schemas_frontmatter" }
+schemas_ir = { path = "../../../selfhost/.napl/src/rust/schemas_ir" }
+schemas_line_range = { path = "../../../selfhost/.napl/src/rust/schemas_line_range" }
+schemas_lock = { path = "../../../selfhost/.napl/src/rust/schemas_lock" }
+schemas_map = { path = "../../../selfhost/.napl/src/rust/schemas_map" }
+schemas_ml = { path = "../../../selfhost/.napl/src/rust/schemas_ml" }
+schemas_ordered_map = { path = "../../../selfhost/.napl/src/rust/schemas_ordered_map" }
 
 [lints]
 workspace = true

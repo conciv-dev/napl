@@ -1,72 +1,12 @@
-//! Intermediate-representation (IR) schema.
+//! Stage1 adapter over the NAPL-generated `schemas_ir` crate. Its
+//! `IrValidationError` is mapped to the shared `SchemaError`.
 
-use serde::Deserialize;
+use super::SchemaError;
 
-use super::{require_non_empty, SchemaError};
+pub use schemas_ir::{Ir, IrFunction, IrTest, IrType};
 
-/// A named IR type.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct IrType {
-    pub name: String,
-    pub description: String,
-}
-
-/// A named IR function.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct IrFunction {
-    pub name: String,
-    pub signature: String,
-    pub behavior: String,
-}
-
-fn default_contract() -> serde_json::Value {
-    serde_json::Value::Object(serde_json::Map::new())
-}
-
-/// An IR test case; `given`/`expect` accept an object or a string.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
-pub struct IrTest {
-    pub name: String,
-    #[serde(default = "default_contract")]
-    pub given: serde_json::Value,
-    #[serde(default = "default_contract")]
-    pub expect: serde_json::Value,
-}
-
-/// The full IR document.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
-pub struct Ir {
-    pub module: String,
-    #[serde(default)]
-    pub deps: Vec<String>,
-    #[serde(default)]
-    pub types: Vec<IrType>,
-    #[serde(default)]
-    pub functions: Vec<IrFunction>,
-    #[serde(default)]
-    pub tests: Vec<IrTest>,
-}
-
-fn validate_contract(value: &serde_json::Value, field: &str) -> Result<(), SchemaError> {
-    if value.is_object() || value.is_string() {
-        Ok(())
-    } else {
-        Err(SchemaError::Validation(format!(
-            "{field} must be an object or a string"
-        )))
-    }
-}
-
-/// Validate an IR document, mirroring `validateIr`.
 pub fn validate_ir(value: serde_json::Value) -> Result<Ir, SchemaError> {
-    let ir: Ir =
-        serde_json::from_value(value).map_err(|e| SchemaError::Deserialize(e.to_string()))?;
-    require_non_empty(&ir.module, "module")?;
-    for test in &ir.tests {
-        validate_contract(&test.given, "given")?;
-        validate_contract(&test.expect, "expect")?;
-    }
-    Ok(ir)
+    schemas_ir::validate_ir(value).map_err(|e| SchemaError::Deserialize(e.to_string()))
 }
 
 #[cfg(test)]

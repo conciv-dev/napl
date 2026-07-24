@@ -1,82 +1,19 @@
-//! Machine-layer (ml/mapl) schema: model annotations keyed to prompt lines.
+//! Stage1 adapter over the NAPL-generated `schemas_ml` crate. Its `MlError` is
+//! mapped to the shared `SchemaError`.
 
-use serde::Deserialize;
+use super::SchemaError;
 
-use super::line_range::LineRange;
-use super::{require_non_empty, SchemaError};
+pub use schemas_ml::{ml_entries_at_body_line, Ml, MlEntry, MlKind};
 
-/// The four annotation kinds.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum MlKind {
-    Ambiguity,
-    Assumption,
-    Note,
-    #[serde(rename = "no-op")]
-    NoOp,
-}
+#[cfg(test)]
+use super::LineRange;
 
-/// One machine-layer annotation entry.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct MlEntry {
-    #[serde(rename = "promptLines")]
-    pub prompt_lines: LineRange,
-    pub kind: MlKind,
-    pub message: String,
-    #[serde(default)]
-    pub reasoning: String,
-    #[serde(default)]
-    pub suggestion: Option<String>,
-}
-
-/// A machine-layer document for one module/target pair.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct Ml {
-    pub module: String,
-    pub target: String,
-    #[serde(default)]
-    pub entries: Vec<MlEntry>,
-}
-
-fn validate_entry(entry: &MlEntry) -> Result<(), SchemaError> {
-    require_non_empty(&entry.message, "ml entry message")
-}
-
-/// Validate a machine-layer document, mirroring `validateMl`.
 pub fn validate_ml(value: serde_json::Value) -> Result<Ml, SchemaError> {
-    let ml: Ml =
-        serde_json::from_value(value).map_err(|e| SchemaError::Deserialize(e.to_string()))?;
-    require_non_empty(&ml.module, "module")?;
-    require_non_empty(&ml.target, "target")?;
-    for entry in &ml.entries {
-        validate_entry(entry)?;
-    }
-    Ok(ml)
+    schemas_ml::validate_ml(value).map_err(|e| SchemaError::Deserialize(e.to_string()))
 }
 
-/// Parse a list of ml entries, treating a non-list as empty, mirroring
-/// `parseMlEntries`.
 pub fn parse_ml_entries(value: serde_json::Value) -> Result<Vec<MlEntry>, SchemaError> {
-    if !value.is_array() {
-        return Ok(Vec::new());
-    }
-    let entries: Vec<MlEntry> =
-        serde_json::from_value(value).map_err(|e| SchemaError::Deserialize(e.to_string()))?;
-    for entry in &entries {
-        validate_entry(entry)?;
-    }
-    Ok(entries)
-}
-
-/// Return every entry whose range covers `body_line`.
-#[must_use]
-pub fn ml_entries_at_body_line(ml: &Ml, body_line: u32) -> Vec<&MlEntry> {
-    ml.entries
-        .iter()
-        .filter(|entry| {
-            body_line >= entry.prompt_lines.start && body_line <= entry.prompt_lines.end
-        })
-        .collect()
+    schemas_ml::parse_ml_entries(value).map_err(|e| SchemaError::Deserialize(e.to_string()))
 }
 
 #[cfg(test)]

@@ -1,73 +1,33 @@
-//! Prompt/machine extension alias logic with codepoint-correct matching.
+//! Stage1 adapter over the NAPL-generated `extensions` crate. The generated
+//! `prompt_extensions`/`is_prompt_file` take `Option<&[&str]>` and
+//! `machine_extensions` returns `&'static str` slices; the wrappers below bridge
+//! those seams back to the hand-written `Option<&[String]>` / `Vec<String>`
+//! surface the callers expect.
 
-/// The canonical prompt file extension.
-pub const PROMPT_EXTENSION: &str = ".napl";
-/// The canonical machine (compiled) file extension.
-pub const MACHINE_EXTENSION: &str = ".mapl";
-/// The emoji machine-file alias.
-pub const MACHINE_ALIAS: &str = ".\u{1F916}";
+pub use gen_extensions::{
+    default_prompt_aliases, is_machine_file, machine_extension_for_prompt,
+    CURATED_PROMPT_ALIASES as DEFAULT_PROMPT_ALIASES, MACHINE_ALIAS, MACHINE_EXTENSION,
+    PROMPT_EXTENSION,
+};
 
-/// The curated single-person emoji prompt aliases.
-pub const DEFAULT_PROMPT_ALIASES: [&str; 6] = [
-    ".\u{1F9D1}",
-    ".\u{1F9D3}",
-    ".\u{1F464}",
-    ".\u{1F468}",
-    ".\u{1F469}",
-    ".\u{1F9D2}",
-];
-
-/// The curated aliases as owned strings.
 #[must_use]
-pub fn default_prompt_aliases() -> Vec<String> {
-    DEFAULT_PROMPT_ALIASES
-        .iter()
-        .map(|s| (*s).to_string())
+pub fn prompt_extensions(aliases: Option<&[String]>) -> Vec<String> {
+    let borrowed: Option<Vec<&str>> = aliases.map(|a| a.iter().map(String::as_str).collect());
+    gen_extensions::prompt_extensions(borrowed.as_deref())
+}
+
+#[must_use]
+pub fn machine_extensions() -> Vec<String> {
+    gen_extensions::machine_extensions()
+        .into_iter()
+        .map(String::from)
         .collect()
 }
 
-/// The recognized prompt extensions: the canonical spelling plus `aliases`
-/// (the curated list when `aliases` is `None`).
-#[must_use]
-pub fn prompt_extensions(aliases: Option<&[String]>) -> Vec<String> {
-    let mut out = vec![PROMPT_EXTENSION.to_string()];
-    match aliases {
-        Some(list) => out.extend(list.iter().cloned()),
-        None => out.extend(default_prompt_aliases()),
-    }
-    out
-}
-
-/// The recognized machine extensions: canonical plus emoji alias.
-#[must_use]
-pub fn machine_extensions() -> Vec<String> {
-    vec![MACHINE_EXTENSION.to_string(), MACHINE_ALIAS.to_string()]
-}
-
-/// Whether `path` is a prompt file, matching any recognized extension by
-/// (codepoint-correct) suffix.
 #[must_use]
 pub fn is_prompt_file(path: &str, aliases: Option<&[String]>) -> bool {
-    prompt_extensions(aliases)
-        .iter()
-        .any(|ext| path.ends_with(ext))
-}
-
-/// Whether `path` is a machine file.
-#[must_use]
-pub fn is_machine_file(path: &str) -> bool {
-    machine_extensions().iter().any(|ext| path.ends_with(ext))
-}
-
-/// The machine extension mirroring a prompt's spelling: a canonical `.napl`
-/// prompt keeps `.mapl`, any other (emoji) prompt gets the emoji alias.
-#[must_use]
-pub fn machine_extension_for_prompt(prompt_path: &str) -> &'static str {
-    if prompt_path.ends_with(PROMPT_EXTENSION) {
-        MACHINE_EXTENSION
-    } else {
-        MACHINE_ALIAS
-    }
+    let borrowed: Option<Vec<&str>> = aliases.map(|a| a.iter().map(String::as_str).collect());
+    gen_extensions::is_prompt_file(path, borrowed.as_deref())
 }
 
 #[cfg(test)]
