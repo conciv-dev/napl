@@ -1,0 +1,9 @@
+[package]
+name = "reconcile_derive"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+drift = { path = "../drift" }
+prompts = { path = "../prompts" }
+text_diff = { path = "../text_diff" }

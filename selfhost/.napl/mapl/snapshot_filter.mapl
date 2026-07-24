@@ -1,0 +1,3 @@
+module: snapshot_filter
+target: rust
+entries: []

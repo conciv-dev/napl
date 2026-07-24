@@ -448,6 +448,70 @@
           ]
         }
       }
+    },
+    "snapshot_filter.napl": {
+      "module": "snapshot_filter",
+      "promptHash": "7f505aa884a76cab7a726d8fff73fa09a2d8d7c9a21a7461dd627191827c8db8",
+      "declaredTargets": [
+        "rust"
+      ],
+      "targets": {
+        "rust": {
+          "promptHashAtGen": "7f505aa884a76cab7a726d8fff73fa09a2d8d7c9a21a7461dd627191827c8db8",
+          "files": [
+            ".napl/src/rust/snapshot_filter/Cargo.toml",
+            ".napl/src/rust/snapshot_filter/src/lib.rs"
+          ]
+        }
+      }
+    },
+    "blame_render.napl": {
+      "module": "blame_render",
+      "promptHash": "24f5a9fb57c836884c5c5b671bc1f45dd69e5a592d15b00de12dfb1e0dbb3615",
+      "declaredTargets": [
+        "rust"
+      ],
+      "targets": {
+        "rust": {
+          "promptHashAtGen": "24f5a9fb57c836884c5c5b671bc1f45dd69e5a592d15b00de12dfb1e0dbb3615",
+          "files": [
+            ".napl/src/rust/blame_render/Cargo.toml",
+            ".napl/src/rust/blame_render/src/lib.rs"
+          ]
+        }
+      }
+    },
+    "watch_filter.napl": {
+      "module": "watch_filter",
+      "promptHash": "0fd7a885b0a99d6c35bd18152b4ba93746068afc1528c8509a3b545908e230ba",
+      "declaredTargets": [
+        "rust"
+      ],
+      "targets": {
+        "rust": {
+          "promptHashAtGen": "0fd7a885b0a99d6c35bd18152b4ba93746068afc1528c8509a3b545908e230ba",
+          "files": [
+            ".napl/src/rust/watch_filter/Cargo.toml",
+            ".napl/src/rust/watch_filter/src/lib.rs"
+          ]
+        }
+      }
+    },
+    "reconcile_derive.napl": {
+      "module": "reconcile_derive",
+      "promptHash": "704b6537cd1d5c203cd89337f18a28682ece8b7bc8d21c3a70afb4bf04415d43",
+      "declaredTargets": [
+        "rust"
+      ],
+      "targets": {
+        "rust": {
+          "promptHashAtGen": "704b6537cd1d5c203cd89337f18a28682ece8b7bc8d21c3a70afb4bf04415d43",
+          "files": [
+            ".napl/src/rust/reconcile_derive/Cargo.toml",
+            ".napl/src/rust/reconcile_derive/src/lib.rs"
+          ]
+        }
+      }
     }
   },
   "files": {
@@ -841,6 +905,62 @@
       "hash": "28144ba2053d71ab1cf583ba92657b500ac8b1e6e6dbd59def533218cdef2ebf",
       "prompts": [
         "snapshot_diff.napl"
+      ]
+    },
+    ".napl/src/rust/snapshot_filter/Cargo.toml": {
+      "target": "rust",
+      "hash": "b6b7f0b62af61a4c34647059ec2ac76acb77219c3868bfd3f51ca6f328aff07b",
+      "prompts": [
+        "snapshot_filter.napl"
+      ]
+    },
+    ".napl/src/rust/snapshot_filter/src/lib.rs": {
+      "target": "rust",
+      "hash": "bfcbaaed1aad17d3d96ad1b956919e47748f1bf9cc0b88ae1518cecafb231fb1",
+      "prompts": [
+        "snapshot_filter.napl"
+      ]
+    },
+    ".napl/src/rust/blame_render/Cargo.toml": {
+      "target": "rust",
+      "hash": "1ac95e40ce5147457a86fb4fd747056eae6b3d6eb619c5bbf6ffb63e6583ae7d",
+      "prompts": [
+        "blame_render.napl"
+      ]
+    },
+    ".napl/src/rust/blame_render/src/lib.rs": {
+      "target": "rust",
+      "hash": "e3cefa0f1d7efa8ef4b09681e39d5150be0ff7ce4cc5be6d4441443ecd6c24f7",
+      "prompts": [
+        "blame_render.napl"
+      ]
+    },
+    ".napl/src/rust/watch_filter/Cargo.toml": {
+      "target": "rust",
+      "hash": "af97bfde25feec193531cfea9619cc31e3a78e208a1caadbe0a3d4c8e572a6d9",
+      "prompts": [
+        "watch_filter.napl"
+      ]
+    },
+    ".napl/src/rust/watch_filter/src/lib.rs": {
+      "target": "rust",
+      "hash": "42bbabb26a13a889ac7714d55db601adc22c540942274be9cda2ca222891a160",
+      "prompts": [
+        "watch_filter.napl"
+      ]
+    },
+    ".napl/src/rust/reconcile_derive/Cargo.toml": {
+      "target": "rust",
+      "hash": "081bec9e3d4e4f1736c82c24c4b3e3121305d7338ae45184aaaba8570a518fae",
+      "prompts": [
+        "reconcile_derive.napl"
+      ]
+    },
+    ".napl/src/rust/reconcile_derive/src/lib.rs": {
+      "target": "rust",
+      "hash": "063e1e437203c23abc27a0d71daf69f43fb509caeb06d13d0d217edee0ebd265",
+      "prompts": [
+        "reconcile_derive.napl"
       ]
     }
   }

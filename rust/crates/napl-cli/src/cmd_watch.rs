@@ -5,6 +5,11 @@
 //! `--once` is the deterministic conformance seam: it runs a single gen pass over
 //! whatever is currently pending (stale) and exits, so a scenario can pin the
 //! full output without racing real filesystem events.
+//!
+//! Stage1: the pure ignore predicate (`is_ignored`) is the NAPL-generated
+//! `watch_filter` crate, re-exported here; this shell keeps the event loop, the
+//! debounce, and the gen dispatch. The unit corpus below rides along as the
+//! regression net.
 
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
@@ -21,6 +26,8 @@ use crate::error::{CliError, CliResult};
 use crate::paths::{rel_to, resolve_paths};
 use crate::state::load_prompt_aliases;
 
+use watch_filter::is_ignored;
+
 /// Arguments for the watch command.
 pub struct WatchArgs<'a> {
     /// The target language.
@@ -31,15 +38,6 @@ pub struct WatchArgs<'a> {
     pub debounce: u64,
     /// Process the currently-pending changes once, then exit (deterministic).
     pub once: bool,
-}
-
-const IGNORED_DIRS: [&str; 3] = ["node_modules", ".napl", ".git"];
-
-fn is_ignored(path: &Path, root: &Path) -> bool {
-    let rel = path.strip_prefix(root).unwrap_or(path);
-    rel.components().any(|component| {
-        IGNORED_DIRS.contains(&component.as_os_str().to_string_lossy().as_ref())
-    })
 }
 
 fn gen_once(root: &Path, args: &WatchArgs) -> CliResult<i32> {
@@ -168,5 +166,26 @@ fn run_for_changed(root: &Path, args: &WatchArgs, changed: &BTreeSet<PathBuf>) {
         if let Err(error) = result {
             eprintln!("napl: {error}");
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ignores_paths_under_toolchain_and_vcs_dirs() {
+        let root = Path::new("/proj");
+        assert!(is_ignored(&root.join("node_modules/dep.js"), root));
+        assert!(is_ignored(&root.join(".napl/src/rust/x.rs"), root));
+        assert!(is_ignored(&root.join(".git/HEAD"), root));
+        assert!(is_ignored(&root.join("src/a/.napl/b"), root));
+    }
+
+    #[test]
+    fn keeps_ordinary_prompt_paths() {
+        let root = Path::new("/proj");
+        assert!(!is_ignored(&root.join("examples/greeting.napl"), root));
+        assert!(!is_ignored(&root.join("src/lib.rs"), root));
     }
 }

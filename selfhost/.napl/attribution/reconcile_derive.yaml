@@ -1,0 +1,139 @@
+module: reconcile_derive
+target: rust
+entries:
+  - promptLines:
+      - 39
+      - 39
+    file: reconcile_derive/src/lib.rs
+    lines:
+      - 15
+      - 17
+    note: editable_drifted signature and body
+  - promptLines:
+      - 41
+      - 45
+    file: reconcile_derive/src/lib.rs
+    lines:
+      - 9
+      - 11
+    note: "editability predicate: Edited + current is_some"
+  - promptLines:
+      - 41
+      - 47
+    file: reconcile_derive/src/lib.rs
+    lines:
+      - 15
+      - 17
+    note: filter drifted files preserving order
+  - promptLines:
+      - 46
+      - 47
+    file: reconcile_derive/src/lib.rs
+    lines:
+      - 62
+      - 76
+    note: "test: editable_drifted keeps edited-with-current in order"
+  - promptLines:
+      - 43
+      - 45
+    file: reconcile_derive/src/lib.rs
+    lines:
+      - 78
+      - 83
+    note: "test: empty when none qualify"
+  - promptLines:
+      - 49
+      - 49
+    file: reconcile_derive/src/lib.rs
+    lines:
+      - 20
+      - 20
+    note: build_reconcile_files signature
+  - promptLines:
+      - 51
+      - 52
+    file: reconcile_derive/src/lib.rs
+    lines:
+      - 21
+      - 23
+    note: reuses editable_drifted for same eligibility/order
+  - promptLines:
+      - 54
+      - 54
+    file: reconcile_derive/src/lib.rs
+    lines:
+      - 24
+      - 24
+    note: file field copied verbatim
+  - promptLines:
+      - 55
+      - 58
+    file: reconcile_derive/src/lib.rs
+    lines:
+      - 25
+      - 28
+    note: "diff: recorded diff or fallback unified_diff of current"
+  - promptLines:
+      - 60
+      - 62
+    file: reconcile_derive/src/lib.rs
+    lines:
+      - 86
+      - 94
+    note: "test: recorded diff used verbatim"
+  - promptLines:
+      - 62
+      - 63
+    file: reconcile_derive/src/lib.rs
+    lines:
+      - 96
+      - 104
+    note: "test: computed diff when missing"
+  - promptLines:
+      - 63
+      - 65
+    file: reconcile_derive/src/lib.rs
+    lines:
+      - 107
+      - 111
+    note: "test: skips missing/contentless files, empty vector"
+  - promptLines:
+      - 51
+      - 52
+    file: reconcile_derive/src/lib.rs
+    lines:
+      - 113
+      - 127
+    note: "test: build_reconcile_files preserves order"
+  - promptLines:
+      - 25
+      - 30
+    file: reconcile_derive/src/lib.rs
+    lines:
+      - 5
+      - 5
+    note: import drift's DriftReason and DriftedFile
+  - promptLines:
+      - 31
+      - 32
+    file: reconcile_derive/src/lib.rs
+    lines:
+      - 6
+      - 6
+    note: import prompts' ReconcileFile
+  - promptLines:
+      - 33
+      - 34
+    file: reconcile_derive/src/lib.rs
+    lines:
+      - 7
+      - 7
+    note: import text_diff's unified_diff
+  - promptLines:
+      - 1
+      - 8
+    file: reconcile_derive/src/lib.rs
+    lines:
+      - 1
+      - 3
+    note: "module doc: pure derivation core description"

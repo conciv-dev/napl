@@ -2,11 +2,12 @@
 //! `snapshot.ts`.
 //!
 //! Stage1: the pure snapshot comparison (`diff_snapshots`) is the NAPL-generated
-//! `snapshot_diff` crate, re-exported here; this shell keeps the filesystem walk
-//! and the exclusion filter. The unit corpus below rides along as the regression
-//! net.
+//! `snapshot_diff` crate and the pure exclusion filter (`SnapshotFilter`,
+//! `make_filter`) is the NAPL-generated `snapshot_filter` crate, both re-exported
+//! here; this shell keeps the filesystem walk. The unit corpus below rides along
+//! as the regression net.
 
-use std::collections::{BTreeMap, HashSet};
+use std::collections::BTreeMap;
 use std::path::Path;
 
 use napl_core::hash::content_hash;
@@ -14,41 +15,7 @@ use napl_core::hash::content_hash;
 use crate::error::CliResult;
 
 pub use snapshot_diff::diff_snapshots;
-
-/// Which entries a snapshot skips.
-#[allow(clippy::struct_field_names)]
-pub struct SnapshotFilter {
-    exclude_dirs: HashSet<String>,
-    exclude_files: HashSet<String>,
-    exclude_root_files: HashSet<String>,
-    exclude_suffixes: Vec<String>,
-}
-
-/// Build a snapshot filter, mirroring `makeFilter`. `exclude_root_files` are
-/// dropped only at the walked tree's root (used for toolchain-owned root
-/// manifests whose same-named per-module siblings stay attributed).
-#[must_use]
-pub fn make_filter(
-    exclude_dirs: &[String],
-    exclude_files: &[String],
-    exclude_root_files: &[String],
-    exclude_suffixes: &[String],
-) -> SnapshotFilter {
-    SnapshotFilter {
-        exclude_dirs: exclude_dirs.iter().cloned().collect(),
-        exclude_files: exclude_files.iter().cloned().collect(),
-        exclude_root_files: exclude_root_files.iter().cloned().collect(),
-        exclude_suffixes: exclude_suffixes.to_vec(),
-    }
-}
-
-impl SnapshotFilter {
-    fn is_excluded_file(&self, name: &str, at_root: bool) -> bool {
-        self.exclude_files.contains(name)
-            || (at_root && self.exclude_root_files.contains(name))
-            || self.exclude_suffixes.iter().any(|s| name.ends_with(s))
-    }
-}
+pub use snapshot_filter::{make_filter, SnapshotFilter};
 
 fn walk(
     current: &Path,
@@ -66,7 +33,7 @@ fn walk(
         let full = entry.path();
         let file_type = entry.file_type()?;
         if file_type.is_dir() {
-            if filter.exclude_dirs.contains(&name) {
+            if filter.is_excluded_dir(&name) {
                 continue;
             }
             walk(&full, filter, with_content, false, out)?;
@@ -120,6 +87,26 @@ mod tests {
             diff_snapshots(&before, &after),
             vec!["/b".to_string(), "/c".to_string()]
         );
+    }
+
+    #[test]
+    fn filter_predicate_decides_dirs_files_roots_and_suffixes() {
+        let filter = make_filter(
+            &["node_modules".to_string(), ".git".to_string()],
+            &["AGENTS.md".to_string()],
+            &["Cargo.toml".to_string()],
+            &[".d.ts".to_string(), ".lock".to_string()],
+        );
+        assert!(filter.is_excluded_dir("node_modules"));
+        assert!(filter.is_excluded_dir(".git"));
+        assert!(!filter.is_excluded_dir("src"));
+        assert!(filter.is_excluded_file("AGENTS.md", false));
+        assert!(filter.is_excluded_file("AGENTS.md", true));
+        assert!(filter.is_excluded_file("types.d.ts", false));
+        assert!(filter.is_excluded_file("Cargo.lock", true));
+        assert!(!filter.is_excluded_file("keep.ts", false));
+        assert!(filter.is_excluded_file("Cargo.toml", true));
+        assert!(!filter.is_excluded_file("Cargo.toml", false));
     }
 
     #[test]

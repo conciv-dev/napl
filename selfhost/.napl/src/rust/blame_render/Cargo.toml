@@ -1,0 +1,8 @@
+[package]
+name = "blame_render"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+blame = { path = "../blame" }
+schemas_journal = { path = "../schemas_journal" }

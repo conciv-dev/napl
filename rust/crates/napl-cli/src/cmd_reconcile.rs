@@ -3,16 +3,23 @@
 //! amends the prompt so a future regeneration reproduces the edited behavior,
 //! then accepts the edited source as the new baseline, journals a reconcile
 //! entry, and clears the drift (leaving the module stale for the next gen).
+//!
+//! Stage1: the pure derivation slice (`editable_drifted`, `build_reconcile_files`)
+//! is the NAPL-generated `reconcile_derive` crate, re-exported here; this shell
+//! keeps the drift detection, the agent run, and the journal/map writes. The unit
+//! corpus below rides along as the regression net.
 
 use std::path::Path;
 
-use napl_core::drift::{DriftReason, DriftedFile, ModuleDrift};
+use napl_core::drift::ModuleDrift;
 use napl_core::hash::content_hash;
 use napl_core::incremental::diff_body_lines;
-use napl_core::prompts::{build_reconcile_task, ReconcileFile};
+use napl_core::prompts::build_reconcile_task;
 use napl_core::schemas::{parse_frontmatter, JournalEntry, JournalFile, JournalMode, NaplMap};
 use napl_core::targets::get_adapter;
 use napl_core::text_diff::unified_diff;
+
+use reconcile_derive::{build_reconcile_files, editable_drifted};
 
 use crate::clock::now;
 use crate::driftdetect::detect_gen_drift;
@@ -106,11 +113,7 @@ fn run_reconcile_locked(
     let mut reconciled_files = 0;
 
     for drift in drifts {
-        let editable: Vec<&DriftedFile> = drift
-            .files
-            .iter()
-            .filter(|f| f.reason == DriftReason::Edited && f.current.is_some())
-            .collect();
+        let editable = editable_drifted(&drift.files);
         let missing = drift.files.len() - editable.len();
         if missing > 0 {
             println!(
@@ -133,16 +136,7 @@ fn run_reconcile_locked(
         let before_raw = std::fs::read_to_string(&prompt_abs)?;
         let before_body = parse_frontmatter(&before_raw)?.body;
 
-        let reconcile_files: Vec<ReconcileFile> = editable
-            .iter()
-            .map(|f| ReconcileFile {
-                file: f.file.clone(),
-                diff: f
-                    .diff
-                    .clone()
-                    .unwrap_or_else(|| unified_diff("", f.current.as_deref().unwrap_or(""))),
-            })
-            .collect();
+        let reconcile_files = build_reconcile_files(&drift.files);
         let task = build_reconcile_task(
             &drift.module,
             &drift.prompt_file,
@@ -215,4 +209,61 @@ fn run_reconcile_locked(
         modules: reconciled_modules,
         files: reconciled_files,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use napl_core::drift::{DriftReason, DriftedFile};
+
+    fn drifted(file: &str, reason: DriftReason, current: Option<&str>, diff: Option<&str>) -> DriftedFile {
+        DriftedFile {
+            file: file.to_string(),
+            reason,
+            expected_hash: None,
+            actual_hash: None,
+            baseline: None,
+            current: current.map(str::to_string),
+            diff: diff.map(str::to_string),
+        }
+    }
+
+    #[test]
+    fn editable_drifted_keeps_only_edited_files_with_current_content() {
+        let files = vec![
+            drifted("a.ts", DriftReason::Edited, Some("a"), None),
+            drifted("b.ts", DriftReason::Missing, None, None),
+            drifted("c.ts", DriftReason::Edited, None, None),
+            drifted("d.ts", DriftReason::Edited, Some("d"), None),
+        ];
+        let editable = editable_drifted(&files);
+        let names: Vec<&str> = editable.iter().map(|f| f.file.as_str()).collect();
+        assert_eq!(names, vec!["a.ts", "d.ts"]);
+    }
+
+    #[test]
+    fn build_reconcile_files_uses_recorded_diff_when_present() {
+        let files = vec![drifted("a.ts", DriftReason::Edited, Some("hand edit"), Some("PRERECORDED DIFF"))];
+        let built = build_reconcile_files(&files);
+        assert_eq!(built.len(), 1);
+        assert_eq!(built[0].file, "a.ts");
+        assert_eq!(built[0].diff, "PRERECORDED DIFF");
+    }
+
+    #[test]
+    fn build_reconcile_files_falls_back_to_added_from_empty_diff() {
+        let files = vec![drifted("a.ts", DriftReason::Edited, Some("new content"), None)];
+        let built = build_reconcile_files(&files);
+        assert_eq!(built.len(), 1);
+        assert_eq!(built[0].diff, unified_diff("", "new content"));
+    }
+
+    #[test]
+    fn build_reconcile_files_skips_deleted_and_contentless_files() {
+        let files = vec![
+            drifted("gone.ts", DriftReason::Missing, None, None),
+            drifted("empty.ts", DriftReason::Edited, None, None),
+        ];
+        assert!(build_reconcile_files(&files).is_empty());
+    }
 }

@@ -1,0 +1,16 @@
+module: reconcile_derive
+target: rust
+entries:
+  - promptLines:
+      - 27
+      - 30
+    kind: assumption
+    message: DriftedFile has more fields than the prompt lists
+    reasoning: Prompt only mentions file, reason, current, diff fields on DriftedFile. Agent's test helpers reference additional fields (expected_hash, actual_hash, baseline) presumably required by the real `drift` crate struct. Assumed these exist and default to None for test fixtures rather than being told the full field list.
+    suggestion: List all public fields of DriftedFile, not just the ones this module uses.
+  - promptLines:
+      - 12
+      - 17
+    kind: note
+    message: Cargo.toml contents not shown in change log
+    reasoning: Prompt requires reconcile_derive/Cargo.toml with path deps on drift, prompts, text_diff, and passing `cargo test` from workspace root. Only lib.rs changes were listed; Cargo.toml creation is implied by the agent's final message claiming path deps were added and tests pass, but not verifiable from the given diff.

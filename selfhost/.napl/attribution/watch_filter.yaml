@@ -1,0 +1,115 @@
+module: watch_filter
+target: rust
+entries:
+  - promptLines:
+      - 3
+      - 8
+    file: watch_filter/src/lib.rs
+    lines:
+      - 1
+      - 3
+    note: module intent/header, pure predicate, no I/O deps
+  - promptLines:
+      - 12
+      - 17
+    file: watch_filter/src/lib.rs
+    lines:
+      - 1
+      - 1
+    note: workspace member crate location marker (generated-file banner)
+  - promptLines:
+      - 21
+      - 25
+    file: watch_filter/src/lib.rs
+    lines:
+      - 5
+      - 6
+    note: public IGNORED_DIRS constant, exact order
+  - promptLines:
+      - 27
+      - 28
+    file: watch_filter/src/lib.rs
+    lines:
+      - 8
+      - 10
+    note: is_ignored function signature and doc comment
+  - promptLines:
+      - 29
+      - 30
+    file: watch_filter/src/lib.rs
+    lines:
+      - 11
+      - 11
+    note: strip root prefix, fallback to unchanged path
+  - promptLines:
+      - 30
+      - 32
+    file: watch_filter/src/lib.rs
+    lines:
+      - 12
+      - 18
+    note: check any component matches ignored dir names as strings
+  - promptLines:
+      - 36
+      - 38
+    file: watch_filter/src/lib.rs
+    lines:
+      - 30
+      - 32
+    note: node_modules component ignored test
+  - promptLines:
+      - 36
+      - 39
+    file: watch_filter/src/lib.rs
+    lines:
+      - 34
+      - 37
+    note: .napl component ignored test
+  - promptLines:
+      - 36
+      - 40
+    file: watch_filter/src/lib.rs
+    lines:
+      - 39
+      - 42
+    note: .git component ignored test
+  - promptLines:
+      - 41
+      - 42
+    file: watch_filter/src/lib.rs
+    lines:
+      - 44
+      - 47
+    note: nested ignored dir at any depth test
+  - promptLines:
+      - 43
+      - 44
+    file: watch_filter/src/lib.rs
+    lines:
+      - 49
+      - 52
+    note: .napl file extension not a directory match test
+  - promptLines:
+      - 45
+      - 45
+    file: watch_filter/src/lib.rs
+    lines:
+      - 54
+      - 57
+    note: plain source file not ignored test
+  - promptLines:
+      - 29
+      - 30
+    file: watch_filter/src/lib.rs
+    lines:
+      - 59
+      - 63
+    note: path not under root used unchanged test
+  - promptLines:
+      - 21
+      - 22
+    file: watch_filter/src/lib.rs
+    lines:
+      - 65
+      - 68
+    note: constant order assertion test

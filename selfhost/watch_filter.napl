@@ -1,0 +1,67 @@
+---
+module: watch_filter
+deps: []
+targets: [rust]
+tests:
+  - name: paths under toolchain or vcs directories are ignored at any depth
+    given:
+      root: "/proj"
+      paths:
+        - "/proj/node_modules/dep.js"
+        - "/proj/.napl/src/rust/x.rs"
+        - "/proj/.git/HEAD"
+        - "/proj/src/a/.napl/b"
+    expect: { ignored: [true, true, true, true] }
+  - name: ordinary prompt and source paths are kept
+    given:
+      root: "/proj"
+      paths:
+        - "/proj/examples/greeting.napl"
+        - "/proj/src/lib.rs"
+    expect: { ignored: [false, false] }
+---
+# The watch ignore filter
+
+This module is the **pure** path-decision core of the CLI's watch command: it
+decides whether a filesystem event on a given path should be ignored because the
+path lives inside a toolchain-owned or version-control directory. It is pure — no
+filesystem access, no dependencies on other project modules. The I/O shell
+receives real filesystem events and consults this predicate before deciding
+whether a changed path is a prompt worth recompiling.
+
+## Where this code lives
+
+The working directory is a Cargo workspace whose root manifest is written and
+owned by the toolchain — leave it alone. Create this module as its own member
+crate in a subdirectory named `watch_filter/`: `watch_filter/Cargo.toml`
+(package name `watch_filter`) and `watch_filter/src/lib.rs`. Touch nothing
+outside `watch_filter/`. Ensure `cargo test` passes from the workspace root
+before finishing.
+
+## The ignored directory names
+
+Expose a public constant array of the directory names that are always ignored,
+in exactly this order: `node_modules`, `.napl`, `.git`. A path is ignored when
+**any** path component (relative to the project root) exactly matches one of
+these names — so an ignored directory anywhere along the path, at any depth,
+causes the whole path to be ignored.
+
+## `is_ignored(path: &std::path::Path, root: &std::path::Path) -> bool`
+
+Compute the path of `path` relative to `root` by stripping the `root` prefix; if
+`path` does not start with `root`, use `path` unchanged. Then return `true` when
+any component of that (possibly relative) path exactly equals one of the ignored
+directory names, and `false` otherwise. Compare component names as strings.
+
+### Worked decisions
+
+With `root = /proj`:
+
+- `/proj/node_modules/dep.js` → `true` (the `node_modules` component matches).
+- `/proj/.napl/src/rust/x.rs` → `true` (`.napl` matches).
+- `/proj/.git/HEAD` → `true` (`.git` matches).
+- `/proj/src/a/.napl/b` → `true` (a nested `.napl` matches — depth does not
+  matter).
+- `/proj/examples/greeting.napl` → `false` (no component is an ignored directory;
+  the `.napl` **file extension** is not a `.napl` directory component).
+- `/proj/src/lib.rs` → `false`.

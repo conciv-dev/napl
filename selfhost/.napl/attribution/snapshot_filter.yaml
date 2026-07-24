@@ -1,0 +1,99 @@
+module: snapshot_filter
+target: rust
+entries:
+  - promptLines:
+      - 20
+      - 34
+    file: snapshot_filter/src/lib.rs
+    lines:
+      - 5
+      - 12
+    note: SnapshotFilter struct with four rule sets
+  - promptLines:
+      - 36
+      - 40
+    file: snapshot_filter/src/lib.rs
+    lines:
+      - 14
+      - 27
+    note: make_filter builds struct from four lists
+  - promptLines:
+      - 42
+      - 46
+    file: snapshot_filter/src/lib.rs
+    lines:
+      - 30
+      - 33
+    note: is_excluded_dir exact-match check
+  - promptLines:
+      - 48
+      - 58
+    file: snapshot_filter/src/lib.rs
+    lines:
+      - 35
+      - 41
+    note: is_excluded_file plain/root/suffix rule logic
+  - promptLines:
+      - 65
+      - 66
+    file: snapshot_filter/src/lib.rs
+    lines:
+      - 61
+      - 79
+    note: dir exact match tests, incl. non-match/no suffix-prefix
+  - promptLines:
+      - 67
+      - 68
+    file: snapshot_filter/src/lib.rs
+    lines:
+      - 81
+      - 86
+    note: plain file rule test regardless of depth
+  - promptLines:
+      - 69
+      - 69
+    file: snapshot_filter/src/lib.rs
+    lines:
+      - 88
+      - 93
+    note: suffix rule test
+  - promptLines:
+      - 70
+      - 70
+    file: snapshot_filter/src/lib.rs
+    lines:
+      - 95
+      - 99
+    note: root-only rule applies at root test
+  - promptLines:
+      - 71
+      - 72
+    file: snapshot_filter/src/lib.rs
+    lines:
+      - 101
+      - 105
+    note: root-only rule ignored below root test
+  - promptLines:
+      - 73
+      - 73
+    file: snapshot_filter/src/lib.rs
+    lines:
+      - 107
+      - 112
+    note: no matching rule test
+  - promptLines:
+      - 62
+      - 63
+    file: snapshot_filter/src/lib.rs
+    lines:
+      - 48
+      - 59
+    note: worked_filter test fixture matching worked-decisions example
+  - promptLines:
+      - 33
+      - 33
+    file: snapshot_filter/src/lib.rs
+    lines:
+      - 3
+      - 11
+    note: internal repr uses HashSet for names, Vec for suffixes

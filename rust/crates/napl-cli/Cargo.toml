@@ -25,6 +25,10 @@ paths_core = { path = "../../../selfhost/.napl/src/rust/paths_core" }
 statusclass_render = { path = "../../../selfhost/.napl/src/rust/statusclass_render" }
 driftdetect_replay = { path = "../../../selfhost/.napl/src/rust/driftdetect_replay" }
 snapshot_diff = { path = "../../../selfhost/.napl/src/rust/snapshot_diff" }
+snapshot_filter = { path = "../../../selfhost/.napl/src/rust/snapshot_filter" }
+blame_render = { path = "../../../selfhost/.napl/src/rust/blame_render" }
+watch_filter = { path = "../../../selfhost/.napl/src/rust/watch_filter" }
+reconcile_derive = { path = "../../../selfhost/.napl/src/rust/reconcile_derive" }
 
 [lints]
 workspace = true

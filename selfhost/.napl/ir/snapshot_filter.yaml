@@ -1,0 +1,43 @@
+module: snapshot_filter
+deps: []
+types:
+  - name: SnapshotFilter
+    description: "Pure exclusion-predicate holder for a snapshot walk. Holds four independent rule sets: excluded directory names, excluded file names (anywhere), excluded root-only file names (only at tree root), and excluded file-name suffixes (anywhere). No filesystem access; answers only yes/no membership questions.\n"
+functions:
+  - name: make_filter
+    signature: "make_filter(exclude_dirs: [string], exclude_files: [string], exclude_root_files: [string], exclude_suffixes: [string]) -> SnapshotFilter"
+    behavior: "Builds a SnapshotFilter from the four rule lists, in that exact order: excluded dirs, excluded files, excluded root-only files, excluded suffixes. Copies entries; no I/O, no validation, no dedup requirement (duplicates behave identically to unique entries). Empty lists produce a filter that excludes nothing.\n"
+  - name: SnapshotFilter::is_excluded_dir
+    signature: "is_excluded_dir(self, name: string) -> bool"
+    behavior: "Returns true iff name exactly matches one of the filter's excluded directory names. Exact whole-name match only — no suffix/prefix/substring matching.\n"
+  - name: SnapshotFilter::is_excluded_file
+    signature: "is_excluded_file(self, name: string, at_root: bool) -> bool"
+    behavior: "Returns true iff any of: (1) name exactly matches an excluded file name, (2) at_root is true and name exactly matches an excluded root-only file name, (3) name ends with one of the excluded suffixes. When at_root is false, rule (2) is ignored entirely; rules (1) and (3) apply regardless of at_root. Returns false only when none of the applicable rules match.\n"
+tests:
+  - name: dir_exact_match_excluded
+    given: filter with exclude_dirs=[node_modules, .git]; query is_excluded_dir("node_modules") and is_excluded_dir(".git")
+    expect: both return true
+  - name: dir_non_match_not_excluded
+    given: same filter; is_excluded_dir("src")
+    expect: "false"
+  - name: dir_no_suffix_or_prefix_logic
+    given: same filter; is_excluded_dir("node_modules_extra") and is_excluded_dir("my_node_modules")
+    expect: both return false
+  - name: plain_file_rule_excluded_regardless_of_depth
+    given: filter with exclude_files=[AGENTS.md]; is_excluded_file("AGENTS.md", false) and is_excluded_file("AGENTS.md", true)
+    expect: both return true
+  - name: suffix_rule_excluded_anywhere
+    given: filter with exclude_suffixes=[.d.ts]; is_excluded_file("types.d.ts", false) and is_excluded_file("types.d.ts", true)
+    expect: both return true
+  - name: root_only_rule_applies_at_root
+    given: filter with exclude_root_files=[Cargo.toml]; is_excluded_file("Cargo.toml", true)
+    expect: "true"
+  - name: root_only_rule_ignored_below_root
+    given: same filter; is_excluded_file("Cargo.toml", false)
+    expect: "false"
+  - name: no_matching_rule_not_excluded
+    given: filter with above rules; is_excluded_file("keep.ts", false) and is_excluded_file("keep.ts", true)
+    expect: both return false
+  - name: empty_rules_exclude_nothing
+    given: filter built from four empty lists; is_excluded_dir("anything"), is_excluded_file("anything", true), is_excluded_file("anything", false)
+    expect: all return false

@@ -777,3 +777,104 @@ shells, conformance byte-identical, one of them composing on generated phase-1
 crates. What remains in phase 2 is more pure-core extraction (batch 2+) and,
 ultimately, the conformance-gated `cmd_gen` fixpoint — the generator regenerating
 itself.
+
+## Phase 2 — batch 2 (`napl-cli` derivation/render slices)
+
+Batch 2 continues shrinking `napl-cli`'s hand-written surface: four more pure
+cores extracted, generated from prose, and swapped in behind their I/O shells,
+each converged on **attempt 1 of 3**. New totals: **32/32 generated modules, 214
+equivalence cases green, conformance 40/40 byte-identical, escape-hatch list
+empty.**
+
+| Generated crate | Replaces (napl-cli pure slice) | Deps | Equivalence |
+| --- | --- | --- | --- |
+| `snapshot_filter` | `snapshot::{SnapshotFilter, make_filter, is_excluded_dir, is_excluded_file}` | — | 1/1 |
+| `blame_render` | `cmd_blame::{mode_str, format_blame_row, why_line, render_blame_gen}` | `blame`, `schemas_journal` | 7/7 |
+| `watch_filter` | `cmd_watch::{is_ignored, IGNORED_DIRS}` | — | 2/2 |
+| `reconcile_derive` | `cmd_reconcile::{editable_drifted, build_reconcile_files}` | `drift`, `prompts`, `text_diff` | 4/4 |
+
+### Corpus-first + extraction-first — the new discipline vs. batch 1
+
+Batch 1's five slices were already cleanly separable functions with existing unit
+tests, so each swap was a bare re-export. Batch 2 was harder: three of the four
+modules had **no** unit tests and their pure logic was inlined in an I/O function.
+Each therefore went through the full campaign discipline:
+
+- **`snapshot_filter`** — `SnapshotFilter`/`make_filter` were pure but only tested
+  indirectly through the fs walk. A **direct** filter unit test
+  (`filter_predicate_decides_dirs_files_roots_and_suffixes`) was added first, and
+  the private `is_excluded_file` was made `pub` alongside a new `is_excluded_dir`
+  (the walk now calls `filter.is_excluded_dir(name)` instead of reaching into the
+  field). Conformance stayed byte-identical, then the crate genned and swapped.
+- **`blame_render`** — `cmd_blame` had no tests and its single-gen summary was
+  printed by an inline `blame_gen` that interleaved `println!`s. It was refactored
+  into a pure `render_blame_gen(entries, gen) -> BlameGenRender { text, exit_code }`
+  that returns the exact multi-line block as one joined string (the shell prints it
+  with a single `println!`, byte-identical to the old line-by-line printing), plus a
+  7-case corpus over `mode_str`/`format_blame_row`/`why_line`/`render_blame_gen`. It
+  composes on generated `blame` (`BlameLine`, `first_prompt_diff_line`) and
+  `schemas_journal` (`JournalEntry`, `JournalMode`) by path.
+- **`watch_filter`** — extracted the `is_ignored` path predicate and its
+  `IGNORED_DIRS` constant with a 2-case corpus (toolchain/VCS dirs ignored at any
+  depth; ordinary prompt paths kept — the `.napl` file **extension** is not a
+  `.napl` directory component).
+- **`reconcile_derive`** — extracted the two derivations inlined in the reconcile
+  loop: `editable_drifted` (keep only hand-edited files that still have on-disk
+  content, in order) and `build_reconcile_files` (one `ReconcileFile` per editable
+  file, using its recorded diff or a `unified_diff("", current)` empty-baseline
+  fallback), with a 4-case corpus. It composes on generated `drift`, `prompts`, and
+  `text_diff` by path.
+
+Every corpus addition was test-only (conformance byte-identical), every extraction
+refactor kept conformance byte-identical **before** the swap, and every swap kept it
+byte-identical again.
+
+### More phase-2-on-phase-1 composition
+
+Like batch 1's `driftdetect_replay`, two of batch 2's cores compose on generated
+phase-1 crates and the types unify with no glue: `blame_render` takes
+`&[napl_core::schemas::JournalEntry]` (a re-export of `schemas_journal::JournalEntry`)
+and `&napl_core::blame::BlameLine` straight from the shell; `reconcile_derive` takes
+`&[napl_core::drift::DriftedFile]` and returns `napl_core::prompts::ReconcileFile`s.
+Because napl-core re-exports the generated types and every crate path-deps the same
+sibling, the shell passes its already-read data through unchanged.
+
+### `error` declined again
+
+`error` was re-weighed and left a shell: its only pure logic is the
+`From<SchemaError>` message extraction, trait glue inseparable from the hand-written
+`SchemaError`/`io::Error` caller types — no separable pure core with a behavioral
+corpus. `cmd_status`/`cmd_init` similarly have no separable untested pure slice.
+
+### Gate results
+
+1. `cargo test --workspace` — **234 pass, 0 fail** (181 `napl-core` unit + 5
+   `cross_check` + 32 `napl-cli` — up 14 with the new batch-2 unit corpora — + 16
+   `napl-lsp`), the hand-written corpora running against the adapters and phase-2
+   shells.
+2. `cargo clippy --workspace --all-targets` — **clean** (adapters + shells; the
+   generated crates are not workspace members and are not linted).
+3. `cargo build --release` — green.
+4. **Conformance — 40/40 BYTE-IDENTICAL**, including every `blame`/`watch`/
+   `reconcile`/`snapshot`-touching scenario driven by the phase-2 shells over the new
+   generated pure cores.
+5. `selfhost/` — `napl status` clean, **32/32 modules** (23 phase-1 + 5 phase-2
+   batch-1 + 4 phase-2 batch-2), the generated tree drift-clean.
+6. Equivalence harness — **214/214** (200 prior + 14 batch-2: 1 + 7 + 2 + 4).
+
+### No stage1-binary misbehavior
+
+All four gens ran through the shipping stage1+2 binary (generated code generating
+code) and converged on attempt 1 with valid attribution, machine layer, journal, and
+`0444` locks — no fixpoint regression observed.
+
+### Verdict
+
+Batch 2 shrinks `napl-cli`'s hand-written surface by four more pure cores — the
+byte-exact `blame` renderer, the `watch` ignore predicate, the `reconcile` input
+derivation, and the `snapshot` exclusion filter — all generated from prose and
+swapped in behind unchanged I/O shells, conformance byte-identical, three of them
+requiring a corpus and an extraction refactor first and two composing on generated
+phase-1 crates. What remains in phase 2 is the scarcer pure slices outside `cmd_gen`
+and, ultimately, the conformance-gated `cmd_gen` fixpoint — the generator
+regenerating itself.

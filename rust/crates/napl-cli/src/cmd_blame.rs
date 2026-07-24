@@ -1,13 +1,20 @@
 //! `napl blame`: git-blame-style line history for a generated file.
+//!
+//! Stage1: the pure rendering slice (`mode_str`, `format_blame_row`, `why_line`,
+//! `render_blame_gen`) is the NAPL-generated `blame_render` crate, re-exported
+//! here; this shell keeps the journal read, the blame computation, and the
+//! printing. The unit corpus below rides along as the regression net.
 
 use std::path::Path;
 
-use napl_core::blame::{blame_file, first_prompt_diff_line, BlameLine};
-use napl_core::schemas::{file_history, JournalEntry, JournalMode};
+use napl_core::blame::{blame_file, BlameLine};
+use napl_core::schemas::file_history;
 
 use crate::error::CliResult;
 use crate::paths::{rel_to, resolve_paths};
 use crate::state::read_journal;
+
+use blame_render::{format_blame_row, render_blame_gen, why_line};
 
 /// Options for the blame command.
 pub struct BlameArgs<'a> {
@@ -19,67 +26,6 @@ pub struct BlameArgs<'a> {
     pub gen: Option<i64>,
     /// Also show the prompt edit that caused each line.
     pub verbose: bool,
-}
-
-fn mode_str(mode: JournalMode) -> &'static str {
-    match mode {
-        JournalMode::Full => "full",
-        JournalMode::Incremental => "incremental",
-        JournalMode::Reconcile => "reconcile",
-    }
-}
-
-fn why_line(prompt_diff: &str) -> String {
-    let first = first_prompt_diff_line(prompt_diff);
-    if first.is_empty() {
-        "initial generation".to_string()
-    } else {
-        first
-    }
-}
-
-fn format_blame_row(entry: &BlameLine) -> String {
-    format!(
-        "gen #{}  {}  {}  {}",
-        entry.gen, entry.timestamp, entry.module, entry.text
-    )
-}
-
-fn blame_gen(entries: &[JournalEntry], gen: i64) -> i32 {
-    let Some(entry) = entries.iter().find(|candidate| candidate.gen == gen) else {
-        println!("napl blame: no journal entry for gen #{gen}");
-        return 1;
-    };
-    println!(
-        "gen #{}  {}  {} ({})  mode: {}",
-        entry.gen,
-        entry.timestamp,
-        entry.module,
-        entry.target,
-        mode_str(entry.mode)
-    );
-    println!();
-    println!("prompt edit:");
-    if entry.prompt_diff.trim().is_empty() {
-        println!("  initial generation");
-    } else {
-        let indented: Vec<String> = entry
-            .prompt_diff
-            .split('\n')
-            .map(|line| format!("  {line}"))
-            .collect();
-        println!("{}", indented.join("\n"));
-    }
-    println!();
-    println!("files touched:");
-    if entry.files.is_empty() {
-        println!("  (none)");
-    } else {
-        for file in &entry.files {
-            println!("  {}", file.path);
-        }
-    }
-    0
 }
 
 fn normalize_file_arg(root: &Path, file: &str) -> String {
@@ -108,7 +54,9 @@ pub fn run(root: &Path, args: &BlameArgs) -> CliResult<i32> {
     }
 
     if let Some(gen) = args.gen {
-        return Ok(blame_gen(&entries, gen));
+        let render = render_blame_gen(&entries, gen);
+        println!("{}", render.text);
+        return Ok(render.exit_code);
     }
 
     let Some(file) = args.file else {
@@ -160,4 +108,101 @@ pub fn run(root: &Path, args: &BlameArgs) -> CliResult<i32> {
         }
     }
     Ok(0)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use blame_render::mode_str;
+    use napl_core::schemas::{JournalEntry, JournalFile, JournalMode};
+
+    fn entry(gen: i64, module: &str, prompt_diff: &str, files: Vec<JournalFile>) -> JournalEntry {
+        JournalEntry {
+            gen,
+            timestamp: "2026-07-24T00:00:00.000Z".to_string(),
+            module: module.to_string(),
+            target: "typescript".to_string(),
+            prompt_hash: "hp".to_string(),
+            prompt_diff: prompt_diff.to_string(),
+            mode: JournalMode::Full,
+            files,
+        }
+    }
+
+    fn journal_file(path: &str) -> JournalFile {
+        JournalFile {
+            path: path.to_string(),
+            patch: String::new(),
+            hash_before: None,
+            hash_after: "h".to_string(),
+        }
+    }
+
+    #[test]
+    fn mode_str_maps_every_variant() {
+        assert_eq!(mode_str(JournalMode::Full), "full");
+        assert_eq!(mode_str(JournalMode::Incremental), "incremental");
+        assert_eq!(mode_str(JournalMode::Reconcile), "reconcile");
+    }
+
+    #[test]
+    fn format_blame_row_is_two_space_separated() {
+        let line = BlameLine {
+            line: 4,
+            gen: 7,
+            timestamp: "2026-07-24T00:00:00.000Z".to_string(),
+            module: "greeting".to_string(),
+            text: "export function greet() {".to_string(),
+        };
+        assert_eq!(
+            format_blame_row(&line),
+            "gen #7  2026-07-24T00:00:00.000Z  greeting  export function greet() {"
+        );
+    }
+
+    #[test]
+    fn why_line_is_initial_generation_for_empty_diff() {
+        assert_eq!(why_line(""), "initial generation");
+    }
+
+    #[test]
+    fn why_line_reports_the_first_added_prompt_line() {
+        let diff = "@@ -1,1 +1,2 @@\n context\n+the new behavior line\n";
+        assert_eq!(why_line(diff), "the new behavior line");
+    }
+
+    #[test]
+    fn render_blame_gen_not_found_exits_one() {
+        let render = render_blame_gen(&[entry(1, "greeting", "", vec![])], 9);
+        assert_eq!(render.text, "napl blame: no journal entry for gen #9");
+        assert_eq!(render.exit_code, 1);
+    }
+
+    #[test]
+    fn render_blame_gen_initial_generation_no_files() {
+        let render = render_blame_gen(&[entry(1, "greeting", "", vec![])], 1);
+        assert_eq!(
+            render.text,
+            "gen #1  2026-07-24T00:00:00.000Z  greeting (typescript)  mode: full\n\nprompt edit:\n  initial generation\n\nfiles touched:\n  (none)"
+        );
+        assert_eq!(render.exit_code, 0);
+    }
+
+    #[test]
+    fn render_blame_gen_indents_prompt_diff_and_lists_files() {
+        let render = render_blame_gen(
+            &[entry(
+                2,
+                "greeting",
+                "@@ -1,1 +1,2 @@\n context\n+added behavior\n",
+                vec![journal_file("src/greeting.ts")],
+            )],
+            2,
+        );
+        assert_eq!(
+            render.text,
+            "gen #2  2026-07-24T00:00:00.000Z  greeting (typescript)  mode: full\n\nprompt edit:\n  @@ -1,1 +1,2 @@\n   context\n  +added behavior\n  \n\nfiles touched:\n  src/greeting.ts"
+        );
+        assert_eq!(render.exit_code, 0);
+    }
 }

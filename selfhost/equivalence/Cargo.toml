@@ -32,6 +32,10 @@ paths_core = { path = "../.napl/src/rust/paths_core" }
 statusclass_render = { path = "../.napl/src/rust/statusclass_render" }
 driftdetect_replay = { path = "../.napl/src/rust/driftdetect_replay" }
 snapshot_diff = { path = "../.napl/src/rust/snapshot_diff" }
+snapshot_filter = { path = "../.napl/src/rust/snapshot_filter" }
+blame_render = { path = "../.napl/src/rust/blame_render" }
+watch_filter = { path = "../.napl/src/rust/watch_filter" }
+reconcile_derive = { path = "../.napl/src/rust/reconcile_derive" }
 
 [dev-dependencies]
 serde_json = "1"

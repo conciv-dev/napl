@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "blame",
+    "blame_render",
     "body_lines",
     "clock_fmt",
     "drift",
@@ -13,6 +14,7 @@ members = [
     "parse_output",
     "paths_core",
     "prompts",
+    "reconcile_derive",
     "reverse",
     "scanner",
     "schemas_attribution",
@@ -25,8 +27,10 @@ members = [
     "schemas_ml",
     "schemas_ordered_map",
     "snapshot_diff",
+    "snapshot_filter",
     "statusclass_render",
     "targets",
     "text_diff",
+    "watch_filter",
     "yaml",
 ]

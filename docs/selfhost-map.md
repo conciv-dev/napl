@@ -124,7 +124,7 @@ byte-identical, escape-hatch list empty (`schemas::journal` cleared — see the
 stage1 status section above). See `selfhost.md` → "Stage1 swap-in — DONE" and
 "Journal escape-hatch cleared + Phase 2 opened".
 
-## Phase 2 — `napl-cli` (I/O orchestration; OPEN, first batch swapped in)
+## Phase 2 — `napl-cli` (I/O orchestration; OPEN, batches 1–2 swapped in)
 
 Phase 2 is not behavioral-unit self-hostable the way `napl-core` is — the command
 handlers are gated by the **conformance corpus** (`conformance/`, 40 scenarios),
@@ -149,13 +149,15 @@ swap; then the swap must keep it byte-identical again.
 | `paths` | 126 | `resolve_paths` + `NaplPaths` + `rel_to` (path algebra) | `find_prompt_files`/`walk` (readdir) | 1 (`rel_to`) | **swapped** (`paths_core`, batch 1) |
 | `statusclass` | 213 | `FileStatus` + `StatusEntry` + `line`/`is_error` (render) | `classify_prompt`/`detect_drift` (fs read + hash) | 2 | **swapped** (`statusclass_render`, batch 1) |
 | `driftdetect` | 146 | `reconstruct_file_content` (journal patch replay) | `classify_file`/`detect_gen_drift` (fs read) | 2 | **swapped** (`driftdetect_replay`, batch 1 — composes on generated `schemas_journal` + `text_diff`) |
-| `snapshot` | 147 | `diff_snapshots` (before/after hash diff) | `walk`/`snapshot_hashes`/`snapshot_contents` + `make_filter`/`SnapshotFilter` | 1 (`diff_snapshots`) | **swapped** (`snapshot_diff`, batch 1) |
+| `snapshot` | 154 | `diff_snapshots` (hash diff) + `SnapshotFilter`/`make_filter`/`is_excluded_*` (exclusion predicate) | `walk`/`snapshot_hashes`/`snapshot_contents` (readdir) | 2 | **swapped** (`snapshot_diff` batch 1; `snapshot_filter` batch 2) |
 | `fsutil` | 70 | — (only the mode constants are pure; every fn is fs I/O) | all (`read_opt`/`write`/`set_mode`/`exists`/`mkdir_parent`) | 0 pure | **shell** (no pure slice with a unit test) |
 | `error` | 35 | msg-extraction from `SchemaError` | type + `From` trait glue over hand-written `SchemaError`/`io::Error` | 0 | **shell** (inseparable from caller types) |
 | `process` | 435 | — | subprocess spawn + lockfile (all 4 tests are fs I/O) | 0 pure | **shell** |
 | `state` | 89 | in-memory state | — | 0 | **shell** |
-| `driftdetect`/`snapshot` filter slices | — | `make_filter`/`SnapshotFilter::is_excluded_file` are pure but have no direct unit test | walk uses them | 0 pure | later batch (add a pure unit test first) |
-| `cmd_*` (gen/status/init/watch/reconcile/blame/build/test) | ~1900 | derivation/orchestration | I/O + orchestration | 0 | **shell** (conformance-gated) |
+| `cmd_blame` | 208 | `mode_str`/`format_blame_row`/`why_line`/`render_blame_gen` (byte-exact rendering) | journal read + `blame_file` compute + printing | 7 | **swapped** (`blame_render`, batch 2 — composes on generated `blame` + `schemas_journal`) |
+| `cmd_reconcile` | 269 | `editable_drifted`/`build_reconcile_files` (drift → reconcile-input derivation) | drift detect + agent run + journal/map writes | 4 | **swapped** (`reconcile_derive`, batch 2 — composes on generated `drift` + `prompts` + `text_diff`) |
+| `cmd_watch` | 191 | `is_ignored` (ignored-dir path predicate) | watcher event loop + debounce + gen dispatch | 2 | **swapped** (`watch_filter`, batch 2) |
+| `cmd_gen`/`cmd_status`/`cmd_init`/`cmd_build`/`cmd_test` | ~1370 | orchestration (`cmd_status`/`cmd_init` compose on already-swapped pure cores; no separable untested slice) | I/O + orchestration | 0 | **shell** (conformance-gated) |
 | `main` | 184 | — | arg parsing / dispatch | 0 | **shell** |
 
 `cmd_gen` (1133 LOC) is the stage0 orchestrator itself — the last thing to
@@ -188,14 +190,73 @@ was already a cleanly separable function/type in its module, so the swap is a
 re-export behind the unchanged call sites, and conformance stayed 40/40
 byte-identical across every swap.
 
-### Batch 2 candidates (recommended next)
+### Batch 2 — the derivation/render slices (DONE, all swapped in)
 
-The next low-risk pure slices, in rough order: the `snapshot`/`SnapshotFilter`
-exclusion predicate (`make_filter` + `is_excluded_file` — pure, but needs a direct
-unit test added first), then the pure derivation helpers inside `cmd_reconcile` /
-`cmd_blame` that operate over already-read journal/map data. The `cmd_*` handlers,
-`process`, `fsutil`, `error`, `state`, and `main` stay hand-written shells until
-their pure cores grow (or until the conformance-gated `cmd_gen` fixpoint work).
+Four more pure cores generated from behavior-prose prompts, each converged on
+**attempt 1 of 3**, each gated by that module's hand-written pure unit corpus in the
+shared equivalence harness, each swapped into `napl-cli` behind its existing call
+sites (thin re-export; hand-written pure body deleted; the unit corpus kept as the
+regression net). Three of the four modules had **no** prior unit tests, so a
+meaningful corpus was added first (test-only, conformance byte-identical), then an
+extraction refactor split the pure core from the I/O shell (conformance byte-
+identical again) before the generated swap:
+
+| Generated crate | Replaces (napl-cli pure slice) | Extraction? | Deps | Equivalence |
+| --- | --- | --- | --- | --- |
+| `snapshot_filter` | `snapshot::{SnapshotFilter, make_filter, is_excluded_dir, is_excluded_file}` | added direct filter unit test; made predicates `pub` | — | 1/1 |
+| `blame_render` | `cmd_blame::{mode_str, format_blame_row, why_line, render_blame_gen}` | added 7-case corpus; extracted `render_blame_gen` (was inline `blame_gen` I/O) | `blame`, `schemas_journal` | 7/7 (byte-exact blocks) |
+| `watch_filter` | `cmd_watch::{is_ignored, IGNORED_DIRS}` | added 2-case corpus | — | 2/2 |
+| `reconcile_derive` | `cmd_reconcile::{editable_drifted, build_reconcile_files}` | added 4-case corpus; extracted the two helpers (were inline in the reconcile loop) | `drift`, `prompts`, `text_diff` | 4/4 |
+
+**Batch-2 evidence:** `blame_render` and `reconcile_derive` are the notable ones —
+two more **phase-2** pure cores composing on **generated phase-1** crates by path.
+`blame_render` renders `blame::BlameLine` rows and `schemas_journal::JournalEntry`
+gen-summaries byte-exactly (the `render_blame_gen` block is a single joined string
+the shell prints with one `println!`); `reconcile_derive` filters
+`drift::DriftedFile`s and builds `prompts::ReconcileFile`s with a
+`text_diff::unified_diff("", current)` empty-baseline fallback. Because napl-core
+re-exports the same generated types and every crate path-deps the same siblings, the
+types unify and each shell passes its already-read data straight through. The only
+new discipline vs. batch 1 was that three of the four modules needed a corpus and an
+extraction refactor first (batch 1's slices were already cleanly separable); every
+extraction kept conformance 40/40 byte-identical **before** the swap, and every swap
+kept it byte-identical again.
+
+`error` was re-weighed and **declined again**: its only pure logic is the
+`From<SchemaError>` message extraction (`Deserialize(m) | Validation(m) => m`), which
+is trait glue inseparable from the hand-written `SchemaError`/`io::Error` caller
+types — no separable pure core with a behavioral corpus. `cmd_status`/`cmd_init` were
+surveyed and have no separable untested pure slice (they already compose on
+batch-1/stage1 pure cores; their remaining logic is fs orchestration).
+
+### Remaining hand-written shell in `napl-cli` (after batch 2)
+
+3,437 LOC total across 18 modules; the pure cores of six are now generated crates
+re-exported behind unchanged shells. Hand-written LOC left, by module:
+
+| Module | LOC | Character |
+| --- | ---: | --- |
+| `cmd_gen` | 1,133 | the stage0 orchestrator — the eventual fixpoint |
+| `process` | 435 | subprocess spawn + lockfile (all I/O) |
+| `cmd_reconcile` | 269 | reconcile orchestration shell (pure derivation swapped to `reconcile_derive`) |
+| `cmd_blame` | 208 | blame I/O shell (pure rendering swapped to `blame_render`) |
+| `cmd_watch` | 191 | watcher loop shell (pure predicate swapped to `watch_filter`) |
+| `main` | 184 | arg parsing / dispatch |
+| `statusclass` | 168 | fs classifier shell (pure render swapped to `statusclass_render`, batch 1) |
+| `cmd_init` | 162 | scaffold I/O (composes on generated `guard`/`targets`) |
+| `snapshot` | 154 | fs walk shell (pure diff + filter swapped to `snapshot_diff`/`snapshot_filter`) |
+| `driftdetect` | 138 | fs classifier shell (pure replay swapped to `driftdetect_replay`, batch 1) |
+| `state` | 89 | in-memory state + fs read/write glue |
+| `paths` | 83 | path shell (pure algebra swapped to `paths_core`, batch 1) |
+| `fsutil` | 70 | fs primitives (all I/O) |
+| `clock` | 47 | wall-clock read (pure format swapped to `clock_fmt`, batch 1) |
+| `error` | 35 | error type + `From` glue (inseparable from caller types) |
+| `cmd_test` / `cmd_status` / `cmd_build` | 71 | thin command shells |
+
+The `cmd_*` handlers, `process`, `fsutil`, `error`, `state`, and `main` stay
+hand-written shells; the next pure-core extractions with real corpora are scarce
+outside `cmd_gen`, which is conformance-gated orchestration and the true fixpoint
+when it self-hosts.
 
 ## Phase 3 — `napl-lsp` (JSON-RPC server; later)
 

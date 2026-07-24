@@ -1,0 +1,16 @@
+module: blame_render
+target: rust
+entries:
+  - promptLines:
+      - 28
+      - 33
+    kind: assumption
+    message: "JournalEntry test fixture includes a `prompt_hash: String` field not mentioned in the prompt."
+    reasoning: "The prompt says JournalEntry's \"fields include\" gen, timestamp, module, target, prompt_diff, mode, and files — wording that implies the list is non-exhaustive. The agent's test helper constructs entries with an extra `prompt_hash: String` field, assuming this extra field exists on the real schemas_journal::JournalEntry struct and just wasn't called out since it's irrelevant to rendering. This is a reasonable read of \"fields include\" but was never confirmed against the actual sibling crate.\n"
+    suggestion: "List JournalEntry's full field set explicitly (or say \"at least these fields, plus possibly others you can ignore\") so implementers don't have to guess whether unlisted fields exist.\n"
+  - promptLines:
+      - 11
+      - 16
+    kind: note
+    message: Cargo.toml contents (package name, path deps, workspace registration) aren't shown in the diff, only lib.rs.
+    reasoning: The prompt requires creating blame_render/Cargo.toml with path dependencies on ../blame and ../schemas_journal, and running `cargo test` from the workspace root. The provided change list only shows lib.rs; Cargo.toml's contents weren't surfaced for review, so correctness of the manifest (package name, path deps, workspace member registration) is taken on the agent's final-message claim that "10 tests pass" rather than directly verified here.

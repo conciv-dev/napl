@@ -1,0 +1,123 @@
+module: blame_render
+target: rust
+entries:
+  - promptLines:
+      - 38
+      - 41
+    file: blame_render/src/lib.rs
+    lines:
+      - 10
+      - 17
+    note: mode_str maps JournalMode to lowercase label
+  - promptLines:
+      - 43
+      - 50
+    file: blame_render/src/lib.rs
+    lines:
+      - 19
+      - 25
+    note: format_blame_row builds "gen
+  - promptLines:
+      - 52
+      - 58
+    file: blame_render/src/lib.rs
+    lines:
+      - 27
+      - 35
+    note: why_line falls back to "initial generation" on empty diff line
+  - promptLines:
+      - 60
+      - 64
+    file: blame_render/src/lib.rs
+    lines:
+      - 37
+      - 45
+    note: BlameGenRender struct and render_blame_gen signature
+  - promptLines:
+      - 66
+      - 66
+    file: blame_render/src/lib.rs
+    lines:
+      - 46
+      - 46
+    note: find first entry matching gen
+  - promptLines:
+      - 68
+      - 70
+    file: blame_render/src/lib.rs
+    lines:
+      - 46
+      - 51
+    note: no-match branch returns error text and exit_code 1
+  - promptLines:
+      - 72
+      - 78
+    file: blame_render/src/lib.rs
+    lines:
+      - 53
+      - 62
+    note: build header line with gen/timestamp/module/target/mode
+  - promptLines:
+      - 79
+      - 80
+    file: blame_render/src/lib.rs
+    lines:
+      - 63
+      - 64
+    note: blank line then "prompt edit:" label
+  - promptLines:
+      - 81
+      - 85
+    file: blame_render/src/lib.rs
+    lines:
+      - 66
+      - 72
+    note: trimmed-empty check and per-line two-space-prefixed diff rendering
+  - promptLines:
+      - 86
+      - 87
+    file: blame_render/src/lib.rs
+    lines:
+      - 74
+      - 75
+    note: blank line then "files touched:" label
+  - promptLines:
+      - 88
+      - 90
+    file: blame_render/src/lib.rs
+    lines:
+      - 77
+      - 83
+    note: empty-files "(none)" case vs per-file path lines
+  - promptLines:
+      - 72
+      - 73
+    file: blame_render/src/lib.rs
+    lines:
+      - 85
+      - 88
+    note: join lines with newline, no trailing newline, exit_code 0
+  - promptLines:
+      - 24
+      - 27
+    file: blame_render/src/lib.rs
+    lines:
+      - 7
+      - 7
+    note: import BlameLine from sibling blame crate
+  - promptLines:
+      - 28
+      - 33
+    file: blame_render/src/lib.rs
+    lines:
+      - 8
+      - 8
+    note: import JournalEntry/JournalMode from schemas_journal crate
+  - promptLines:
+      - 92
+      - 96
+    file: blame_render/src/lib.rs
+    lines:
+      - 165
+      - 173
+    note: test matching example empty-diff-no-files rendering

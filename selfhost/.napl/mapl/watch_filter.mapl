@@ -1,0 +1,19 @@
+module: watch_filter
+target: rust
+entries:
+  - promptLines:
+      - 29
+      - 32
+    kind: assumption
+    message: Prefix stripping implemented as component-wise (Path::strip_prefix), not raw string prefix.
+    reasoning: 'Prompt says "stripping the root prefix" and "if path does not start with root, use path unchanged" without specifying whether this is a string-level or path-component-level operation. The agent used std::path::Path::strip_prefix, which matches by path components (so e.g. "/proj2" would NOT be treated as starting with root "/proj" even though the string does). This is the natural Rust interpretation given the function signature takes &Path, but the prompt never states it explicitly.
+'
+    suggestion: 'Clarify: "Use Path::strip_prefix (component-wise, not raw string prefix) to compute the relative path."
+'
+  - promptLines:
+      - 32
+      - 32
+    kind: assumption
+    message: Non-UTF8 path components handled via lossy string conversion, unspecified by prompt.
+    reasoning: "\"Compare component names as strings\" doesn't address what happens with non-UTF8 OsStr components. The agent used to_string_lossy(), which silently replaces invalid UTF-8 with replacement characters rather than failing or handling bytes directly. This is a reasonable default but was not dictated by the prompt.\n"
+    suggestion: State whether non-UTF8 path components should be handled losslessly, rejected, or are out of scope.

@@ -10,6 +10,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "blame_render"
+version = "0.1.0"
+dependencies = [
+ "blame",
+ "schemas_journal",
+]
+
+[[package]]
 name = "block-buffer"
 version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -186,6 +194,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "reconcile_derive"
+version = "0.1.0"
+dependencies = [
+ "drift",
+ "prompts",
+ "text_diff",
+]
+
+[[package]]
 name = "reverse"
 version = "0.1.0"
 dependencies = [
@@ -354,6 +371,10 @@ name = "snapshot_diff"
 version = "0.1.0"
 
 [[package]]
+name = "snapshot_filter"
+version = "0.1.0"
+
+[[package]]
 name = "statusclass_render"
 version = "0.1.0"
 
@@ -399,6 +420,10 @@ name = "version_check"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
+
+[[package]]
+name = "watch_filter"
+version = "0.1.0"
 
 [[package]]
 name = "yaml"
