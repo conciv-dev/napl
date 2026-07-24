@@ -1,0 +1,554 @@
+{
+  "module": "incremental",
+  "collection": "selfhost",
+  "target": "rust",
+  "targets": [
+    "rust"
+  ],
+  "prompt": {
+    "file": "incremental.napl",
+    "path": "core/incremental.napl",
+    "content": "---\nmodule: incremental\ndeps: [schemas_attribution, schemas_line_range]\ntargets: [rust]\ntests:\n  - name: diffing two prompt bodies tracks the changed line and emits a unified diff\n    given: { old: \"Greet a person by name.\\\\n\", new: \"Greet a person by name, loudly.\\\\n\" }\n    expect: { unified_contains: [\"-Greet a person by name.\", \"+Greet a person by name, loudly.\"], changed_old_lines: [1], changed_new_lines: [1] }\n  - name: the unlock list is sorted and deduplicated\n    given: { owned: [\".napl/src/typescript/greet.ts\"], intersecting: [], target_rel: \".napl/src/typescript\" }\n    expect: { list: [\".napl/src/typescript/greet.ts\"] }\n---\n# Incremental regeneration: body-line diffing and the unlock list\n\nThis module computes what an *incremental* (diff-scoped) regeneration must touch:\nit diffs two versions of a prompt body with per-line change tracking, selects the\nowned attribution regions that intersect the changed lines, and builds the sorted\nunlock list of files to reopen. It is pure: no I/O.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `incremental/`: `incremental/Cargo.toml` (package\nname `incremental`) and `incremental/src/lib.rs`. Touch nothing outside\n`incremental/`. Ensure `cargo test` passes from the workspace root before\nfinishing.\n\n## Builds on two modules of this workspace\n\nBoth are sibling member crates generated into this same workspace. Add a path\ndependency on each in your `Cargo.toml` (workspace siblings, not external\ncrates.io dependencies), use their public API, and do **not** reimplement their\nlogic or depend on any hand-written crate.\n\n- **`schemas_line_range`** (`../schemas_line_range`): exposes `LineRange`, an\n  inclusive 1-based range with public `start` and `end` fields (`u32`) and a\n  `new(start, end)` constructor.\n- **`schemas_attribution`** (`../schemas_attribution`): exposes\n  `AttributionEntry` (`Clone`), a mapping from prompt lines to code lines with\n  public fields `prompt_lines: LineRange`, `file: String`, `lines: LineRange`,\n  and `note: String`. This module reads `prompt_lines` and `file`, and returns\n  cloned `AttributionEntry` values.\n\n## The body-line diff\n\nExpose a public struct `BodyLineDiff` (`Debug`, `Clone`, `PartialEq`, `Eq`) with\npublic fields `unified: String`, `changed_old_lines: Vec<usize>`, and\n`changed_new_lines: Vec<usize>`.\n\n`diff_body_lines(old_body: &str, new_body: &str) -> BodyLineDiff` computes a\nline-level diff between the two bodies:\n\n- Split each body into lines on `\\n`, stripping a trailing `\\r` from each line\n  (so `\"a\\nb\\n\"` splits into `[\"a\", \"b\", \"\"]`).\n- Compute a longest-common-subsequence alignment of the two line sequences,\n  producing an ordered list of operations, each an **equal**, a **deletion** (a\n  line present only in the old body), or an **insertion** (a line present only in\n  the new body). Deletions carry a 1-based old-body line number; insertions carry\n  a 1-based new-body line number; equals carry both. When the choice between a\n  deletion and an insertion is free (neither extends the common subsequence\n  further), prefer the deletion.\n- `changed_old_lines` is the old-body line numbers of the deletions, in order.\n- `changed_new_lines` is the new-body line numbers of the insertions, in order.\n- `unified` is a unified diff of the two bodies with **3 lines of context**: group\n  the operations into hunks, where a hunk covers every operation within 3 of a\n  change; a purely-equal run wider than the context splits hunks. Each hunk begins\n  with a header `@@ -oldStart,oldCount +newStart,newCount @@`, where `oldStart`\n  and `oldCount` count the lines in the hunk present in the old body (equals and\n  deletions) and `newStart`/`newCount` those present in the new body (equals and\n  insertions); `oldStart`/`newStart` are the first such line number in the hunk,\n  or `0` if none. Under each header, one line per operation: a leading space then\n  the text for an equal, a leading `-` then the old text for a deletion, a leading\n  `+` then the new text for an insertion. Join all hunk lines with `\\n` (no\n  trailing newline). So changing the sole body line from\n  `Greet a person by name.` to `Greet a person by name, loudly.` yields a unified\n  diff containing the lines `-Greet a person by name.` and\n  `+Greet a person by name, loudly.`.\n\n## Selecting the intersecting regions\n\n`select_intersecting_entries(entries: &[AttributionEntry], changed_old_lines: &[usize]) -> Vec<AttributionEntry>`:\nkeep (cloned) every entry whose prompt range intersects the changed old lines —\nthat is, some line in the inclusive range `prompt_lines.start ..= prompt_lines.end`\n(compared as `usize`) appears in `changed_old_lines`. Preserve input order.\n\n## The unlock list\n\n`incremental_unlock_list(owned_files: &[String], intersecting_entries: &[AttributionEntry], target_rel_to_root: &str) -> Vec<String>`:\nstart from the owned files, then for each intersecting entry add the string\n`\"{target_rel_to_root}/{file}\"` (the entry's `file` joined under the target-\nrelative directory with a `/`). Sort the resulting list and remove duplicates,\nreturning the sorted, deduplicated vector.\n"
+  },
+  "promptAtGen": "# Incremental regeneration: body-line diffing and the unlock list\n\nThis module computes what an *incremental* (diff-scoped) regeneration must touch:\nit diffs two versions of a prompt body with per-line change tracking, selects the\nowned attribution regions that intersect the changed lines, and builds the sorted\nunlock list of files to reopen. It is pure: no I/O.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `incremental/`: `incremental/Cargo.toml` (package\nname `incremental`) and `incremental/src/lib.rs`. Touch nothing outside\n`incremental/`. Ensure `cargo test` passes from the workspace root before\nfinishing.\n\n## Builds on two modules of this workspace\n\nBoth are sibling member crates generated into this same workspace. Add a path\ndependency on each in your `Cargo.toml` (workspace siblings, not external\ncrates.io dependencies), use their public API, and do **not** reimplement their\nlogic or depend on any hand-written crate.\n\n- **`schemas_line_range`** (`../schemas_line_range`): exposes `LineRange`, an\n  inclusive 1-based range with public `start` and `end` fields (`u32`) and a\n  `new(start, end)` constructor.\n- **`schemas_attribution`** (`../schemas_attribution`): exposes\n  `AttributionEntry` (`Clone`), a mapping from prompt lines to code lines with\n  public fields `prompt_lines: LineRange`, `file: String`, `lines: LineRange`,\n  and `note: String`. This module reads `prompt_lines` and `file`, and returns\n  cloned `AttributionEntry` values.\n\n## The body-line diff\n\nExpose a public struct `BodyLineDiff` (`Debug`, `Clone`, `PartialEq`, `Eq`) with\npublic fields `unified: String`, `changed_old_lines: Vec<usize>`, and\n`changed_new_lines: Vec<usize>`.\n\n`diff_body_lines(old_body: &str, new_body: &str) -> BodyLineDiff` computes a\nline-level diff between the two bodies:\n\n- Split each body into lines on `\\n`, stripping a trailing `\\r` from each line\n  (so `\"a\\nb\\n\"` splits into `[\"a\", \"b\", \"\"]`).\n- Compute a longest-common-subsequence alignment of the two line sequences,\n  producing an ordered list of operations, each an **equal**, a **deletion** (a\n  line present only in the old body), or an **insertion** (a line present only in\n  the new body). Deletions carry a 1-based old-body line number; insertions carry\n  a 1-based new-body line number; equals carry both. When the choice between a\n  deletion and an insertion is free (neither extends the common subsequence\n  further), prefer the deletion.\n- `changed_old_lines` is the old-body line numbers of the deletions, in order.\n- `changed_new_lines` is the new-body line numbers of the insertions, in order.\n- `unified` is a unified diff of the two bodies with **3 lines of context**: group\n  the operations into hunks, where a hunk covers every operation within 3 of a\n  change; a purely-equal run wider than the context splits hunks. Each hunk begins\n  with a header `@@ -oldStart,oldCount +newStart,newCount @@`, where `oldStart`\n  and `oldCount` count the lines in the hunk present in the old body (equals and\n  deletions) and `newStart`/`newCount` those present in the new body (equals and\n  insertions); `oldStart`/`newStart` are the first such line number in the hunk,\n  or `0` if none. Under each header, one line per operation: a leading space then\n  the text for an equal, a leading `-` then the old text for a deletion, a leading\n  `+` then the new text for an insertion. Join all hunk lines with `\\n` (no\n  trailing newline). So changing the sole body line from\n  `Greet a person by name.` to `Greet a person by name, loudly.` yields a unified\n  diff containing the lines `-Greet a person by name.` and\n  `+Greet a person by name, loudly.`.\n\n## Selecting the intersecting regions\n\n`select_intersecting_entries(entries: &[AttributionEntry], changed_old_lines: &[usize]) -> Vec<AttributionEntry>`:\nkeep (cloned) every entry whose prompt range intersects the changed old lines —\nthat is, some line in the inclusive range `prompt_lines.start ..= prompt_lines.end`\n(compared as `usize`) appears in `changed_old_lines`. Preserve input order.\n\n## The unlock list\n\n`incremental_unlock_list(owned_files: &[String], intersecting_entries: &[AttributionEntry], target_rel_to_root: &str) -> Vec<String>`:\nstart from the owned files, then for each intersecting entry add the string\n`\"{target_rel_to_root}/{file}\"` (the entry's `file` joined under the target-\nrelative directory with a `/`). Sort the resulting list and remove duplicates,\nreturning the sorted, deduplicated vector.\n",
+  "summary": "Incremental regeneration: body-line diffing and the unlock list",
+  "files": [
+    {
+      "path": "incremental/Cargo.toml",
+      "journalPath": ".napl/src/rust/incremental/Cargo.toml",
+      "content": "[package]\nname = \"incremental\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\nschemas_line_range = { path = \"../schemas_line_range\" }\nschemas_attribution = { path = \"../schemas_attribution\" }\n",
+      "language": "toml"
+    },
+    {
+      "path": "incremental/src/lib.rs",
+      "journalPath": ".napl/src/rust/incremental/src/lib.rs",
+      "content": "// GENERATED BY NAPL from incremental.napl — edit the prompt, not this file\n\nuse schemas_attribution::AttributionEntry;\nuse std::collections::BTreeSet;\n\nconst CONTEXT: usize = 3;\n\n#[derive(Debug, Clone, PartialEq, Eq)]\nenum DiffOp {\n    Equal { old_line: usize, new_line: usize, text: String },\n    Delete { old_line: usize, text: String },\n    Insert { new_line: usize, text: String },\n}\n\n#[derive(Debug, Clone, PartialEq, Eq)]\npub struct BodyLineDiff {\n    pub unified: String,\n    pub changed_old_lines: Vec<usize>,\n    pub changed_new_lines: Vec<usize>,\n}\n\nfn split_lines(body: &str) -> Vec<String> {\n    body.split('\\n')\n        .map(|line| line.strip_suffix('\\r').unwrap_or(line).to_string())\n        .collect()\n}\n\nfn lcs_table(old: &[String], new: &[String]) -> Vec<Vec<u32>> {\n    let n = old.len();\n    let m = new.len();\n    let mut table = vec![vec![0u32; m + 1]; n + 1];\n    for i in (0..n).rev() {\n        for j in (0..m).rev() {\n            table[i][j] = if old[i] == new[j] {\n                table[i + 1][j + 1] + 1\n            } else {\n                table[i + 1][j].max(table[i][j + 1])\n            };\n        }\n    }\n    table\n}\n\nfn build_ops(old: &[String], new: &[String]) -> Vec<DiffOp> {\n    let table = lcs_table(old, new);\n    let mut ops = Vec::new();\n    let (mut i, mut j) = (0usize, 0usize);\n    let n = old.len();\n    let m = new.len();\n    while i < n && j < m {\n        if old[i] == new[j] {\n            ops.push(DiffOp::Equal {\n                old_line: i + 1,\n                new_line: j + 1,\n                text: old[i].clone(),\n            });\n            i += 1;\n            j += 1;\n        } else if table[i + 1][j] >= table[i][j + 1] {\n            ops.push(DiffOp::Delete {\n                old_line: i + 1,\n                text: old[i].clone(),\n            });\n            i += 1;\n        } else {\n            ops.push(DiffOp::Insert {\n                new_line: j + 1,\n                text: new[j].clone(),\n            });\n            j += 1;\n        }\n    }\n    while i < n {\n        ops.push(DiffOp::Delete {\n            old_line: i + 1,\n            text: old[i].clone(),\n        });\n        i += 1;\n    }\n    while j < m {\n        ops.push(DiffOp::Insert {\n            new_line: j + 1,\n            text: new[j].clone(),\n        });\n        j += 1;\n    }\n    ops\n}\n\nfn merged_hunk_ranges(ops: &[DiffOp]) -> Vec<(usize, usize)> {\n    let change_indices: Vec<usize> = ops\n        .iter()\n        .enumerate()\n        .filter(|(_, op)| !matches!(op, DiffOp::Equal { .. }))\n        .map(|(idx, _)| idx)\n        .collect();\n\n    let mut ranges: Vec<(usize, usize)> = Vec::new();\n    for &idx in &change_indices {\n        let lo = idx.saturating_sub(CONTEXT);\n        let hi = (idx + CONTEXT).min(ops.len() - 1);\n        match ranges.last_mut() {\n            Some((_, last_hi)) if lo <= *last_hi + 1 => {\n                *last_hi = (*last_hi).max(hi);\n            }\n            _ => ranges.push((lo, hi)),\n        }\n    }\n    ranges\n}\n\nfn render_hunk(ops: &[DiffOp]) -> String {\n    let mut old_start = 0usize;\n    let mut old_count = 0usize;\n    let mut new_start = 0usize;\n    let mut new_count = 0usize;\n    let mut lines: Vec<String> = Vec::new();\n\n    for op in ops {\n        match op {\n            DiffOp::Equal { old_line, new_line, text } => {\n                if old_start == 0 {\n                    old_start = *old_line;\n                }\n                if new_start == 0 {\n                    new_start = *new_line;\n                }\n                old_count += 1;\n                new_count += 1;\n                lines.push(format!(\" {text}\"));\n            }\n            DiffOp::Delete { old_line, text } => {\n                if old_start == 0 {\n                    old_start = *old_line;\n                }\n                old_count += 1;\n                lines.push(format!(\"-{text}\"));\n            }\n            DiffOp::Insert { new_line, text } => {\n                if new_start == 0 {\n                    new_start = *new_line;\n                }\n                new_count += 1;\n                lines.push(format!(\"+{text}\"));\n            }\n        }\n    }\n\n    let header = format!(\"@@ -{old_start},{old_count} +{new_start},{new_count} @@\");\n    let mut hunk = vec![header];\n    hunk.extend(lines);\n    hunk.join(\"\\n\")\n}\n\npub fn diff_body_lines(old_body: &str, new_body: &str) -> BodyLineDiff {\n    let old_lines = split_lines(old_body);\n    let new_lines = split_lines(new_body);\n    let ops = build_ops(&old_lines, &new_lines);\n\n    let changed_old_lines: Vec<usize> = ops\n        .iter()\n        .filter_map(|op| match op {\n            DiffOp::Delete { old_line, .. } => Some(*old_line),\n            _ => None,\n        })\n        .collect();\n    let changed_new_lines: Vec<usize> = ops\n        .iter()\n        .filter_map(|op| match op {\n            DiffOp::Insert { new_line, .. } => Some(*new_line),\n            _ => None,\n        })\n        .collect();\n\n    let ranges = merged_hunk_ranges(&ops);\n    let hunks: Vec<String> = ranges\n        .iter()\n        .map(|(lo, hi)| render_hunk(&ops[*lo..=*hi]))\n        .collect();\n    let unified = hunks.join(\"\\n\");\n\n    BodyLineDiff {\n        unified,\n        changed_old_lines,\n        changed_new_lines,\n    }\n}\n\npub fn select_intersecting_entries(\n    entries: &[AttributionEntry],\n    changed_old_lines: &[usize],\n) -> Vec<AttributionEntry> {\n    let changed: BTreeSet<usize> = changed_old_lines.iter().copied().collect();\n    entries\n        .iter()\n        .filter(|entry| {\n            let start = entry.prompt_lines.start as usize;\n            let end = entry.prompt_lines.end as usize;\n            (start..=end).any(|line| changed.contains(&line))\n        })\n        .cloned()\n        .collect()\n}\n\npub fn incremental_unlock_list(\n    owned_files: &[String],\n    intersecting_entries: &[AttributionEntry],\n    target_rel_to_root: &str,\n) -> Vec<String> {\n    let mut files: Vec<String> = owned_files.to_vec();\n    for entry in intersecting_entries {\n        files.push(format!(\"{target_rel_to_root}/{}\", entry.file));\n    }\n    files.sort();\n    files.dedup();\n    files\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n    use schemas_line_range::LineRange;\n\n    fn entry(prompt_start: u32, prompt_end: u32, file: &str) -> AttributionEntry {\n        AttributionEntry {\n            prompt_lines: LineRange::new(prompt_start, prompt_end),\n            file: file.to_string(),\n            lines: LineRange::new(1, 1),\n            note: String::new(),\n        }\n    }\n\n    #[test]\n    fn splits_lines_and_strips_cr() {\n        let diff = diff_body_lines(\"a\\r\\nb\\r\\n\", \"a\\r\\nb\\r\\n\");\n        assert!(diff.changed_old_lines.is_empty());\n        assert!(diff.changed_new_lines.is_empty());\n        assert_eq!(diff.unified, \"\");\n    }\n\n    #[test]\n    fn identical_bodies_produce_no_changes() {\n        let diff = diff_body_lines(\"Greet a person by name.\", \"Greet a person by name.\");\n        assert_eq!(diff.changed_old_lines, Vec::<usize>::new());\n        assert_eq!(diff.changed_new_lines, Vec::<usize>::new());\n        assert_eq!(diff.unified, \"\");\n    }\n\n    #[test]\n    fn single_line_change_reports_delete_and_insert() {\n        let diff = diff_body_lines(\n            \"Greet a person by name.\",\n            \"Greet a person by name, loudly.\",\n        );\n        assert_eq!(diff.changed_old_lines, vec![1]);\n        assert_eq!(diff.changed_new_lines, vec![1]);\n        assert!(diff.unified.contains(\"-Greet a person by name.\"));\n        assert!(diff.unified.contains(\"+Greet a person by name, loudly.\"));\n        assert!(diff.unified.starts_with(\"@@ -1,1 +1,1 @@\"));\n    }\n\n    #[test]\n    fn context_lines_are_included_in_hunk() {\n        let old = \"one\\ntwo\\nthree\\nfour\\nfive\";\n        let new = \"one\\ntwo\\nCHANGED\\nfour\\nfive\";\n        let diff = diff_body_lines(old, new);\n        assert_eq!(diff.changed_old_lines, vec![3]);\n        assert_eq!(diff.changed_new_lines, vec![3]);\n        assert_eq!(\n            diff.unified,\n            \"@@ -1,5 +1,5 @@\\n one\\n two\\n-three\\n+CHANGED\\n four\\n five\"\n        );\n    }\n\n    #[test]\n    fn distant_changes_split_into_separate_hunks() {\n        let old_lines: Vec<String> = (1..=20).map(|n| format!(\"line{n}\")).collect();\n        let mut new_lines = old_lines.clone();\n        new_lines[0] = \"CHANGED1\".to_string();\n        new_lines[19] = \"CHANGED20\".to_string();\n        let old_body = old_lines.join(\"\\n\");\n        let new_body = new_lines.join(\"\\n\");\n        let diff = diff_body_lines(&old_body, &new_body);\n        let hunk_count = diff.unified.matches(\"@@\").count() / 2;\n        assert_eq!(hunk_count, 2);\n    }\n\n    #[test]\n    fn adjacent_changes_merge_into_one_hunk() {\n        // gap of exactly 6 equal lines between two single-line changes merges.\n        let old_lines: Vec<String> = (1..=8).map(|n| format!(\"line{n}\")).collect();\n        let mut new_lines = old_lines.clone();\n        new_lines[0] = \"CHANGED1\".to_string();\n        new_lines[7] = \"CHANGED8\".to_string();\n        let old_body = old_lines.join(\"\\n\");\n        let new_body = new_lines.join(\"\\n\");\n        let diff = diff_body_lines(&old_body, &new_body);\n        let hunk_count = diff.unified.matches(\"@@\").count() / 2;\n        assert_eq!(hunk_count, 1);\n    }\n\n    #[test]\n    fn prefers_deletion_on_free_choice() {\n        // \"a\" -> \"a\" then old has extra \"x\" vs new has extra \"y\": tie means delete first.\n        let diff = diff_body_lines(\"a\\nx\", \"a\\ny\");\n        assert_eq!(diff.changed_old_lines, vec![2]);\n        assert_eq!(diff.changed_new_lines, vec![2]);\n    }\n\n    #[test]\n    fn select_intersecting_entries_keeps_only_overlapping_ranges() {\n        let entries = vec![\n            entry(1, 2, \"a.rs\"),\n            entry(3, 3, \"b.rs\"),\n            entry(5, 6, \"c.rs\"),\n        ];\n        let selected = select_intersecting_entries(&entries, &[3, 7]);\n        assert_eq!(selected.len(), 1);\n        assert_eq!(selected[0].file, \"b.rs\");\n    }\n\n    #[test]\n    fn select_intersecting_entries_preserves_order() {\n        let entries = vec![entry(5, 5, \"z.rs\"), entry(1, 1, \"a.rs\")];\n        let selected = select_intersecting_entries(&entries, &[1, 5]);\n        assert_eq!(selected.len(), 2);\n        assert_eq!(selected[0].file, \"z.rs\");\n        assert_eq!(selected[1].file, \"a.rs\");\n    }\n\n    #[test]\n    fn unlock_list_merges_owned_and_intersecting_sorted_deduped() {\n        let owned = vec![\"b.rs\".to_string(), \"a.rs\".to_string()];\n        let entries = vec![entry(1, 1, \"a.rs\"), entry(2, 2, \"c.rs\")];\n        let unlock = incremental_unlock_list(&owned, &entries, \"target/rust\");\n        assert_eq!(\n            unlock,\n            vec![\n                \"a.rs\".to_string(),\n                \"b.rs\".to_string(),\n                \"target/rust/a.rs\".to_string(),\n                \"target/rust/c.rs\".to_string(),\n            ]\n        );\n    }\n\n    #[test]\n    fn unlock_list_is_empty_when_no_input() {\n        let unlock = incremental_unlock_list(&[], &[], \"target/rust\");\n        assert!(unlock.is_empty());\n    }\n}\n",
+      "language": "rust"
+    }
+  ],
+  "attribution": [
+    {
+      "promptLines": [
+        35,
+        37
+      ],
+      "file": "incremental/src/lib.rs",
+      "lines": [
+        15,
+        20
+      ],
+      "note": "BodyLineDiff struct definition"
+    },
+    {
+      "promptLines": [
+        42,
+        43
+      ],
+      "file": "incremental/src/lib.rs",
+      "lines": [
+        22,
+        26
+      ],
+      "note": "split lines on \\n, strip trailing \\r"
+    },
+    {
+      "promptLines": [
+        44,
+        50
+      ],
+      "file": "incremental/src/lib.rs",
+      "lines": [
+        28,
+        88
+      ],
+      "note": "LCS table and op building with delete-preference on ties"
+    },
+    {
+      "promptLines": [
+        51,
+        51
+      ],
+      "file": "incremental/src/lib.rs",
+      "lines": [
+        160,
+        166
+      ],
+      "note": "changed_old_lines from deletions"
+    },
+    {
+      "promptLines": [
+        52,
+        52
+      ],
+      "file": "incremental/src/lib.rs",
+      "lines": [
+        167,
+        173
+      ],
+      "note": "changed_new_lines from insertions"
+    },
+    {
+      "promptLines": [
+        53,
+        55
+      ],
+      "file": "incremental/src/lib.rs",
+      "lines": [
+        90,
+        110
+      ],
+      "note": "hunk grouping with 3-line context"
+    },
+    {
+      "promptLines": [
+        56,
+        59
+      ],
+      "file": "incremental/src/lib.rs",
+      "lines": [
+        112,
+        149
+      ],
+      "note": "hunk header rendering with old/new start+count"
+    },
+    {
+      "promptLines": [
+        60,
+        62
+      ],
+      "file": "incremental/src/lib.rs",
+      "lines": [
+        130,
+        152
+      ],
+      "note": "per-op line rendering, joined with newline"
+    },
+    {
+      "promptLines": [
+        39,
+        41
+      ],
+      "file": "incremental/src/lib.rs",
+      "lines": [
+        155,
+        187
+      ],
+      "note": "diff_body_lines entry point assembling BodyLineDiff"
+    },
+    {
+      "promptLines": [
+        63,
+        66
+      ],
+      "file": "incremental/src/lib.rs",
+      "lines": [
+        250,
+        260
+      ],
+      "note": "test for greet sentence unified diff example"
+    },
+    {
+      "promptLines": [
+        70,
+        73
+      ],
+      "file": "incremental/src/lib.rs",
+      "lines": [
+        189,
+        203
+      ],
+      "note": "select_intersecting_entries implementation"
+    },
+    {
+      "promptLines": [
+        77,
+        81
+      ],
+      "file": "incremental/src/lib.rs",
+      "lines": [
+        205,
+        217
+      ],
+      "note": "incremental_unlock_list implementation"
+    },
+    {
+      "promptLines": [
+        24,
+        26
+      ],
+      "file": "incremental/src/lib.rs",
+      "lines": [
+        222,
+        222
+      ],
+      "note": "uses schemas_line_range::LineRange"
+    },
+    {
+      "promptLines": [
+        27,
+        31
+      ],
+      "file": "incremental/src/lib.rs",
+      "lines": [
+        3,
+        3
+      ],
+      "note": "uses schemas_attribution::AttributionEntry"
+    },
+    {
+      "promptLines": [
+        27,
+        31
+      ],
+      "file": "incremental/src/lib.rs",
+      "lines": [
+        224,
+        231
+      ],
+      "note": "test helper building AttributionEntry"
+    }
+  ],
+  "attributionYaml": "module: incremental\ntarget: rust\nentries:\n  - promptLines:\n      - 35\n      - 37\n    file: incremental/src/lib.rs\n    lines:\n      - 15\n      - 20\n    note: BodyLineDiff struct definition\n  - promptLines:\n      - 42\n      - 43\n    file: incremental/src/lib.rs\n    lines:\n      - 22\n      - 26\n    note: split lines on \\n, strip trailing \\r\n  - promptLines:\n      - 44\n      - 50\n    file: incremental/src/lib.rs\n    lines:\n      - 28\n      - 88\n    note: LCS table and op building with delete-preference on ties\n  - promptLines:\n      - 51\n      - 51\n    file: incremental/src/lib.rs\n    lines:\n      - 160\n      - 166\n    note: changed_old_lines from deletions\n  - promptLines:\n      - 52\n      - 52\n    file: incremental/src/lib.rs\n    lines:\n      - 167\n      - 173\n    note: changed_new_lines from insertions\n  - promptLines:\n      - 53\n      - 55\n    file: incremental/src/lib.rs\n    lines:\n      - 90\n      - 110\n    note: hunk grouping with 3-line context\n  - promptLines:\n      - 56\n      - 59\n    file: incremental/src/lib.rs\n    lines:\n      - 112\n      - 149\n    note: hunk header rendering with old/new start+count\n  - promptLines:\n      - 60\n      - 62\n    file: incremental/src/lib.rs\n    lines:\n      - 130\n      - 152\n    note: per-op line rendering, joined with newline\n  - promptLines:\n      - 39\n      - 41\n    file: incremental/src/lib.rs\n    lines:\n      - 155\n      - 187\n    note: diff_body_lines entry point assembling BodyLineDiff\n  - promptLines:\n      - 63\n      - 66\n    file: incremental/src/lib.rs\n    lines:\n      - 250\n      - 260\n    note: test for greet sentence unified diff example\n  - promptLines:\n      - 70\n      - 73\n    file: incremental/src/lib.rs\n    lines:\n      - 189\n      - 203\n    note: select_intersecting_entries implementation\n  - promptLines:\n      - 77\n      - 81\n    file: incremental/src/lib.rs\n    lines:\n      - 205\n      - 217\n    note: incremental_unlock_list implementation\n  - promptLines:\n      - 24\n      - 26\n    file: incremental/src/lib.rs\n    lines:\n      - 222\n      - 222\n    note: uses schemas_line_range::LineRange\n  - promptLines:\n      - 27\n      - 31\n    file: incremental/src/lib.rs\n    lines:\n      - 3\n      - 3\n    note: uses schemas_attribution::AttributionEntry\n  - promptLines:\n      - 27\n      - 31\n    file: incremental/src/lib.rs\n    lines:\n      - 224\n      - 231\n    note: test helper building AttributionEntry\n",
+  "mapl": [
+    {
+      "promptLines": [
+        21,
+        22
+      ],
+      "kind": "ambiguity",
+      "severity": "error",
+      "message": "\"do not... depend on any hand-written crate\" is oddly worded and its scope is unclear.",
+      "reasoning": "The instruction to add path deps on the two sibling crates and not reimplement their logic makes sense, but the trailing clause \"or depend on any hand-written crate\" reads as an odd, out-of-place insertion — it's unclear what \"hand-written\" is meant to contrast with (generated vs. authored code?), and whether it bans any crates.io dependency beyond the two named siblings, or something else entirely. The agent treated it as reinforcing \"use only the two generated sibling crates, plus std\" and added no other dependencies, which satisfies the plain reading but the phrase itself is worth the author's attention.\n",
+      "suggestion": "Depend only on these two sibling crates (plus the standard library) — do not add any other crate dependency."
+    },
+    {
+      "promptLines": [
+        53,
+        55
+      ],
+      "kind": "assumption",
+      "severity": "warning",
+      "message": "\"within 3 of a change\" was interpreted as operation-index distance, not line-number distance.",
+      "reasoning": "The hunk-grouping rule says a hunk covers every operation within 3 of a change, and hunks merge/split based on run width, but it doesn't explicitly state whether \"within 3\" is measured in diff-operation index or in body line number (these usually coincide for equal runs but could diverge with runs of consecutive inserts/deletes). The agent implemented it as operation-index distance (`idx.saturating_sub(CONTEXT)` / `idx + CONTEXT` over the ops array, merging when `lo <= last_hi + 1`), which matches the worked examples in the tests (6-line gap merges, wider gaps split) but is one of a few defensible readings.\n",
+      "suggestion": "Clarify: within 3 diff-operations (not source line numbers) of a changed (deletion/insertion) operation."
+    },
+    {
+      "promptLines": [
+        48,
+        50
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "Delete/insert tie-break implemented via LCS-table comparison, not explicitly spelled out in prompt.",
+      "reasoning": "The prompt states that on a free choice, deletion is preferred over insertion, without specifying the mechanism. The agent implemented this by choosing Delete whenever `table[i+1][j] >= table[i][j+1]` (ties go to delete), which the `prefers_deletion_on_free_choice` test confirms produces the intended result. Purely a note on the implementation choice, no ambiguity in the required behavior itself."
+    }
+  ],
+  "journal": [
+    {
+      "gen": 22,
+      "timestamp": "2026-07-24T07:55:17.579Z",
+      "mode": "full",
+      "promptHash": "daea8da01dc83d87a8a5435727784058ba5f2b6e9501a2532d74acd072d6ed7d",
+      "files": [
+        {
+          "path": "incremental/Cargo.toml",
+          "journalPath": ".napl/src/rust/incremental/Cargo.toml",
+          "patch": "@@ -0,0 +1,8 @@\n+[package]\n+name = \"incremental\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]\n+schemas_line_range = { path = \"../schemas_line_range\" }\n+schemas_attribution = { path = \"../schemas_attribution\" }"
+        },
+        {
+          "path": "incremental/src/lib.rs",
+          "journalPath": ".napl/src/rust/incremental/src/lib.rs",
+          "patch": "@@ -0,0 +1,352 @@\n+// GENERATED BY NAPL from incremental.napl — edit the prompt, not this file\n+\n+use schemas_attribution::AttributionEntry;\n+use std::collections::BTreeSet;\n+\n+const CONTEXT: usize = 3;\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+enum DiffOp {\n+    Equal { old_line: usize, new_line: usize, text: String },\n+    Delete { old_line: usize, text: String },\n+    Insert { new_line: usize, text: String },\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct BodyLineDiff {\n+    pub unified: String,\n+    pub changed_old_lines: Vec<usize>,\n+    pub changed_new_lines: Vec<usize>,\n+}\n+\n+fn split_lines(body: &str) -> Vec<String> {\n+    body.split('\\n')\n+        .map(|line| line.strip_suffix('\\r').unwrap_or(line).to_string())\n+        .collect()\n+}\n+\n+fn lcs_table(old: &[String], new: &[String]) -> Vec<Vec<u32>> {\n+    let n = old.len();\n+    let m = new.len();\n+    let mut table = vec![vec![0u32; m + 1]; n + 1];\n+    for i in (0..n).rev() {\n+        for j in (0..m).rev() {\n+            table[i][j] = if old[i] == new[j] {\n+                table[i + 1][j + 1] + 1\n+            } else {\n+                table[i + 1][j].max(table[i][j + 1])\n+            };\n+        }\n+    }\n+    table\n+}\n+\n+fn build_ops(old: &[String], new: &[String]) -> Vec<DiffOp> {\n+    let table = lcs_table(old, new);\n+    let mut ops = Vec::new();\n+    let (mut i, mut j) = (0usize, 0usize);\n+    let n = old.len();\n+    let m = new.len();\n+    while i < n && j < m {\n+        if old[i] == new[j] {\n+            ops.push(DiffOp::Equal {\n+                old_line: i + 1,\n+                new_line: j + 1,\n+                text: old[i].clone(),\n+            });\n+            i += 1;\n+            j += 1;\n+        } else if table[i + 1][j] >= table[i][j + 1] {\n+            ops.push(DiffOp::Delete {\n+                old_line: i + 1,\n+                text: old[i].clone(),\n+            });\n+            i += 1;\n+        } else {\n+            ops.push(DiffOp::Insert {\n+                new_line: j + 1,\n+                text: new[j].clone(),\n+            });\n+            j += 1;\n+        }\n+    }\n+    while i < n {\n+        ops.push(DiffOp::Delete {\n+            old_line: i + 1,\n+            text: old[i].clone(),\n+        });\n+        i += 1;\n+    }\n+    while j < m {\n+        ops.push(DiffOp::Insert {\n+            new_line: j + 1,\n+            text: new[j].clone(),\n+        });\n+        j += 1;\n+    }\n+    ops\n+}\n+\n+fn merged_hunk_ranges(ops: &[DiffOp]) -> Vec<(usize, usize)> {\n+    let change_indices: Vec<usize> = ops\n+        .iter()\n+        .enumerate()\n+        .filter(|(_, op)| !matches!(op, DiffOp::Equal { .. }))\n+        .map(|(idx, _)| idx)\n+        .collect();\n+\n+    let mut ranges: Vec<(usize, usize)> = Vec::new();\n+    for &idx in &change_indices {\n+        let lo = idx.saturating_sub(CONTEXT);\n+        let hi = (idx + CONTEXT).min(ops.len() - 1);\n+        match ranges.last_mut() {\n+            Some((_, last_hi)) if lo <= *last_hi + 1 => {\n+                *last_hi = (*last_hi).max(hi);\n+            }\n+            _ => ranges.push((lo, hi)),\n+        }\n+    }\n+    ranges\n+}\n+\n+fn render_hunk(ops: &[DiffOp]) -> String {\n+    let mut old_start = 0usize;\n+    let mut old_count = 0usize;\n+    let mut new_start = 0usize;\n+    let mut new_count = 0usize;\n+    let mut lines: Vec<String> = Vec::new();\n+\n+    for op in ops {\n+        match op {\n+            DiffOp::Equal { old_line, new_line, text } => {\n+                if old_start == 0 {\n+                    old_start = *old_line;\n+                }\n+                if new_start == 0 {\n+                    new_start = *new_line;\n+                }\n+                old_count += 1;\n+                new_count += 1;\n+                lines.push(format!(\" {text}\"));\n+            }\n+            DiffOp::Delete { old_line, text } => {\n+                if old_start == 0 {\n+                    old_start = *old_line;\n+                }\n+                old_count += 1;\n+                lines.push(format!(\"-{text}\"));\n+            }\n+            DiffOp::Insert { new_line, text } => {\n+                if new_start == 0 {\n+                    new_start = *new_line;\n+                }\n+                new_count += 1;\n+                lines.push(format!(\"+{text}\"));\n+            }\n+        }\n+    }\n+\n+    let header = format!(\"@@ -{old_start},{old_count} +{new_start},{new_count} @@\");\n+    let mut hunk = vec![header];\n+    hunk.extend(lines);\n+    hunk.join(\"\\n\")\n+}\n+\n+pub fn diff_body_lines(old_body: &str, new_body: &str) -> BodyLineDiff {\n+    let old_lines = split_lines(old_body);\n+    let new_lines = split_lines(new_body);\n+    let ops = build_ops(&old_lines, &new_lines);\n+\n+    let changed_old_lines: Vec<usize> = ops\n+        .iter()\n+        .filter_map(|op| match op {\n+            DiffOp::Delete { old_line, .. } => Some(*old_line),\n+            _ => None,\n+        })\n+        .collect();\n+    let changed_new_lines: Vec<usize> = ops\n+        .iter()\n+        .filter_map(|op| match op {\n+            DiffOp::Insert { new_line, .. } => Some(*new_line),\n+            _ => None,\n+        })\n+        .collect();\n+\n+    let ranges = merged_hunk_ranges(&ops);\n+    let hunks: Vec<String> = ranges\n+        .iter()\n+        .map(|(lo, hi)| render_hunk(&ops[*lo..=*hi]))\n+        .collect();\n+    let unified = hunks.join(\"\\n\");\n+\n+    BodyLineDiff {\n+        unified,\n+        changed_old_lines,\n+        changed_new_lines,\n+    }\n+}\n+\n+pub fn select_intersecting_entries(\n+    entries: &[AttributionEntry],\n+    changed_old_lines: &[usize],\n+) -> Vec<AttributionEntry> {\n+    let changed: BTreeSet<usize> = changed_old_lines.iter().copied().collect();\n+    entries\n+        .iter()\n+        .filter(|entry| {\n+            let start = entry.prompt_lines.start as usize;\n+            let end = entry.prompt_lines.end as usize;\n+            (start..=end).any(|line| changed.contains(&line))\n+        })\n+        .cloned()\n+        .collect()\n+}\n+\n+pub fn incremental_unlock_list(\n+    owned_files: &[String],\n+    intersecting_entries: &[AttributionEntry],\n+    target_rel_to_root: &str,\n+) -> Vec<String> {\n+    let mut files: Vec<String> = owned_files.to_vec();\n+    for entry in intersecting_entries {\n+        files.push(format!(\"{target_rel_to_root}/{}\", entry.file));\n+    }\n+    files.sort();\n+    files.dedup();\n+    files\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+    use schemas_line_range::LineRange;\n+\n+    fn entry(prompt_start: u32, prompt_end: u32, file: &str) -> AttributionEntry {\n+        AttributionEntry {\n+            prompt_lines: LineRange::new(prompt_start, prompt_end),\n+            file: file.to_string(),\n+            lines: LineRange::new(1, 1),\n+            note: String::new(),\n+        }\n+    }\n+\n+    #[test]\n+    fn splits_lines_and_strips_cr() {\n+        let diff = diff_body_lines(\"a\\r\\nb\\r\\n\", \"a\\r\\nb\\r\\n\");\n+        assert!(diff.changed_old_lines.is_empty());\n+        assert!(diff.changed_new_lines.is_empty());\n+        assert_eq!(diff.unified, \"\");\n+    }\n+\n+    #[test]\n+    fn identical_bodies_produce_no_changes() {\n+        let diff = diff_body_lines(\"Greet a person by name.\", \"Greet a person by name.\");\n+        assert_eq!(diff.changed_old_lines, Vec::<usize>::new());\n+        assert_eq!(diff.changed_new_lines, Vec::<usize>::new());\n+        assert_eq!(diff.unified, \"\");\n+    }\n+\n+    #[test]\n+    fn single_line_change_reports_delete_and_insert() {\n+        let diff = diff_body_lines(\n+            \"Greet a person by name.\",\n+            \"Greet a person by name, loudly.\",\n+        );\n+        assert_eq!(diff.changed_old_lines, vec![1]);\n+        assert_eq!(diff.changed_new_lines, vec![1]);\n+        assert!(diff.unified.contains(\"-Greet a person by name.\"));\n+        assert!(diff.unified.contains(\"+Greet a person by name, loudly.\"));\n+        assert!(diff.unified.starts_with(\"@@ -1,1 +1,1 @@\"));\n+    }\n+\n+    #[test]\n+    fn context_lines_are_included_in_hunk() {\n+        let old = \"one\\ntwo\\nthree\\nfour\\nfive\";\n+        let new = \"one\\ntwo\\nCHANGED\\nfour\\nfive\";\n+        let diff = diff_body_lines(old, new);\n+        assert_eq!(diff.changed_old_lines, vec![3]);\n+        assert_eq!(diff.changed_new_lines, vec![3]);\n+        assert_eq!(\n+            diff.unified,\n+            \"@@ -1,5 +1,5 @@\\n one\\n two\\n-three\\n+CHANGED\\n four\\n five\"\n+        );\n+    }\n+\n+    #[test]\n+    fn distant_changes_split_into_separate_hunks() {\n+        let old_lines: Vec<String> = (1..=20).map(|n| format!(\"line{n}\")).collect();\n+        let mut new_lines = old_lines.clone();\n+        new_lines[0] = \"CHANGED1\".to_string();\n+        new_lines[19] = \"CHANGED20\".to_string();\n+        let old_body = old_lines.join(\"\\n\");\n+        let new_body = new_lines.join(\"\\n\");\n+        let diff = diff_body_lines(&old_body, &new_body);\n+        let hunk_count = diff.unified.matches(\"@@\").count() / 2;\n+        assert_eq!(hunk_count, 2);\n+    }\n+\n+    #[test]\n+    fn adjacent_changes_merge_into_one_hunk() {\n+        // gap of exactly 6 equal lines between two single-line changes merges.\n+        let old_lines: Vec<String> = (1..=8).map(|n| format!(\"line{n}\")).collect();\n+        let mut new_lines = old_lines.clone();\n+        new_lines[0] = \"CHANGED1\".to_string();\n+        new_lines[7] = \"CHANGED8\".to_string();\n+        let old_body = old_lines.join(\"\\n\");\n+        let new_body = new_lines.join(\"\\n\");\n+        let diff = diff_body_lines(&old_body, &new_body);\n+        let hunk_count = diff.unified.matches(\"@@\").count() / 2;\n+        assert_eq!(hunk_count, 1);\n+    }\n+\n+    #[test]\n+    fn prefers_deletion_on_free_choice() {\n+        // \"a\" -> \"a\" then old has extra \"x\" vs new has extra \"y\": tie means delete first.\n+        let diff = diff_body_lines(\"a\\nx\", \"a\\ny\");\n+        assert_eq!(diff.changed_old_lines, vec![2]);\n+        assert_eq!(diff.changed_new_lines, vec![2]);\n+    }\n+\n+    #[test]\n+    fn select_intersecting_entries_keeps_only_overlapping_ranges() {\n+        let entries = vec![\n+            entry(1, 2, \"a.rs\"),\n+            entry(3, 3, \"b.rs\"),\n+            entry(5, 6, \"c.rs\"),\n+        ];\n+        let selected = select_intersecting_entries(&entries, &[3, 7]);\n+        assert_eq!(selected.len(), 1);\n+        assert_eq!(selected[0].file, \"b.rs\");\n+    }\n+\n+    #[test]\n+    fn select_intersecting_entries_preserves_order() {\n+        let entries = vec![entry(5, 5, \"z.rs\"), entry(1, 1, \"a.rs\")];\n+        let selected = select_intersecting_entries(&entries, &[1, 5]);\n+        assert_eq!(selected.len(), 2);\n+        assert_eq!(selected[0].file, \"z.rs\");\n+        assert_eq!(selected[1].file, \"a.rs\");\n+    }\n+\n+    #[test]\n+    fn unlock_list_merges_owned_and_intersecting_sorted_deduped() {\n+        let owned = vec![\"b.rs\".to_string(), \"a.rs\".to_string()];\n+        let entries = vec![entry(1, 1, \"a.rs\"), entry(2, 2, \"c.rs\")];\n+        let unlock = incremental_unlock_list(&owned, &entries, \"target/rust\");\n+        assert_eq!(\n+            unlock,\n+            vec![\n+                \"a.rs\".to_string(),\n+                \"b.rs\".to_string(),\n+                \"target/rust/a.rs\".to_string(),\n+                \"target/rust/c.rs\".to_string(),\n+            ]\n+        );\n+    }\n+\n+    #[test]\n+    fn unlock_list_is_empty_when_no_input() {\n+        let unlock = incremental_unlock_list(&[], &[], \"target/rust\");\n+        assert!(unlock.is_empty());\n+    }\n+}"
+        }
+      ]
+    }
+  ],
+  "lock": [
+    {
+      "path": "incremental/Cargo.toml",
+      "hash": "8f24ff787d504aabdada635b0bba347563b5371185f22f0e17b501b3f48eacde"
+    },
+    {
+      "path": "incremental/src/lib.rs",
+      "hash": "dc6da73cf6085e364a8c83f82f88b5080bee055d48524ee251b120036d780666"
+    }
+  ],
+  "session": {
+    "task": "napl gen rust → incremental",
+    "files": {
+      "incremental.napl": "---\nmodule: incremental\ndeps: [schemas_attribution, schemas_line_range]\ntargets: [rust]\ntests:\n  - name: diffing two prompt bodies tracks the changed line and emits a unified diff\n    given: { old: \"Greet a person by name.\\\\n\", new: \"Greet a person by name, loudly.\\\\n\" }\n    expect: { unified_contains: [\"-Greet a person by name.\", \"+Greet a person by name, loudly.\"], changed_old_lines: [1], changed_new_lines: [1] }\n  - name: the unlock list is sorted and deduplicated\n    given: { owned: [\".napl/src/typescript/greet.ts\"], intersecting: [], target_rel: \".napl/src/typescript\" }\n    expect: { list: [\".napl/src/typescript/greet.ts\"] }\n---\n# Incremental regeneration: body-line diffing and the unlock list\n\nThis module computes what an *incremental* (diff-scoped) regeneration must touch:\nit diffs two versions of a prompt body with per-line change tracking, selects the\nowned attribution regions that intersect the changed lines, and builds the sorted\nunlock list of files to reopen. It is pure: no I/O.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `incremental/`: `incremental/Cargo.toml` (package\nname `incremental`) and `incremental/src/lib.rs`. Touch nothing outside\n`incremental/`. Ensure `cargo test` passes from the workspace root before\nfinishing.\n\n## Builds on two modules of this workspace\n\nBoth are sibling member crates generated into this same workspace. Add a path\ndependency on each in your `Cargo.toml` (workspace siblings, not external\ncrates.io dependencies), use their public API, and do **not** reimplement their\nlogic or depend on any hand-written crate.\n\n- **`schemas_line_range`** (`../schemas_line_range`): exposes `LineRange`, an\n  inclusive 1-based range with public `start` and `end` fields (`u32`) and a\n  `new(start, end)` constructor.\n- **`schemas_attribution`** (`../schemas_attribution`): exposes\n  `AttributionEntry` (`Clone`), a mapping from prompt lines to code lines with\n  public fields `prompt_lines: LineRange`, `file: String`, `lines: LineRange`,\n  and `note: String`. This module reads `prompt_lines` and `file`, and returns\n  cloned `AttributionEntry` values.\n\n## The body-line diff\n\nExpose a public struct `BodyLineDiff` (`Debug`, `Clone`, `PartialEq`, `Eq`) with\npublic fields `unified: String`, `changed_old_lines: Vec<usize>`, and\n`changed_new_lines: Vec<usize>`.\n\n`diff_body_lines(old_body: &str, new_body: &str) -> BodyLineDiff` computes a\nline-level diff between the two bodies:\n\n- Split each body into lines on `\\n`, stripping a trailing `\\r` from each line\n  (so `\"a\\nb\\n\"` splits into `[\"a\", \"b\", \"\"]`).\n- Compute a longest-common-subsequence alignment of the two line sequences,\n  producing an ordered list of operations, each an **equal**, a **deletion** (a\n  line present only in the old body), or an **insertion** (a line present only in\n  the new body). Deletions carry a 1-based old-body line number; insertions carry\n  a 1-based new-body line number; equals carry both. When the choice between a\n  deletion and an insertion is free (neither extends the common subsequence\n  further), prefer the deletion.\n- `changed_old_lines` is the old-body line numbers of the deletions, in order.\n- `changed_new_lines` is the new-body line numbers of the insertions, in order.\n- `unified` is a unified diff of the two bodies with **3 lines of context**: group\n  the operations into hunks, where a hunk covers every operation within 3 of a\n  change; a purely-equal run wider than the context splits hunks. Each hunk begins\n  with a header `@@ -oldStart,oldCount +newStart,newCount @@`, where `oldStart`\n  and `oldCount` count the lines in the hunk present in the old body (equals and\n  deletions) and `newStart`/`newCount` those present in the new body (equals and\n  insertions); `oldStart`/`newStart` are the first such line number in the hunk,\n  or `0` if none. Under each header, one line per operation: a leading space then\n  the text for an equal, a leading `-` then the old text for a deletion, a leading\n  `+` then the new text for an insertion. Join all hunk lines with `\\n` (no\n  trailing newline). So changing the sole body line from\n  `Greet a person by name.` to `Greet a person by name, loudly.` yields a unified\n  diff containing the lines `-Greet a person by name.` and\n  `+Greet a person by name, loudly.`.\n\n## Selecting the intersecting regions\n\n`select_intersecting_entries(entries: &[AttributionEntry], changed_old_lines: &[usize]) -> Vec<AttributionEntry>`:\nkeep (cloned) every entry whose prompt range intersects the changed old lines —\nthat is, some line in the inclusive range `prompt_lines.start ..= prompt_lines.end`\n(compared as `usize`) appears in `changed_old_lines`. Preserve input order.\n\n## The unlock list\n\n`incremental_unlock_list(owned_files: &[String], intersecting_entries: &[AttributionEntry], target_rel_to_root: &str) -> Vec<String>`:\nstart from the owned files, then for each intersecting entry add the string\n`\"{target_rel_to_root}/{file}\"` (the entry's `file` joined under the target-\nrelative directory with a `/`). Sort the resulting list and remove duplicates,\nreturning the sorted, deduplicated vector.\n"
+    },
+    "events": [
+      {
+        "type": "task",
+        "task": "napl gen rust → incremental"
+      },
+      {
+        "type": "diff",
+        "path": "incremental/Cargo.toml",
+        "patch": "@@ -0,0 +1,8 @@\n+[package]\n+name = \"incremental\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]\n+schemas_line_range = { path = \"../schemas_line_range\" }\n+schemas_attribution = { path = \"../schemas_attribution\" }"
+      },
+      {
+        "type": "file-edit",
+        "path": "incremental/Cargo.toml",
+        "content": "[package]\nname = \"incremental\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\nschemas_line_range = { path = \"../schemas_line_range\" }\nschemas_attribution = { path = \"../schemas_attribution\" }\n"
+      },
+      {
+        "type": "diff",
+        "path": "incremental/src/lib.rs",
+        "patch": "@@ -0,0 +1,352 @@\n+// GENERATED BY NAPL from incremental.napl — edit the prompt, not this file\n+\n+use schemas_attribution::AttributionEntry;\n+use std::collections::BTreeSet;\n+\n+const CONTEXT: usize = 3;\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+enum DiffOp {\n+    Equal { old_line: usize, new_line: usize, text: String },\n+    Delete { old_line: usize, text: String },\n+    Insert { new_line: usize, text: String },\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct BodyLineDiff {\n+    pub unified: String,\n+    pub changed_old_lines: Vec<usize>,\n+    pub changed_new_lines: Vec<usize>,\n+}\n+\n+fn split_lines(body: &str) -> Vec<String> {\n+    body.split('\\n')\n+        .map(|line| line.strip_suffix('\\r').unwrap_or(line).to_string())\n+        .collect()\n+}\n+\n+fn lcs_table(old: &[String], new: &[String]) -> Vec<Vec<u32>> {\n+    let n = old.len();\n+    let m = new.len();\n+    let mut table = vec![vec![0u32; m + 1]; n + 1];\n+    for i in (0..n).rev() {\n+        for j in (0..m).rev() {\n+            table[i][j] = if old[i] == new[j] {\n+                table[i + 1][j + 1] + 1\n+            } else {\n+                table[i + 1][j].max(table[i][j + 1])\n+            };\n+        }\n+    }\n+    table\n+}\n+\n+fn build_ops(old: &[String], new: &[String]) -> Vec<DiffOp> {\n+    let table = lcs_table(old, new);\n+    let mut ops = Vec::new();\n+    let (mut i, mut j) = (0usize, 0usize);\n+    let n = old.len();\n+    let m = new.len();\n+    while i < n && j < m {\n+        if old[i] == new[j] {\n+            ops.push(DiffOp::Equal {\n+                old_line: i + 1,\n+                new_line: j + 1,\n+                text: old[i].clone(),\n+            });\n+            i += 1;\n+            j += 1;\n+        } else if table[i + 1][j] >= table[i][j + 1] {\n+            ops.push(DiffOp::Delete {\n+                old_line: i + 1,\n+                text: old[i].clone(),\n+            });\n+            i += 1;\n+        } else {\n+            ops.push(DiffOp::Insert {\n+                new_line: j + 1,\n+                text: new[j].clone(),\n+            });\n+            j += 1;\n+        }\n+    }\n+    while i < n {\n+        ops.push(DiffOp::Delete {\n+            old_line: i + 1,\n+            text: old[i].clone(),\n+        });\n+        i += 1;\n+    }\n+    while j < m {\n+        ops.push(DiffOp::Insert {\n+            new_line: j + 1,\n+            text: new[j].clone(),\n+        });\n+        j += 1;\n+    }\n+    ops\n+}\n+\n+fn merged_hunk_ranges(ops: &[DiffOp]) -> Vec<(usize, usize)> {\n+    let change_indices: Vec<usize> = ops\n+        .iter()\n+        .enumerate()\n+        .filter(|(_, op)| !matches!(op, DiffOp::Equal { .. }))\n+        .map(|(idx, _)| idx)\n+        .collect();\n+\n+    let mut ranges: Vec<(usize, usize)> = Vec::new();\n+    for &idx in &change_indices {\n+        let lo = idx.saturating_sub(CONTEXT);\n+        let hi = (idx + CONTEXT).min(ops.len() - 1);\n+        match ranges.last_mut() {\n+            Some((_, last_hi)) if lo <= *last_hi + 1 => {\n+                *last_hi = (*last_hi).max(hi);\n+            }\n+            _ => ranges.push((lo, hi)),\n+        }\n+    }\n+    ranges\n+}\n+\n+fn render_hunk(ops: &[DiffOp]) -> String {\n+    let mut old_start = 0usize;\n+    let mut old_count = 0usize;\n+    let mut new_start = 0usize;\n+    let mut new_count = 0usize;\n+    let mut lines: Vec<String> = Vec::new();\n+\n+    for op in ops {\n+        match op {\n+            DiffOp::Equal { old_line, new_line, text } => {\n+                if old_start == 0 {\n+                    old_start = *old_line;\n+                }\n+                if new_start == 0 {\n+                    new_start = *new_line;\n+                }\n+                old_count += 1;\n+                new_count += 1;\n+                lines.push(format!(\" {text}\"));\n+            }\n+            DiffOp::Delete { old_line, text } => {\n+                if old_start == 0 {\n+                    old_start = *old_line;\n+                }\n+                old_count += 1;\n+                lines.push(format!(\"-{text}\"));\n+            }\n+            DiffOp::Insert { new_line, text } => {\n+                if new_start == 0 {\n+                    new_start = *new_line;\n+                }\n+                new_count += 1;\n+                lines.push(format!(\"+{text}\"));\n+            }\n+        }\n+    }\n+\n+    let header = format!(\"@@ -{old_start},{old_count} +{new_start},{new_count} @@\");\n+    let mut hunk = vec![header];\n+    hunk.extend(lines);\n+    hunk.join(\"\\n\")\n+}\n+\n+pub fn diff_body_lines(old_body: &str, new_body: &str) -> BodyLineDiff {\n+    let old_lines = split_lines(old_body);\n+    let new_lines = split_lines(new_body);\n+    let ops = build_ops(&old_lines, &new_lines);\n+\n+    let changed_old_lines: Vec<usize> = ops\n+        .iter()\n+        .filter_map(|op| match op {\n+            DiffOp::Delete { old_line, .. } => Some(*old_line),\n+            _ => None,\n+        })\n+        .collect();\n+    let changed_new_lines: Vec<usize> = ops\n+        .iter()\n+        .filter_map(|op| match op {\n+            DiffOp::Insert { new_line, .. } => Some(*new_line),\n+            _ => None,\n+        })\n+        .collect();\n+\n+    let ranges = merged_hunk_ranges(&ops);\n+    let hunks: Vec<String> = ranges\n+        .iter()\n+        .map(|(lo, hi)| render_hunk(&ops[*lo..=*hi]))\n+        .collect();\n+    let unified = hunks.join(\"\\n\");\n+\n+    BodyLineDiff {\n+        unified,\n+        changed_old_lines,\n+        changed_new_lines,\n+    }\n+}\n+\n+pub fn select_intersecting_entries(\n+    entries: &[AttributionEntry],\n+    changed_old_lines: &[usize],\n+) -> Vec<AttributionEntry> {\n+    let changed: BTreeSet<usize> = changed_old_lines.iter().copied().collect();\n+    entries\n+        .iter()\n+        .filter(|entry| {\n+            let start = entry.prompt_lines.start as usize;\n+            let end = entry.prompt_lines.end as usize;\n+            (start..=end).any(|line| changed.contains(&line))\n+        })\n+        .cloned()\n+        .collect()\n+}\n+\n+pub fn incremental_unlock_list(\n+    owned_files: &[String],\n+    intersecting_entries: &[AttributionEntry],\n+    target_rel_to_root: &str,\n+) -> Vec<String> {\n+    let mut files: Vec<String> = owned_files.to_vec();\n+    for entry in intersecting_entries {\n+        files.push(format!(\"{target_rel_to_root}/{}\", entry.file));\n+    }\n+    files.sort();\n+    files.dedup();\n+    files\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+    use schemas_line_range::LineRange;\n+\n+    fn entry(prompt_start: u32, prompt_end: u32, file: &str) -> AttributionEntry {\n+        AttributionEntry {\n+            prompt_lines: LineRange::new(prompt_start, prompt_end),\n+            file: file.to_string(),\n+            lines: LineRange::new(1, 1),\n+            note: String::new(),\n+        }\n+    }\n+\n+    #[test]\n+    fn splits_lines_and_strips_cr() {\n+        let diff = diff_body_lines(\"a\\r\\nb\\r\\n\", \"a\\r\\nb\\r\\n\");\n+        assert!(diff.changed_old_lines.is_empty());\n+        assert!(diff.changed_new_lines.is_empty());\n+        assert_eq!(diff.unified, \"\");\n+    }\n+\n+    #[test]\n+    fn identical_bodies_produce_no_changes() {\n+        let diff = diff_body_lines(\"Greet a person by name.\", \"Greet a person by name.\");\n+        assert_eq!(diff.changed_old_lines, Vec::<usize>::new());\n+        assert_eq!(diff.changed_new_lines, Vec::<usize>::new());\n+        assert_eq!(diff.unified, \"\");\n+    }\n+\n+    #[test]\n+    fn single_line_change_reports_delete_and_insert() {\n+        let diff = diff_body_lines(\n+            \"Greet a person by name.\",\n+            \"Greet a person by name, loudly.\",\n+        );\n+        assert_eq!(diff.changed_old_lines, vec![1]);\n+        assert_eq!(diff.changed_new_lines, vec![1]);\n+        assert!(diff.unified.contains(\"-Greet a person by name.\"));\n+        assert!(diff.unified.contains(\"+Greet a person by name, loudly.\"));\n+        assert!(diff.unified.starts_with(\"@@ -1,1 +1,1 @@\"));\n+    }\n+\n+    #[test]\n+    fn context_lines_are_included_in_hunk() {\n+        let old = \"one\\ntwo\\nthree\\nfour\\nfive\";\n+        let new = \"one\\ntwo\\nCHANGED\\nfour\\nfive\";\n+        let diff = diff_body_lines(old, new);\n+        assert_eq!(diff.changed_old_lines, vec![3]);\n+        assert_eq!(diff.changed_new_lines, vec![3]);\n+        assert_eq!(\n+            diff.unified,\n+            \"@@ -1,5 +1,5 @@\\n one\\n two\\n-three\\n+CHANGED\\n four\\n five\"\n+        );\n+    }\n+\n+    #[test]\n+    fn distant_changes_split_into_separate_hunks() {\n+        let old_lines: Vec<String> = (1..=20).map(|n| format!(\"line{n}\")).collect();\n+        let mut new_lines = old_lines.clone();\n+        new_lines[0] = \"CHANGED1\".to_string();\n+        new_lines[19] = \"CHANGED20\".to_string();\n+        let old_body = old_lines.join(\"\\n\");\n+        let new_body = new_lines.join(\"\\n\");\n+        let diff = diff_body_lines(&old_body, &new_body);\n+        let hunk_count = diff.unified.matches(\"@@\").count() / 2;\n+        assert_eq!(hunk_count, 2);\n+    }\n+\n+    #[test]\n+    fn adjacent_changes_merge_into_one_hunk() {\n+        // gap of exactly 6 equal lines between two single-line changes merges.\n+        let old_lines: Vec<String> = (1..=8).map(|n| format!(\"line{n}\")).collect();\n+        let mut new_lines = old_lines.clone();\n+        new_lines[0] = \"CHANGED1\".to_string();\n+        new_lines[7] = \"CHANGED8\".to_string();\n+        let old_body = old_lines.join(\"\\n\");\n+        let new_body = new_lines.join(\"\\n\");\n+        let diff = diff_body_lines(&old_body, &new_body);\n+        let hunk_count = diff.unified.matches(\"@@\").count() / 2;\n+        assert_eq!(hunk_count, 1);\n+    }\n+\n+    #[test]\n+    fn prefers_deletion_on_free_choice() {\n+        // \"a\" -> \"a\" then old has extra \"x\" vs new has extra \"y\": tie means delete first.\n+        let diff = diff_body_lines(\"a\\nx\", \"a\\ny\");\n+        assert_eq!(diff.changed_old_lines, vec![2]);\n+        assert_eq!(diff.changed_new_lines, vec![2]);\n+    }\n+\n+    #[test]\n+    fn select_intersecting_entries_keeps_only_overlapping_ranges() {\n+        let entries = vec![\n+            entry(1, 2, \"a.rs\"),\n+            entry(3, 3, \"b.rs\"),\n+            entry(5, 6, \"c.rs\"),\n+        ];\n+        let selected = select_intersecting_entries(&entries, &[3, 7]);\n+        assert_eq!(selected.len(), 1);\n+        assert_eq!(selected[0].file, \"b.rs\");\n+    }\n+\n+    #[test]\n+    fn select_intersecting_entries_preserves_order() {\n+        let entries = vec![entry(5, 5, \"z.rs\"), entry(1, 1, \"a.rs\")];\n+        let selected = select_intersecting_entries(&entries, &[1, 5]);\n+        assert_eq!(selected.len(), 2);\n+        assert_eq!(selected[0].file, \"z.rs\");\n+        assert_eq!(selected[1].file, \"a.rs\");\n+    }\n+\n+    #[test]\n+    fn unlock_list_merges_owned_and_intersecting_sorted_deduped() {\n+        let owned = vec![\"b.rs\".to_string(), \"a.rs\".to_string()];\n+        let entries = vec![entry(1, 1, \"a.rs\"), entry(2, 2, \"c.rs\")];\n+        let unlock = incremental_unlock_list(&owned, &entries, \"target/rust\");\n+        assert_eq!(\n+            unlock,\n+            vec![\n+                \"a.rs\".to_string(),\n+                \"b.rs\".to_string(),\n+                \"target/rust/a.rs\".to_string(),\n+                \"target/rust/c.rs\".to_string(),\n+            ]\n+        );\n+    }\n+\n+    #[test]\n+    fn unlock_list_is_empty_when_no_input() {\n+        let unlock = incremental_unlock_list(&[], &[], \"target/rust\");\n+        assert!(unlock.is_empty());\n+    }\n+}"
+      },
+      {
+        "type": "file-edit",
+        "path": "incremental/src/lib.rs",
+        "content": "// GENERATED BY NAPL from incremental.napl — edit the prompt, not this file\n\nuse schemas_attribution::AttributionEntry;\nuse std::collections::BTreeSet;\n\nconst CONTEXT: usize = 3;\n\n#[derive(Debug, Clone, PartialEq, Eq)]\nenum DiffOp {\n    Equal { old_line: usize, new_line: usize, text: String },\n    Delete { old_line: usize, text: String },\n    Insert { new_line: usize, text: String },\n}\n\n#[derive(Debug, Clone, PartialEq, Eq)]\npub struct BodyLineDiff {\n    pub unified: String,\n    pub changed_old_lines: Vec<usize>,\n    pub changed_new_lines: Vec<usize>,\n}\n\nfn split_lines(body: &str) -> Vec<String> {\n    body.split('\\n')\n        .map(|line| line.strip_suffix('\\r').unwrap_or(line).to_string())\n        .collect()\n}\n\nfn lcs_table(old: &[String], new: &[String]) -> Vec<Vec<u32>> {\n    let n = old.len();\n    let m = new.len();\n    let mut table = vec![vec![0u32; m + 1]; n + 1];\n    for i in (0..n).rev() {\n        for j in (0..m).rev() {\n            table[i][j] = if old[i] == new[j] {\n                table[i + 1][j + 1] + 1\n            } else {\n                table[i + 1][j].max(table[i][j + 1])\n            };\n        }\n    }\n    table\n}\n\nfn build_ops(old: &[String], new: &[String]) -> Vec<DiffOp> {\n    let table = lcs_table(old, new);\n    let mut ops = Vec::new();\n    let (mut i, mut j) = (0usize, 0usize);\n    let n = old.len();\n    let m = new.len();\n    while i < n && j < m {\n        if old[i] == new[j] {\n            ops.push(DiffOp::Equal {\n                old_line: i + 1,\n                new_line: j + 1,\n                text: old[i].clone(),\n            });\n            i += 1;\n            j += 1;\n        } else if table[i + 1][j] >= table[i][j + 1] {\n            ops.push(DiffOp::Delete {\n                old_line: i + 1,\n                text: old[i].clone(),\n            });\n            i += 1;\n        } else {\n            ops.push(DiffOp::Insert {\n                new_line: j + 1,\n                text: new[j].clone(),\n            });\n            j += 1;\n        }\n    }\n    while i < n {\n        ops.push(DiffOp::Delete {\n            old_line: i + 1,\n            text: old[i].clone(),\n        });\n        i += 1;\n    }\n    while j < m {\n        ops.push(DiffOp::Insert {\n            new_line: j + 1,\n            text: new[j].clone(),\n        });\n        j += 1;\n    }\n    ops\n}\n\nfn merged_hunk_ranges(ops: &[DiffOp]) -> Vec<(usize, usize)> {\n    let change_indices: Vec<usize> = ops\n        .iter()\n        .enumerate()\n        .filter(|(_, op)| !matches!(op, DiffOp::Equal { .. }))\n        .map(|(idx, _)| idx)\n        .collect();\n\n    let mut ranges: Vec<(usize, usize)> = Vec::new();\n    for &idx in &change_indices {\n        let lo = idx.saturating_sub(CONTEXT);\n        let hi = (idx + CONTEXT).min(ops.len() - 1);\n        match ranges.last_mut() {\n            Some((_, last_hi)) if lo <= *last_hi + 1 => {\n                *last_hi = (*last_hi).max(hi);\n            }\n            _ => ranges.push((lo, hi)),\n        }\n    }\n    ranges\n}\n\nfn render_hunk(ops: &[DiffOp]) -> String {\n    let mut old_start = 0usize;\n    let mut old_count = 0usize;\n    let mut new_start = 0usize;\n    let mut new_count = 0usize;\n    let mut lines: Vec<String> = Vec::new();\n\n    for op in ops {\n        match op {\n            DiffOp::Equal { old_line, new_line, text } => {\n                if old_start == 0 {\n                    old_start = *old_line;\n                }\n                if new_start == 0 {\n                    new_start = *new_line;\n                }\n                old_count += 1;\n                new_count += 1;\n                lines.push(format!(\" {text}\"));\n            }\n            DiffOp::Delete { old_line, text } => {\n                if old_start == 0 {\n                    old_start = *old_line;\n                }\n                old_count += 1;\n                lines.push(format!(\"-{text}\"));\n            }\n            DiffOp::Insert { new_line, text } => {\n                if new_start == 0 {\n                    new_start = *new_line;\n                }\n                new_count += 1;\n                lines.push(format!(\"+{text}\"));\n            }\n        }\n    }\n\n    let header = format!(\"@@ -{old_start},{old_count} +{new_start},{new_count} @@\");\n    let mut hunk = vec![header];\n    hunk.extend(lines);\n    hunk.join(\"\\n\")\n}\n\npub fn diff_body_lines(old_body: &str, new_body: &str) -> BodyLineDiff {\n    let old_lines = split_lines(old_body);\n    let new_lines = split_lines(new_body);\n    let ops = build_ops(&old_lines, &new_lines);\n\n    let changed_old_lines: Vec<usize> = ops\n        .iter()\n        .filter_map(|op| match op {\n            DiffOp::Delete { old_line, .. } => Some(*old_line),\n            _ => None,\n        })\n        .collect();\n    let changed_new_lines: Vec<usize> = ops\n        .iter()\n        .filter_map(|op| match op {\n            DiffOp::Insert { new_line, .. } => Some(*new_line),\n            _ => None,\n        })\n        .collect();\n\n    let ranges = merged_hunk_ranges(&ops);\n    let hunks: Vec<String> = ranges\n        .iter()\n        .map(|(lo, hi)| render_hunk(&ops[*lo..=*hi]))\n        .collect();\n    let unified = hunks.join(\"\\n\");\n\n    BodyLineDiff {\n        unified,\n        changed_old_lines,\n        changed_new_lines,\n    }\n}\n\npub fn select_intersecting_entries(\n    entries: &[AttributionEntry],\n    changed_old_lines: &[usize],\n) -> Vec<AttributionEntry> {\n    let changed: BTreeSet<usize> = changed_old_lines.iter().copied().collect();\n    entries\n        .iter()\n        .filter(|entry| {\n            let start = entry.prompt_lines.start as usize;\n            let end = entry.prompt_lines.end as usize;\n            (start..=end).any(|line| changed.contains(&line))\n        })\n        .cloned()\n        .collect()\n}\n\npub fn incremental_unlock_list(\n    owned_files: &[String],\n    intersecting_entries: &[AttributionEntry],\n    target_rel_to_root: &str,\n) -> Vec<String> {\n    let mut files: Vec<String> = owned_files.to_vec();\n    for entry in intersecting_entries {\n        files.push(format!(\"{target_rel_to_root}/{}\", entry.file));\n    }\n    files.sort();\n    files.dedup();\n    files\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n    use schemas_line_range::LineRange;\n\n    fn entry(prompt_start: u32, prompt_end: u32, file: &str) -> AttributionEntry {\n        AttributionEntry {\n            prompt_lines: LineRange::new(prompt_start, prompt_end),\n            file: file.to_string(),\n            lines: LineRange::new(1, 1),\n            note: String::new(),\n        }\n    }\n\n    #[test]\n    fn splits_lines_and_strips_cr() {\n        let diff = diff_body_lines(\"a\\r\\nb\\r\\n\", \"a\\r\\nb\\r\\n\");\n        assert!(diff.changed_old_lines.is_empty());\n        assert!(diff.changed_new_lines.is_empty());\n        assert_eq!(diff.unified, \"\");\n    }\n\n    #[test]\n    fn identical_bodies_produce_no_changes() {\n        let diff = diff_body_lines(\"Greet a person by name.\", \"Greet a person by name.\");\n        assert_eq!(diff.changed_old_lines, Vec::<usize>::new());\n        assert_eq!(diff.changed_new_lines, Vec::<usize>::new());\n        assert_eq!(diff.unified, \"\");\n    }\n\n    #[test]\n    fn single_line_change_reports_delete_and_insert() {\n        let diff = diff_body_lines(\n            \"Greet a person by name.\",\n            \"Greet a person by name, loudly.\",\n        );\n        assert_eq!(diff.changed_old_lines, vec![1]);\n        assert_eq!(diff.changed_new_lines, vec![1]);\n        assert!(diff.unified.contains(\"-Greet a person by name.\"));\n        assert!(diff.unified.contains(\"+Greet a person by name, loudly.\"));\n        assert!(diff.unified.starts_with(\"@@ -1,1 +1,1 @@\"));\n    }\n\n    #[test]\n    fn context_lines_are_included_in_hunk() {\n        let old = \"one\\ntwo\\nthree\\nfour\\nfive\";\n        let new = \"one\\ntwo\\nCHANGED\\nfour\\nfive\";\n        let diff = diff_body_lines(old, new);\n        assert_eq!(diff.changed_old_lines, vec![3]);\n        assert_eq!(diff.changed_new_lines, vec![3]);\n        assert_eq!(\n            diff.unified,\n            \"@@ -1,5 +1,5 @@\\n one\\n two\\n-three\\n+CHANGED\\n four\\n five\"\n        );\n    }\n\n    #[test]\n    fn distant_changes_split_into_separate_hunks() {\n        let old_lines: Vec<String> = (1..=20).map(|n| format!(\"line{n}\")).collect();\n        let mut new_lines = old_lines.clone();\n        new_lines[0] = \"CHANGED1\".to_string();\n        new_lines[19] = \"CHANGED20\".to_string();\n        let old_body = old_lines.join(\"\\n\");\n        let new_body = new_lines.join(\"\\n\");\n        let diff = diff_body_lines(&old_body, &new_body);\n        let hunk_count = diff.unified.matches(\"@@\").count() / 2;\n        assert_eq!(hunk_count, 2);\n    }\n\n    #[test]\n    fn adjacent_changes_merge_into_one_hunk() {\n        // gap of exactly 6 equal lines between two single-line changes merges.\n        let old_lines: Vec<String> = (1..=8).map(|n| format!(\"line{n}\")).collect();\n        let mut new_lines = old_lines.clone();\n        new_lines[0] = \"CHANGED1\".to_string();\n        new_lines[7] = \"CHANGED8\".to_string();\n        let old_body = old_lines.join(\"\\n\");\n        let new_body = new_lines.join(\"\\n\");\n        let diff = diff_body_lines(&old_body, &new_body);\n        let hunk_count = diff.unified.matches(\"@@\").count() / 2;\n        assert_eq!(hunk_count, 1);\n    }\n\n    #[test]\n    fn prefers_deletion_on_free_choice() {\n        // \"a\" -> \"a\" then old has extra \"x\" vs new has extra \"y\": tie means delete first.\n        let diff = diff_body_lines(\"a\\nx\", \"a\\ny\");\n        assert_eq!(diff.changed_old_lines, vec![2]);\n        assert_eq!(diff.changed_new_lines, vec![2]);\n    }\n\n    #[test]\n    fn select_intersecting_entries_keeps_only_overlapping_ranges() {\n        let entries = vec![\n            entry(1, 2, \"a.rs\"),\n            entry(3, 3, \"b.rs\"),\n            entry(5, 6, \"c.rs\"),\n        ];\n        let selected = select_intersecting_entries(&entries, &[3, 7]);\n        assert_eq!(selected.len(), 1);\n        assert_eq!(selected[0].file, \"b.rs\");\n    }\n\n    #[test]\n    fn select_intersecting_entries_preserves_order() {\n        let entries = vec![entry(5, 5, \"z.rs\"), entry(1, 1, \"a.rs\")];\n        let selected = select_intersecting_entries(&entries, &[1, 5]);\n        assert_eq!(selected.len(), 2);\n        assert_eq!(selected[0].file, \"z.rs\");\n        assert_eq!(selected[1].file, \"a.rs\");\n    }\n\n    #[test]\n    fn unlock_list_merges_owned_and_intersecting_sorted_deduped() {\n        let owned = vec![\"b.rs\".to_string(), \"a.rs\".to_string()];\n        let entries = vec![entry(1, 1, \"a.rs\"), entry(2, 2, \"c.rs\")];\n        let unlock = incremental_unlock_list(&owned, &entries, \"target/rust\");\n        assert_eq!(\n            unlock,\n            vec![\n                \"a.rs\".to_string(),\n                \"b.rs\".to_string(),\n                \"target/rust/a.rs\".to_string(),\n                \"target/rust/c.rs\".to_string(),\n            ]\n        );\n    }\n\n    #[test]\n    fn unlock_list_is_empty_when_no_input() {\n        let unlock = incremental_unlock_list(&[], &[], \"target/rust\");\n        assert!(unlock.is_empty());\n    }\n}\n"
+      },
+      {
+        "type": "attribution",
+        "module": "incremental",
+        "target": "rust",
+        "entries": [
+          {
+            "promptLines": [
+              35,
+              37
+            ],
+            "file": "incremental/src/lib.rs",
+            "lines": [
+              15,
+              20
+            ],
+            "note": "BodyLineDiff struct definition"
+          },
+          {
+            "promptLines": [
+              42,
+              43
+            ],
+            "file": "incremental/src/lib.rs",
+            "lines": [
+              22,
+              26
+            ],
+            "note": "split lines on \\n, strip trailing \\r"
+          },
+          {
+            "promptLines": [
+              44,
+              50
+            ],
+            "file": "incremental/src/lib.rs",
+            "lines": [
+              28,
+              88
+            ],
+            "note": "LCS table and op building with delete-preference on ties"
+          },
+          {
+            "promptLines": [
+              51,
+              51
+            ],
+            "file": "incremental/src/lib.rs",
+            "lines": [
+              160,
+              166
+            ],
+            "note": "changed_old_lines from deletions"
+          },
+          {
+            "promptLines": [
+              52,
+              52
+            ],
+            "file": "incremental/src/lib.rs",
+            "lines": [
+              167,
+              173
+            ],
+            "note": "changed_new_lines from insertions"
+          },
+          {
+            "promptLines": [
+              53,
+              55
+            ],
+            "file": "incremental/src/lib.rs",
+            "lines": [
+              90,
+              110
+            ],
+            "note": "hunk grouping with 3-line context"
+          },
+          {
+            "promptLines": [
+              56,
+              59
+            ],
+            "file": "incremental/src/lib.rs",
+            "lines": [
+              112,
+              149
+            ],
+            "note": "hunk header rendering with old/new start+count"
+          },
+          {
+            "promptLines": [
+              60,
+              62
+            ],
+            "file": "incremental/src/lib.rs",
+            "lines": [
+              130,
+              152
+            ],
+            "note": "per-op line rendering, joined with newline"
+          },
+          {
+            "promptLines": [
+              39,
+              41
+            ],
+            "file": "incremental/src/lib.rs",
+            "lines": [
+              155,
+              187
+            ],
+            "note": "diff_body_lines entry point assembling BodyLineDiff"
+          },
+          {
+            "promptLines": [
+              63,
+              66
+            ],
+            "file": "incremental/src/lib.rs",
+            "lines": [
+              250,
+              260
+            ],
+            "note": "test for greet sentence unified diff example"
+          },
+          {
+            "promptLines": [
+              70,
+              73
+            ],
+            "file": "incremental/src/lib.rs",
+            "lines": [
+              189,
+              203
+            ],
+            "note": "select_intersecting_entries implementation"
+          },
+          {
+            "promptLines": [
+              77,
+              81
+            ],
+            "file": "incremental/src/lib.rs",
+            "lines": [
+              205,
+              217
+            ],
+            "note": "incremental_unlock_list implementation"
+          },
+          {
+            "promptLines": [
+              24,
+              26
+            ],
+            "file": "incremental/src/lib.rs",
+            "lines": [
+              222,
+              222
+            ],
+            "note": "uses schemas_line_range::LineRange"
+          },
+          {
+            "promptLines": [
+              27,
+              31
+            ],
+            "file": "incremental/src/lib.rs",
+            "lines": [
+              3,
+              3
+            ],
+            "note": "uses schemas_attribution::AttributionEntry"
+          },
+          {
+            "promptLines": [
+              27,
+              31
+            ],
+            "file": "incremental/src/lib.rs",
+            "lines": [
+              224,
+              231
+            ],
+            "note": "test helper building AttributionEntry"
+          }
+        ]
+      },
+      {
+        "type": "mapl-entry",
+        "path": "incremental.mapl",
+        "entry": {
+          "promptLines": [
+            21,
+            22
+          ],
+          "kind": "ambiguity",
+          "severity": "error",
+          "message": "\"do not... depend on any hand-written crate\" is oddly worded and its scope is unclear.",
+          "reasoning": "The instruction to add path deps on the two sibling crates and not reimplement their logic makes sense, but the trailing clause \"or depend on any hand-written crate\" reads as an odd, out-of-place insertion — it's unclear what \"hand-written\" is meant to contrast with (generated vs. authored code?), and whether it bans any crates.io dependency beyond the two named siblings, or something else entirely. The agent treated it as reinforcing \"use only the two generated sibling crates, plus std\" and added no other dependencies, which satisfies the plain reading but the phrase itself is worth the author's attention.\n",
+          "suggestion": "Depend only on these two sibling crates (plus the standard library) — do not add any other crate dependency."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "incremental.mapl",
+        "entry": {
+          "promptLines": [
+            53,
+            55
+          ],
+          "kind": "assumption",
+          "severity": "warning",
+          "message": "\"within 3 of a change\" was interpreted as operation-index distance, not line-number distance.",
+          "reasoning": "The hunk-grouping rule says a hunk covers every operation within 3 of a change, and hunks merge/split based on run width, but it doesn't explicitly state whether \"within 3\" is measured in diff-operation index or in body line number (these usually coincide for equal runs but could diverge with runs of consecutive inserts/deletes). The agent implemented it as operation-index distance (`idx.saturating_sub(CONTEXT)` / `idx + CONTEXT` over the ops array, merging when `lo <= last_hi + 1`), which matches the worked examples in the tests (6-line gap merges, wider gaps split) but is one of a few defensible readings.\n",
+          "suggestion": "Clarify: within 3 diff-operations (not source line numbers) of a changed (deletion/insertion) operation."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "incremental.mapl",
+        "entry": {
+          "promptLines": [
+            48,
+            50
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "Delete/insert tie-break implemented via LCS-table comparison, not explicitly spelled out in prompt.",
+          "reasoning": "The prompt states that on a free choice, deletion is preferred over insertion, without specifying the mechanism. The agent implemented this by choosing Delete whenever `table[i+1][j] >= table[i][j+1]` (ties go to delete), which the `prefers_deletion_on_free_choice` test confirms produces the intended result. Purely a note on the implementation choice, no ambiguity in the required behavior itself."
+        }
+      },
+      {
+        "type": "lock",
+        "module": "incremental",
+        "target": "rust",
+        "files": [
+          {
+            "path": "incremental/Cargo.toml",
+            "hash": "8f24ff787d504aabdada635b0bba347563b5371185f22f0e17b501b3f48eacde"
+          },
+          {
+            "path": "incremental/src/lib.rs",
+            "hash": "dc6da73cf6085e364a8c83f82f88b5080bee055d48524ee251b120036d780666"
+          }
+        ]
+      }
+    ]
+  }
+}

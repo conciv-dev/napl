@@ -1,0 +1,454 @@
+{
+  "module": "gen_attribution_check",
+  "collection": "selfhost",
+  "target": "rust",
+  "targets": [
+    "rust"
+  ],
+  "prompt": {
+    "file": "gen_attribution_check.napl",
+    "path": "cli/gen_attribution_check.napl",
+    "content": "---\nmodule: gen_attribution_check\ndeps: [schemas_attribution]\ntargets: [rust]\ntests:\n  - name: no attributed files and no entries is fine\n    given: { allowed: [], entries: [] }\n    expect: { ok: true }\n  - name: attributed files but no entries is an error\n    given: { allowed: [\"a.ts\"], entries: [] }\n    expect: { error: \"attribution has no entries but the module has attributed source files\" }\n  - name: an entry inside the allowed set is fine\n    given: { allowed: [\"a.ts\"], entries: [{ file: \"a.ts\" }] }\n    expect: { ok: true }\n  - name: an entry outside the allowed set is an error\n    given: { allowed: [\"a.ts\"], entries: [{ file: \"b.ts\" }] }\n    expect: { error: \"attribution entry references file \\\"b.ts\\\" which is outside the attributed file set\" }\n---\n# The attribution sanity gate\n\nThis module is the **pure** sanity check the code-generation command runs on a\nderived attribution before it accepts it: it rejects an attribution that claims no\nmappings when the module actually has attributed source files, and rejects any\nentry pointing at a file outside the attributed set. It is pure — no filesystem\naccess, no process spawning. The I/O shell derives the attribution from the LLM,\nthen gates it with this check before locking and recording.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `gen_attribution_check/`:\n`gen_attribution_check/Cargo.toml` (package name `gen_attribution_check`) and\n`gen_attribution_check/src/lib.rs`. Touch nothing outside\n`gen_attribution_check/`. Ensure `cargo test` passes from the workspace root\nbefore finishing.\n\n## Builds on the `schemas_attribution` module of this workspace\n\nThis module composes on a **generated sibling member crate** in the same\nworkspace — not a crates.io dependency and not a hand-written crate. Add a path\ndependency on it in your `Cargo.toml`:\n\n- `schemas_attribution` lives at `../schemas_attribution`. Use its public\n  `Attribution` struct (which has a public `entries: Vec<AttributionEntry>` field)\n  and its public `AttributionEntry` struct (which has a public `file: String`\n  field, among others). Do not reimplement them.\n\nDepending on a sibling by path only reads it; leave the `schemas_attribution`\ncrate untouched.\n\n## `assert_attribution_sane(attribution: &Attribution, allowed: &[String]) -> Result<(), String>`\n\nValidate a derived attribution against the set of file paths that are actually\nallowed to be attributed:\n\n1. If `allowed` is **non-empty** and `attribution.entries` is **empty**, return\n   `Err` with exactly this message:\n   `attribution has no entries but the module has attributed source files`\n2. For each entry in `attribution.entries`, if the entry's `file` is **not**\n   contained in `allowed`, return `Err` with exactly this message (with the\n   offending file path substituted, wrapped in straight double quotes):\n   `attribution entry references file \"<file>\" which is outside the attributed file set`\n   — for a file `b.ts` the message is exactly\n   `attribution entry references file \"b.ts\" which is outside the attributed file set`.\n3. If neither rule fires, return `Ok(())`.\n\nSo an empty `allowed` with empty `entries` → `Ok(())`; a non-empty `allowed` with\nempty `entries` → the first error; an entry whose file is in `allowed` → `Ok(())`;\nan entry whose file is not in `allowed` → the second error naming that file. Check\nthe entries in order and return on the first violation.\n"
+  },
+  "promptAtGen": "# The attribution sanity gate\n\nThis module is the **pure** sanity check the code-generation command runs on a\nderived attribution before it accepts it: it rejects an attribution that claims no\nmappings when the module actually has attributed source files, and rejects any\nentry pointing at a file outside the attributed set. It is pure — no filesystem\naccess, no process spawning. The I/O shell derives the attribution from the LLM,\nthen gates it with this check before locking and recording.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `gen_attribution_check/`:\n`gen_attribution_check/Cargo.toml` (package name `gen_attribution_check`) and\n`gen_attribution_check/src/lib.rs`. Touch nothing outside\n`gen_attribution_check/`. Ensure `cargo test` passes from the workspace root\nbefore finishing.\n\n## Builds on the `schemas_attribution` module of this workspace\n\nThis module composes on a **generated sibling member crate** in the same\nworkspace — not a crates.io dependency and not a hand-written crate. Add a path\ndependency on it in your `Cargo.toml`:\n\n- `schemas_attribution` lives at `../schemas_attribution`. Use its public\n  `Attribution` struct (which has a public `entries: Vec<AttributionEntry>` field)\n  and its public `AttributionEntry` struct (which has a public `file: String`\n  field, among others). Do not reimplement them.\n\nDepending on a sibling by path only reads it; leave the `schemas_attribution`\ncrate untouched.\n\n## `assert_attribution_sane(attribution: &Attribution, allowed: &[String]) -> Result<(), String>`\n\nValidate a derived attribution against the set of file paths that are actually\nallowed to be attributed:\n\n1. If `allowed` is **non-empty** and `attribution.entries` is **empty**, return\n   `Err` with exactly this message:\n   `attribution has no entries but the module has attributed source files`\n2. For each entry in `attribution.entries`, if the entry's `file` is **not**\n   contained in `allowed`, return `Err` with exactly this message (with the\n   offending file path substituted, wrapped in straight double quotes):\n   `attribution entry references file \"<file>\" which is outside the attributed file set`\n   — for a file `b.ts` the message is exactly\n   `attribution entry references file \"b.ts\" which is outside the attributed file set`.\n3. If neither rule fires, return `Ok(())`.\n\nSo an empty `allowed` with empty `entries` → `Ok(())`; a non-empty `allowed` with\nempty `entries` → the first error; an entry whose file is in `allowed` → `Ok(())`;\nan entry whose file is not in `allowed` → the second error naming that file. Check\nthe entries in order and return on the first violation.\n",
+  "summary": "The attribution sanity gate",
+  "files": [
+    {
+      "path": "gen_attribution_check/Cargo.toml",
+      "journalPath": ".napl/src/rust/gen_attribution_check/Cargo.toml",
+      "content": "[package]\nname = \"gen_attribution_check\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\nschemas_attribution = { path = \"../schemas_attribution\" }\n\n[dev-dependencies]\nschemas_line_range = { path = \"../schemas_line_range\" }\n",
+      "language": "toml"
+    },
+    {
+      "path": "gen_attribution_check/src/lib.rs",
+      "journalPath": ".napl/src/rust/gen_attribution_check/src/lib.rs",
+      "content": "use schemas_attribution::Attribution;\n\npub fn assert_attribution_sane(attribution: &Attribution, allowed: &[String]) -> Result<(), String> {\n    if !allowed.is_empty() && attribution.entries.is_empty() {\n        return Err(\"attribution has no entries but the module has attributed source files\".to_string());\n    }\n\n    for entry in &attribution.entries {\n        if !allowed.iter().any(|file| file == &entry.file) {\n            return Err(format!(\n                \"attribution entry references file \\\"{}\\\" which is outside the attributed file set\",\n                entry.file\n            ));\n        }\n    }\n\n    Ok(())\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n    use schemas_attribution::AttributionEntry;\n    use schemas_line_range::LineRange;\n\n    fn entry(file: &str) -> AttributionEntry {\n        AttributionEntry {\n            prompt_lines: LineRange::new(1, 1),\n            file: file.to_string(),\n            lines: LineRange::new(1, 1),\n            note: String::new(),\n        }\n    }\n\n    fn attribution(entries: Vec<AttributionEntry>) -> Attribution {\n        Attribution {\n            module: \"m\".to_string(),\n            target: \"t\".to_string(),\n            entries,\n        }\n    }\n\n    #[test]\n    fn empty_allowed_and_empty_entries_is_ok() {\n        let attr = attribution(vec![]);\n        assert_eq!(assert_attribution_sane(&attr, &[]), Ok(()));\n    }\n\n    #[test]\n    fn nonempty_allowed_and_empty_entries_errors() {\n        let attr = attribution(vec![]);\n        let allowed = vec![\"a.ts\".to_string()];\n        assert_eq!(\n            assert_attribution_sane(&attr, &allowed),\n            Err(\"attribution has no entries but the module has attributed source files\".to_string())\n        );\n    }\n\n    #[test]\n    fn entry_within_allowed_is_ok() {\n        let attr = attribution(vec![entry(\"a.ts\")]);\n        let allowed = vec![\"a.ts\".to_string()];\n        assert_eq!(assert_attribution_sane(&attr, &allowed), Ok(()));\n    }\n\n    #[test]\n    fn entry_outside_allowed_errors_with_exact_message() {\n        let attr = attribution(vec![entry(\"b.ts\")]);\n        let allowed = vec![\"a.ts\".to_string()];\n        assert_eq!(\n            assert_attribution_sane(&attr, &allowed),\n            Err(\"attribution entry references file \\\"b.ts\\\" which is outside the attributed file set\".to_string())\n        );\n    }\n\n    #[test]\n    fn returns_first_violation_in_order() {\n        let attr = attribution(vec![entry(\"a.ts\"), entry(\"b.ts\"), entry(\"c.ts\")]);\n        let allowed = vec![\"a.ts\".to_string(), \"c.ts\".to_string()];\n        assert_eq!(\n            assert_attribution_sane(&attr, &allowed),\n            Err(\"attribution entry references file \\\"b.ts\\\" which is outside the attributed file set\".to_string())\n        );\n    }\n\n    #[test]\n    fn all_entries_within_allowed_multiple_is_ok() {\n        let attr = attribution(vec![entry(\"a.ts\"), entry(\"c.ts\")]);\n        let allowed = vec![\"a.ts\".to_string(), \"b.ts\".to_string(), \"c.ts\".to_string()];\n        assert_eq!(assert_attribution_sane(&attr, &allowed), Ok(()));\n    }\n}\n",
+      "language": "rust"
+    }
+  ],
+  "attribution": [
+    {
+      "promptLines": [
+        3,
+        8
+      ],
+      "file": "gen_attribution_check/src/lib.rs",
+      "lines": [
+        1,
+        18
+      ],
+      "note": "module summary implemented as pure sanity-check function"
+    },
+    {
+      "promptLines": [
+        26,
+        29
+      ],
+      "file": "gen_attribution_check/src/lib.rs",
+      "lines": [
+        1,
+        1
+      ],
+      "note": "import Attribution from sibling schemas_attribution crate"
+    },
+    {
+      "promptLines": [
+        34,
+        34
+      ],
+      "file": "gen_attribution_check/src/lib.rs",
+      "lines": [
+        3,
+        3
+      ],
+      "note": "function signature matches spec"
+    },
+    {
+      "promptLines": [
+        39,
+        41
+      ],
+      "file": "gen_attribution_check/src/lib.rs",
+      "lines": [
+        4,
+        6
+      ],
+      "note": "rule 1 - non-empty allowed with empty entries errors"
+    },
+    {
+      "promptLines": [
+        42,
+        47
+      ],
+      "file": "gen_attribution_check/src/lib.rs",
+      "lines": [
+        8,
+        15
+      ],
+      "note": "rule 2 - entry file not in allowed errors with exact message"
+    },
+    {
+      "promptLines": [
+        48,
+        48
+      ],
+      "file": "gen_attribution_check/src/lib.rs",
+      "lines": [
+        17,
+        17
+      ],
+      "note": "rule 3 - fallback Ok"
+    },
+    {
+      "promptLines": [
+        50,
+        53
+      ],
+      "file": "gen_attribution_check/src/lib.rs",
+      "lines": [
+        44,
+        91
+      ],
+      "note": "tests covering all described scenarios in order"
+    },
+    {
+      "promptLines": [
+        50,
+        50
+      ],
+      "file": "gen_attribution_check/src/lib.rs",
+      "lines": [
+        44,
+        47
+      ],
+      "note": "empty allowed + empty entries -> Ok test"
+    },
+    {
+      "promptLines": [
+        50,
+        51
+      ],
+      "file": "gen_attribution_check/src/lib.rs",
+      "lines": [
+        49,
+        57
+      ],
+      "note": "non-empty allowed + empty entries -> error test"
+    },
+    {
+      "promptLines": [
+        51,
+        51
+      ],
+      "file": "gen_attribution_check/src/lib.rs",
+      "lines": [
+        59,
+        64
+      ],
+      "note": "entry within allowed -> Ok test"
+    },
+    {
+      "promptLines": [
+        52,
+        52
+      ],
+      "file": "gen_attribution_check/src/lib.rs",
+      "lines": [
+        66,
+        74
+      ],
+      "note": "entry outside allowed -> error naming file test"
+    },
+    {
+      "promptLines": [
+        52,
+        53
+      ],
+      "file": "gen_attribution_check/src/lib.rs",
+      "lines": [
+        76,
+        84
+      ],
+      "note": "check entries in order, return first violation test"
+    },
+    {
+      "promptLines": [
+        51,
+        51
+      ],
+      "file": "gen_attribution_check/src/lib.rs",
+      "lines": [
+        86,
+        91
+      ],
+      "note": "all entries within allowed multiple -> Ok test"
+    }
+  ],
+  "attributionYaml": "module: gen_attribution_check\ntarget: rust\nentries:\n  - promptLines:\n      - 3\n      - 8\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 1\n      - 18\n    note: module summary implemented as pure sanity-check function\n  - promptLines:\n      - 26\n      - 29\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 1\n      - 1\n    note: import Attribution from sibling schemas_attribution crate\n  - promptLines:\n      - 34\n      - 34\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 3\n      - 3\n    note: function signature matches spec\n  - promptLines:\n      - 39\n      - 41\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 4\n      - 6\n    note: rule 1 - non-empty allowed with empty entries errors\n  - promptLines:\n      - 42\n      - 47\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 8\n      - 15\n    note: rule 2 - entry file not in allowed errors with exact message\n  - promptLines:\n      - 48\n      - 48\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 17\n      - 17\n    note: rule 3 - fallback Ok\n  - promptLines:\n      - 50\n      - 53\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 44\n      - 91\n    note: tests covering all described scenarios in order\n  - promptLines:\n      - 50\n      - 50\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 44\n      - 47\n    note: empty allowed + empty entries -> Ok test\n  - promptLines:\n      - 50\n      - 51\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 49\n      - 57\n    note: non-empty allowed + empty entries -> error test\n  - promptLines:\n      - 51\n      - 51\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 59\n      - 64\n    note: entry within allowed -> Ok test\n  - promptLines:\n      - 52\n      - 52\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 66\n      - 74\n    note: entry outside allowed -> error naming file test\n  - promptLines:\n      - 52\n      - 53\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 76\n      - 84\n    note: check entries in order, return first violation test\n  - promptLines:\n      - 51\n      - 51\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 86\n      - 91\n    note: all entries within allowed multiple -> Ok test\n",
+  "mapl": [
+    {
+      "promptLines": [
+        39,
+        47
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "Rules 1 and 2 implemented exactly as spec'd, error strings match verbatim.",
+      "reasoning": "Agent's code matches message text char-for-char including quoting style, order of checks, and iteration-stops-at-first-violation behavior. No ambiguity here, just confirming correct compile."
+    }
+  ],
+  "journal": [
+    {
+      "gen": 37,
+      "timestamp": "2026-07-24T10:05:19.767Z",
+      "mode": "full",
+      "promptHash": "b4c17dd61957714a9953a0a631236ceae382b2b389450f2b7eea1416a53cd897",
+      "files": [
+        {
+          "path": "gen_attribution_check/Cargo.toml",
+          "journalPath": ".napl/src/rust/gen_attribution_check/Cargo.toml",
+          "patch": "@@ -0,0 +1,10 @@\n+[package]\n+name = \"gen_attribution_check\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]\n+schemas_attribution = { path = \"../schemas_attribution\" }\n+\n+[dev-dependencies]\n+schemas_line_range = { path = \"../schemas_line_range\" }"
+        },
+        {
+          "path": "gen_attribution_check/src/lib.rs",
+          "journalPath": ".napl/src/rust/gen_attribution_check/src/lib.rs",
+          "patch": "@@ -0,0 +1,92 @@\n+use schemas_attribution::Attribution;\n+\n+pub fn assert_attribution_sane(attribution: &Attribution, allowed: &[String]) -> Result<(), String> {\n+    if !allowed.is_empty() && attribution.entries.is_empty() {\n+        return Err(\"attribution has no entries but the module has attributed source files\".to_string());\n+    }\n+\n+    for entry in &attribution.entries {\n+        if !allowed.iter().any(|file| file == &entry.file) {\n+            return Err(format!(\n+                \"attribution entry references file \\\"{}\\\" which is outside the attributed file set\",\n+                entry.file\n+            ));\n+        }\n+    }\n+\n+    Ok(())\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+    use schemas_attribution::AttributionEntry;\n+    use schemas_line_range::LineRange;\n+\n+    fn entry(file: &str) -> AttributionEntry {\n+        AttributionEntry {\n+            prompt_lines: LineRange::new(1, 1),\n+            file: file.to_string(),\n+            lines: LineRange::new(1, 1),\n+            note: String::new(),\n+        }\n+    }\n+\n+    fn attribution(entries: Vec<AttributionEntry>) -> Attribution {\n+        Attribution {\n+            module: \"m\".to_string(),\n+            target: \"t\".to_string(),\n+            entries,\n+        }\n+    }\n+\n+    #[test]\n+    fn empty_allowed_and_empty_entries_is_ok() {\n+        let attr = attribution(vec![]);\n+        assert_eq!(assert_attribution_sane(&attr, &[]), Ok(()));\n+    }\n+\n+    #[test]\n+    fn nonempty_allowed_and_empty_entries_errors() {\n+        let attr = attribution(vec![]);\n+        let allowed = vec![\"a.ts\".to_string()];\n+        assert_eq!(\n+            assert_attribution_sane(&attr, &allowed),\n+            Err(\"attribution has no entries but the module has attributed source files\".to_string())\n+        );\n+    }\n+\n+    #[test]\n+    fn entry_within_allowed_is_ok() {\n+        let attr = attribution(vec![entry(\"a.ts\")]);\n+        let allowed = vec![\"a.ts\".to_string()];\n+        assert_eq!(assert_attribution_sane(&attr, &allowed), Ok(()));\n+    }\n+\n+    #[test]\n+    fn entry_outside_allowed_errors_with_exact_message() {\n+        let attr = attribution(vec![entry(\"b.ts\")]);\n+        let allowed = vec![\"a.ts\".to_string()];\n+        assert_eq!(\n+            assert_attribution_sane(&attr, &allowed),\n+            Err(\"attribution entry references file \\\"b.ts\\\" which is outside the attributed file set\".to_string())\n+        );\n+    }\n+\n+    #[test]\n+    fn returns_first_violation_in_order() {\n+        let attr = attribution(vec![entry(\"a.ts\"), entry(\"b.ts\"), entry(\"c.ts\")]);\n+        let allowed = vec![\"a.ts\".to_string(), \"c.ts\".to_string()];\n+        assert_eq!(\n+            assert_attribution_sane(&attr, &allowed),\n+            Err(\"attribution entry references file \\\"b.ts\\\" which is outside the attributed file set\".to_string())\n+        );\n+    }\n+\n+    #[test]\n+    fn all_entries_within_allowed_multiple_is_ok() {\n+        let attr = attribution(vec![entry(\"a.ts\"), entry(\"c.ts\")]);\n+        let allowed = vec![\"a.ts\".to_string(), \"b.ts\".to_string(), \"c.ts\".to_string()];\n+        assert_eq!(assert_attribution_sane(&attr, &allowed), Ok(()));\n+    }\n+}"
+        }
+      ]
+    }
+  ],
+  "lock": [
+    {
+      "path": "gen_attribution_check/Cargo.toml",
+      "hash": "90c859a34e81d6b6190a4921137aa116e45c00af54d930490d462062716049ab"
+    },
+    {
+      "path": "gen_attribution_check/src/lib.rs",
+      "hash": "c0a05084787f44636425ec7ce4d0b8026e39e6df8e29a593213d8aba7716d58e"
+    }
+  ],
+  "session": {
+    "task": "napl gen rust → gen_attribution_check",
+    "files": {
+      "gen_attribution_check.napl": "---\nmodule: gen_attribution_check\ndeps: [schemas_attribution]\ntargets: [rust]\ntests:\n  - name: no attributed files and no entries is fine\n    given: { allowed: [], entries: [] }\n    expect: { ok: true }\n  - name: attributed files but no entries is an error\n    given: { allowed: [\"a.ts\"], entries: [] }\n    expect: { error: \"attribution has no entries but the module has attributed source files\" }\n  - name: an entry inside the allowed set is fine\n    given: { allowed: [\"a.ts\"], entries: [{ file: \"a.ts\" }] }\n    expect: { ok: true }\n  - name: an entry outside the allowed set is an error\n    given: { allowed: [\"a.ts\"], entries: [{ file: \"b.ts\" }] }\n    expect: { error: \"attribution entry references file \\\"b.ts\\\" which is outside the attributed file set\" }\n---\n# The attribution sanity gate\n\nThis module is the **pure** sanity check the code-generation command runs on a\nderived attribution before it accepts it: it rejects an attribution that claims no\nmappings when the module actually has attributed source files, and rejects any\nentry pointing at a file outside the attributed set. It is pure — no filesystem\naccess, no process spawning. The I/O shell derives the attribution from the LLM,\nthen gates it with this check before locking and recording.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `gen_attribution_check/`:\n`gen_attribution_check/Cargo.toml` (package name `gen_attribution_check`) and\n`gen_attribution_check/src/lib.rs`. Touch nothing outside\n`gen_attribution_check/`. Ensure `cargo test` passes from the workspace root\nbefore finishing.\n\n## Builds on the `schemas_attribution` module of this workspace\n\nThis module composes on a **generated sibling member crate** in the same\nworkspace — not a crates.io dependency and not a hand-written crate. Add a path\ndependency on it in your `Cargo.toml`:\n\n- `schemas_attribution` lives at `../schemas_attribution`. Use its public\n  `Attribution` struct (which has a public `entries: Vec<AttributionEntry>` field)\n  and its public `AttributionEntry` struct (which has a public `file: String`\n  field, among others). Do not reimplement them.\n\nDepending on a sibling by path only reads it; leave the `schemas_attribution`\ncrate untouched.\n\n## `assert_attribution_sane(attribution: &Attribution, allowed: &[String]) -> Result<(), String>`\n\nValidate a derived attribution against the set of file paths that are actually\nallowed to be attributed:\n\n1. If `allowed` is **non-empty** and `attribution.entries` is **empty**, return\n   `Err` with exactly this message:\n   `attribution has no entries but the module has attributed source files`\n2. For each entry in `attribution.entries`, if the entry's `file` is **not**\n   contained in `allowed`, return `Err` with exactly this message (with the\n   offending file path substituted, wrapped in straight double quotes):\n   `attribution entry references file \"<file>\" which is outside the attributed file set`\n   — for a file `b.ts` the message is exactly\n   `attribution entry references file \"b.ts\" which is outside the attributed file set`.\n3. If neither rule fires, return `Ok(())`.\n\nSo an empty `allowed` with empty `entries` → `Ok(())`; a non-empty `allowed` with\nempty `entries` → the first error; an entry whose file is in `allowed` → `Ok(())`;\nan entry whose file is not in `allowed` → the second error naming that file. Check\nthe entries in order and return on the first violation.\n"
+    },
+    "events": [
+      {
+        "type": "task",
+        "task": "napl gen rust → gen_attribution_check"
+      },
+      {
+        "type": "diff",
+        "path": "gen_attribution_check/Cargo.toml",
+        "patch": "@@ -0,0 +1,10 @@\n+[package]\n+name = \"gen_attribution_check\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]\n+schemas_attribution = { path = \"../schemas_attribution\" }\n+\n+[dev-dependencies]\n+schemas_line_range = { path = \"../schemas_line_range\" }"
+      },
+      {
+        "type": "file-edit",
+        "path": "gen_attribution_check/Cargo.toml",
+        "content": "[package]\nname = \"gen_attribution_check\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\nschemas_attribution = { path = \"../schemas_attribution\" }\n\n[dev-dependencies]\nschemas_line_range = { path = \"../schemas_line_range\" }\n"
+      },
+      {
+        "type": "diff",
+        "path": "gen_attribution_check/src/lib.rs",
+        "patch": "@@ -0,0 +1,92 @@\n+use schemas_attribution::Attribution;\n+\n+pub fn assert_attribution_sane(attribution: &Attribution, allowed: &[String]) -> Result<(), String> {\n+    if !allowed.is_empty() && attribution.entries.is_empty() {\n+        return Err(\"attribution has no entries but the module has attributed source files\".to_string());\n+    }\n+\n+    for entry in &attribution.entries {\n+        if !allowed.iter().any(|file| file == &entry.file) {\n+            return Err(format!(\n+                \"attribution entry references file \\\"{}\\\" which is outside the attributed file set\",\n+                entry.file\n+            ));\n+        }\n+    }\n+\n+    Ok(())\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+    use schemas_attribution::AttributionEntry;\n+    use schemas_line_range::LineRange;\n+\n+    fn entry(file: &str) -> AttributionEntry {\n+        AttributionEntry {\n+            prompt_lines: LineRange::new(1, 1),\n+            file: file.to_string(),\n+            lines: LineRange::new(1, 1),\n+            note: String::new(),\n+        }\n+    }\n+\n+    fn attribution(entries: Vec<AttributionEntry>) -> Attribution {\n+        Attribution {\n+            module: \"m\".to_string(),\n+            target: \"t\".to_string(),\n+            entries,\n+        }\n+    }\n+\n+    #[test]\n+    fn empty_allowed_and_empty_entries_is_ok() {\n+        let attr = attribution(vec![]);\n+        assert_eq!(assert_attribution_sane(&attr, &[]), Ok(()));\n+    }\n+\n+    #[test]\n+    fn nonempty_allowed_and_empty_entries_errors() {\n+        let attr = attribution(vec![]);\n+        let allowed = vec![\"a.ts\".to_string()];\n+        assert_eq!(\n+            assert_attribution_sane(&attr, &allowed),\n+            Err(\"attribution has no entries but the module has attributed source files\".to_string())\n+        );\n+    }\n+\n+    #[test]\n+    fn entry_within_allowed_is_ok() {\n+        let attr = attribution(vec![entry(\"a.ts\")]);\n+        let allowed = vec![\"a.ts\".to_string()];\n+        assert_eq!(assert_attribution_sane(&attr, &allowed), Ok(()));\n+    }\n+\n+    #[test]\n+    fn entry_outside_allowed_errors_with_exact_message() {\n+        let attr = attribution(vec![entry(\"b.ts\")]);\n+        let allowed = vec![\"a.ts\".to_string()];\n+        assert_eq!(\n+            assert_attribution_sane(&attr, &allowed),\n+            Err(\"attribution entry references file \\\"b.ts\\\" which is outside the attributed file set\".to_string())\n+        );\n+    }\n+\n+    #[test]\n+    fn returns_first_violation_in_order() {\n+        let attr = attribution(vec![entry(\"a.ts\"), entry(\"b.ts\"), entry(\"c.ts\")]);\n+        let allowed = vec![\"a.ts\".to_string(), \"c.ts\".to_string()];\n+        assert_eq!(\n+            assert_attribution_sane(&attr, &allowed),\n+            Err(\"attribution entry references file \\\"b.ts\\\" which is outside the attributed file set\".to_string())\n+        );\n+    }\n+\n+    #[test]\n+    fn all_entries_within_allowed_multiple_is_ok() {\n+        let attr = attribution(vec![entry(\"a.ts\"), entry(\"c.ts\")]);\n+        let allowed = vec![\"a.ts\".to_string(), \"b.ts\".to_string(), \"c.ts\".to_string()];\n+        assert_eq!(assert_attribution_sane(&attr, &allowed), Ok(()));\n+    }\n+}"
+      },
+      {
+        "type": "file-edit",
+        "path": "gen_attribution_check/src/lib.rs",
+        "content": "use schemas_attribution::Attribution;\n\npub fn assert_attribution_sane(attribution: &Attribution, allowed: &[String]) -> Result<(), String> {\n    if !allowed.is_empty() && attribution.entries.is_empty() {\n        return Err(\"attribution has no entries but the module has attributed source files\".to_string());\n    }\n\n    for entry in &attribution.entries {\n        if !allowed.iter().any(|file| file == &entry.file) {\n            return Err(format!(\n                \"attribution entry references file \\\"{}\\\" which is outside the attributed file set\",\n                entry.file\n            ));\n        }\n    }\n\n    Ok(())\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n    use schemas_attribution::AttributionEntry;\n    use schemas_line_range::LineRange;\n\n    fn entry(file: &str) -> AttributionEntry {\n        AttributionEntry {\n            prompt_lines: LineRange::new(1, 1),\n            file: file.to_string(),\n            lines: LineRange::new(1, 1),\n            note: String::new(),\n        }\n    }\n\n    fn attribution(entries: Vec<AttributionEntry>) -> Attribution {\n        Attribution {\n            module: \"m\".to_string(),\n            target: \"t\".to_string(),\n            entries,\n        }\n    }\n\n    #[test]\n    fn empty_allowed_and_empty_entries_is_ok() {\n        let attr = attribution(vec![]);\n        assert_eq!(assert_attribution_sane(&attr, &[]), Ok(()));\n    }\n\n    #[test]\n    fn nonempty_allowed_and_empty_entries_errors() {\n        let attr = attribution(vec![]);\n        let allowed = vec![\"a.ts\".to_string()];\n        assert_eq!(\n            assert_attribution_sane(&attr, &allowed),\n            Err(\"attribution has no entries but the module has attributed source files\".to_string())\n        );\n    }\n\n    #[test]\n    fn entry_within_allowed_is_ok() {\n        let attr = attribution(vec![entry(\"a.ts\")]);\n        let allowed = vec![\"a.ts\".to_string()];\n        assert_eq!(assert_attribution_sane(&attr, &allowed), Ok(()));\n    }\n\n    #[test]\n    fn entry_outside_allowed_errors_with_exact_message() {\n        let attr = attribution(vec![entry(\"b.ts\")]);\n        let allowed = vec![\"a.ts\".to_string()];\n        assert_eq!(\n            assert_attribution_sane(&attr, &allowed),\n            Err(\"attribution entry references file \\\"b.ts\\\" which is outside the attributed file set\".to_string())\n        );\n    }\n\n    #[test]\n    fn returns_first_violation_in_order() {\n        let attr = attribution(vec![entry(\"a.ts\"), entry(\"b.ts\"), entry(\"c.ts\")]);\n        let allowed = vec![\"a.ts\".to_string(), \"c.ts\".to_string()];\n        assert_eq!(\n            assert_attribution_sane(&attr, &allowed),\n            Err(\"attribution entry references file \\\"b.ts\\\" which is outside the attributed file set\".to_string())\n        );\n    }\n\n    #[test]\n    fn all_entries_within_allowed_multiple_is_ok() {\n        let attr = attribution(vec![entry(\"a.ts\"), entry(\"c.ts\")]);\n        let allowed = vec![\"a.ts\".to_string(), \"b.ts\".to_string(), \"c.ts\".to_string()];\n        assert_eq!(assert_attribution_sane(&attr, &allowed), Ok(()));\n    }\n}\n"
+      },
+      {
+        "type": "attribution",
+        "module": "gen_attribution_check",
+        "target": "rust",
+        "entries": [
+          {
+            "promptLines": [
+              3,
+              8
+            ],
+            "file": "gen_attribution_check/src/lib.rs",
+            "lines": [
+              1,
+              18
+            ],
+            "note": "module summary implemented as pure sanity-check function"
+          },
+          {
+            "promptLines": [
+              26,
+              29
+            ],
+            "file": "gen_attribution_check/src/lib.rs",
+            "lines": [
+              1,
+              1
+            ],
+            "note": "import Attribution from sibling schemas_attribution crate"
+          },
+          {
+            "promptLines": [
+              34,
+              34
+            ],
+            "file": "gen_attribution_check/src/lib.rs",
+            "lines": [
+              3,
+              3
+            ],
+            "note": "function signature matches spec"
+          },
+          {
+            "promptLines": [
+              39,
+              41
+            ],
+            "file": "gen_attribution_check/src/lib.rs",
+            "lines": [
+              4,
+              6
+            ],
+            "note": "rule 1 - non-empty allowed with empty entries errors"
+          },
+          {
+            "promptLines": [
+              42,
+              47
+            ],
+            "file": "gen_attribution_check/src/lib.rs",
+            "lines": [
+              8,
+              15
+            ],
+            "note": "rule 2 - entry file not in allowed errors with exact message"
+          },
+          {
+            "promptLines": [
+              48,
+              48
+            ],
+            "file": "gen_attribution_check/src/lib.rs",
+            "lines": [
+              17,
+              17
+            ],
+            "note": "rule 3 - fallback Ok"
+          },
+          {
+            "promptLines": [
+              50,
+              53
+            ],
+            "file": "gen_attribution_check/src/lib.rs",
+            "lines": [
+              44,
+              91
+            ],
+            "note": "tests covering all described scenarios in order"
+          },
+          {
+            "promptLines": [
+              50,
+              50
+            ],
+            "file": "gen_attribution_check/src/lib.rs",
+            "lines": [
+              44,
+              47
+            ],
+            "note": "empty allowed + empty entries -> Ok test"
+          },
+          {
+            "promptLines": [
+              50,
+              51
+            ],
+            "file": "gen_attribution_check/src/lib.rs",
+            "lines": [
+              49,
+              57
+            ],
+            "note": "non-empty allowed + empty entries -> error test"
+          },
+          {
+            "promptLines": [
+              51,
+              51
+            ],
+            "file": "gen_attribution_check/src/lib.rs",
+            "lines": [
+              59,
+              64
+            ],
+            "note": "entry within allowed -> Ok test"
+          },
+          {
+            "promptLines": [
+              52,
+              52
+            ],
+            "file": "gen_attribution_check/src/lib.rs",
+            "lines": [
+              66,
+              74
+            ],
+            "note": "entry outside allowed -> error naming file test"
+          },
+          {
+            "promptLines": [
+              52,
+              53
+            ],
+            "file": "gen_attribution_check/src/lib.rs",
+            "lines": [
+              76,
+              84
+            ],
+            "note": "check entries in order, return first violation test"
+          },
+          {
+            "promptLines": [
+              51,
+              51
+            ],
+            "file": "gen_attribution_check/src/lib.rs",
+            "lines": [
+              86,
+              91
+            ],
+            "note": "all entries within allowed multiple -> Ok test"
+          }
+        ]
+      },
+      {
+        "type": "mapl-entry",
+        "path": "gen_attribution_check.mapl",
+        "entry": {
+          "promptLines": [
+            39,
+            47
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "Rules 1 and 2 implemented exactly as spec'd, error strings match verbatim.",
+          "reasoning": "Agent's code matches message text char-for-char including quoting style, order of checks, and iteration-stops-at-first-violation behavior. No ambiguity here, just confirming correct compile."
+        }
+      },
+      {
+        "type": "lock",
+        "module": "gen_attribution_check",
+        "target": "rust",
+        "files": [
+          {
+            "path": "gen_attribution_check/Cargo.toml",
+            "hash": "90c859a34e81d6b6190a4921137aa116e45c00af54d930490d462062716049ab"
+          },
+          {
+            "path": "gen_attribution_check/src/lib.rs",
+            "hash": "c0a05084787f44636425ec7ce4d0b8026e39e6df8e29a593213d8aba7716d58e"
+          }
+        ]
+      }
+    ]
+  }
+}

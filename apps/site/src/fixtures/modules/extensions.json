@@ -1,0 +1,528 @@
+{
+  "module": "extensions",
+  "collection": "selfhost",
+  "target": "rust",
+  "targets": [
+    "rust"
+  ],
+  "prompt": {
+    "file": "extensions.napl",
+    "path": "core/extensions.napl",
+    "content": "---\nmodule: extensions\ndeps: []\ntargets: [rust]\ntests:\n  - name: recognizes the canonical prompt extension and every curated alias\n    given: { path: \"greeting.napl\" }\n    expect: { isPrompt: true }\n  - name: recognizes a curated single-person emoji alias\n    given: { path: \"a/b/c/person.\\U0001F9D3\" }\n    expect: { isPrompt: true }\n  - name: the robot emoji is a machine alias, not a prompt alias\n    given: { path: \"robot.\\U0001F916\" }\n    expect: { isPrompt: false }\n  - name: rejects a ZWJ emoji sequence that is not a curated single-person alias\n    given: { path: \"team.\\U0001F468‍\\U0001F4BB\" }\n    expect: { isPrompt: false }\n  - name: default prompt extensions are the canonical spelling followed by the six curated aliases\n    given: {}\n    expect: { promptExtensions: [\".napl\", \".\\U0001F9D1\", \".\\U0001F9D3\", \".\\U0001F464\", \".\\U0001F468\", \".\\U0001F469\", \".\\U0001F9D2\"] }\n  - name: an explicit alias override replaces the curated list\n    given: { override: [\".\\U0001F9D1\"] }\n    expect:\n      promptExtensions: [\".napl\", \".\\U0001F9D1\"]\n      onlyOverrideAliasMatches: true\n  - name: both machine spellings are recognized\n    given: {}\n    expect: { machineExtensions: [\".mapl\", \".\\U0001F916\"] }\n  - name: a canonical prompt keeps the canonical machine extension, an emoji prompt gets the emoji machine alias\n    given: { canonical: \"examples/greeting.napl\", emoji: \"examples/greeting.\\U0001F9D1\" }\n    expect: { canonicalMachine: \".mapl\", emojiMachine: \".\\U0001F916\" }\n---\n# Prompt and machine file extensions\n\nThis module owns the file-extension vocabulary of NAPL: which suffixes mark a\nfile as a *prompt* (human-authored source) and which mark a *machine* (compiled)\nfile, with matching done correctly over whole Unicode codepoints. It is pure: no\nI/O, no dependencies.\n\n## Where this code lives\n\nThe working directory already contains a generated `body_lines` crate at its\nroot — leave it completely untouched. Create this module as a **new, separate\nRust library crate in a subdirectory named `extensions/`**: `extensions/Cargo.toml`\n(package name `extensions`) and `extensions/src/lib.rs`. Do not add a workspace\nmanifest and do not modify anything outside `extensions/`. Ensure `cargo test`\npasses from inside `extensions/`.\n\n## The canonical extensions\n\nExpose these as public constants (string slices):\n\n- The canonical **prompt** extension is `.napl`.\n- The canonical **machine** extension is `.mapl`.\n- The **machine alias** is a dot followed by the robot-face emoji (Unicode\n  U+1F916). It is the emoji spelling of a compiled file.\n\n## The curated prompt aliases\n\nBesides `.napl`, a prompt file may be spelled with a dot followed by exactly one\nof six curated \"single person\" emoji. In codepoint order they are: person\n(U+1F9D1), older person (U+1F9D3), bust in silhouette (U+1F464), man (U+1F468),\nwoman (U+1F469), child (U+1F9D2). Expose this curated set, and a function\n`default_prompt_aliases()` returning them as owned strings in that order.\n\n## Recognized extension lists\n\n- `prompt_extensions(aliases)` takes an optional list of alias strings. It returns\n  the canonical `.napl` first, followed by either the given aliases (when a list is\n  supplied) or the six curated aliases (when none is supplied), in order.\n- `machine_extensions()` returns the canonical machine extension followed by the\n  emoji machine alias: `.mapl` then `.` + robot emoji.\n\n## Classifying a path\n\n- `is_prompt_file(path, aliases)` is true when `path` ends with any recognized\n  prompt extension, using the same optional-alias rule as `prompt_extensions`.\n- `is_machine_file(path)` is true when `path` ends with any recognized machine\n  extension.\n\nMatching is a plain **suffix** test against each recognized extension string.\nBecause the extensions are whole codepoints and the suffix test is exact, a\ncomposite emoji sequence never matches a single-person alias: a file ending in\nman + zero-width-joiner (U+200D) + laptop (U+1F4BB) is **not** a prompt file,\nbecause that four-scalar sequence is not one of the curated aliases and does not\nend with any of them. Likewise the robot-emoji spelling is a machine file, never a\nprompt file.\n\nWhen an explicit alias override is supplied, only the canonical `.napl` and the\noverride entries match — the curated aliases no longer apply.\n\n## Mirroring the spelling of a compiled file\n\n`machine_extension_for_prompt(prompt_path)` chooses the machine extension whose\nspelling mirrors the prompt's. When `prompt_path` ends with the canonical `.napl`,\nthe machine extension is the canonical `.mapl`. For any other (emoji) prompt\nspelling, it is the emoji machine alias. The return type is a `&'static str`.\n</content>\n"
+  },
+  "promptAtGen": "# Prompt and machine file extensions\n\nThis module owns the file-extension vocabulary of NAPL: which suffixes mark a\nfile as a *prompt* (human-authored source) and which mark a *machine* (compiled)\nfile, with matching done correctly over whole Unicode codepoints. It is pure: no\nI/O, no dependencies.\n\n## Where this code lives\n\nThe working directory already contains a generated `body_lines` crate at its\nroot — leave it completely untouched. Create this module as a **new, separate\nRust library crate in a subdirectory named `extensions/`**: `extensions/Cargo.toml`\n(package name `extensions`) and `extensions/src/lib.rs`. Do not add a workspace\nmanifest and do not modify anything outside `extensions/`. Ensure `cargo test`\npasses from inside `extensions/`.\n\n## The canonical extensions\n\nExpose these as public constants (string slices):\n\n- The canonical **prompt** extension is `.napl`.\n- The canonical **machine** extension is `.mapl`.\n- The **machine alias** is a dot followed by the robot-face emoji (Unicode\n  U+1F916). It is the emoji spelling of a compiled file.\n\n## The curated prompt aliases\n\nBesides `.napl`, a prompt file may be spelled with a dot followed by exactly one\nof six curated \"single person\" emoji. In codepoint order they are: person\n(U+1F9D1), older person (U+1F9D3), bust in silhouette (U+1F464), man (U+1F468),\nwoman (U+1F469), child (U+1F9D2). Expose this curated set, and a function\n`default_prompt_aliases()` returning them as owned strings in that order.\n\n## Recognized extension lists\n\n- `prompt_extensions(aliases)` takes an optional list of alias strings. It returns\n  the canonical `.napl` first, followed by either the given aliases (when a list is\n  supplied) or the six curated aliases (when none is supplied), in order.\n- `machine_extensions()` returns the canonical machine extension followed by the\n  emoji machine alias: `.mapl` then `.` + robot emoji.\n\n## Classifying a path\n\n- `is_prompt_file(path, aliases)` is true when `path` ends with any recognized\n  prompt extension, using the same optional-alias rule as `prompt_extensions`.\n- `is_machine_file(path)` is true when `path` ends with any recognized machine\n  extension.\n\nMatching is a plain **suffix** test against each recognized extension string.\nBecause the extensions are whole codepoints and the suffix test is exact, a\ncomposite emoji sequence never matches a single-person alias: a file ending in\nman + zero-width-joiner (U+200D) + laptop (U+1F4BB) is **not** a prompt file,\nbecause that four-scalar sequence is not one of the curated aliases and does not\nend with any of them. Likewise the robot-emoji spelling is a machine file, never a\nprompt file.\n\nWhen an explicit alias override is supplied, only the canonical `.napl` and the\noverride entries match — the curated aliases no longer apply.\n\n## Mirroring the spelling of a compiled file\n\n`machine_extension_for_prompt(prompt_path)` chooses the machine extension whose\nspelling mirrors the prompt's. When `prompt_path` ends with the canonical `.napl`,\nthe machine extension is the canonical `.mapl`. For any other (emoji) prompt\nspelling, it is the emoji machine alias. The return type is a `&'static str`.\n</content>\n",
+  "summary": "Prompt and machine file extensions",
+  "files": [
+    {
+      "path": "extensions/Cargo.toml",
+      "journalPath": ".napl/src/rust/extensions/Cargo.toml",
+      "content": "[package]\nname = \"extensions\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n",
+      "language": "toml"
+    },
+    {
+      "path": "extensions/src/lib.rs",
+      "journalPath": ".napl/src/rust/extensions/src/lib.rs",
+      "content": "// GENERATED BY NAPL from extensions.napl — edit the prompt, not this file\n\n/// The canonical prompt (human-authored source) extension.\npub const PROMPT_EXTENSION: &str = \".napl\";\n\n/// The canonical machine (compiled) extension.\npub const MACHINE_EXTENSION: &str = \".mapl\";\n\n/// The emoji spelling of a compiled file: a dot followed by the robot-face emoji (U+1F916).\npub const MACHINE_ALIAS: &str = \".\\u{1F916}\";\n\n/// The six curated \"single person\" emoji prompt aliases, in the order NAPL treats as canonical.\npub const CURATED_PROMPT_ALIASES: [&str; 6] = [\n    \".\\u{1F9D1}\", // person\n    \".\\u{1F9D3}\", // older person\n    \".\\u{1F464}\", // bust in silhouette\n    \".\\u{1F468}\", // man\n    \".\\u{1F469}\", // woman\n    \".\\u{1F9D2}\", // child\n];\n\n/// The curated prompt aliases as owned strings, in canonical order.\npub fn default_prompt_aliases() -> Vec<String> {\n    CURATED_PROMPT_ALIASES.iter().map(|s| s.to_string()).collect()\n}\n\n/// The canonical `.napl` extension followed by either the given aliases or the curated ones.\npub fn prompt_extensions(aliases: Option<&[&str]>) -> Vec<String> {\n    let mut result = vec![PROMPT_EXTENSION.to_string()];\n    match aliases {\n        Some(given) => result.extend(given.iter().map(|s| s.to_string())),\n        None => result.extend(default_prompt_aliases()),\n    }\n    result\n}\n\n/// The canonical machine extension followed by the emoji machine alias.\npub fn machine_extensions() -> Vec<&'static str> {\n    vec![MACHINE_EXTENSION, MACHINE_ALIAS]\n}\n\n/// True when `path` ends with any recognized prompt extension.\npub fn is_prompt_file(path: &str, aliases: Option<&[&str]>) -> bool {\n    prompt_extensions(aliases).iter().any(|ext| path.ends_with(ext.as_str()))\n}\n\n/// True when `path` ends with any recognized machine extension.\npub fn is_machine_file(path: &str) -> bool {\n    machine_extensions().iter().any(|ext| path.ends_with(ext))\n}\n\n/// The machine extension whose spelling mirrors `prompt_path`'s prompt extension.\npub fn machine_extension_for_prompt(prompt_path: &str) -> &'static str {\n    if prompt_path.ends_with(PROMPT_EXTENSION) {\n        MACHINE_EXTENSION\n    } else {\n        MACHINE_ALIAS\n    }\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn canonical_constants() {\n        assert_eq!(PROMPT_EXTENSION, \".napl\");\n        assert_eq!(MACHINE_EXTENSION, \".mapl\");\n        assert_eq!(MACHINE_ALIAS, \".\\u{1F916}\");\n    }\n\n    #[test]\n    fn curated_aliases_in_order() {\n        let expected = [\n            \".\\u{1F9D1}\",\n            \".\\u{1F9D3}\",\n            \".\\u{1F464}\",\n            \".\\u{1F468}\",\n            \".\\u{1F469}\",\n            \".\\u{1F9D2}\",\n        ];\n        assert_eq!(CURATED_PROMPT_ALIASES, expected);\n        assert_eq!(\n            default_prompt_aliases(),\n            expected.iter().map(|s| s.to_string()).collect::<Vec<_>>()\n        );\n    }\n\n    #[test]\n    fn prompt_extensions_defaults_to_curated() {\n        let exts = prompt_extensions(None);\n        assert_eq!(exts[0], \".napl\");\n        assert_eq!(exts.len(), 7);\n        assert_eq!(&exts[1..], default_prompt_aliases().as_slice());\n    }\n\n    #[test]\n    fn prompt_extensions_with_override() {\n        let overrides = [\".foo\", \".bar\"];\n        let exts = prompt_extensions(Some(&overrides));\n        assert_eq!(exts, vec![\".napl\".to_string(), \".foo\".to_string(), \".bar\".to_string()]);\n    }\n\n    #[test]\n    fn machine_extensions_lists_both() {\n        assert_eq!(machine_extensions(), vec![\".mapl\", \".\\u{1F916}\"]);\n    }\n\n    #[test]\n    fn is_prompt_file_matches_canonical() {\n        assert!(is_prompt_file(\"foo.napl\", None));\n        assert!(!is_prompt_file(\"foo.mapl\", None));\n    }\n\n    #[test]\n    fn is_prompt_file_matches_curated_aliases() {\n        assert!(is_prompt_file(\"foo.\\u{1F9D1}\", None));\n        assert!(is_prompt_file(\"foo.\\u{1F9D3}\", None));\n        assert!(is_prompt_file(\"foo.\\u{1F464}\", None));\n        assert!(is_prompt_file(\"foo.\\u{1F468}\", None));\n        assert!(is_prompt_file(\"foo.\\u{1F469}\", None));\n        assert!(is_prompt_file(\"foo.\\u{1F9D2}\", None));\n    }\n\n    #[test]\n    fn is_prompt_file_override_excludes_curated() {\n        let overrides = [\".xyz\"];\n        assert!(is_prompt_file(\"foo.napl\", Some(&overrides)));\n        assert!(is_prompt_file(\"foo.xyz\", Some(&overrides)));\n        assert!(!is_prompt_file(\"foo.\\u{1F9D1}\", Some(&overrides)));\n    }\n\n    #[test]\n    fn composite_emoji_sequence_is_not_a_prompt_file() {\n        // man (U+1F468) + ZWJ (U+200D) + laptop (U+1F4BB): a four-scalar composite,\n        // not the single-scalar \"man\" alias, and does not end with any recognized extension.\n        let composite = format!(\"foo.\\u{1F468}\\u{200D}\\u{1F4BB}\");\n        assert!(!is_prompt_file(&composite, None));\n    }\n\n    #[test]\n    fn robot_emoji_is_machine_not_prompt() {\n        let path = format!(\"foo.{}\", \"\\u{1F916}\");\n        assert!(!is_prompt_file(&path, None));\n        assert!(is_machine_file(&format!(\"foo.\\u{1F916}\")));\n    }\n\n    #[test]\n    fn is_machine_file_matches_canonical_and_alias() {\n        assert!(is_machine_file(\"foo.mapl\"));\n        assert!(is_machine_file(\"foo.\\u{1F916}\"));\n        assert!(!is_machine_file(\"foo.napl\"));\n    }\n\n    #[test]\n    fn machine_extension_for_prompt_mirrors_canonical() {\n        assert_eq!(machine_extension_for_prompt(\"foo.napl\"), \".mapl\");\n    }\n\n    #[test]\n    fn machine_extension_for_prompt_mirrors_emoji() {\n        assert_eq!(\n            machine_extension_for_prompt(\"foo.\\u{1F9D1}\"),\n            \".\\u{1F916}\"\n        );\n        assert_eq!(\n            machine_extension_for_prompt(\"foo.\\u{1F464}\"),\n            \".\\u{1F916}\"\n        );\n    }\n}\n",
+      "language": "rust"
+    }
+  ],
+  "attribution": [
+    {
+      "promptLines": [
+        21,
+        21
+      ],
+      "file": "extensions/src/lib.rs",
+      "lines": [
+        3,
+        4
+      ],
+      "note": "canonical prompt extension constant"
+    },
+    {
+      "promptLines": [
+        22,
+        22
+      ],
+      "file": "extensions/src/lib.rs",
+      "lines": [
+        6,
+        7
+      ],
+      "note": "canonical machine extension constant"
+    },
+    {
+      "promptLines": [
+        23,
+        24
+      ],
+      "file": "extensions/src/lib.rs",
+      "lines": [
+        9,
+        10
+      ],
+      "note": "machine alias robot-face emoji constant"
+    },
+    {
+      "promptLines": [
+        28,
+        32
+      ],
+      "file": "extensions/src/lib.rs",
+      "lines": [
+        12,
+        20
+      ],
+      "note": "curated single-person emoji aliases in codepoint order"
+    },
+    {
+      "promptLines": [
+        31,
+        32
+      ],
+      "file": "extensions/src/lib.rs",
+      "lines": [
+        22,
+        25
+      ],
+      "note": "default_prompt_aliases returns curated set as owned strings"
+    },
+    {
+      "promptLines": [
+        36,
+        38
+      ],
+      "file": "extensions/src/lib.rs",
+      "lines": [
+        27,
+        35
+      ],
+      "note": "prompt_extensions builds canonical plus given or curated aliases"
+    },
+    {
+      "promptLines": [
+        39,
+        40
+      ],
+      "file": "extensions/src/lib.rs",
+      "lines": [
+        37,
+        40
+      ],
+      "note": "machine_extensions returns canonical then emoji alias"
+    },
+    {
+      "promptLines": [
+        44,
+        45
+      ],
+      "file": "extensions/src/lib.rs",
+      "lines": [
+        42,
+        45
+      ],
+      "note": "is_prompt_file suffix test over prompt_extensions"
+    },
+    {
+      "promptLines": [
+        46,
+        47
+      ],
+      "file": "extensions/src/lib.rs",
+      "lines": [
+        47,
+        50
+      ],
+      "note": "is_machine_file suffix test over machine_extensions"
+    },
+    {
+      "promptLines": [
+        49,
+        55
+      ],
+      "file": "extensions/src/lib.rs",
+      "lines": [
+        43,
+        44
+      ],
+      "note": "exact whole-codepoint suffix match, no partial composite match"
+    },
+    {
+      "promptLines": [
+        51,
+        53
+      ],
+      "file": "extensions/src/lib.rs",
+      "lines": [
+        134,
+        139
+      ],
+      "note": "test for composite emoji sequence not matching single alias"
+    },
+    {
+      "promptLines": [
+        54,
+        54
+      ],
+      "file": "extensions/src/lib.rs",
+      "lines": [
+        142,
+        146
+      ],
+      "note": "test robot emoji is machine not prompt"
+    },
+    {
+      "promptLines": [
+        57,
+        58
+      ],
+      "file": "extensions/src/lib.rs",
+      "lines": [
+        30,
+        33
+      ],
+      "note": "explicit alias override replaces curated aliases entirely"
+    },
+    {
+      "promptLines": [
+        57,
+        58
+      ],
+      "file": "extensions/src/lib.rs",
+      "lines": [
+        126,
+        131
+      ],
+      "note": "test override excludes curated aliases"
+    },
+    {
+      "promptLines": [
+        62,
+        65
+      ],
+      "file": "extensions/src/lib.rs",
+      "lines": [
+        52,
+        59
+      ],
+      "note": "machine_extension_for_prompt mirrors prompt spelling, static str return"
+    }
+  ],
+  "attributionYaml": "module: extensions\ntarget: rust\nentries:\n  - promptLines:\n      - 21\n      - 21\n    file: extensions/src/lib.rs\n    lines:\n      - 3\n      - 4\n    note: canonical prompt extension constant\n  - promptLines:\n      - 22\n      - 22\n    file: extensions/src/lib.rs\n    lines:\n      - 6\n      - 7\n    note: canonical machine extension constant\n  - promptLines:\n      - 23\n      - 24\n    file: extensions/src/lib.rs\n    lines:\n      - 9\n      - 10\n    note: machine alias robot-face emoji constant\n  - promptLines:\n      - 28\n      - 32\n    file: extensions/src/lib.rs\n    lines:\n      - 12\n      - 20\n    note: curated single-person emoji aliases in codepoint order\n  - promptLines:\n      - 31\n      - 32\n    file: extensions/src/lib.rs\n    lines:\n      - 22\n      - 25\n    note: default_prompt_aliases returns curated set as owned strings\n  - promptLines:\n      - 36\n      - 38\n    file: extensions/src/lib.rs\n    lines:\n      - 27\n      - 35\n    note: prompt_extensions builds canonical plus given or curated aliases\n  - promptLines:\n      - 39\n      - 40\n    file: extensions/src/lib.rs\n    lines:\n      - 37\n      - 40\n    note: machine_extensions returns canonical then emoji alias\n  - promptLines:\n      - 44\n      - 45\n    file: extensions/src/lib.rs\n    lines:\n      - 42\n      - 45\n    note: is_prompt_file suffix test over prompt_extensions\n  - promptLines:\n      - 46\n      - 47\n    file: extensions/src/lib.rs\n    lines:\n      - 47\n      - 50\n    note: is_machine_file suffix test over machine_extensions\n  - promptLines:\n      - 49\n      - 55\n    file: extensions/src/lib.rs\n    lines:\n      - 43\n      - 44\n    note: exact whole-codepoint suffix match, no partial composite match\n  - promptLines:\n      - 51\n      - 53\n    file: extensions/src/lib.rs\n    lines:\n      - 134\n      - 139\n    note: test for composite emoji sequence not matching single alias\n  - promptLines:\n      - 54\n      - 54\n    file: extensions/src/lib.rs\n    lines:\n      - 142\n      - 146\n    note: test robot emoji is machine not prompt\n  - promptLines:\n      - 57\n      - 58\n    file: extensions/src/lib.rs\n    lines:\n      - 30\n      - 33\n    note: explicit alias override replaces curated aliases entirely\n  - promptLines:\n      - 57\n      - 58\n    file: extensions/src/lib.rs\n    lines:\n      - 126\n      - 131\n    note: test override excludes curated aliases\n  - promptLines:\n      - 62\n      - 65\n    file: extensions/src/lib.rs\n    lines:\n      - 52\n      - 59\n    note: machine_extension_for_prompt mirrors prompt spelling, static str return\n",
+  "mapl": [
+    {
+      "promptLines": [
+        36,
+        40
+      ],
+      "kind": "assumption",
+      "severity": "warning",
+      "message": "Return types for prompt_extensions/machine_extensions left unspecified; agent picked Vec<String> vs Vec<&'static str>.",
+      "reasoning": "Prompt says prompt_extensions(aliases) \"returns\" a list and machine_extensions() \"returns\" a list but never states element ownership. Agent made prompt_extensions return Vec<String> (owned, since it must merge borrowed aliases with owned defaults) but machine_extensions return Vec<&'static str> (borrowed, since both entries are static). This split is reasonable but not dictated by the prompt, and callers unifying the two lists would need to know this.\n",
+      "suggestion": "State explicitly whether prompt_extensions and machine_extensions return owned Strings or &'static str slices."
+    },
+    {
+      "promptLines": [
+        10,
+        15
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "Crate scaffold (Cargo.toml, no workspace manifest, root untouched) matches instructions per agent's final message.",
+      "reasoning": "Only src/lib.rs changes were included in the diff shown; the agent's final message states Cargo.toml was also created and the root body_lines crate and workspace manifest constraints were respected. Recorded as a note since compliance can't be directly verified from the supplied change listing."
+    }
+  ],
+  "journal": [
+    {
+      "gen": 2,
+      "timestamp": "2026-07-24T05:56:36.166Z",
+      "mode": "full",
+      "promptHash": "53b3004a36ec7d3e18f21eccb7133d6620a90346ccabac373e809fc5de8cb56b",
+      "files": [
+        {
+          "path": "extensions/Cargo.toml",
+          "journalPath": ".napl/src/rust/extensions/Cargo.toml",
+          "patch": "@@ -0,0 +1,6 @@\n+[package]\n+name = \"extensions\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]"
+        },
+        {
+          "path": "extensions/src/lib.rs",
+          "journalPath": ".napl/src/rust/extensions/src/lib.rs",
+          "patch": "@@ -0,0 +1,171 @@\n+// GENERATED BY NAPL from extensions.napl — edit the prompt, not this file\n+\n+/// The canonical prompt (human-authored source) extension.\n+pub const PROMPT_EXTENSION: &str = \".napl\";\n+\n+/// The canonical machine (compiled) extension.\n+pub const MACHINE_EXTENSION: &str = \".mapl\";\n+\n+/// The emoji spelling of a compiled file: a dot followed by the robot-face emoji (U+1F916).\n+pub const MACHINE_ALIAS: &str = \".\\u{1F916}\";\n+\n+/// The six curated \"single person\" emoji prompt aliases, in the order NAPL treats as canonical.\n+pub const CURATED_PROMPT_ALIASES: [&str; 6] = [\n+    \".\\u{1F9D1}\", // person\n+    \".\\u{1F9D3}\", // older person\n+    \".\\u{1F464}\", // bust in silhouette\n+    \".\\u{1F468}\", // man\n+    \".\\u{1F469}\", // woman\n+    \".\\u{1F9D2}\", // child\n+];\n+\n+/// The curated prompt aliases as owned strings, in canonical order.\n+pub fn default_prompt_aliases() -> Vec<String> {\n+    CURATED_PROMPT_ALIASES.iter().map(|s| s.to_string()).collect()\n+}\n+\n+/// The canonical `.napl` extension followed by either the given aliases or the curated ones.\n+pub fn prompt_extensions(aliases: Option<&[&str]>) -> Vec<String> {\n+    let mut result = vec![PROMPT_EXTENSION.to_string()];\n+    match aliases {\n+        Some(given) => result.extend(given.iter().map(|s| s.to_string())),\n+        None => result.extend(default_prompt_aliases()),\n+    }\n+    result\n+}\n+\n+/// The canonical machine extension followed by the emoji machine alias.\n+pub fn machine_extensions() -> Vec<&'static str> {\n+    vec![MACHINE_EXTENSION, MACHINE_ALIAS]\n+}\n+\n+/// True when `path` ends with any recognized prompt extension.\n+pub fn is_prompt_file(path: &str, aliases: Option<&[&str]>) -> bool {\n+    prompt_extensions(aliases).iter().any(|ext| path.ends_with(ext.as_str()))\n+}\n+\n+/// True when `path` ends with any recognized machine extension.\n+pub fn is_machine_file(path: &str) -> bool {\n+    machine_extensions().iter().any(|ext| path.ends_with(ext))\n+}\n+\n+/// The machine extension whose spelling mirrors `prompt_path`'s prompt extension.\n+pub fn machine_extension_for_prompt(prompt_path: &str) -> &'static str {\n+    if prompt_path.ends_with(PROMPT_EXTENSION) {\n+        MACHINE_EXTENSION\n+    } else {\n+        MACHINE_ALIAS\n+    }\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn canonical_constants() {\n+        assert_eq!(PROMPT_EXTENSION, \".napl\");\n+        assert_eq!(MACHINE_EXTENSION, \".mapl\");\n+        assert_eq!(MACHINE_ALIAS, \".\\u{1F916}\");\n+    }\n+\n+    #[test]\n+    fn curated_aliases_in_order() {\n+        let expected = [\n+            \".\\u{1F9D1}\",\n+            \".\\u{1F9D3}\",\n+            \".\\u{1F464}\",\n+            \".\\u{1F468}\",\n+            \".\\u{1F469}\",\n+            \".\\u{1F9D2}\",\n+        ];\n+        assert_eq!(CURATED_PROMPT_ALIASES, expected);\n+        assert_eq!(\n+            default_prompt_aliases(),\n+            expected.iter().map(|s| s.to_string()).collect::<Vec<_>>()\n+        );\n+    }\n+\n+    #[test]\n+    fn prompt_extensions_defaults_to_curated() {\n+        let exts = prompt_extensions(None);\n+        assert_eq!(exts[0], \".napl\");\n+        assert_eq!(exts.len(), 7);\n+        assert_eq!(&exts[1..], default_prompt_aliases().as_slice());\n+    }\n+\n+    #[test]\n+    fn prompt_extensions_with_override() {\n+        let overrides = [\".foo\", \".bar\"];\n+        let exts = prompt_extensions(Some(&overrides));\n+        assert_eq!(exts, vec![\".napl\".to_string(), \".foo\".to_string(), \".bar\".to_string()]);\n+    }\n+\n+    #[test]\n+    fn machine_extensions_lists_both() {\n+        assert_eq!(machine_extensions(), vec![\".mapl\", \".\\u{1F916}\"]);\n+    }\n+\n+    #[test]\n+    fn is_prompt_file_matches_canonical() {\n+        assert!(is_prompt_file(\"foo.napl\", None));\n+        assert!(!is_prompt_file(\"foo.mapl\", None));\n+    }\n+\n+    #[test]\n+    fn is_prompt_file_matches_curated_aliases() {\n+        assert!(is_prompt_file(\"foo.\\u{1F9D1}\", None));\n+        assert!(is_prompt_file(\"foo.\\u{1F9D3}\", None));\n+        assert!(is_prompt_file(\"foo.\\u{1F464}\", None));\n+        assert!(is_prompt_file(\"foo.\\u{1F468}\", None));\n+        assert!(is_prompt_file(\"foo.\\u{1F469}\", None));\n+        assert!(is_prompt_file(\"foo.\\u{1F9D2}\", None));\n+    }\n+\n+    #[test]\n+    fn is_prompt_file_override_excludes_curated() {\n+        let overrides = [\".xyz\"];\n+        assert!(is_prompt_file(\"foo.napl\", Some(&overrides)));\n+        assert!(is_prompt_file(\"foo.xyz\", Some(&overrides)));\n+        assert!(!is_prompt_file(\"foo.\\u{1F9D1}\", Some(&overrides)));\n+    }\n+\n+    #[test]\n+    fn composite_emoji_sequence_is_not_a_prompt_file() {\n+        // man (U+1F468) + ZWJ (U+200D) + laptop (U+1F4BB): a four-scalar composite,\n+        // not the single-scalar \"man\" alias, and does not end with any recognized extension.\n+        let composite = format!(\"foo.\\u{1F468}\\u{200D}\\u{1F4BB}\");\n+        assert!(!is_prompt_file(&composite, None));\n+    }\n+\n+    #[test]\n+    fn robot_emoji_is_machine_not_prompt() {\n+        let path = format!(\"foo.{}\", \"\\u{1F916}\");\n+        assert!(!is_prompt_file(&path, None));\n+        assert!(is_machine_file(&format!(\"foo.\\u{1F916}\")));\n+    }\n+\n+    #[test]\n+    fn is_machine_file_matches_canonical_and_alias() {\n+        assert!(is_machine_file(\"foo.mapl\"));\n+        assert!(is_machine_file(\"foo.\\u{1F916}\"));\n+        assert!(!is_machine_file(\"foo.napl\"));\n+    }\n+\n+    #[test]\n+    fn machine_extension_for_prompt_mirrors_canonical() {\n+        assert_eq!(machine_extension_for_prompt(\"foo.napl\"), \".mapl\");\n+    }\n+\n+    #[test]\n+    fn machine_extension_for_prompt_mirrors_emoji() {\n+        assert_eq!(\n+            machine_extension_for_prompt(\"foo.\\u{1F9D1}\"),\n+            \".\\u{1F916}\"\n+        );\n+        assert_eq!(\n+            machine_extension_for_prompt(\"foo.\\u{1F464}\"),\n+            \".\\u{1F916}\"\n+        );\n+    }\n+}"
+        }
+      ]
+    }
+  ],
+  "lock": [
+    {
+      "path": "extensions/Cargo.toml",
+      "hash": "1e5450cfc6f881b6b27bb47aaf68f388c4666df1bae946cf664d60599e874c8a"
+    },
+    {
+      "path": "extensions/src/lib.rs",
+      "hash": "5a4c066920d1d42d04c18d34821bbb4b1b8834e7433d94300d0352b3976d1ce8"
+    }
+  ],
+  "session": {
+    "task": "napl gen rust → extensions",
+    "files": {
+      "extensions.napl": "---\nmodule: extensions\ndeps: []\ntargets: [rust]\ntests:\n  - name: recognizes the canonical prompt extension and every curated alias\n    given: { path: \"greeting.napl\" }\n    expect: { isPrompt: true }\n  - name: recognizes a curated single-person emoji alias\n    given: { path: \"a/b/c/person.\\U0001F9D3\" }\n    expect: { isPrompt: true }\n  - name: the robot emoji is a machine alias, not a prompt alias\n    given: { path: \"robot.\\U0001F916\" }\n    expect: { isPrompt: false }\n  - name: rejects a ZWJ emoji sequence that is not a curated single-person alias\n    given: { path: \"team.\\U0001F468‍\\U0001F4BB\" }\n    expect: { isPrompt: false }\n  - name: default prompt extensions are the canonical spelling followed by the six curated aliases\n    given: {}\n    expect: { promptExtensions: [\".napl\", \".\\U0001F9D1\", \".\\U0001F9D3\", \".\\U0001F464\", \".\\U0001F468\", \".\\U0001F469\", \".\\U0001F9D2\"] }\n  - name: an explicit alias override replaces the curated list\n    given: { override: [\".\\U0001F9D1\"] }\n    expect:\n      promptExtensions: [\".napl\", \".\\U0001F9D1\"]\n      onlyOverrideAliasMatches: true\n  - name: both machine spellings are recognized\n    given: {}\n    expect: { machineExtensions: [\".mapl\", \".\\U0001F916\"] }\n  - name: a canonical prompt keeps the canonical machine extension, an emoji prompt gets the emoji machine alias\n    given: { canonical: \"examples/greeting.napl\", emoji: \"examples/greeting.\\U0001F9D1\" }\n    expect: { canonicalMachine: \".mapl\", emojiMachine: \".\\U0001F916\" }\n---\n# Prompt and machine file extensions\n\nThis module owns the file-extension vocabulary of NAPL: which suffixes mark a\nfile as a *prompt* (human-authored source) and which mark a *machine* (compiled)\nfile, with matching done correctly over whole Unicode codepoints. It is pure: no\nI/O, no dependencies.\n\n## Where this code lives\n\nThe working directory already contains a generated `body_lines` crate at its\nroot — leave it completely untouched. Create this module as a **new, separate\nRust library crate in a subdirectory named `extensions/`**: `extensions/Cargo.toml`\n(package name `extensions`) and `extensions/src/lib.rs`. Do not add a workspace\nmanifest and do not modify anything outside `extensions/`. Ensure `cargo test`\npasses from inside `extensions/`.\n\n## The canonical extensions\n\nExpose these as public constants (string slices):\n\n- The canonical **prompt** extension is `.napl`.\n- The canonical **machine** extension is `.mapl`.\n- The **machine alias** is a dot followed by the robot-face emoji (Unicode\n  U+1F916). It is the emoji spelling of a compiled file.\n\n## The curated prompt aliases\n\nBesides `.napl`, a prompt file may be spelled with a dot followed by exactly one\nof six curated \"single person\" emoji. In codepoint order they are: person\n(U+1F9D1), older person (U+1F9D3), bust in silhouette (U+1F464), man (U+1F468),\nwoman (U+1F469), child (U+1F9D2). Expose this curated set, and a function\n`default_prompt_aliases()` returning them as owned strings in that order.\n\n## Recognized extension lists\n\n- `prompt_extensions(aliases)` takes an optional list of alias strings. It returns\n  the canonical `.napl` first, followed by either the given aliases (when a list is\n  supplied) or the six curated aliases (when none is supplied), in order.\n- `machine_extensions()` returns the canonical machine extension followed by the\n  emoji machine alias: `.mapl` then `.` + robot emoji.\n\n## Classifying a path\n\n- `is_prompt_file(path, aliases)` is true when `path` ends with any recognized\n  prompt extension, using the same optional-alias rule as `prompt_extensions`.\n- `is_machine_file(path)` is true when `path` ends with any recognized machine\n  extension.\n\nMatching is a plain **suffix** test against each recognized extension string.\nBecause the extensions are whole codepoints and the suffix test is exact, a\ncomposite emoji sequence never matches a single-person alias: a file ending in\nman + zero-width-joiner (U+200D) + laptop (U+1F4BB) is **not** a prompt file,\nbecause that four-scalar sequence is not one of the curated aliases and does not\nend with any of them. Likewise the robot-emoji spelling is a machine file, never a\nprompt file.\n\nWhen an explicit alias override is supplied, only the canonical `.napl` and the\noverride entries match — the curated aliases no longer apply.\n\n## Mirroring the spelling of a compiled file\n\n`machine_extension_for_prompt(prompt_path)` chooses the machine extension whose\nspelling mirrors the prompt's. When `prompt_path` ends with the canonical `.napl`,\nthe machine extension is the canonical `.mapl`. For any other (emoji) prompt\nspelling, it is the emoji machine alias. The return type is a `&'static str`.\n</content>\n"
+    },
+    "events": [
+      {
+        "type": "task",
+        "task": "napl gen rust → extensions"
+      },
+      {
+        "type": "diff",
+        "path": "extensions/Cargo.toml",
+        "patch": "@@ -0,0 +1,6 @@\n+[package]\n+name = \"extensions\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]"
+      },
+      {
+        "type": "file-edit",
+        "path": "extensions/Cargo.toml",
+        "content": "[package]\nname = \"extensions\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n"
+      },
+      {
+        "type": "diff",
+        "path": "extensions/src/lib.rs",
+        "patch": "@@ -0,0 +1,171 @@\n+// GENERATED BY NAPL from extensions.napl — edit the prompt, not this file\n+\n+/// The canonical prompt (human-authored source) extension.\n+pub const PROMPT_EXTENSION: &str = \".napl\";\n+\n+/// The canonical machine (compiled) extension.\n+pub const MACHINE_EXTENSION: &str = \".mapl\";\n+\n+/// The emoji spelling of a compiled file: a dot followed by the robot-face emoji (U+1F916).\n+pub const MACHINE_ALIAS: &str = \".\\u{1F916}\";\n+\n+/// The six curated \"single person\" emoji prompt aliases, in the order NAPL treats as canonical.\n+pub const CURATED_PROMPT_ALIASES: [&str; 6] = [\n+    \".\\u{1F9D1}\", // person\n+    \".\\u{1F9D3}\", // older person\n+    \".\\u{1F464}\", // bust in silhouette\n+    \".\\u{1F468}\", // man\n+    \".\\u{1F469}\", // woman\n+    \".\\u{1F9D2}\", // child\n+];\n+\n+/// The curated prompt aliases as owned strings, in canonical order.\n+pub fn default_prompt_aliases() -> Vec<String> {\n+    CURATED_PROMPT_ALIASES.iter().map(|s| s.to_string()).collect()\n+}\n+\n+/// The canonical `.napl` extension followed by either the given aliases or the curated ones.\n+pub fn prompt_extensions(aliases: Option<&[&str]>) -> Vec<String> {\n+    let mut result = vec![PROMPT_EXTENSION.to_string()];\n+    match aliases {\n+        Some(given) => result.extend(given.iter().map(|s| s.to_string())),\n+        None => result.extend(default_prompt_aliases()),\n+    }\n+    result\n+}\n+\n+/// The canonical machine extension followed by the emoji machine alias.\n+pub fn machine_extensions() -> Vec<&'static str> {\n+    vec![MACHINE_EXTENSION, MACHINE_ALIAS]\n+}\n+\n+/// True when `path` ends with any recognized prompt extension.\n+pub fn is_prompt_file(path: &str, aliases: Option<&[&str]>) -> bool {\n+    prompt_extensions(aliases).iter().any(|ext| path.ends_with(ext.as_str()))\n+}\n+\n+/// True when `path` ends with any recognized machine extension.\n+pub fn is_machine_file(path: &str) -> bool {\n+    machine_extensions().iter().any(|ext| path.ends_with(ext))\n+}\n+\n+/// The machine extension whose spelling mirrors `prompt_path`'s prompt extension.\n+pub fn machine_extension_for_prompt(prompt_path: &str) -> &'static str {\n+    if prompt_path.ends_with(PROMPT_EXTENSION) {\n+        MACHINE_EXTENSION\n+    } else {\n+        MACHINE_ALIAS\n+    }\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn canonical_constants() {\n+        assert_eq!(PROMPT_EXTENSION, \".napl\");\n+        assert_eq!(MACHINE_EXTENSION, \".mapl\");\n+        assert_eq!(MACHINE_ALIAS, \".\\u{1F916}\");\n+    }\n+\n+    #[test]\n+    fn curated_aliases_in_order() {\n+        let expected = [\n+            \".\\u{1F9D1}\",\n+            \".\\u{1F9D3}\",\n+            \".\\u{1F464}\",\n+            \".\\u{1F468}\",\n+            \".\\u{1F469}\",\n+            \".\\u{1F9D2}\",\n+        ];\n+        assert_eq!(CURATED_PROMPT_ALIASES, expected);\n+        assert_eq!(\n+            default_prompt_aliases(),\n+            expected.iter().map(|s| s.to_string()).collect::<Vec<_>>()\n+        );\n+    }\n+\n+    #[test]\n+    fn prompt_extensions_defaults_to_curated() {\n+        let exts = prompt_extensions(None);\n+        assert_eq!(exts[0], \".napl\");\n+        assert_eq!(exts.len(), 7);\n+        assert_eq!(&exts[1..], default_prompt_aliases().as_slice());\n+    }\n+\n+    #[test]\n+    fn prompt_extensions_with_override() {\n+        let overrides = [\".foo\", \".bar\"];\n+        let exts = prompt_extensions(Some(&overrides));\n+        assert_eq!(exts, vec![\".napl\".to_string(), \".foo\".to_string(), \".bar\".to_string()]);\n+    }\n+\n+    #[test]\n+    fn machine_extensions_lists_both() {\n+        assert_eq!(machine_extensions(), vec![\".mapl\", \".\\u{1F916}\"]);\n+    }\n+\n+    #[test]\n+    fn is_prompt_file_matches_canonical() {\n+        assert!(is_prompt_file(\"foo.napl\", None));\n+        assert!(!is_prompt_file(\"foo.mapl\", None));\n+    }\n+\n+    #[test]\n+    fn is_prompt_file_matches_curated_aliases() {\n+        assert!(is_prompt_file(\"foo.\\u{1F9D1}\", None));\n+        assert!(is_prompt_file(\"foo.\\u{1F9D3}\", None));\n+        assert!(is_prompt_file(\"foo.\\u{1F464}\", None));\n+        assert!(is_prompt_file(\"foo.\\u{1F468}\", None));\n+        assert!(is_prompt_file(\"foo.\\u{1F469}\", None));\n+        assert!(is_prompt_file(\"foo.\\u{1F9D2}\", None));\n+    }\n+\n+    #[test]\n+    fn is_prompt_file_override_excludes_curated() {\n+        let overrides = [\".xyz\"];\n+        assert!(is_prompt_file(\"foo.napl\", Some(&overrides)));\n+        assert!(is_prompt_file(\"foo.xyz\", Some(&overrides)));\n+        assert!(!is_prompt_file(\"foo.\\u{1F9D1}\", Some(&overrides)));\n+    }\n+\n+    #[test]\n+    fn composite_emoji_sequence_is_not_a_prompt_file() {\n+        // man (U+1F468) + ZWJ (U+200D) + laptop (U+1F4BB): a four-scalar composite,\n+        // not the single-scalar \"man\" alias, and does not end with any recognized extension.\n+        let composite = format!(\"foo.\\u{1F468}\\u{200D}\\u{1F4BB}\");\n+        assert!(!is_prompt_file(&composite, None));\n+    }\n+\n+    #[test]\n+    fn robot_emoji_is_machine_not_prompt() {\n+        let path = format!(\"foo.{}\", \"\\u{1F916}\");\n+        assert!(!is_prompt_file(&path, None));\n+        assert!(is_machine_file(&format!(\"foo.\\u{1F916}\")));\n+    }\n+\n+    #[test]\n+    fn is_machine_file_matches_canonical_and_alias() {\n+        assert!(is_machine_file(\"foo.mapl\"));\n+        assert!(is_machine_file(\"foo.\\u{1F916}\"));\n+        assert!(!is_machine_file(\"foo.napl\"));\n+    }\n+\n+    #[test]\n+    fn machine_extension_for_prompt_mirrors_canonical() {\n+        assert_eq!(machine_extension_for_prompt(\"foo.napl\"), \".mapl\");\n+    }\n+\n+    #[test]\n+    fn machine_extension_for_prompt_mirrors_emoji() {\n+        assert_eq!(\n+            machine_extension_for_prompt(\"foo.\\u{1F9D1}\"),\n+            \".\\u{1F916}\"\n+        );\n+        assert_eq!(\n+            machine_extension_for_prompt(\"foo.\\u{1F464}\"),\n+            \".\\u{1F916}\"\n+        );\n+    }\n+}"
+      },
+      {
+        "type": "file-edit",
+        "path": "extensions/src/lib.rs",
+        "content": "// GENERATED BY NAPL from extensions.napl — edit the prompt, not this file\n\n/// The canonical prompt (human-authored source) extension.\npub const PROMPT_EXTENSION: &str = \".napl\";\n\n/// The canonical machine (compiled) extension.\npub const MACHINE_EXTENSION: &str = \".mapl\";\n\n/// The emoji spelling of a compiled file: a dot followed by the robot-face emoji (U+1F916).\npub const MACHINE_ALIAS: &str = \".\\u{1F916}\";\n\n/// The six curated \"single person\" emoji prompt aliases, in the order NAPL treats as canonical.\npub const CURATED_PROMPT_ALIASES: [&str; 6] = [\n    \".\\u{1F9D1}\", // person\n    \".\\u{1F9D3}\", // older person\n    \".\\u{1F464}\", // bust in silhouette\n    \".\\u{1F468}\", // man\n    \".\\u{1F469}\", // woman\n    \".\\u{1F9D2}\", // child\n];\n\n/// The curated prompt aliases as owned strings, in canonical order.\npub fn default_prompt_aliases() -> Vec<String> {\n    CURATED_PROMPT_ALIASES.iter().map(|s| s.to_string()).collect()\n}\n\n/// The canonical `.napl` extension followed by either the given aliases or the curated ones.\npub fn prompt_extensions(aliases: Option<&[&str]>) -> Vec<String> {\n    let mut result = vec![PROMPT_EXTENSION.to_string()];\n    match aliases {\n        Some(given) => result.extend(given.iter().map(|s| s.to_string())),\n        None => result.extend(default_prompt_aliases()),\n    }\n    result\n}\n\n/// The canonical machine extension followed by the emoji machine alias.\npub fn machine_extensions() -> Vec<&'static str> {\n    vec![MACHINE_EXTENSION, MACHINE_ALIAS]\n}\n\n/// True when `path` ends with any recognized prompt extension.\npub fn is_prompt_file(path: &str, aliases: Option<&[&str]>) -> bool {\n    prompt_extensions(aliases).iter().any(|ext| path.ends_with(ext.as_str()))\n}\n\n/// True when `path` ends with any recognized machine extension.\npub fn is_machine_file(path: &str) -> bool {\n    machine_extensions().iter().any(|ext| path.ends_with(ext))\n}\n\n/// The machine extension whose spelling mirrors `prompt_path`'s prompt extension.\npub fn machine_extension_for_prompt(prompt_path: &str) -> &'static str {\n    if prompt_path.ends_with(PROMPT_EXTENSION) {\n        MACHINE_EXTENSION\n    } else {\n        MACHINE_ALIAS\n    }\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn canonical_constants() {\n        assert_eq!(PROMPT_EXTENSION, \".napl\");\n        assert_eq!(MACHINE_EXTENSION, \".mapl\");\n        assert_eq!(MACHINE_ALIAS, \".\\u{1F916}\");\n    }\n\n    #[test]\n    fn curated_aliases_in_order() {\n        let expected = [\n            \".\\u{1F9D1}\",\n            \".\\u{1F9D3}\",\n            \".\\u{1F464}\",\n            \".\\u{1F468}\",\n            \".\\u{1F469}\",\n            \".\\u{1F9D2}\",\n        ];\n        assert_eq!(CURATED_PROMPT_ALIASES, expected);\n        assert_eq!(\n            default_prompt_aliases(),\n            expected.iter().map(|s| s.to_string()).collect::<Vec<_>>()\n        );\n    }\n\n    #[test]\n    fn prompt_extensions_defaults_to_curated() {\n        let exts = prompt_extensions(None);\n        assert_eq!(exts[0], \".napl\");\n        assert_eq!(exts.len(), 7);\n        assert_eq!(&exts[1..], default_prompt_aliases().as_slice());\n    }\n\n    #[test]\n    fn prompt_extensions_with_override() {\n        let overrides = [\".foo\", \".bar\"];\n        let exts = prompt_extensions(Some(&overrides));\n        assert_eq!(exts, vec![\".napl\".to_string(), \".foo\".to_string(), \".bar\".to_string()]);\n    }\n\n    #[test]\n    fn machine_extensions_lists_both() {\n        assert_eq!(machine_extensions(), vec![\".mapl\", \".\\u{1F916}\"]);\n    }\n\n    #[test]\n    fn is_prompt_file_matches_canonical() {\n        assert!(is_prompt_file(\"foo.napl\", None));\n        assert!(!is_prompt_file(\"foo.mapl\", None));\n    }\n\n    #[test]\n    fn is_prompt_file_matches_curated_aliases() {\n        assert!(is_prompt_file(\"foo.\\u{1F9D1}\", None));\n        assert!(is_prompt_file(\"foo.\\u{1F9D3}\", None));\n        assert!(is_prompt_file(\"foo.\\u{1F464}\", None));\n        assert!(is_prompt_file(\"foo.\\u{1F468}\", None));\n        assert!(is_prompt_file(\"foo.\\u{1F469}\", None));\n        assert!(is_prompt_file(\"foo.\\u{1F9D2}\", None));\n    }\n\n    #[test]\n    fn is_prompt_file_override_excludes_curated() {\n        let overrides = [\".xyz\"];\n        assert!(is_prompt_file(\"foo.napl\", Some(&overrides)));\n        assert!(is_prompt_file(\"foo.xyz\", Some(&overrides)));\n        assert!(!is_prompt_file(\"foo.\\u{1F9D1}\", Some(&overrides)));\n    }\n\n    #[test]\n    fn composite_emoji_sequence_is_not_a_prompt_file() {\n        // man (U+1F468) + ZWJ (U+200D) + laptop (U+1F4BB): a four-scalar composite,\n        // not the single-scalar \"man\" alias, and does not end with any recognized extension.\n        let composite = format!(\"foo.\\u{1F468}\\u{200D}\\u{1F4BB}\");\n        assert!(!is_prompt_file(&composite, None));\n    }\n\n    #[test]\n    fn robot_emoji_is_machine_not_prompt() {\n        let path = format!(\"foo.{}\", \"\\u{1F916}\");\n        assert!(!is_prompt_file(&path, None));\n        assert!(is_machine_file(&format!(\"foo.\\u{1F916}\")));\n    }\n\n    #[test]\n    fn is_machine_file_matches_canonical_and_alias() {\n        assert!(is_machine_file(\"foo.mapl\"));\n        assert!(is_machine_file(\"foo.\\u{1F916}\"));\n        assert!(!is_machine_file(\"foo.napl\"));\n    }\n\n    #[test]\n    fn machine_extension_for_prompt_mirrors_canonical() {\n        assert_eq!(machine_extension_for_prompt(\"foo.napl\"), \".mapl\");\n    }\n\n    #[test]\n    fn machine_extension_for_prompt_mirrors_emoji() {\n        assert_eq!(\n            machine_extension_for_prompt(\"foo.\\u{1F9D1}\"),\n            \".\\u{1F916}\"\n        );\n        assert_eq!(\n            machine_extension_for_prompt(\"foo.\\u{1F464}\"),\n            \".\\u{1F916}\"\n        );\n    }\n}\n"
+      },
+      {
+        "type": "attribution",
+        "module": "extensions",
+        "target": "rust",
+        "entries": [
+          {
+            "promptLines": [
+              21,
+              21
+            ],
+            "file": "extensions/src/lib.rs",
+            "lines": [
+              3,
+              4
+            ],
+            "note": "canonical prompt extension constant"
+          },
+          {
+            "promptLines": [
+              22,
+              22
+            ],
+            "file": "extensions/src/lib.rs",
+            "lines": [
+              6,
+              7
+            ],
+            "note": "canonical machine extension constant"
+          },
+          {
+            "promptLines": [
+              23,
+              24
+            ],
+            "file": "extensions/src/lib.rs",
+            "lines": [
+              9,
+              10
+            ],
+            "note": "machine alias robot-face emoji constant"
+          },
+          {
+            "promptLines": [
+              28,
+              32
+            ],
+            "file": "extensions/src/lib.rs",
+            "lines": [
+              12,
+              20
+            ],
+            "note": "curated single-person emoji aliases in codepoint order"
+          },
+          {
+            "promptLines": [
+              31,
+              32
+            ],
+            "file": "extensions/src/lib.rs",
+            "lines": [
+              22,
+              25
+            ],
+            "note": "default_prompt_aliases returns curated set as owned strings"
+          },
+          {
+            "promptLines": [
+              36,
+              38
+            ],
+            "file": "extensions/src/lib.rs",
+            "lines": [
+              27,
+              35
+            ],
+            "note": "prompt_extensions builds canonical plus given or curated aliases"
+          },
+          {
+            "promptLines": [
+              39,
+              40
+            ],
+            "file": "extensions/src/lib.rs",
+            "lines": [
+              37,
+              40
+            ],
+            "note": "machine_extensions returns canonical then emoji alias"
+          },
+          {
+            "promptLines": [
+              44,
+              45
+            ],
+            "file": "extensions/src/lib.rs",
+            "lines": [
+              42,
+              45
+            ],
+            "note": "is_prompt_file suffix test over prompt_extensions"
+          },
+          {
+            "promptLines": [
+              46,
+              47
+            ],
+            "file": "extensions/src/lib.rs",
+            "lines": [
+              47,
+              50
+            ],
+            "note": "is_machine_file suffix test over machine_extensions"
+          },
+          {
+            "promptLines": [
+              49,
+              55
+            ],
+            "file": "extensions/src/lib.rs",
+            "lines": [
+              43,
+              44
+            ],
+            "note": "exact whole-codepoint suffix match, no partial composite match"
+          },
+          {
+            "promptLines": [
+              51,
+              53
+            ],
+            "file": "extensions/src/lib.rs",
+            "lines": [
+              134,
+              139
+            ],
+            "note": "test for composite emoji sequence not matching single alias"
+          },
+          {
+            "promptLines": [
+              54,
+              54
+            ],
+            "file": "extensions/src/lib.rs",
+            "lines": [
+              142,
+              146
+            ],
+            "note": "test robot emoji is machine not prompt"
+          },
+          {
+            "promptLines": [
+              57,
+              58
+            ],
+            "file": "extensions/src/lib.rs",
+            "lines": [
+              30,
+              33
+            ],
+            "note": "explicit alias override replaces curated aliases entirely"
+          },
+          {
+            "promptLines": [
+              57,
+              58
+            ],
+            "file": "extensions/src/lib.rs",
+            "lines": [
+              126,
+              131
+            ],
+            "note": "test override excludes curated aliases"
+          },
+          {
+            "promptLines": [
+              62,
+              65
+            ],
+            "file": "extensions/src/lib.rs",
+            "lines": [
+              52,
+              59
+            ],
+            "note": "machine_extension_for_prompt mirrors prompt spelling, static str return"
+          }
+        ]
+      },
+      {
+        "type": "mapl-entry",
+        "path": "extensions.mapl",
+        "entry": {
+          "promptLines": [
+            36,
+            40
+          ],
+          "kind": "assumption",
+          "severity": "warning",
+          "message": "Return types for prompt_extensions/machine_extensions left unspecified; agent picked Vec<String> vs Vec<&'static str>.",
+          "reasoning": "Prompt says prompt_extensions(aliases) \"returns\" a list and machine_extensions() \"returns\" a list but never states element ownership. Agent made prompt_extensions return Vec<String> (owned, since it must merge borrowed aliases with owned defaults) but machine_extensions return Vec<&'static str> (borrowed, since both entries are static). This split is reasonable but not dictated by the prompt, and callers unifying the two lists would need to know this.\n",
+          "suggestion": "State explicitly whether prompt_extensions and machine_extensions return owned Strings or &'static str slices."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "extensions.mapl",
+        "entry": {
+          "promptLines": [
+            10,
+            15
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "Crate scaffold (Cargo.toml, no workspace manifest, root untouched) matches instructions per agent's final message.",
+          "reasoning": "Only src/lib.rs changes were included in the diff shown; the agent's final message states Cargo.toml was also created and the root body_lines crate and workspace manifest constraints were respected. Recorded as a note since compliance can't be directly verified from the supplied change listing."
+        }
+      },
+      {
+        "type": "lock",
+        "module": "extensions",
+        "target": "rust",
+        "files": [
+          {
+            "path": "extensions/Cargo.toml",
+            "hash": "1e5450cfc6f881b6b27bb47aaf68f388c4666df1bae946cf664d60599e874c8a"
+          },
+          {
+            "path": "extensions/src/lib.rs",
+            "hash": "5a4c066920d1d42d04c18d34821bbb4b1b8834e7433d94300d0352b3976d1ce8"
+          }
+        ]
+      }
+    ]
+  }
+}

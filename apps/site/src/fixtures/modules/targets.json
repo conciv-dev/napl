@@ -1,0 +1,892 @@
+{
+  "module": "targets",
+  "collection": "selfhost",
+  "target": "rust",
+  "targets": [
+    "rust"
+  ],
+  "prompt": {
+    "file": "targets.napl",
+    "path": "core/targets.napl",
+    "content": "---\nmodule: targets\ndeps: []\ntargets: [rust]\ntests:\n  - name: lists the three registered targets in registry order\n    given: {}\n    expect: { listTargets: [\"typescript\", \"react\", \"rust\"] }\n  - name: the starter targets are the first two, a subset of the registered set\n    given: {}\n    expect: { starterTargets: [\"typescript\", \"react\"] }\n  - name: the typescript adapter runs vitest and excludes no vite config\n    given: { target: typescript }\n    expect: { label: \"npx vitest run\", testArgs: [\"vitest\", \"run\"], hasRead: true, excludesViteConfig: false }\n  - name: the react adapter excludes vite.config.js from attribution\n    given: { target: react }\n    expect: { excludesViteConfig: true }\n  - name: the rust adapter runs cargo test and is a workspace\n    given: { target: rust }\n    expect:\n      label: \"cargo test\"\n      command: \"cargo\"\n      testArgs: [\"test\"]\n      hasCargoTool: true\n      hasNpxTool: false\n      excludesTargetDir: true\n      excludesCargoLock: true\n      workspaceLayout: true\n      excludesRootCargoToml: true\n      idiomMentionsWorkspace: true\n  - name: single-package targets are not workspaces\n    given: { targets: [typescript, react] }\n    expect: { workspaceLayout: false, rootExcludesEmpty: true }\n  - name: the workspace manifest lists members deterministically\n    given: { members: [\"body_lines\", \"extensions\", \"hash\"] }\n    expect: { contains: [\"[workspace]\", \"resolver = \\\"2\\\"\", \"\\\"body_lines\\\",\", \"\\\"extensions\\\",\", \"\\\"hash\\\",\"], deterministic: true }\n  - name: an unknown target errors with the available list\n    given: { target: cobol }\n    expect: { errorContains: [\"unknown target 'cobol'\", \"typescript, react, rust\"] }\n---\n# Target adapters\n\nThis module is the per-language target registry the toolchain consults when it\ngenerates, tests, and attributes code. Each target names its coding-agent idiom\nguidance, the tools the agent may use, the attribution exclusion rules, and the\ntest command that gates generation. It is pure data: no I/O and no dependencies\non other project modules.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `targets/`: `targets/Cargo.toml` (package name\n`targets`) and `targets/src/lib.rs`. Touch nothing outside `targets/`. Ensure\n`cargo test` passes from the workspace root before finishing.\n\n## The data types\n\n- `TestRunCommand`, a struct with public fields `command` (a `String`, the\n  executable) and `args` (a `Vec<String>`, its arguments). Support\n  equality/cloning.\n- `TargetAdapter`, a struct with these public fields:\n  - `name`: a `&'static str`, the target name (also its source subdirectory).\n  - `idiom_guidance`: a `String`, guidance injected into the coding-agent task.\n  - `agent_tools`: a `Vec<String>`, the tools the agent may use.\n  - `attribution_exclude_dirs`: a `Vec<String>`, directory names excluded from\n    attribution snapshots.\n  - `attribution_exclude_files`: a `Vec<String>`, file names excluded everywhere.\n  - `attribution_exclude_root_files`: a `Vec<String>`, file names excluded only at\n    the target-directory root (used for a toolchain-owned root manifest whose\n    same-named per-module siblings stay attributed).\n  - `attribution_exclude_suffixes`: a `Vec<String>`, file suffixes excluded.\n  - `test_command_label`: a `&'static str`, the human-facing test-command label.\n  - `test_run`: a `TestRunCommand`, the test invocation gating generation.\n  - `workspace_layout`: a `bool` — true when the target dir is a workspace of\n    per-module member crates, false for a single package rooted at the target dir.\n\n  Give `TargetAdapter` a method `test_command(&self, target_dir: &str)` returning\n  the `TestRunCommand` (the command is fixed per target; the directory argument is\n  accepted but not consulted).\n\n## The registry\n\n- `list_targets()` returns the registered target names, in registry order, as\n  `[\"typescript\", \"react\", \"rust\"]`.\n- `starter_targets()` returns the targets whose guard directory `napl init`\n  pre-creates: `[\"typescript\", \"react\"]` (a subset of the registered set — the\n  third target, `rust`, is fully usable but not scaffolded up front).\n- `get_adapter(name)` looks up an adapter by name, returning it on success or, for\n  an unregistered name, an error string of the form\n  `unknown target '<name>'. Available targets: typescript, react, rust`. (So an\n  unknown target `cobol` yields an error containing `unknown target 'cobol'` and\n  `typescript, react, rust`.)\n\n## The three adapters\n\n- **typescript**: name `typescript`; test command label `npx vitest run`, whose\n  `TestRunCommand` is command `npx` with args `[\"vitest\", \"run\"]`; agent tools\n  include `Read` (and the usual npm/npx/node/file tools); attribution excludes the\n  usual JS dirs (`node_modules`, `dist`, `.git`, `build`, `coverage`, `.vite`) and\n  files (`package-lock.json`, `AGENTS.md`, `CLAUDE.md`) and suffixes (`.tsbuildinfo`,\n  `.d.ts`); it does **not** exclude `vite.config.js`; `workspace_layout` is false\n  and `attribution_exclude_root_files` is empty.\n- **react**: like typescript (same test command, tools, and base excludes) but its\n  `attribution_exclude_files` additionally includes `vite.config.js`;\n  `workspace_layout` is false and `attribution_exclude_root_files` is empty.\n- **rust**: name `rust`; test command label `cargo test`, whose `TestRunCommand` is\n  command `cargo` with args `[\"test\"]`; agent tools include `Read` and\n  `Bash(cargo:*)` (and rustc/rustfmt/file tools) and do **not** include\n  `Bash(npx:*)`; attribution excludes dirs including `target` and files including\n  `Cargo.lock`; `workspace_layout` is **true** and\n  `attribution_exclude_root_files` includes `Cargo.toml` (the toolchain-owned\n  workspace root manifest). Its `idiom_guidance` describes a Rust library crate\n  tested with `cargo test` and must mention that the working directory is a Cargo\n  WORKSPACE (include the words \"Cargo WORKSPACE\").\n\n## The workspace manifest — `workspace_manifest_toml(members)`\n\nRender the workspace root `Cargo.toml` for a Cargo-workspace target. Given a\nslice of member crate directory names (already sorted by the caller), return a\ndeterministic TOML string containing a `[workspace]` table with `resolver = \"2\"`\nand a `members` array listing each member as a quoted string on its own line. The\nsame member slice always yields byte-identical output. For members `[\"body_lines\",\n\"extensions\", \"hash\"]` the output contains `[workspace]`, `resolver = \"2\"`, and\nthe lines `\"body_lines\",`, `\"extensions\",`, `\"hash\",`. For an empty member slice\nthe output contains an empty members array rendered as `members = [` then a line\n`]`.\n"
+  },
+  "promptAtGen": "# Target adapters\n\nThis module is the per-language target registry the toolchain consults when it\ngenerates, tests, and attributes code. Each target names its coding-agent idiom\nguidance, the tools the agent may use, the attribution exclusion rules, and the\ntest command that gates generation. It is pure data: no I/O and no dependencies\non other project modules.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `targets/`: `targets/Cargo.toml` (package name\n`targets`) and `targets/src/lib.rs`. Touch nothing outside `targets/`. Ensure\n`cargo test` passes from the workspace root before finishing.\n\n## The data types\n\n- `TestRunCommand`, a struct with public fields `command` (a `String`, the\n  executable) and `args` (a `Vec<String>`, its arguments). Support\n  equality/cloning.\n- `TargetAdapter`, a struct with these public fields:\n  - `name`: a `&'static str`, the target name (also its source subdirectory).\n  - `idiom_guidance`: a `String`, guidance injected into the coding-agent task.\n  - `agent_tools`: a `Vec<String>`, the tools the agent may use.\n  - `attribution_exclude_dirs`: a `Vec<String>`, directory names excluded from\n    attribution snapshots.\n  - `attribution_exclude_files`: a `Vec<String>`, file names excluded everywhere.\n  - `attribution_exclude_root_files`: a `Vec<String>`, file names excluded only at\n    the target-directory root (used for a toolchain-owned root manifest whose\n    same-named per-module siblings stay attributed).\n  - `attribution_exclude_suffixes`: a `Vec<String>`, file suffixes excluded.\n  - `test_command_label`: a `&'static str`, the human-facing test-command label.\n  - `test_run`: a `TestRunCommand`, the test invocation gating generation.\n  - `workspace_layout`: a `bool` — true when the target dir is a workspace of\n    per-module member crates, false for a single package rooted at the target dir.\n\n  Give `TargetAdapter` a method `test_command(&self, target_dir: &str)` returning\n  the `TestRunCommand` (the command is fixed per target; the directory argument is\n  accepted but not consulted).\n\n## The registry\n\n- `list_targets()` returns the registered target names, in registry order, as\n  `[\"typescript\", \"react\", \"rust\"]`.\n- `starter_targets()` returns the targets whose guard directory `napl init`\n  pre-creates: `[\"typescript\", \"react\"]` (a subset of the registered set — the\n  third target, `rust`, is fully usable but not scaffolded up front).\n- `get_adapter(name)` looks up an adapter by name, returning it on success or, for\n  an unregistered name, an error string of the form\n  `unknown target '<name>'. Available targets: typescript, react, rust`. (So an\n  unknown target `cobol` yields an error containing `unknown target 'cobol'` and\n  `typescript, react, rust`.)\n\n## The three adapters\n\n- **typescript**: name `typescript`; test command label `npx vitest run`, whose\n  `TestRunCommand` is command `npx` with args `[\"vitest\", \"run\"]`; agent tools\n  include `Read` (and the usual npm/npx/node/file tools); attribution excludes the\n  usual JS dirs (`node_modules`, `dist`, `.git`, `build`, `coverage`, `.vite`) and\n  files (`package-lock.json`, `AGENTS.md`, `CLAUDE.md`) and suffixes (`.tsbuildinfo`,\n  `.d.ts`); it does **not** exclude `vite.config.js`; `workspace_layout` is false\n  and `attribution_exclude_root_files` is empty.\n- **react**: like typescript (same test command, tools, and base excludes) but its\n  `attribution_exclude_files` additionally includes `vite.config.js`;\n  `workspace_layout` is false and `attribution_exclude_root_files` is empty.\n- **rust**: name `rust`; test command label `cargo test`, whose `TestRunCommand` is\n  command `cargo` with args `[\"test\"]`; agent tools include `Read` and\n  `Bash(cargo:*)` (and rustc/rustfmt/file tools) and do **not** include\n  `Bash(npx:*)`; attribution excludes dirs including `target` and files including\n  `Cargo.lock`; `workspace_layout` is **true** and\n  `attribution_exclude_root_files` includes `Cargo.toml` (the toolchain-owned\n  workspace root manifest). Its `idiom_guidance` describes a Rust library crate\n  tested with `cargo test` and must mention that the working directory is a Cargo\n  WORKSPACE (include the words \"Cargo WORKSPACE\").\n\n## The workspace manifest — `workspace_manifest_toml(members)`\n\nRender the workspace root `Cargo.toml` for a Cargo-workspace target. Given a\nslice of member crate directory names (already sorted by the caller), return a\ndeterministic TOML string containing a `[workspace]` table with `resolver = \"2\"`\nand a `members` array listing each member as a quoted string on its own line. The\nsame member slice always yields byte-identical output. For members `[\"body_lines\",\n\"extensions\", \"hash\"]` the output contains `[workspace]`, `resolver = \"2\"`, and\nthe lines `\"body_lines\",`, `\"extensions\",`, `\"hash\",`. For an empty member slice\nthe output contains an empty members array rendered as `members = [` then a line\n`]`.\n",
+  "summary": "Target adapters",
+  "files": [
+    {
+      "path": "targets/Cargo.toml",
+      "journalPath": ".napl/src/rust/targets/Cargo.toml",
+      "content": "[package]\nname = \"targets\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n",
+      "language": "toml"
+    },
+    {
+      "path": "targets/src/lib.rs",
+      "journalPath": ".napl/src/rust/targets/src/lib.rs",
+      "content": "// GENERATED BY NAPL from targets.napl — edit the prompt, not this file\n\n/// A test invocation: an executable and its arguments.\n#[derive(Debug, Clone, PartialEq, Eq)]\npub struct TestRunCommand {\n    pub command: String,\n    pub args: Vec<String>,\n}\n\n/// Per-language target adapter: idiom guidance, agent tools, attribution\n/// exclusion rules, and the test command that gates generation.\n#[derive(Debug, Clone, PartialEq, Eq)]\npub struct TargetAdapter {\n    pub name: &'static str,\n    pub idiom_guidance: String,\n    pub agent_tools: Vec<String>,\n    pub attribution_exclude_dirs: Vec<String>,\n    pub attribution_exclude_files: Vec<String>,\n    pub attribution_exclude_root_files: Vec<String>,\n    pub attribution_exclude_suffixes: Vec<String>,\n    pub test_command_label: &'static str,\n    pub test_run: TestRunCommand,\n    pub workspace_layout: bool,\n}\n\nimpl TargetAdapter {\n    /// The test invocation that gates generation for this target. The\n    /// command is fixed per target; `target_dir` is accepted but not\n    /// consulted.\n    pub fn test_command(&self, _target_dir: &str) -> TestRunCommand {\n        self.test_run.clone()\n    }\n}\n\nfn strings(items: &[&str]) -> Vec<String> {\n    items.iter().map(|s| s.to_string()).collect()\n}\n\nfn typescript_adapter() -> TargetAdapter {\n    TargetAdapter {\n        name: \"typescript\",\n        idiom_guidance: \"Target: a TypeScript library tested with `npx vitest run`. \\\n            Write idiomatic, modern TypeScript with named exports.\"\n            .to_string(),\n        agent_tools: strings(&[\n            \"Read\",\n            \"Write\",\n            \"Edit\",\n            \"Bash(npm:*)\",\n            \"Bash(npx:*)\",\n            \"Bash(node:*)\",\n        ]),\n        attribution_exclude_dirs: strings(&[\n            \"node_modules\",\n            \"dist\",\n            \".git\",\n            \"build\",\n            \"coverage\",\n            \".vite\",\n        ]),\n        attribution_exclude_files: strings(&[\"package-lock.json\", \"AGENTS.md\", \"CLAUDE.md\"]),\n        attribution_exclude_root_files: Vec::new(),\n        attribution_exclude_suffixes: strings(&[\".tsbuildinfo\", \".d.ts\"]),\n        test_command_label: \"npx vitest run\",\n        test_run: TestRunCommand {\n            command: \"npx\".to_string(),\n            args: strings(&[\"vitest\", \"run\"]),\n        },\n        workspace_layout: false,\n    }\n}\n\nfn react_adapter() -> TargetAdapter {\n    let mut adapter = typescript_adapter();\n    adapter.name = \"react\";\n    adapter.idiom_guidance = \"Target: a React component library tested with `npx vitest run`. \\\n        Write idiomatic, modern React with function components and hooks.\"\n        .to_string();\n    adapter\n        .attribution_exclude_files\n        .push(\"vite.config.js\".to_string());\n    adapter\n}\n\nfn rust_adapter() -> TargetAdapter {\n    TargetAdapter {\n        name: \"rust\",\n        idiom_guidance: \"Target: a Rust library crate tested with `cargo test`. \\\n            The working directory is a Cargo WORKSPACE whose root `Cargo.toml` is \\\n            written and owned by the toolchain — do not create, edit, or delete it. \\\n            Write idiomatic, modern Rust.\"\n            .to_string(),\n        agent_tools: strings(&[\n            \"Read\",\n            \"Write\",\n            \"Edit\",\n            \"Bash(cargo:*)\",\n            \"Bash(rustc:*)\",\n            \"Bash(rustfmt:*)\",\n        ]),\n        attribution_exclude_dirs: strings(&[\"target\", \".git\"]),\n        attribution_exclude_files: strings(&[\"Cargo.lock\", \"AGENTS.md\", \"CLAUDE.md\"]),\n        attribution_exclude_root_files: strings(&[\"Cargo.toml\"]),\n        attribution_exclude_suffixes: Vec::new(),\n        test_command_label: \"cargo test\",\n        test_run: TestRunCommand {\n            command: \"cargo\".to_string(),\n            args: strings(&[\"test\"]),\n        },\n        workspace_layout: true,\n    }\n}\n\nfn registry() -> Vec<TargetAdapter> {\n    vec![typescript_adapter(), react_adapter(), rust_adapter()]\n}\n\n/// Registered target names, in registry order.\npub fn list_targets() -> Vec<&'static str> {\n    registry().into_iter().map(|adapter| adapter.name).collect()\n}\n\n/// Targets whose guard directory `napl init` pre-creates — a subset of the\n/// registered set.\npub fn starter_targets() -> Vec<&'static str> {\n    vec![\"typescript\", \"react\"]\n}\n\n/// Look up an adapter by name.\npub fn get_adapter(name: &str) -> Result<TargetAdapter, String> {\n    registry()\n        .into_iter()\n        .find(|adapter| adapter.name == name)\n        .ok_or_else(|| {\n            format!(\n                \"unknown target '{}'. Available targets: {}\",\n                name,\n                list_targets().join(\", \")\n            )\n        })\n}\n\n/// Render the workspace root `Cargo.toml` for a Cargo-workspace target.\n/// Deterministic: the same member slice always yields byte-identical output.\npub fn workspace_manifest_toml(members: &[String]) -> String {\n    let mut out = String::new();\n    out.push_str(\"[workspace]\\n\");\n    out.push_str(\"resolver = \\\"2\\\"\\n\");\n    out.push_str(\"members = [\\n\");\n    for member in members {\n        out.push_str(&format!(\"    \\\"{member}\\\",\\n\"));\n    }\n    out.push_str(\"]\\n\");\n    out\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn list_targets_is_registry_order() {\n        assert_eq!(list_targets(), vec![\"typescript\", \"react\", \"rust\"]);\n    }\n\n    #[test]\n    fn starter_targets_is_subset() {\n        let starters = starter_targets();\n        assert_eq!(starters, vec![\"typescript\", \"react\"]);\n        let all = list_targets();\n        for starter in &starters {\n            assert!(all.contains(starter));\n        }\n        assert!(!starters.contains(&\"rust\"));\n    }\n\n    #[test]\n    fn get_adapter_returns_known_targets() {\n        assert_eq!(get_adapter(\"typescript\").unwrap().name, \"typescript\");\n        assert_eq!(get_adapter(\"react\").unwrap().name, \"react\");\n        assert_eq!(get_adapter(\"rust\").unwrap().name, \"rust\");\n    }\n\n    #[test]\n    fn get_adapter_errors_on_unknown_target() {\n        let err = get_adapter(\"cobol\").unwrap_err();\n        assert!(err.contains(\"unknown target 'cobol'\"));\n        assert!(err.contains(\"typescript, react, rust\"));\n    }\n\n    #[test]\n    fn typescript_adapter_shape() {\n        let adapter = get_adapter(\"typescript\").unwrap();\n        assert_eq!(adapter.test_command_label, \"npx vitest run\");\n        assert_eq!(\n            adapter.test_run,\n            TestRunCommand {\n                command: \"npx\".to_string(),\n                args: strings(&[\"vitest\", \"run\"]),\n            }\n        );\n        assert!(adapter.agent_tools.contains(&\"Read\".to_string()));\n        for dir in [\"node_modules\", \"dist\", \".git\", \"build\", \"coverage\", \".vite\"] {\n            assert!(adapter.attribution_exclude_dirs.contains(&dir.to_string()));\n        }\n        for file in [\"package-lock.json\", \"AGENTS.md\", \"CLAUDE.md\"] {\n            assert!(adapter.attribution_exclude_files.contains(&file.to_string()));\n        }\n        assert!(!adapter\n            .attribution_exclude_files\n            .contains(&\"vite.config.js\".to_string()));\n        for suffix in [\".tsbuildinfo\", \".d.ts\"] {\n            assert!(adapter\n                .attribution_exclude_suffixes\n                .contains(&suffix.to_string()));\n        }\n        assert!(!adapter.workspace_layout);\n        assert!(adapter.attribution_exclude_root_files.is_empty());\n    }\n\n    #[test]\n    fn react_adapter_shape() {\n        let adapter = get_adapter(\"react\").unwrap();\n        assert_eq!(adapter.test_command_label, \"npx vitest run\");\n        assert_eq!(\n            adapter.test_run,\n            TestRunCommand {\n                command: \"npx\".to_string(),\n                args: strings(&[\"vitest\", \"run\"]),\n            }\n        );\n        assert!(adapter.agent_tools.contains(&\"Read\".to_string()));\n        for dir in [\"node_modules\", \"dist\", \".git\", \"build\", \"coverage\", \".vite\"] {\n            assert!(adapter.attribution_exclude_dirs.contains(&dir.to_string()));\n        }\n        for file in [\n            \"package-lock.json\",\n            \"AGENTS.md\",\n            \"CLAUDE.md\",\n            \"vite.config.js\",\n        ] {\n            assert!(adapter.attribution_exclude_files.contains(&file.to_string()));\n        }\n        assert!(!adapter.workspace_layout);\n        assert!(adapter.attribution_exclude_root_files.is_empty());\n    }\n\n    #[test]\n    fn rust_adapter_shape() {\n        let adapter = get_adapter(\"rust\").unwrap();\n        assert_eq!(adapter.test_command_label, \"cargo test\");\n        assert_eq!(\n            adapter.test_run,\n            TestRunCommand {\n                command: \"cargo\".to_string(),\n                args: strings(&[\"test\"]),\n            }\n        );\n        assert!(adapter.agent_tools.contains(&\"Read\".to_string()));\n        assert!(adapter.agent_tools.contains(&\"Bash(cargo:*)\".to_string()));\n        assert!(!adapter.agent_tools.contains(&\"Bash(npx:*)\".to_string()));\n        assert!(adapter.attribution_exclude_dirs.contains(&\"target\".to_string()));\n        assert!(adapter\n            .attribution_exclude_files\n            .contains(&\"Cargo.lock\".to_string()));\n        assert!(adapter\n            .attribution_exclude_root_files\n            .contains(&\"Cargo.toml\".to_string()));\n        assert!(adapter.workspace_layout);\n        assert!(adapter.idiom_guidance.contains(\"Cargo WORKSPACE\"));\n    }\n\n    #[test]\n    fn test_command_ignores_target_dir_argument() {\n        let adapter = get_adapter(\"rust\").unwrap();\n        assert_eq!(adapter.test_command(\"anything\"), adapter.test_run);\n        assert_eq!(adapter.test_command(\"\"), adapter.test_run);\n    }\n\n    #[test]\n    fn workspace_manifest_toml_lists_members() {\n        let members = strings(&[\"body_lines\", \"extensions\", \"hash\"]);\n        let manifest = workspace_manifest_toml(&members);\n        assert!(manifest.contains(\"[workspace]\"));\n        assert!(manifest.contains(\"resolver = \\\"2\\\"\"));\n        assert!(manifest.contains(\"\\\"body_lines\\\",\"));\n        assert!(manifest.contains(\"\\\"extensions\\\",\"));\n        assert!(manifest.contains(\"\\\"hash\\\",\"));\n    }\n\n    #[test]\n    fn workspace_manifest_toml_is_deterministic() {\n        let members = strings(&[\"a\", \"b\"]);\n        assert_eq!(\n            workspace_manifest_toml(&members),\n            workspace_manifest_toml(&members)\n        );\n    }\n\n    #[test]\n    fn workspace_manifest_toml_empty_members() {\n        let manifest = workspace_manifest_toml(&[]);\n        assert!(manifest.contains(\"members = [\\n]\") || manifest.contains(\"members = [\\n]\\n\"));\n    }\n}\n",
+      "language": "rust"
+    }
+  ],
+  "attribution": [
+    {
+      "promptLines": [
+        1,
+        8
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        1,
+        1
+      ],
+      "note": "module header/generated marker"
+    },
+    {
+      "promptLines": [
+        19,
+        21
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        3,
+        8
+      ],
+      "note": "TestRunCommand struct with command/args fields, derives Eq/Clone"
+    },
+    {
+      "promptLines": [
+        22,
+        24
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        10,
+        15
+      ],
+      "note": "TargetAdapter name field"
+    },
+    {
+      "promptLines": [
+        24,
+        24
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        15,
+        15
+      ],
+      "note": "idiom_guidance field"
+    },
+    {
+      "promptLines": [
+        25,
+        25
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        16,
+        16
+      ],
+      "note": "agent_tools field"
+    },
+    {
+      "promptLines": [
+        26,
+        27
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        17,
+        17
+      ],
+      "note": "attribution_exclude_dirs field"
+    },
+    {
+      "promptLines": [
+        28,
+        28
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        18,
+        18
+      ],
+      "note": "attribution_exclude_files field"
+    },
+    {
+      "promptLines": [
+        29,
+        31
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        19,
+        19
+      ],
+      "note": "attribution_exclude_root_files field"
+    },
+    {
+      "promptLines": [
+        32,
+        32
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        20,
+        20
+      ],
+      "note": "attribution_exclude_suffixes field"
+    },
+    {
+      "promptLines": [
+        33,
+        33
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        21,
+        21
+      ],
+      "note": "test_command_label field"
+    },
+    {
+      "promptLines": [
+        34,
+        34
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        22,
+        22
+      ],
+      "note": "test_run field"
+    },
+    {
+      "promptLines": [
+        35,
+        36
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        23,
+        23
+      ],
+      "note": "workspace_layout field"
+    },
+    {
+      "promptLines": [
+        38,
+        40
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        26,
+        33
+      ],
+      "note": "test_command method returns cloned test_run ignoring target_dir"
+    },
+    {
+      "promptLines": [
+        44,
+        45
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        118,
+        121
+      ],
+      "note": "list_targets returns registry order names"
+    },
+    {
+      "promptLines": [
+        46,
+        48
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        123,
+        127
+      ],
+      "note": "starter_targets subset"
+    },
+    {
+      "promptLines": [
+        49,
+        53
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        129,
+        141
+      ],
+      "note": "get_adapter lookup with formatted unknown-target error"
+    },
+    {
+      "promptLines": [
+        57,
+        63
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        39,
+        71
+      ],
+      "note": "typescript adapter definition"
+    },
+    {
+      "promptLines": [
+        64,
+        66
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        73,
+        83
+      ],
+      "note": "react adapter derived from typescript, adds vite.config.js exclude"
+    },
+    {
+      "promptLines": [
+        67,
+        75
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        85,
+        112
+      ],
+      "note": "rust adapter definition including workspace idiom guidance"
+    },
+    {
+      "promptLines": [
+        114,
+        116
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        114,
+        116
+      ],
+      "note": "registry() builds ordered vec of the three adapters"
+    },
+    {
+      "promptLines": [
+        79,
+        87
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        145,
+        155
+      ],
+      "note": "workspace_manifest_toml renders deterministic workspace TOML"
+    },
+    {
+      "promptLines": [
+        83,
+        87
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        281,
+        304
+      ],
+      "note": "tests for workspace manifest members/determinism/empty case"
+    },
+    {
+      "promptLines": [
+        44,
+        45
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        162,
+        164
+      ],
+      "note": "test asserting registry order"
+    },
+    {
+      "promptLines": [
+        46,
+        48
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        166,
+        175
+      ],
+      "note": "test asserting starter subset"
+    },
+    {
+      "promptLines": [
+        49,
+        53
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        184,
+        189
+      ],
+      "note": "test asserting unknown target error message"
+    },
+    {
+      "promptLines": [
+        57,
+        63
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        192,
+        219
+      ],
+      "note": "test asserting typescript adapter shape"
+    },
+    {
+      "promptLines": [
+        64,
+        66
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        222,
+        246
+      ],
+      "note": "test asserting react adapter shape"
+    },
+    {
+      "promptLines": [
+        67,
+        75
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        249,
+        271
+      ],
+      "note": "test asserting rust adapter shape and Cargo WORKSPACE mention"
+    },
+    {
+      "promptLines": [
+        38,
+        40
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        274,
+        278
+      ],
+      "note": "test that test_command ignores target_dir argument"
+    }
+  ],
+  "attributionYaml": "module: targets\ntarget: rust\nentries:\n  - promptLines:\n      - 1\n      - 8\n    file: targets/src/lib.rs\n    lines:\n      - 1\n      - 1\n    note: module header/generated marker\n  - promptLines:\n      - 19\n      - 21\n    file: targets/src/lib.rs\n    lines:\n      - 3\n      - 8\n    note: TestRunCommand struct with command/args fields, derives Eq/Clone\n  - promptLines:\n      - 22\n      - 24\n    file: targets/src/lib.rs\n    lines:\n      - 10\n      - 15\n    note: TargetAdapter name field\n  - promptLines:\n      - 24\n      - 24\n    file: targets/src/lib.rs\n    lines:\n      - 15\n      - 15\n    note: idiom_guidance field\n  - promptLines:\n      - 25\n      - 25\n    file: targets/src/lib.rs\n    lines:\n      - 16\n      - 16\n    note: agent_tools field\n  - promptLines:\n      - 26\n      - 27\n    file: targets/src/lib.rs\n    lines:\n      - 17\n      - 17\n    note: attribution_exclude_dirs field\n  - promptLines:\n      - 28\n      - 28\n    file: targets/src/lib.rs\n    lines:\n      - 18\n      - 18\n    note: attribution_exclude_files field\n  - promptLines:\n      - 29\n      - 31\n    file: targets/src/lib.rs\n    lines:\n      - 19\n      - 19\n    note: attribution_exclude_root_files field\n  - promptLines:\n      - 32\n      - 32\n    file: targets/src/lib.rs\n    lines:\n      - 20\n      - 20\n    note: attribution_exclude_suffixes field\n  - promptLines:\n      - 33\n      - 33\n    file: targets/src/lib.rs\n    lines:\n      - 21\n      - 21\n    note: test_command_label field\n  - promptLines:\n      - 34\n      - 34\n    file: targets/src/lib.rs\n    lines:\n      - 22\n      - 22\n    note: test_run field\n  - promptLines:\n      - 35\n      - 36\n    file: targets/src/lib.rs\n    lines:\n      - 23\n      - 23\n    note: workspace_layout field\n  - promptLines:\n      - 38\n      - 40\n    file: targets/src/lib.rs\n    lines:\n      - 26\n      - 33\n    note: test_command method returns cloned test_run ignoring target_dir\n  - promptLines:\n      - 44\n      - 45\n    file: targets/src/lib.rs\n    lines:\n      - 118\n      - 121\n    note: list_targets returns registry order names\n  - promptLines:\n      - 46\n      - 48\n    file: targets/src/lib.rs\n    lines:\n      - 123\n      - 127\n    note: starter_targets subset\n  - promptLines:\n      - 49\n      - 53\n    file: targets/src/lib.rs\n    lines:\n      - 129\n      - 141\n    note: get_adapter lookup with formatted unknown-target error\n  - promptLines:\n      - 57\n      - 63\n    file: targets/src/lib.rs\n    lines:\n      - 39\n      - 71\n    note: typescript adapter definition\n  - promptLines:\n      - 64\n      - 66\n    file: targets/src/lib.rs\n    lines:\n      - 73\n      - 83\n    note: react adapter derived from typescript, adds vite.config.js exclude\n  - promptLines:\n      - 67\n      - 75\n    file: targets/src/lib.rs\n    lines:\n      - 85\n      - 112\n    note: rust adapter definition including workspace idiom guidance\n  - promptLines:\n      - 114\n      - 116\n    file: targets/src/lib.rs\n    lines:\n      - 114\n      - 116\n    note: registry() builds ordered vec of the three adapters\n  - promptLines:\n      - 79\n      - 87\n    file: targets/src/lib.rs\n    lines:\n      - 145\n      - 155\n    note: workspace_manifest_toml renders deterministic workspace TOML\n  - promptLines:\n      - 83\n      - 87\n    file: targets/src/lib.rs\n    lines:\n      - 281\n      - 304\n    note: tests for workspace manifest members/determinism/empty case\n  - promptLines:\n      - 44\n      - 45\n    file: targets/src/lib.rs\n    lines:\n      - 162\n      - 164\n    note: test asserting registry order\n  - promptLines:\n      - 46\n      - 48\n    file: targets/src/lib.rs\n    lines:\n      - 166\n      - 175\n    note: test asserting starter subset\n  - promptLines:\n      - 49\n      - 53\n    file: targets/src/lib.rs\n    lines:\n      - 184\n      - 189\n    note: test asserting unknown target error message\n  - promptLines:\n      - 57\n      - 63\n    file: targets/src/lib.rs\n    lines:\n      - 192\n      - 219\n    note: test asserting typescript adapter shape\n  - promptLines:\n      - 64\n      - 66\n    file: targets/src/lib.rs\n    lines:\n      - 222\n      - 246\n    note: test asserting react adapter shape\n  - promptLines:\n      - 67\n      - 75\n    file: targets/src/lib.rs\n    lines:\n      - 249\n      - 271\n    note: test asserting rust adapter shape and Cargo WORKSPACE mention\n  - promptLines:\n      - 38\n      - 40\n    file: targets/src/lib.rs\n    lines:\n      - 274\n      - 278\n    note: test that test_command ignores target_dir argument\n",
+  "mapl": [
+    {
+      "promptLines": [
+        57,
+        63
+      ],
+      "kind": "assumption",
+      "severity": "warning",
+      "message": "Exact agent_tools list for typescript left to implementer's judgment.",
+      "reasoning": "Prompt says \"agent tools include `Read` (and the usual npm/npx/node/file tools)\" without enumerating them. Agent assumed Write, Edit, Bash(npm:*), Bash(npx:*), Bash(node:*) as the concrete set. Tests only assert `Read` is present, so this exact list isn't verified against the prompt's intent.\n",
+      "suggestion": "agent tools: Read, Write, Edit, Bash(npm:*), Bash(npx:*), Bash(node:*)."
+    },
+    {
+      "promptLines": [
+        67,
+        75
+      ],
+      "kind": "assumption",
+      "severity": "warning",
+      "message": "Exact agent_tools list for rust, and universal exclude files, left implicit.",
+      "reasoning": "Prompt says agent tools \"include `Read` and `Bash(cargo:*)` (and rustc/rustfmt/file tools)\" and must not include `Bash(npx:*)` — agent chose Write, Edit, Bash(cargo:*), Bash(rustc:*), Bash(rustfmt:*). Also, attribution_exclude_files for rust ends up with AGENTS.md/CLAUDE.md added alongside Cargo.lock, mirroring typescript's universal excludes, but the prompt's rust bullet only explicitly calls out `Cargo.lock`. Not asserted by tests either way, so it's a silent extrapolation from the typescript spec.\n",
+      "suggestion": "List rust's exact agent_tools and attribution_exclude_files explicitly, as done for typescript."
+    },
+    {
+      "promptLines": [
+        70,
+        70
+      ],
+      "kind": "assumption",
+      "severity": "warning",
+      "message": "rust attribution_exclude_dirs beyond 'target' assumed to include '.git'.",
+      "reasoning": "Prompt says \"attribution excludes dirs including `target`\" — open-ended wording (\"including\") let the agent add `.git` too, matching typescript's dir excludes. Not verified by any test, so it's a guess at intended scope.\n",
+      "suggestion": "State the full attribution_exclude_dirs list for rust, e.g. ['target', '.git']."
+    }
+  ],
+  "journal": [
+    {
+      "gen": 13,
+      "timestamp": "2026-07-24T06:54:44.050Z",
+      "mode": "full",
+      "promptHash": "ee1c036d337878f247a878e50bac1f1e2b03efe38054bb967363aee21cbb194e",
+      "files": [
+        {
+          "path": "targets/Cargo.toml",
+          "journalPath": ".napl/src/rust/targets/Cargo.toml",
+          "patch": "@@ -0,0 +1,6 @@\n+[package]\n+name = \"targets\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]"
+        },
+        {
+          "path": "targets/src/lib.rs",
+          "journalPath": ".napl/src/rust/targets/src/lib.rs",
+          "patch": "@@ -0,0 +1,305 @@\n+// GENERATED BY NAPL from targets.napl — edit the prompt, not this file\n+\n+/// A test invocation: an executable and its arguments.\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct TestRunCommand {\n+    pub command: String,\n+    pub args: Vec<String>,\n+}\n+\n+/// Per-language target adapter: idiom guidance, agent tools, attribution\n+/// exclusion rules, and the test command that gates generation.\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct TargetAdapter {\n+    pub name: &'static str,\n+    pub idiom_guidance: String,\n+    pub agent_tools: Vec<String>,\n+    pub attribution_exclude_dirs: Vec<String>,\n+    pub attribution_exclude_files: Vec<String>,\n+    pub attribution_exclude_root_files: Vec<String>,\n+    pub attribution_exclude_suffixes: Vec<String>,\n+    pub test_command_label: &'static str,\n+    pub test_run: TestRunCommand,\n+    pub workspace_layout: bool,\n+}\n+\n+impl TargetAdapter {\n+    /// The test invocation that gates generation for this target. The\n+    /// command is fixed per target; `target_dir` is accepted but not\n+    /// consulted.\n+    pub fn test_command(&self, _target_dir: &str) -> TestRunCommand {\n+        self.test_run.clone()\n+    }\n+}\n+\n+fn strings(items: &[&str]) -> Vec<String> {\n+    items.iter().map(|s| s.to_string()).collect()\n+}\n+\n+fn typescript_adapter() -> TargetAdapter {\n+    TargetAdapter {\n+        name: \"typescript\",\n+        idiom_guidance: \"Target: a TypeScript library tested with `npx vitest run`. \\\n+            Write idiomatic, modern TypeScript with named exports.\"\n+            .to_string(),\n+        agent_tools: strings(&[\n+            \"Read\",\n+            \"Write\",\n+            \"Edit\",\n+            \"Bash(npm:*)\",\n+            \"Bash(npx:*)\",\n+            \"Bash(node:*)\",\n+        ]),\n+        attribution_exclude_dirs: strings(&[\n+            \"node_modules\",\n+            \"dist\",\n+            \".git\",\n+            \"build\",\n+            \"coverage\",\n+            \".vite\",\n+        ]),\n+        attribution_exclude_files: strings(&[\"package-lock.json\", \"AGENTS.md\", \"CLAUDE.md\"]),\n+        attribution_exclude_root_files: Vec::new(),\n+        attribution_exclude_suffixes: strings(&[\".tsbuildinfo\", \".d.ts\"]),\n+        test_command_label: \"npx vitest run\",\n+        test_run: TestRunCommand {\n+            command: \"npx\".to_string(),\n+            args: strings(&[\"vitest\", \"run\"]),\n+        },\n+        workspace_layout: false,\n+    }\n+}\n+\n+fn react_adapter() -> TargetAdapter {\n+    let mut adapter = typescript_adapter();\n+    adapter.name = \"react\";\n+    adapter.idiom_guidance = \"Target: a React component library tested with `npx vitest run`. \\\n+        Write idiomatic, modern React with function components and hooks.\"\n+        .to_string();\n+    adapter\n+        .attribution_exclude_files\n+        .push(\"vite.config.js\".to_string());\n+    adapter\n+}\n+\n+fn rust_adapter() -> TargetAdapter {\n+    TargetAdapter {\n+        name: \"rust\",\n+        idiom_guidance: \"Target: a Rust library crate tested with `cargo test`. \\\n+            The working directory is a Cargo WORKSPACE whose root `Cargo.toml` is \\\n+            written and owned by the toolchain — do not create, edit, or delete it. \\\n+            Write idiomatic, modern Rust.\"\n+            .to_string(),\n+        agent_tools: strings(&[\n+            \"Read\",\n+            \"Write\",\n+            \"Edit\",\n+            \"Bash(cargo:*)\",\n+            \"Bash(rustc:*)\",\n+            \"Bash(rustfmt:*)\",\n+        ]),\n+        attribution_exclude_dirs: strings(&[\"target\", \".git\"]),\n+        attribution_exclude_files: strings(&[\"Cargo.lock\", \"AGENTS.md\", \"CLAUDE.md\"]),\n+        attribution_exclude_root_files: strings(&[\"Cargo.toml\"]),\n+        attribution_exclude_suffixes: Vec::new(),\n+        test_command_label: \"cargo test\",\n+        test_run: TestRunCommand {\n+            command: \"cargo\".to_string(),\n+            args: strings(&[\"test\"]),\n+        },\n+        workspace_layout: true,\n+    }\n+}\n+\n+fn registry() -> Vec<TargetAdapter> {\n+    vec![typescript_adapter(), react_adapter(), rust_adapter()]\n+}\n+\n+/// Registered target names, in registry order.\n+pub fn list_targets() -> Vec<&'static str> {\n+    registry().into_iter().map(|adapter| adapter.name).collect()\n+}\n+\n+/// Targets whose guard directory `napl init` pre-creates — a subset of the\n+/// registered set.\n+pub fn starter_targets() -> Vec<&'static str> {\n+    vec![\"typescript\", \"react\"]\n+}\n+\n+/// Look up an adapter by name.\n+pub fn get_adapter(name: &str) -> Result<TargetAdapter, String> {\n+    registry()\n+        .into_iter()\n+        .find(|adapter| adapter.name == name)\n+        .ok_or_else(|| {\n+            format!(\n+                \"unknown target '{}'. Available targets: {}\",\n+                name,\n+                list_targets().join(\", \")\n+            )\n+        })\n+}\n+\n+/// Render the workspace root `Cargo.toml` for a Cargo-workspace target.\n+/// Deterministic: the same member slice always yields byte-identical output.\n+pub fn workspace_manifest_toml(members: &[String]) -> String {\n+    let mut out = String::new();\n+    out.push_str(\"[workspace]\\n\");\n+    out.push_str(\"resolver = \\\"2\\\"\\n\");\n+    out.push_str(\"members = [\\n\");\n+    for member in members {\n+        out.push_str(&format!(\"    \\\"{member}\\\",\\n\"));\n+    }\n+    out.push_str(\"]\\n\");\n+    out\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn list_targets_is_registry_order() {\n+        assert_eq!(list_targets(), vec![\"typescript\", \"react\", \"rust\"]);\n+    }\n+\n+    #[test]\n+    fn starter_targets_is_subset() {\n+        let starters = starter_targets();\n+        assert_eq!(starters, vec![\"typescript\", \"react\"]);\n+        let all = list_targets();\n+        for starter in &starters {\n+            assert!(all.contains(starter));\n+        }\n+        assert!(!starters.contains(&\"rust\"));\n+    }\n+\n+    #[test]\n+    fn get_adapter_returns_known_targets() {\n+        assert_eq!(get_adapter(\"typescript\").unwrap().name, \"typescript\");\n+        assert_eq!(get_adapter(\"react\").unwrap().name, \"react\");\n+        assert_eq!(get_adapter(\"rust\").unwrap().name, \"rust\");\n+    }\n+\n+    #[test]\n+    fn get_adapter_errors_on_unknown_target() {\n+        let err = get_adapter(\"cobol\").unwrap_err();\n+        assert!(err.contains(\"unknown target 'cobol'\"));\n+        assert!(err.contains(\"typescript, react, rust\"));\n+    }\n+\n+    #[test]\n+    fn typescript_adapter_shape() {\n+        let adapter = get_adapter(\"typescript\").unwrap();\n+        assert_eq!(adapter.test_command_label, \"npx vitest run\");\n+        assert_eq!(\n+            adapter.test_run,\n+            TestRunCommand {\n+                command: \"npx\".to_string(),\n+                args: strings(&[\"vitest\", \"run\"]),\n+            }\n+        );\n+        assert!(adapter.agent_tools.contains(&\"Read\".to_string()));\n+        for dir in [\"node_modules\", \"dist\", \".git\", \"build\", \"coverage\", \".vite\"] {\n+            assert!(adapter.attribution_exclude_dirs.contains(&dir.to_string()));\n+        }\n+        for file in [\"package-lock.json\", \"AGENTS.md\", \"CLAUDE.md\"] {\n+            assert!(adapter.attribution_exclude_files.contains(&file.to_string()));\n+        }\n+        assert!(!adapter\n+            .attribution_exclude_files\n+            .contains(&\"vite.config.js\".to_string()));\n+        for suffix in [\".tsbuildinfo\", \".d.ts\"] {\n+            assert!(adapter\n+                .attribution_exclude_suffixes\n+                .contains(&suffix.to_string()));\n+        }\n+        assert!(!adapter.workspace_layout);\n+        assert!(adapter.attribution_exclude_root_files.is_empty());\n+    }\n+\n+    #[test]\n+    fn react_adapter_shape() {\n+        let adapter = get_adapter(\"react\").unwrap();\n+        assert_eq!(adapter.test_command_label, \"npx vitest run\");\n+        assert_eq!(\n+            adapter.test_run,\n+            TestRunCommand {\n+                command: \"npx\".to_string(),\n+                args: strings(&[\"vitest\", \"run\"]),\n+            }\n+        );\n+        assert!(adapter.agent_tools.contains(&\"Read\".to_string()));\n+        for dir in [\"node_modules\", \"dist\", \".git\", \"build\", \"coverage\", \".vite\"] {\n+            assert!(adapter.attribution_exclude_dirs.contains(&dir.to_string()));\n+        }\n+        for file in [\n+            \"package-lock.json\",\n+            \"AGENTS.md\",\n+            \"CLAUDE.md\",\n+            \"vite.config.js\",\n+        ] {\n+            assert!(adapter.attribution_exclude_files.contains(&file.to_string()));\n+        }\n+        assert!(!adapter.workspace_layout);\n+        assert!(adapter.attribution_exclude_root_files.is_empty());\n+    }\n+\n+    #[test]\n+    fn rust_adapter_shape() {\n+        let adapter = get_adapter(\"rust\").unwrap();\n+        assert_eq!(adapter.test_command_label, \"cargo test\");\n+        assert_eq!(\n+            adapter.test_run,\n+            TestRunCommand {\n+                command: \"cargo\".to_string(),\n+                args: strings(&[\"test\"]),\n+            }\n+        );\n+        assert!(adapter.agent_tools.contains(&\"Read\".to_string()));\n+        assert!(adapter.agent_tools.contains(&\"Bash(cargo:*)\".to_string()));\n+        assert!(!adapter.agent_tools.contains(&\"Bash(npx:*)\".to_string()));\n+        assert!(adapter.attribution_exclude_dirs.contains(&\"target\".to_string()));\n+        assert!(adapter\n+            .attribution_exclude_files\n+            .contains(&\"Cargo.lock\".to_string()));\n+        assert!(adapter\n+            .attribution_exclude_root_files\n+            .contains(&\"Cargo.toml\".to_string()));\n+        assert!(adapter.workspace_layout);\n+        assert!(adapter.idiom_guidance.contains(\"Cargo WORKSPACE\"));\n+    }\n+\n+    #[test]\n+    fn test_command_ignores_target_dir_argument() {\n+        let adapter = get_adapter(\"rust\").unwrap();\n+        assert_eq!(adapter.test_command(\"anything\"), adapter.test_run);\n+        assert_eq!(adapter.test_command(\"\"), adapter.test_run);\n+    }\n+\n+    #[test]\n+    fn workspace_manifest_toml_lists_members() {\n+        let members = strings(&[\"body_lines\", \"extensions\", \"hash\"]);\n+        let manifest = workspace_manifest_toml(&members);\n+        assert!(manifest.contains(\"[workspace]\"));\n+        assert!(manifest.contains(\"resolver = \\\"2\\\"\"));\n+        assert!(manifest.contains(\"\\\"body_lines\\\",\"));\n+        assert!(manifest.contains(\"\\\"extensions\\\",\"));\n+        assert!(manifest.contains(\"\\\"hash\\\",\"));\n+    }\n+\n+    #[test]\n+    fn workspace_manifest_toml_is_deterministic() {\n+        let members = strings(&[\"a\", \"b\"]);\n+        assert_eq!(\n+            workspace_manifest_toml(&members),\n+            workspace_manifest_toml(&members)\n+        );\n+    }\n+\n+    #[test]\n+    fn workspace_manifest_toml_empty_members() {\n+        let manifest = workspace_manifest_toml(&[]);\n+        assert!(manifest.contains(\"members = [\\n]\") || manifest.contains(\"members = [\\n]\\n\"));\n+    }\n+}"
+        }
+      ]
+    }
+  ],
+  "lock": [
+    {
+      "path": "targets/Cargo.toml",
+      "hash": "344936b81784a55fc49b63b54cc2f7546bc1e8e84f3c91bb95b42a987ad3e02d"
+    },
+    {
+      "path": "targets/src/lib.rs",
+      "hash": "21ff9ce3f478019e09e028e0c72c306a4e119d22d99bebe6ceb7caec63ca7594"
+    }
+  ],
+  "session": {
+    "task": "napl gen rust → targets",
+    "files": {
+      "targets.napl": "---\nmodule: targets\ndeps: []\ntargets: [rust]\ntests:\n  - name: lists the three registered targets in registry order\n    given: {}\n    expect: { listTargets: [\"typescript\", \"react\", \"rust\"] }\n  - name: the starter targets are the first two, a subset of the registered set\n    given: {}\n    expect: { starterTargets: [\"typescript\", \"react\"] }\n  - name: the typescript adapter runs vitest and excludes no vite config\n    given: { target: typescript }\n    expect: { label: \"npx vitest run\", testArgs: [\"vitest\", \"run\"], hasRead: true, excludesViteConfig: false }\n  - name: the react adapter excludes vite.config.js from attribution\n    given: { target: react }\n    expect: { excludesViteConfig: true }\n  - name: the rust adapter runs cargo test and is a workspace\n    given: { target: rust }\n    expect:\n      label: \"cargo test\"\n      command: \"cargo\"\n      testArgs: [\"test\"]\n      hasCargoTool: true\n      hasNpxTool: false\n      excludesTargetDir: true\n      excludesCargoLock: true\n      workspaceLayout: true\n      excludesRootCargoToml: true\n      idiomMentionsWorkspace: true\n  - name: single-package targets are not workspaces\n    given: { targets: [typescript, react] }\n    expect: { workspaceLayout: false, rootExcludesEmpty: true }\n  - name: the workspace manifest lists members deterministically\n    given: { members: [\"body_lines\", \"extensions\", \"hash\"] }\n    expect: { contains: [\"[workspace]\", \"resolver = \\\"2\\\"\", \"\\\"body_lines\\\",\", \"\\\"extensions\\\",\", \"\\\"hash\\\",\"], deterministic: true }\n  - name: an unknown target errors with the available list\n    given: { target: cobol }\n    expect: { errorContains: [\"unknown target 'cobol'\", \"typescript, react, rust\"] }\n---\n# Target adapters\n\nThis module is the per-language target registry the toolchain consults when it\ngenerates, tests, and attributes code. Each target names its coding-agent idiom\nguidance, the tools the agent may use, the attribution exclusion rules, and the\ntest command that gates generation. It is pure data: no I/O and no dependencies\non other project modules.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `targets/`: `targets/Cargo.toml` (package name\n`targets`) and `targets/src/lib.rs`. Touch nothing outside `targets/`. Ensure\n`cargo test` passes from the workspace root before finishing.\n\n## The data types\n\n- `TestRunCommand`, a struct with public fields `command` (a `String`, the\n  executable) and `args` (a `Vec<String>`, its arguments). Support\n  equality/cloning.\n- `TargetAdapter`, a struct with these public fields:\n  - `name`: a `&'static str`, the target name (also its source subdirectory).\n  - `idiom_guidance`: a `String`, guidance injected into the coding-agent task.\n  - `agent_tools`: a `Vec<String>`, the tools the agent may use.\n  - `attribution_exclude_dirs`: a `Vec<String>`, directory names excluded from\n    attribution snapshots.\n  - `attribution_exclude_files`: a `Vec<String>`, file names excluded everywhere.\n  - `attribution_exclude_root_files`: a `Vec<String>`, file names excluded only at\n    the target-directory root (used for a toolchain-owned root manifest whose\n    same-named per-module siblings stay attributed).\n  - `attribution_exclude_suffixes`: a `Vec<String>`, file suffixes excluded.\n  - `test_command_label`: a `&'static str`, the human-facing test-command label.\n  - `test_run`: a `TestRunCommand`, the test invocation gating generation.\n  - `workspace_layout`: a `bool` — true when the target dir is a workspace of\n    per-module member crates, false for a single package rooted at the target dir.\n\n  Give `TargetAdapter` a method `test_command(&self, target_dir: &str)` returning\n  the `TestRunCommand` (the command is fixed per target; the directory argument is\n  accepted but not consulted).\n\n## The registry\n\n- `list_targets()` returns the registered target names, in registry order, as\n  `[\"typescript\", \"react\", \"rust\"]`.\n- `starter_targets()` returns the targets whose guard directory `napl init`\n  pre-creates: `[\"typescript\", \"react\"]` (a subset of the registered set — the\n  third target, `rust`, is fully usable but not scaffolded up front).\n- `get_adapter(name)` looks up an adapter by name, returning it on success or, for\n  an unregistered name, an error string of the form\n  `unknown target '<name>'. Available targets: typescript, react, rust`. (So an\n  unknown target `cobol` yields an error containing `unknown target 'cobol'` and\n  `typescript, react, rust`.)\n\n## The three adapters\n\n- **typescript**: name `typescript`; test command label `npx vitest run`, whose\n  `TestRunCommand` is command `npx` with args `[\"vitest\", \"run\"]`; agent tools\n  include `Read` (and the usual npm/npx/node/file tools); attribution excludes the\n  usual JS dirs (`node_modules`, `dist`, `.git`, `build`, `coverage`, `.vite`) and\n  files (`package-lock.json`, `AGENTS.md`, `CLAUDE.md`) and suffixes (`.tsbuildinfo`,\n  `.d.ts`); it does **not** exclude `vite.config.js`; `workspace_layout` is false\n  and `attribution_exclude_root_files` is empty.\n- **react**: like typescript (same test command, tools, and base excludes) but its\n  `attribution_exclude_files` additionally includes `vite.config.js`;\n  `workspace_layout` is false and `attribution_exclude_root_files` is empty.\n- **rust**: name `rust`; test command label `cargo test`, whose `TestRunCommand` is\n  command `cargo` with args `[\"test\"]`; agent tools include `Read` and\n  `Bash(cargo:*)` (and rustc/rustfmt/file tools) and do **not** include\n  `Bash(npx:*)`; attribution excludes dirs including `target` and files including\n  `Cargo.lock`; `workspace_layout` is **true** and\n  `attribution_exclude_root_files` includes `Cargo.toml` (the toolchain-owned\n  workspace root manifest). Its `idiom_guidance` describes a Rust library crate\n  tested with `cargo test` and must mention that the working directory is a Cargo\n  WORKSPACE (include the words \"Cargo WORKSPACE\").\n\n## The workspace manifest — `workspace_manifest_toml(members)`\n\nRender the workspace root `Cargo.toml` for a Cargo-workspace target. Given a\nslice of member crate directory names (already sorted by the caller), return a\ndeterministic TOML string containing a `[workspace]` table with `resolver = \"2\"`\nand a `members` array listing each member as a quoted string on its own line. The\nsame member slice always yields byte-identical output. For members `[\"body_lines\",\n\"extensions\", \"hash\"]` the output contains `[workspace]`, `resolver = \"2\"`, and\nthe lines `\"body_lines\",`, `\"extensions\",`, `\"hash\",`. For an empty member slice\nthe output contains an empty members array rendered as `members = [` then a line\n`]`.\n"
+    },
+    "events": [
+      {
+        "type": "task",
+        "task": "napl gen rust → targets"
+      },
+      {
+        "type": "diff",
+        "path": "targets/Cargo.toml",
+        "patch": "@@ -0,0 +1,6 @@\n+[package]\n+name = \"targets\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]"
+      },
+      {
+        "type": "file-edit",
+        "path": "targets/Cargo.toml",
+        "content": "[package]\nname = \"targets\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n"
+      },
+      {
+        "type": "diff",
+        "path": "targets/src/lib.rs",
+        "patch": "@@ -0,0 +1,305 @@\n+// GENERATED BY NAPL from targets.napl — edit the prompt, not this file\n+\n+/// A test invocation: an executable and its arguments.\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct TestRunCommand {\n+    pub command: String,\n+    pub args: Vec<String>,\n+}\n+\n+/// Per-language target adapter: idiom guidance, agent tools, attribution\n+/// exclusion rules, and the test command that gates generation.\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct TargetAdapter {\n+    pub name: &'static str,\n+    pub idiom_guidance: String,\n+    pub agent_tools: Vec<String>,\n+    pub attribution_exclude_dirs: Vec<String>,\n+    pub attribution_exclude_files: Vec<String>,\n+    pub attribution_exclude_root_files: Vec<String>,\n+    pub attribution_exclude_suffixes: Vec<String>,\n+    pub test_command_label: &'static str,\n+    pub test_run: TestRunCommand,\n+    pub workspace_layout: bool,\n+}\n+\n+impl TargetAdapter {\n+    /// The test invocation that gates generation for this target. The\n+    /// command is fixed per target; `target_dir` is accepted but not\n+    /// consulted.\n+    pub fn test_command(&self, _target_dir: &str) -> TestRunCommand {\n+        self.test_run.clone()\n+    }\n+}\n+\n+fn strings(items: &[&str]) -> Vec<String> {\n+    items.iter().map(|s| s.to_string()).collect()\n+}\n+\n+fn typescript_adapter() -> TargetAdapter {\n+    TargetAdapter {\n+        name: \"typescript\",\n+        idiom_guidance: \"Target: a TypeScript library tested with `npx vitest run`. \\\n+            Write idiomatic, modern TypeScript with named exports.\"\n+            .to_string(),\n+        agent_tools: strings(&[\n+            \"Read\",\n+            \"Write\",\n+            \"Edit\",\n+            \"Bash(npm:*)\",\n+            \"Bash(npx:*)\",\n+            \"Bash(node:*)\",\n+        ]),\n+        attribution_exclude_dirs: strings(&[\n+            \"node_modules\",\n+            \"dist\",\n+            \".git\",\n+            \"build\",\n+            \"coverage\",\n+            \".vite\",\n+        ]),\n+        attribution_exclude_files: strings(&[\"package-lock.json\", \"AGENTS.md\", \"CLAUDE.md\"]),\n+        attribution_exclude_root_files: Vec::new(),\n+        attribution_exclude_suffixes: strings(&[\".tsbuildinfo\", \".d.ts\"]),\n+        test_command_label: \"npx vitest run\",\n+        test_run: TestRunCommand {\n+            command: \"npx\".to_string(),\n+            args: strings(&[\"vitest\", \"run\"]),\n+        },\n+        workspace_layout: false,\n+    }\n+}\n+\n+fn react_adapter() -> TargetAdapter {\n+    let mut adapter = typescript_adapter();\n+    adapter.name = \"react\";\n+    adapter.idiom_guidance = \"Target: a React component library tested with `npx vitest run`. \\\n+        Write idiomatic, modern React with function components and hooks.\"\n+        .to_string();\n+    adapter\n+        .attribution_exclude_files\n+        .push(\"vite.config.js\".to_string());\n+    adapter\n+}\n+\n+fn rust_adapter() -> TargetAdapter {\n+    TargetAdapter {\n+        name: \"rust\",\n+        idiom_guidance: \"Target: a Rust library crate tested with `cargo test`. \\\n+            The working directory is a Cargo WORKSPACE whose root `Cargo.toml` is \\\n+            written and owned by the toolchain — do not create, edit, or delete it. \\\n+            Write idiomatic, modern Rust.\"\n+            .to_string(),\n+        agent_tools: strings(&[\n+            \"Read\",\n+            \"Write\",\n+            \"Edit\",\n+            \"Bash(cargo:*)\",\n+            \"Bash(rustc:*)\",\n+            \"Bash(rustfmt:*)\",\n+        ]),\n+        attribution_exclude_dirs: strings(&[\"target\", \".git\"]),\n+        attribution_exclude_files: strings(&[\"Cargo.lock\", \"AGENTS.md\", \"CLAUDE.md\"]),\n+        attribution_exclude_root_files: strings(&[\"Cargo.toml\"]),\n+        attribution_exclude_suffixes: Vec::new(),\n+        test_command_label: \"cargo test\",\n+        test_run: TestRunCommand {\n+            command: \"cargo\".to_string(),\n+            args: strings(&[\"test\"]),\n+        },\n+        workspace_layout: true,\n+    }\n+}\n+\n+fn registry() -> Vec<TargetAdapter> {\n+    vec![typescript_adapter(), react_adapter(), rust_adapter()]\n+}\n+\n+/// Registered target names, in registry order.\n+pub fn list_targets() -> Vec<&'static str> {\n+    registry().into_iter().map(|adapter| adapter.name).collect()\n+}\n+\n+/// Targets whose guard directory `napl init` pre-creates — a subset of the\n+/// registered set.\n+pub fn starter_targets() -> Vec<&'static str> {\n+    vec![\"typescript\", \"react\"]\n+}\n+\n+/// Look up an adapter by name.\n+pub fn get_adapter(name: &str) -> Result<TargetAdapter, String> {\n+    registry()\n+        .into_iter()\n+        .find(|adapter| adapter.name == name)\n+        .ok_or_else(|| {\n+            format!(\n+                \"unknown target '{}'. Available targets: {}\",\n+                name,\n+                list_targets().join(\", \")\n+            )\n+        })\n+}\n+\n+/// Render the workspace root `Cargo.toml` for a Cargo-workspace target.\n+/// Deterministic: the same member slice always yields byte-identical output.\n+pub fn workspace_manifest_toml(members: &[String]) -> String {\n+    let mut out = String::new();\n+    out.push_str(\"[workspace]\\n\");\n+    out.push_str(\"resolver = \\\"2\\\"\\n\");\n+    out.push_str(\"members = [\\n\");\n+    for member in members {\n+        out.push_str(&format!(\"    \\\"{member}\\\",\\n\"));\n+    }\n+    out.push_str(\"]\\n\");\n+    out\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn list_targets_is_registry_order() {\n+        assert_eq!(list_targets(), vec![\"typescript\", \"react\", \"rust\"]);\n+    }\n+\n+    #[test]\n+    fn starter_targets_is_subset() {\n+        let starters = starter_targets();\n+        assert_eq!(starters, vec![\"typescript\", \"react\"]);\n+        let all = list_targets();\n+        for starter in &starters {\n+            assert!(all.contains(starter));\n+        }\n+        assert!(!starters.contains(&\"rust\"));\n+    }\n+\n+    #[test]\n+    fn get_adapter_returns_known_targets() {\n+        assert_eq!(get_adapter(\"typescript\").unwrap().name, \"typescript\");\n+        assert_eq!(get_adapter(\"react\").unwrap().name, \"react\");\n+        assert_eq!(get_adapter(\"rust\").unwrap().name, \"rust\");\n+    }\n+\n+    #[test]\n+    fn get_adapter_errors_on_unknown_target() {\n+        let err = get_adapter(\"cobol\").unwrap_err();\n+        assert!(err.contains(\"unknown target 'cobol'\"));\n+        assert!(err.contains(\"typescript, react, rust\"));\n+    }\n+\n+    #[test]\n+    fn typescript_adapter_shape() {\n+        let adapter = get_adapter(\"typescript\").unwrap();\n+        assert_eq!(adapter.test_command_label, \"npx vitest run\");\n+        assert_eq!(\n+            adapter.test_run,\n+            TestRunCommand {\n+                command: \"npx\".to_string(),\n+                args: strings(&[\"vitest\", \"run\"]),\n+            }\n+        );\n+        assert!(adapter.agent_tools.contains(&\"Read\".to_string()));\n+        for dir in [\"node_modules\", \"dist\", \".git\", \"build\", \"coverage\", \".vite\"] {\n+            assert!(adapter.attribution_exclude_dirs.contains(&dir.to_string()));\n+        }\n+        for file in [\"package-lock.json\", \"AGENTS.md\", \"CLAUDE.md\"] {\n+            assert!(adapter.attribution_exclude_files.contains(&file.to_string()));\n+        }\n+        assert!(!adapter\n+            .attribution_exclude_files\n+            .contains(&\"vite.config.js\".to_string()));\n+        for suffix in [\".tsbuildinfo\", \".d.ts\"] {\n+            assert!(adapter\n+                .attribution_exclude_suffixes\n+                .contains(&suffix.to_string()));\n+        }\n+        assert!(!adapter.workspace_layout);\n+        assert!(adapter.attribution_exclude_root_files.is_empty());\n+    }\n+\n+    #[test]\n+    fn react_adapter_shape() {\n+        let adapter = get_adapter(\"react\").unwrap();\n+        assert_eq!(adapter.test_command_label, \"npx vitest run\");\n+        assert_eq!(\n+            adapter.test_run,\n+            TestRunCommand {\n+                command: \"npx\".to_string(),\n+                args: strings(&[\"vitest\", \"run\"]),\n+            }\n+        );\n+        assert!(adapter.agent_tools.contains(&\"Read\".to_string()));\n+        for dir in [\"node_modules\", \"dist\", \".git\", \"build\", \"coverage\", \".vite\"] {\n+            assert!(adapter.attribution_exclude_dirs.contains(&dir.to_string()));\n+        }\n+        for file in [\n+            \"package-lock.json\",\n+            \"AGENTS.md\",\n+            \"CLAUDE.md\",\n+            \"vite.config.js\",\n+        ] {\n+            assert!(adapter.attribution_exclude_files.contains(&file.to_string()));\n+        }\n+        assert!(!adapter.workspace_layout);\n+        assert!(adapter.attribution_exclude_root_files.is_empty());\n+    }\n+\n+    #[test]\n+    fn rust_adapter_shape() {\n+        let adapter = get_adapter(\"rust\").unwrap();\n+        assert_eq!(adapter.test_command_label, \"cargo test\");\n+        assert_eq!(\n+            adapter.test_run,\n+            TestRunCommand {\n+                command: \"cargo\".to_string(),\n+                args: strings(&[\"test\"]),\n+            }\n+        );\n+        assert!(adapter.agent_tools.contains(&\"Read\".to_string()));\n+        assert!(adapter.agent_tools.contains(&\"Bash(cargo:*)\".to_string()));\n+        assert!(!adapter.agent_tools.contains(&\"Bash(npx:*)\".to_string()));\n+        assert!(adapter.attribution_exclude_dirs.contains(&\"target\".to_string()));\n+        assert!(adapter\n+            .attribution_exclude_files\n+            .contains(&\"Cargo.lock\".to_string()));\n+        assert!(adapter\n+            .attribution_exclude_root_files\n+            .contains(&\"Cargo.toml\".to_string()));\n+        assert!(adapter.workspace_layout);\n+        assert!(adapter.idiom_guidance.contains(\"Cargo WORKSPACE\"));\n+    }\n+\n+    #[test]\n+    fn test_command_ignores_target_dir_argument() {\n+        let adapter = get_adapter(\"rust\").unwrap();\n+        assert_eq!(adapter.test_command(\"anything\"), adapter.test_run);\n+        assert_eq!(adapter.test_command(\"\"), adapter.test_run);\n+    }\n+\n+    #[test]\n+    fn workspace_manifest_toml_lists_members() {\n+        let members = strings(&[\"body_lines\", \"extensions\", \"hash\"]);\n+        let manifest = workspace_manifest_toml(&members);\n+        assert!(manifest.contains(\"[workspace]\"));\n+        assert!(manifest.contains(\"resolver = \\\"2\\\"\"));\n+        assert!(manifest.contains(\"\\\"body_lines\\\",\"));\n+        assert!(manifest.contains(\"\\\"extensions\\\",\"));\n+        assert!(manifest.contains(\"\\\"hash\\\",\"));\n+    }\n+\n+    #[test]\n+    fn workspace_manifest_toml_is_deterministic() {\n+        let members = strings(&[\"a\", \"b\"]);\n+        assert_eq!(\n+            workspace_manifest_toml(&members),\n+            workspace_manifest_toml(&members)\n+        );\n+    }\n+\n+    #[test]\n+    fn workspace_manifest_toml_empty_members() {\n+        let manifest = workspace_manifest_toml(&[]);\n+        assert!(manifest.contains(\"members = [\\n]\") || manifest.contains(\"members = [\\n]\\n\"));\n+    }\n+}"
+      },
+      {
+        "type": "file-edit",
+        "path": "targets/src/lib.rs",
+        "content": "// GENERATED BY NAPL from targets.napl — edit the prompt, not this file\n\n/// A test invocation: an executable and its arguments.\n#[derive(Debug, Clone, PartialEq, Eq)]\npub struct TestRunCommand {\n    pub command: String,\n    pub args: Vec<String>,\n}\n\n/// Per-language target adapter: idiom guidance, agent tools, attribution\n/// exclusion rules, and the test command that gates generation.\n#[derive(Debug, Clone, PartialEq, Eq)]\npub struct TargetAdapter {\n    pub name: &'static str,\n    pub idiom_guidance: String,\n    pub agent_tools: Vec<String>,\n    pub attribution_exclude_dirs: Vec<String>,\n    pub attribution_exclude_files: Vec<String>,\n    pub attribution_exclude_root_files: Vec<String>,\n    pub attribution_exclude_suffixes: Vec<String>,\n    pub test_command_label: &'static str,\n    pub test_run: TestRunCommand,\n    pub workspace_layout: bool,\n}\n\nimpl TargetAdapter {\n    /// The test invocation that gates generation for this target. The\n    /// command is fixed per target; `target_dir` is accepted but not\n    /// consulted.\n    pub fn test_command(&self, _target_dir: &str) -> TestRunCommand {\n        self.test_run.clone()\n    }\n}\n\nfn strings(items: &[&str]) -> Vec<String> {\n    items.iter().map(|s| s.to_string()).collect()\n}\n\nfn typescript_adapter() -> TargetAdapter {\n    TargetAdapter {\n        name: \"typescript\",\n        idiom_guidance: \"Target: a TypeScript library tested with `npx vitest run`. \\\n            Write idiomatic, modern TypeScript with named exports.\"\n            .to_string(),\n        agent_tools: strings(&[\n            \"Read\",\n            \"Write\",\n            \"Edit\",\n            \"Bash(npm:*)\",\n            \"Bash(npx:*)\",\n            \"Bash(node:*)\",\n        ]),\n        attribution_exclude_dirs: strings(&[\n            \"node_modules\",\n            \"dist\",\n            \".git\",\n            \"build\",\n            \"coverage\",\n            \".vite\",\n        ]),\n        attribution_exclude_files: strings(&[\"package-lock.json\", \"AGENTS.md\", \"CLAUDE.md\"]),\n        attribution_exclude_root_files: Vec::new(),\n        attribution_exclude_suffixes: strings(&[\".tsbuildinfo\", \".d.ts\"]),\n        test_command_label: \"npx vitest run\",\n        test_run: TestRunCommand {\n            command: \"npx\".to_string(),\n            args: strings(&[\"vitest\", \"run\"]),\n        },\n        workspace_layout: false,\n    }\n}\n\nfn react_adapter() -> TargetAdapter {\n    let mut adapter = typescript_adapter();\n    adapter.name = \"react\";\n    adapter.idiom_guidance = \"Target: a React component library tested with `npx vitest run`. \\\n        Write idiomatic, modern React with function components and hooks.\"\n        .to_string();\n    adapter\n        .attribution_exclude_files\n        .push(\"vite.config.js\".to_string());\n    adapter\n}\n\nfn rust_adapter() -> TargetAdapter {\n    TargetAdapter {\n        name: \"rust\",\n        idiom_guidance: \"Target: a Rust library crate tested with `cargo test`. \\\n            The working directory is a Cargo WORKSPACE whose root `Cargo.toml` is \\\n            written and owned by the toolchain — do not create, edit, or delete it. \\\n            Write idiomatic, modern Rust.\"\n            .to_string(),\n        agent_tools: strings(&[\n            \"Read\",\n            \"Write\",\n            \"Edit\",\n            \"Bash(cargo:*)\",\n            \"Bash(rustc:*)\",\n            \"Bash(rustfmt:*)\",\n        ]),\n        attribution_exclude_dirs: strings(&[\"target\", \".git\"]),\n        attribution_exclude_files: strings(&[\"Cargo.lock\", \"AGENTS.md\", \"CLAUDE.md\"]),\n        attribution_exclude_root_files: strings(&[\"Cargo.toml\"]),\n        attribution_exclude_suffixes: Vec::new(),\n        test_command_label: \"cargo test\",\n        test_run: TestRunCommand {\n            command: \"cargo\".to_string(),\n            args: strings(&[\"test\"]),\n        },\n        workspace_layout: true,\n    }\n}\n\nfn registry() -> Vec<TargetAdapter> {\n    vec![typescript_adapter(), react_adapter(), rust_adapter()]\n}\n\n/// Registered target names, in registry order.\npub fn list_targets() -> Vec<&'static str> {\n    registry().into_iter().map(|adapter| adapter.name).collect()\n}\n\n/// Targets whose guard directory `napl init` pre-creates — a subset of the\n/// registered set.\npub fn starter_targets() -> Vec<&'static str> {\n    vec![\"typescript\", \"react\"]\n}\n\n/// Look up an adapter by name.\npub fn get_adapter(name: &str) -> Result<TargetAdapter, String> {\n    registry()\n        .into_iter()\n        .find(|adapter| adapter.name == name)\n        .ok_or_else(|| {\n            format!(\n                \"unknown target '{}'. Available targets: {}\",\n                name,\n                list_targets().join(\", \")\n            )\n        })\n}\n\n/// Render the workspace root `Cargo.toml` for a Cargo-workspace target.\n/// Deterministic: the same member slice always yields byte-identical output.\npub fn workspace_manifest_toml(members: &[String]) -> String {\n    let mut out = String::new();\n    out.push_str(\"[workspace]\\n\");\n    out.push_str(\"resolver = \\\"2\\\"\\n\");\n    out.push_str(\"members = [\\n\");\n    for member in members {\n        out.push_str(&format!(\"    \\\"{member}\\\",\\n\"));\n    }\n    out.push_str(\"]\\n\");\n    out\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn list_targets_is_registry_order() {\n        assert_eq!(list_targets(), vec![\"typescript\", \"react\", \"rust\"]);\n    }\n\n    #[test]\n    fn starter_targets_is_subset() {\n        let starters = starter_targets();\n        assert_eq!(starters, vec![\"typescript\", \"react\"]);\n        let all = list_targets();\n        for starter in &starters {\n            assert!(all.contains(starter));\n        }\n        assert!(!starters.contains(&\"rust\"));\n    }\n\n    #[test]\n    fn get_adapter_returns_known_targets() {\n        assert_eq!(get_adapter(\"typescript\").unwrap().name, \"typescript\");\n        assert_eq!(get_adapter(\"react\").unwrap().name, \"react\");\n        assert_eq!(get_adapter(\"rust\").unwrap().name, \"rust\");\n    }\n\n    #[test]\n    fn get_adapter_errors_on_unknown_target() {\n        let err = get_adapter(\"cobol\").unwrap_err();\n        assert!(err.contains(\"unknown target 'cobol'\"));\n        assert!(err.contains(\"typescript, react, rust\"));\n    }\n\n    #[test]\n    fn typescript_adapter_shape() {\n        let adapter = get_adapter(\"typescript\").unwrap();\n        assert_eq!(adapter.test_command_label, \"npx vitest run\");\n        assert_eq!(\n            adapter.test_run,\n            TestRunCommand {\n                command: \"npx\".to_string(),\n                args: strings(&[\"vitest\", \"run\"]),\n            }\n        );\n        assert!(adapter.agent_tools.contains(&\"Read\".to_string()));\n        for dir in [\"node_modules\", \"dist\", \".git\", \"build\", \"coverage\", \".vite\"] {\n            assert!(adapter.attribution_exclude_dirs.contains(&dir.to_string()));\n        }\n        for file in [\"package-lock.json\", \"AGENTS.md\", \"CLAUDE.md\"] {\n            assert!(adapter.attribution_exclude_files.contains(&file.to_string()));\n        }\n        assert!(!adapter\n            .attribution_exclude_files\n            .contains(&\"vite.config.js\".to_string()));\n        for suffix in [\".tsbuildinfo\", \".d.ts\"] {\n            assert!(adapter\n                .attribution_exclude_suffixes\n                .contains(&suffix.to_string()));\n        }\n        assert!(!adapter.workspace_layout);\n        assert!(adapter.attribution_exclude_root_files.is_empty());\n    }\n\n    #[test]\n    fn react_adapter_shape() {\n        let adapter = get_adapter(\"react\").unwrap();\n        assert_eq!(adapter.test_command_label, \"npx vitest run\");\n        assert_eq!(\n            adapter.test_run,\n            TestRunCommand {\n                command: \"npx\".to_string(),\n                args: strings(&[\"vitest\", \"run\"]),\n            }\n        );\n        assert!(adapter.agent_tools.contains(&\"Read\".to_string()));\n        for dir in [\"node_modules\", \"dist\", \".git\", \"build\", \"coverage\", \".vite\"] {\n            assert!(adapter.attribution_exclude_dirs.contains(&dir.to_string()));\n        }\n        for file in [\n            \"package-lock.json\",\n            \"AGENTS.md\",\n            \"CLAUDE.md\",\n            \"vite.config.js\",\n        ] {\n            assert!(adapter.attribution_exclude_files.contains(&file.to_string()));\n        }\n        assert!(!adapter.workspace_layout);\n        assert!(adapter.attribution_exclude_root_files.is_empty());\n    }\n\n    #[test]\n    fn rust_adapter_shape() {\n        let adapter = get_adapter(\"rust\").unwrap();\n        assert_eq!(adapter.test_command_label, \"cargo test\");\n        assert_eq!(\n            adapter.test_run,\n            TestRunCommand {\n                command: \"cargo\".to_string(),\n                args: strings(&[\"test\"]),\n            }\n        );\n        assert!(adapter.agent_tools.contains(&\"Read\".to_string()));\n        assert!(adapter.agent_tools.contains(&\"Bash(cargo:*)\".to_string()));\n        assert!(!adapter.agent_tools.contains(&\"Bash(npx:*)\".to_string()));\n        assert!(adapter.attribution_exclude_dirs.contains(&\"target\".to_string()));\n        assert!(adapter\n            .attribution_exclude_files\n            .contains(&\"Cargo.lock\".to_string()));\n        assert!(adapter\n            .attribution_exclude_root_files\n            .contains(&\"Cargo.toml\".to_string()));\n        assert!(adapter.workspace_layout);\n        assert!(adapter.idiom_guidance.contains(\"Cargo WORKSPACE\"));\n    }\n\n    #[test]\n    fn test_command_ignores_target_dir_argument() {\n        let adapter = get_adapter(\"rust\").unwrap();\n        assert_eq!(adapter.test_command(\"anything\"), adapter.test_run);\n        assert_eq!(adapter.test_command(\"\"), adapter.test_run);\n    }\n\n    #[test]\n    fn workspace_manifest_toml_lists_members() {\n        let members = strings(&[\"body_lines\", \"extensions\", \"hash\"]);\n        let manifest = workspace_manifest_toml(&members);\n        assert!(manifest.contains(\"[workspace]\"));\n        assert!(manifest.contains(\"resolver = \\\"2\\\"\"));\n        assert!(manifest.contains(\"\\\"body_lines\\\",\"));\n        assert!(manifest.contains(\"\\\"extensions\\\",\"));\n        assert!(manifest.contains(\"\\\"hash\\\",\"));\n    }\n\n    #[test]\n    fn workspace_manifest_toml_is_deterministic() {\n        let members = strings(&[\"a\", \"b\"]);\n        assert_eq!(\n            workspace_manifest_toml(&members),\n            workspace_manifest_toml(&members)\n        );\n    }\n\n    #[test]\n    fn workspace_manifest_toml_empty_members() {\n        let manifest = workspace_manifest_toml(&[]);\n        assert!(manifest.contains(\"members = [\\n]\") || manifest.contains(\"members = [\\n]\\n\"));\n    }\n}\n"
+      },
+      {
+        "type": "attribution",
+        "module": "targets",
+        "target": "rust",
+        "entries": [
+          {
+            "promptLines": [
+              1,
+              8
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              1,
+              1
+            ],
+            "note": "module header/generated marker"
+          },
+          {
+            "promptLines": [
+              19,
+              21
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              3,
+              8
+            ],
+            "note": "TestRunCommand struct with command/args fields, derives Eq/Clone"
+          },
+          {
+            "promptLines": [
+              22,
+              24
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              10,
+              15
+            ],
+            "note": "TargetAdapter name field"
+          },
+          {
+            "promptLines": [
+              24,
+              24
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              15,
+              15
+            ],
+            "note": "idiom_guidance field"
+          },
+          {
+            "promptLines": [
+              25,
+              25
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              16,
+              16
+            ],
+            "note": "agent_tools field"
+          },
+          {
+            "promptLines": [
+              26,
+              27
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              17,
+              17
+            ],
+            "note": "attribution_exclude_dirs field"
+          },
+          {
+            "promptLines": [
+              28,
+              28
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              18,
+              18
+            ],
+            "note": "attribution_exclude_files field"
+          },
+          {
+            "promptLines": [
+              29,
+              31
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              19,
+              19
+            ],
+            "note": "attribution_exclude_root_files field"
+          },
+          {
+            "promptLines": [
+              32,
+              32
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              20,
+              20
+            ],
+            "note": "attribution_exclude_suffixes field"
+          },
+          {
+            "promptLines": [
+              33,
+              33
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              21,
+              21
+            ],
+            "note": "test_command_label field"
+          },
+          {
+            "promptLines": [
+              34,
+              34
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              22,
+              22
+            ],
+            "note": "test_run field"
+          },
+          {
+            "promptLines": [
+              35,
+              36
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              23,
+              23
+            ],
+            "note": "workspace_layout field"
+          },
+          {
+            "promptLines": [
+              38,
+              40
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              26,
+              33
+            ],
+            "note": "test_command method returns cloned test_run ignoring target_dir"
+          },
+          {
+            "promptLines": [
+              44,
+              45
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              118,
+              121
+            ],
+            "note": "list_targets returns registry order names"
+          },
+          {
+            "promptLines": [
+              46,
+              48
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              123,
+              127
+            ],
+            "note": "starter_targets subset"
+          },
+          {
+            "promptLines": [
+              49,
+              53
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              129,
+              141
+            ],
+            "note": "get_adapter lookup with formatted unknown-target error"
+          },
+          {
+            "promptLines": [
+              57,
+              63
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              39,
+              71
+            ],
+            "note": "typescript adapter definition"
+          },
+          {
+            "promptLines": [
+              64,
+              66
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              73,
+              83
+            ],
+            "note": "react adapter derived from typescript, adds vite.config.js exclude"
+          },
+          {
+            "promptLines": [
+              67,
+              75
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              85,
+              112
+            ],
+            "note": "rust adapter definition including workspace idiom guidance"
+          },
+          {
+            "promptLines": [
+              114,
+              116
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              114,
+              116
+            ],
+            "note": "registry() builds ordered vec of the three adapters"
+          },
+          {
+            "promptLines": [
+              79,
+              87
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              145,
+              155
+            ],
+            "note": "workspace_manifest_toml renders deterministic workspace TOML"
+          },
+          {
+            "promptLines": [
+              83,
+              87
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              281,
+              304
+            ],
+            "note": "tests for workspace manifest members/determinism/empty case"
+          },
+          {
+            "promptLines": [
+              44,
+              45
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              162,
+              164
+            ],
+            "note": "test asserting registry order"
+          },
+          {
+            "promptLines": [
+              46,
+              48
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              166,
+              175
+            ],
+            "note": "test asserting starter subset"
+          },
+          {
+            "promptLines": [
+              49,
+              53
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              184,
+              189
+            ],
+            "note": "test asserting unknown target error message"
+          },
+          {
+            "promptLines": [
+              57,
+              63
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              192,
+              219
+            ],
+            "note": "test asserting typescript adapter shape"
+          },
+          {
+            "promptLines": [
+              64,
+              66
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              222,
+              246
+            ],
+            "note": "test asserting react adapter shape"
+          },
+          {
+            "promptLines": [
+              67,
+              75
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              249,
+              271
+            ],
+            "note": "test asserting rust adapter shape and Cargo WORKSPACE mention"
+          },
+          {
+            "promptLines": [
+              38,
+              40
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              274,
+              278
+            ],
+            "note": "test that test_command ignores target_dir argument"
+          }
+        ]
+      },
+      {
+        "type": "mapl-entry",
+        "path": "targets.mapl",
+        "entry": {
+          "promptLines": [
+            57,
+            63
+          ],
+          "kind": "assumption",
+          "severity": "warning",
+          "message": "Exact agent_tools list for typescript left to implementer's judgment.",
+          "reasoning": "Prompt says \"agent tools include `Read` (and the usual npm/npx/node/file tools)\" without enumerating them. Agent assumed Write, Edit, Bash(npm:*), Bash(npx:*), Bash(node:*) as the concrete set. Tests only assert `Read` is present, so this exact list isn't verified against the prompt's intent.\n",
+          "suggestion": "agent tools: Read, Write, Edit, Bash(npm:*), Bash(npx:*), Bash(node:*)."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "targets.mapl",
+        "entry": {
+          "promptLines": [
+            67,
+            75
+          ],
+          "kind": "assumption",
+          "severity": "warning",
+          "message": "Exact agent_tools list for rust, and universal exclude files, left implicit.",
+          "reasoning": "Prompt says agent tools \"include `Read` and `Bash(cargo:*)` (and rustc/rustfmt/file tools)\" and must not include `Bash(npx:*)` — agent chose Write, Edit, Bash(cargo:*), Bash(rustc:*), Bash(rustfmt:*). Also, attribution_exclude_files for rust ends up with AGENTS.md/CLAUDE.md added alongside Cargo.lock, mirroring typescript's universal excludes, but the prompt's rust bullet only explicitly calls out `Cargo.lock`. Not asserted by tests either way, so it's a silent extrapolation from the typescript spec.\n",
+          "suggestion": "List rust's exact agent_tools and attribution_exclude_files explicitly, as done for typescript."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "targets.mapl",
+        "entry": {
+          "promptLines": [
+            70,
+            70
+          ],
+          "kind": "assumption",
+          "severity": "warning",
+          "message": "rust attribution_exclude_dirs beyond 'target' assumed to include '.git'.",
+          "reasoning": "Prompt says \"attribution excludes dirs including `target`\" — open-ended wording (\"including\") let the agent add `.git` too, matching typescript's dir excludes. Not verified by any test, so it's a guess at intended scope.\n",
+          "suggestion": "State the full attribution_exclude_dirs list for rust, e.g. ['target', '.git']."
+        }
+      },
+      {
+        "type": "lock",
+        "module": "targets",
+        "target": "rust",
+        "files": [
+          {
+            "path": "targets/Cargo.toml",
+            "hash": "344936b81784a55fc49b63b54cc2f7546bc1e8e84f3c91bb95b42a987ad3e02d"
+          },
+          {
+            "path": "targets/src/lib.rs",
+            "hash": "21ff9ce3f478019e09e028e0c72c306a4e119d22d99bebe6ceb7caec63ca7594"
+          }
+        ]
+      }
+    ]
+  }
+}

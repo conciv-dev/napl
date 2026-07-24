@@ -1,0 +1,454 @@
+{
+  "module": "statusclass_render",
+  "collection": "selfhost",
+  "target": "rust",
+  "targets": [
+    "rust"
+  ],
+  "prompt": {
+    "file": "statusclass_render.napl",
+    "path": "cli/statusclass_render.napl",
+    "content": "---\nmodule: statusclass_render\ndeps: []\ntargets: [rust]\ntests:\n  - name: a clean status pads the label to twelve columns with no detail suffix\n    given: { status: clean, file: \"examples/greeting.napl\", detail: \"\" }\n    expect: { line: \"clean        examples/greeting.napl\" }\n  - name: a prompt-stale status appends its detail in parentheses\n    given: { status: prompt-stale, file: \"examples/greeting.napl\", detail: \"never generated\" }\n    expect: { line: \"prompt-stale examples/greeting.napl (never generated)\" }\n  - name: a drift status uppercases its label and keeps the twelve-column pad\n    given: { status: drift, file: \"examples/greeting.napl\", detail: \"typescript: x was edited\" }\n    expect: { line: \"DRIFT        examples/greeting.napl (typescript: x was edited)\" }\n  - name: an unattributed status renders its label and detail\n    given: { status: unattributed, file: \"examples/greeting.napl\", detail: \"run napl gen typescript --force\" }\n    expect: { line: \"unattributed examples/greeting.napl (run napl gen typescript --force)\" }\n  - name: only drift and unattributed count as errors\n    given: {}\n    expect: { errors: [drift, unattributed], not_errors: [clean, prompt-stale] }\n---\n# Rendering a prompt's status line\n\nThis module is the **pure** rendering core of the CLI's status command: it holds\nthe status enum and the one-line rendering of a classified prompt. It is pure —\nno filesystem access, no hashing, no dependencies on other project modules. (The\nI/O classifier that reads generated files off disk to decide the status stays\nhand-written and constructs the `StatusEntry` values this module renders.)\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `statusclass_render/`:\n`statusclass_render/Cargo.toml` (package name `statusclass_render`) and\n`statusclass_render/src/lib.rs`. Touch nothing outside `statusclass_render/`.\nEnsure `cargo test` passes from the workspace root before finishing.\n\n## The status enum\n\nExpose a public enum `FileStatus` (deriving at least `Debug`, `Clone`, `Copy`,\n`PartialEq`, `Eq`) with exactly these variants:\n\n- `Clean` — locked, attributed, and the prompt matches its last gen.\n- `PromptStale` — not generated, or the prompt changed since gen.\n- `Drift` — a generated file was edited or deleted.\n- `Unattributed` — generated files exist but attribution failed.\n\nEach variant has a fixed lowercase-ish **label** used when rendering:\n\n- `Clean` → `clean`\n- `PromptStale` → `prompt-stale`\n- `Drift` → `DRIFT` (uppercase — it is an error state)\n- `Unattributed` → `unattributed`\n\n## The status entry\n\nExpose a public struct `StatusEntry` with public fields:\n\n- `file: String` — the prompt path relative to the project root.\n- `status: FileStatus`\n- `detail: String` — a human-facing detail, possibly empty.\n\n### `line(&self) -> String`\n\nRender the entry exactly as the CLI prints one status line: the status **label**\nleft-aligned and padded with spaces to a minimum width of **12** columns, then a\nsingle space, then the `file`, then — only when `detail` is non-empty — a space\nand the detail wrapped in parentheses. When `detail` is empty there is no trailing\nspace and no parentheses.\n\nConcretely, the format is `{label:<12} {file}{suffix}` where `suffix` is empty for\nan empty detail and ` ({detail})` otherwise. Byte-exact examples:\n\n- `clean` + `examples/greeting.napl` + empty detail →\n  `clean        examples/greeting.napl` (the label `clean` is 5 characters, so 7\n  spaces pad it to 12, then one separating space).\n- `prompt-stale` + `examples/greeting.napl` + `never generated` →\n  `prompt-stale examples/greeting.napl (never generated)` (the label is already 12\n  characters, so exactly one separating space follows).\n- `DRIFT` + `examples/greeting.napl` + `typescript: x was edited` →\n  `DRIFT        examples/greeting.napl (typescript: x was edited)`.\n- `unattributed` + `examples/greeting.napl` + `run napl gen typescript --force` →\n  `unattributed examples/greeting.napl (run napl gen typescript --force)`.\n\n### `is_error(&self) -> bool`\n\nWhether this status fails the CI gate: `true` for `Drift` and `Unattributed`,\n`false` for `Clean` and `PromptStale`.\n</content>\n"
+  },
+  "promptAtGen": "# Rendering a prompt's status line\n\nThis module is the **pure** rendering core of the CLI's status command: it holds\nthe status enum and the one-line rendering of a classified prompt. It is pure —\nno filesystem access, no hashing, no dependencies on other project modules. (The\nI/O classifier that reads generated files off disk to decide the status stays\nhand-written and constructs the `StatusEntry` values this module renders.)\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `statusclass_render/`:\n`statusclass_render/Cargo.toml` (package name `statusclass_render`) and\n`statusclass_render/src/lib.rs`. Touch nothing outside `statusclass_render/`.\nEnsure `cargo test` passes from the workspace root before finishing.\n\n## The status enum\n\nExpose a public enum `FileStatus` (deriving at least `Debug`, `Clone`, `Copy`,\n`PartialEq`, `Eq`) with exactly these variants:\n\n- `Clean` — locked, attributed, and the prompt matches its last gen.\n- `PromptStale` — not generated, or the prompt changed since gen.\n- `Drift` — a generated file was edited or deleted.\n- `Unattributed` — generated files exist but attribution failed.\n\nEach variant has a fixed lowercase-ish **label** used when rendering:\n\n- `Clean` → `clean`\n- `PromptStale` → `prompt-stale`\n- `Drift` → `DRIFT` (uppercase — it is an error state)\n- `Unattributed` → `unattributed`\n\n## The status entry\n\nExpose a public struct `StatusEntry` with public fields:\n\n- `file: String` — the prompt path relative to the project root.\n- `status: FileStatus`\n- `detail: String` — a human-facing detail, possibly empty.\n\n### `line(&self) -> String`\n\nRender the entry exactly as the CLI prints one status line: the status **label**\nleft-aligned and padded with spaces to a minimum width of **12** columns, then a\nsingle space, then the `file`, then — only when `detail` is non-empty — a space\nand the detail wrapped in parentheses. When `detail` is empty there is no trailing\nspace and no parentheses.\n\nConcretely, the format is `{label:<12} {file}{suffix}` where `suffix` is empty for\nan empty detail and ` ({detail})` otherwise. Byte-exact examples:\n\n- `clean` + `examples/greeting.napl` + empty detail →\n  `clean        examples/greeting.napl` (the label `clean` is 5 characters, so 7\n  spaces pad it to 12, then one separating space).\n- `prompt-stale` + `examples/greeting.napl` + `never generated` →\n  `prompt-stale examples/greeting.napl (never generated)` (the label is already 12\n  characters, so exactly one separating space follows).\n- `DRIFT` + `examples/greeting.napl` + `typescript: x was edited` →\n  `DRIFT        examples/greeting.napl (typescript: x was edited)`.\n- `unattributed` + `examples/greeting.napl` + `run napl gen typescript --force` →\n  `unattributed examples/greeting.napl (run napl gen typescript --force)`.\n\n### `is_error(&self) -> bool`\n\nWhether this status fails the CI gate: `true` for `Drift` and `Unattributed`,\n`false` for `Clean` and `PromptStale`.\n</content>\n",
+  "summary": "Rendering a prompt's status line",
+  "files": [
+    {
+      "path": "statusclass_render/Cargo.toml",
+      "journalPath": ".napl/src/rust/statusclass_render/Cargo.toml",
+      "content": "[package]\nname = \"statusclass_render\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n",
+      "language": "toml"
+    },
+    {
+      "path": "statusclass_render/src/lib.rs",
+      "journalPath": ".napl/src/rust/statusclass_render/src/lib.rs",
+      "content": "//! The pure rendering core of the CLI's status command.\n//!\n//! Holds the status enum and the one-line rendering of a classified prompt.\n//! Pure — no filesystem access, no hashing, no dependencies on other modules.\n\n/// The classification of a prompt relative to its generated files.\n#[derive(Debug, Clone, Copy, PartialEq, Eq)]\npub enum FileStatus {\n    /// Locked, attributed, and the prompt matches its last gen.\n    Clean,\n    /// Not generated, or the prompt changed since gen.\n    PromptStale,\n    /// A generated file was edited or deleted.\n    Drift,\n    /// Generated files exist but attribution failed.\n    Unattributed,\n}\n\nimpl FileStatus {\n    /// The fixed label used when rendering this status.\n    pub fn label(self) -> &'static str {\n        match self {\n            FileStatus::Clean => \"clean\",\n            FileStatus::PromptStale => \"prompt-stale\",\n            FileStatus::Drift => \"DRIFT\",\n            FileStatus::Unattributed => \"unattributed\",\n        }\n    }\n\n    /// Whether this status fails the CI gate.\n    pub fn is_error(self) -> bool {\n        matches!(self, FileStatus::Drift | FileStatus::Unattributed)\n    }\n}\n\n/// A classified prompt ready to be printed as one status line.\n#[derive(Debug, Clone, PartialEq, Eq)]\npub struct StatusEntry {\n    /// The prompt path relative to the project root.\n    pub file: String,\n    pub status: FileStatus,\n    /// A human-facing detail, possibly empty.\n    pub detail: String,\n}\n\nimpl StatusEntry {\n    /// Render the entry exactly as the CLI prints one status line.\n    pub fn line(&self) -> String {\n        let suffix = if self.detail.is_empty() {\n            String::new()\n        } else {\n            format!(\" ({})\", self.detail)\n        };\n        format!(\"{:<12} {}{}\", self.status.label(), self.file, suffix)\n    }\n\n    /// Whether this status fails the CI gate.\n    pub fn is_error(&self) -> bool {\n        self.status.is_error()\n    }\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn labels_are_fixed() {\n        assert_eq!(FileStatus::Clean.label(), \"clean\");\n        assert_eq!(FileStatus::PromptStale.label(), \"prompt-stale\");\n        assert_eq!(FileStatus::Drift.label(), \"DRIFT\");\n        assert_eq!(FileStatus::Unattributed.label(), \"unattributed\");\n    }\n\n    fn entry(status: FileStatus, detail: &str) -> StatusEntry {\n        StatusEntry {\n            file: \"examples/greeting.napl\".to_string(),\n            status,\n            detail: detail.to_string(),\n        }\n    }\n\n    #[test]\n    fn line_clean_empty_detail() {\n        assert_eq!(\n            entry(FileStatus::Clean, \"\").line(),\n            \"clean        examples/greeting.napl\"\n        );\n    }\n\n    #[test]\n    fn line_prompt_stale_with_detail_has_single_separator() {\n        assert_eq!(\n            entry(FileStatus::PromptStale, \"never generated\").line(),\n            \"prompt-stale examples/greeting.napl (never generated)\"\n        );\n    }\n\n    #[test]\n    fn line_drift_with_detail() {\n        assert_eq!(\n            entry(FileStatus::Drift, \"typescript: x was edited\").line(),\n            \"DRIFT        examples/greeting.napl (typescript: x was edited)\"\n        );\n    }\n\n    #[test]\n    fn line_unattributed_with_detail() {\n        assert_eq!(\n            entry(FileStatus::Unattributed, \"run napl gen typescript --force\").line(),\n            \"unattributed examples/greeting.napl (run napl gen typescript --force)\"\n        );\n    }\n\n    #[test]\n    fn line_no_detail_has_no_trailing_space_or_parens() {\n        let rendered = entry(FileStatus::Drift, \"\").line();\n        assert_eq!(rendered, \"DRIFT        examples/greeting.napl\");\n        assert!(!rendered.ends_with(' '));\n        assert!(!rendered.contains('('));\n    }\n\n    #[test]\n    fn line_exact_twelve_char_label_gets_single_separator() {\n        assert_eq!(FileStatus::PromptStale.label().len(), 12);\n        let rendered = entry(FileStatus::PromptStale, \"\").line();\n        assert_eq!(rendered, \"prompt-stale examples/greeting.napl\");\n    }\n\n    #[test]\n    fn line_shorter_labels_pad_to_width_twelve() {\n        let prefix = \"clean        \";\n        assert_eq!(prefix.len(), 13);\n        assert!(entry(FileStatus::Clean, \"\").line().starts_with(prefix));\n    }\n\n    #[test]\n    fn is_error_for_all_variants() {\n        assert!(!entry(FileStatus::Clean, \"\").is_error());\n        assert!(!entry(FileStatus::PromptStale, \"\").is_error());\n        assert!(entry(FileStatus::Drift, \"\").is_error());\n        assert!(entry(FileStatus::Unattributed, \"\").is_error());\n\n        assert!(!FileStatus::Clean.is_error());\n        assert!(!FileStatus::PromptStale.is_error());\n        assert!(FileStatus::Drift.is_error());\n        assert!(FileStatus::Unattributed.is_error());\n    }\n}\n",
+      "language": "rust"
+    }
+  ],
+  "attribution": [
+    {
+      "promptLines": [
+        20,
+        21
+      ],
+      "file": "statusclass_render/src/lib.rs",
+      "lines": [
+        7,
+        8
+      ],
+      "note": "enum decl with required derives"
+    },
+    {
+      "promptLines": [
+        22,
+        27
+      ],
+      "file": "statusclass_render/src/lib.rs",
+      "lines": [
+        9,
+        17
+      ],
+      "note": "four variants with doc comments"
+    },
+    {
+      "promptLines": [
+        28,
+        33
+      ],
+      "file": "statusclass_render/src/lib.rs",
+      "lines": [
+        20,
+        28
+      ],
+      "note": "label() match per variant"
+    },
+    {
+      "promptLines": [
+        37,
+        41
+      ],
+      "file": "statusclass_render/src/lib.rs",
+      "lines": [
+        37,
+        44
+      ],
+      "note": "StatusEntry struct fields"
+    },
+    {
+      "promptLines": [
+        43,
+        49
+      ],
+      "file": "statusclass_render/src/lib.rs",
+      "lines": [
+        48,
+        55
+      ],
+      "note": "line() renders padded label + file + optional detail"
+    },
+    {
+      "promptLines": [
+        51,
+        52
+      ],
+      "file": "statusclass_render/src/lib.rs",
+      "lines": [
+        49,
+        54
+      ],
+      "note": "suffix format and format string"
+    },
+    {
+      "promptLines": [
+        54,
+        56
+      ],
+      "file": "statusclass_render/src/lib.rs",
+      "lines": [
+        84,
+        89
+      ],
+      "note": "byte-exact example test, clean empty detail"
+    },
+    {
+      "promptLines": [
+        57,
+        59
+      ],
+      "file": "statusclass_render/src/lib.rs",
+      "lines": [
+        91,
+        97
+      ],
+      "note": "byte-exact example test, prompt-stale with detail"
+    },
+    {
+      "promptLines": [
+        60,
+        61
+      ],
+      "file": "statusclass_render/src/lib.rs",
+      "lines": [
+        99,
+        105
+      ],
+      "note": "byte-exact example test, DRIFT with detail"
+    },
+    {
+      "promptLines": [
+        62,
+        63
+      ],
+      "file": "statusclass_render/src/lib.rs",
+      "lines": [
+        107,
+        113
+      ],
+      "note": "byte-exact example test, unattributed with detail"
+    },
+    {
+      "promptLines": [
+        65,
+        68
+      ],
+      "file": "statusclass_render/src/lib.rs",
+      "lines": [
+        31,
+        33
+      ],
+      "note": "is_error true for Drift/Unattributed"
+    },
+    {
+      "promptLines": [
+        65,
+        68
+      ],
+      "file": "statusclass_render/src/lib.rs",
+      "lines": [
+        58,
+        60
+      ],
+      "note": "StatusEntry::is_error delegates to status"
+    },
+    {
+      "promptLines": [
+        65,
+        68
+      ],
+      "file": "statusclass_render/src/lib.rs",
+      "lines": [
+        137,
+        148
+      ],
+      "note": "is_error test for all variants"
+    }
+  ],
+  "attributionYaml": "module: statusclass_render\ntarget: rust\nentries:\n  - promptLines:\n      - 20\n      - 21\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 7\n      - 8\n    note: enum decl with required derives\n  - promptLines:\n      - 22\n      - 27\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 9\n      - 17\n    note: four variants with doc comments\n  - promptLines:\n      - 28\n      - 33\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 20\n      - 28\n    note: label() match per variant\n  - promptLines:\n      - 37\n      - 41\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 37\n      - 44\n    note: StatusEntry struct fields\n  - promptLines:\n      - 43\n      - 49\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 48\n      - 55\n    note: line() renders padded label + file + optional detail\n  - promptLines:\n      - 51\n      - 52\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 49\n      - 54\n    note: suffix format and format string\n  - promptLines:\n      - 54\n      - 56\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 84\n      - 89\n    note: byte-exact example test, clean empty detail\n  - promptLines:\n      - 57\n      - 59\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 91\n      - 97\n    note: byte-exact example test, prompt-stale with detail\n  - promptLines:\n      - 60\n      - 61\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 99\n      - 105\n    note: byte-exact example test, DRIFT with detail\n  - promptLines:\n      - 62\n      - 63\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 107\n      - 113\n    note: byte-exact example test, unattributed with detail\n  - promptLines:\n      - 65\n      - 68\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 31\n      - 33\n    note: is_error true for Drift/Unattributed\n  - promptLines:\n      - 65\n      - 68\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 58\n      - 60\n    note: StatusEntry::is_error delegates to status\n  - promptLines:\n      - 65\n      - 68\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 137\n      - 148\n    note: is_error test for all variants\n",
+  "mapl": [
+    {
+      "promptLines": [
+        1,
+        69
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "Prompt fully clear, spec map straight to Rust code 1:1.",
+      "reasoning": "Enum variants, labels, struct fields, line() format, is_error() rules all spelled exact with byte examples. Agent build match, tests match examples verbatim. No gap found."
+    }
+  ],
+  "journal": [
+    {
+      "gen": 28,
+      "timestamp": "2026-07-24T09:08:33.674Z",
+      "mode": "full",
+      "promptHash": "24cdb5c1328634b0489441dce5fdf5660ca766d6d9237bf9952163d442f61e2a",
+      "files": [
+        {
+          "path": "statusclass_render/Cargo.toml",
+          "journalPath": ".napl/src/rust/statusclass_render/Cargo.toml",
+          "patch": "@@ -0,0 +1,6 @@\n+[package]\n+name = \"statusclass_render\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]"
+        },
+        {
+          "path": "statusclass_render/src/lib.rs",
+          "journalPath": ".napl/src/rust/statusclass_render/src/lib.rs",
+          "patch": "@@ -0,0 +1,149 @@\n+//! The pure rendering core of the CLI's status command.\n+//!\n+//! Holds the status enum and the one-line rendering of a classified prompt.\n+//! Pure — no filesystem access, no hashing, no dependencies on other modules.\n+\n+/// The classification of a prompt relative to its generated files.\n+#[derive(Debug, Clone, Copy, PartialEq, Eq)]\n+pub enum FileStatus {\n+    /// Locked, attributed, and the prompt matches its last gen.\n+    Clean,\n+    /// Not generated, or the prompt changed since gen.\n+    PromptStale,\n+    /// A generated file was edited or deleted.\n+    Drift,\n+    /// Generated files exist but attribution failed.\n+    Unattributed,\n+}\n+\n+impl FileStatus {\n+    /// The fixed label used when rendering this status.\n+    pub fn label(self) -> &'static str {\n+        match self {\n+            FileStatus::Clean => \"clean\",\n+            FileStatus::PromptStale => \"prompt-stale\",\n+            FileStatus::Drift => \"DRIFT\",\n+            FileStatus::Unattributed => \"unattributed\",\n+        }\n+    }\n+\n+    /// Whether this status fails the CI gate.\n+    pub fn is_error(self) -> bool {\n+        matches!(self, FileStatus::Drift | FileStatus::Unattributed)\n+    }\n+}\n+\n+/// A classified prompt ready to be printed as one status line.\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct StatusEntry {\n+    /// The prompt path relative to the project root.\n+    pub file: String,\n+    pub status: FileStatus,\n+    /// A human-facing detail, possibly empty.\n+    pub detail: String,\n+}\n+\n+impl StatusEntry {\n+    /// Render the entry exactly as the CLI prints one status line.\n+    pub fn line(&self) -> String {\n+        let suffix = if self.detail.is_empty() {\n+            String::new()\n+        } else {\n+            format!(\" ({})\", self.detail)\n+        };\n+        format!(\"{:<12} {}{}\", self.status.label(), self.file, suffix)\n+    }\n+\n+    /// Whether this status fails the CI gate.\n+    pub fn is_error(&self) -> bool {\n+        self.status.is_error()\n+    }\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn labels_are_fixed() {\n+        assert_eq!(FileStatus::Clean.label(), \"clean\");\n+        assert_eq!(FileStatus::PromptStale.label(), \"prompt-stale\");\n+        assert_eq!(FileStatus::Drift.label(), \"DRIFT\");\n+        assert_eq!(FileStatus::Unattributed.label(), \"unattributed\");\n+    }\n+\n+    fn entry(status: FileStatus, detail: &str) -> StatusEntry {\n+        StatusEntry {\n+            file: \"examples/greeting.napl\".to_string(),\n+            status,\n+            detail: detail.to_string(),\n+        }\n+    }\n+\n+    #[test]\n+    fn line_clean_empty_detail() {\n+        assert_eq!(\n+            entry(FileStatus::Clean, \"\").line(),\n+            \"clean        examples/greeting.napl\"\n+        );\n+    }\n+\n+    #[test]\n+    fn line_prompt_stale_with_detail_has_single_separator() {\n+        assert_eq!(\n+            entry(FileStatus::PromptStale, \"never generated\").line(),\n+            \"prompt-stale examples/greeting.napl (never generated)\"\n+        );\n+    }\n+\n+    #[test]\n+    fn line_drift_with_detail() {\n+        assert_eq!(\n+            entry(FileStatus::Drift, \"typescript: x was edited\").line(),\n+            \"DRIFT        examples/greeting.napl (typescript: x was edited)\"\n+        );\n+    }\n+\n+    #[test]\n+    fn line_unattributed_with_detail() {\n+        assert_eq!(\n+            entry(FileStatus::Unattributed, \"run napl gen typescript --force\").line(),\n+            \"unattributed examples/greeting.napl (run napl gen typescript --force)\"\n+        );\n+    }\n+\n+    #[test]\n+    fn line_no_detail_has_no_trailing_space_or_parens() {\n+        let rendered = entry(FileStatus::Drift, \"\").line();\n+        assert_eq!(rendered, \"DRIFT        examples/greeting.napl\");\n+        assert!(!rendered.ends_with(' '));\n+        assert!(!rendered.contains('('));\n+    }\n+\n+    #[test]\n+    fn line_exact_twelve_char_label_gets_single_separator() {\n+        assert_eq!(FileStatus::PromptStale.label().len(), 12);\n+        let rendered = entry(FileStatus::PromptStale, \"\").line();\n+        assert_eq!(rendered, \"prompt-stale examples/greeting.napl\");\n+    }\n+\n+    #[test]\n+    fn line_shorter_labels_pad_to_width_twelve() {\n+        let prefix = \"clean        \";\n+        assert_eq!(prefix.len(), 13);\n+        assert!(entry(FileStatus::Clean, \"\").line().starts_with(prefix));\n+    }\n+\n+    #[test]\n+    fn is_error_for_all_variants() {\n+        assert!(!entry(FileStatus::Clean, \"\").is_error());\n+        assert!(!entry(FileStatus::PromptStale, \"\").is_error());\n+        assert!(entry(FileStatus::Drift, \"\").is_error());\n+        assert!(entry(FileStatus::Unattributed, \"\").is_error());\n+\n+        assert!(!FileStatus::Clean.is_error());\n+        assert!(!FileStatus::PromptStale.is_error());\n+        assert!(FileStatus::Drift.is_error());\n+        assert!(FileStatus::Unattributed.is_error());\n+    }\n+}"
+        }
+      ]
+    }
+  ],
+  "lock": [
+    {
+      "path": "statusclass_render/Cargo.toml",
+      "hash": "77933484f70605c4364ee04cac6bdc2c47c7b81d878c50d45eeb1daf7c522540"
+    },
+    {
+      "path": "statusclass_render/src/lib.rs",
+      "hash": "ad33ac52ed8dd654476f9d822c95f983cd8003bf2e1472f526840405ec1884c6"
+    }
+  ],
+  "session": {
+    "task": "napl gen rust → statusclass_render",
+    "files": {
+      "statusclass_render.napl": "---\nmodule: statusclass_render\ndeps: []\ntargets: [rust]\ntests:\n  - name: a clean status pads the label to twelve columns with no detail suffix\n    given: { status: clean, file: \"examples/greeting.napl\", detail: \"\" }\n    expect: { line: \"clean        examples/greeting.napl\" }\n  - name: a prompt-stale status appends its detail in parentheses\n    given: { status: prompt-stale, file: \"examples/greeting.napl\", detail: \"never generated\" }\n    expect: { line: \"prompt-stale examples/greeting.napl (never generated)\" }\n  - name: a drift status uppercases its label and keeps the twelve-column pad\n    given: { status: drift, file: \"examples/greeting.napl\", detail: \"typescript: x was edited\" }\n    expect: { line: \"DRIFT        examples/greeting.napl (typescript: x was edited)\" }\n  - name: an unattributed status renders its label and detail\n    given: { status: unattributed, file: \"examples/greeting.napl\", detail: \"run napl gen typescript --force\" }\n    expect: { line: \"unattributed examples/greeting.napl (run napl gen typescript --force)\" }\n  - name: only drift and unattributed count as errors\n    given: {}\n    expect: { errors: [drift, unattributed], not_errors: [clean, prompt-stale] }\n---\n# Rendering a prompt's status line\n\nThis module is the **pure** rendering core of the CLI's status command: it holds\nthe status enum and the one-line rendering of a classified prompt. It is pure —\nno filesystem access, no hashing, no dependencies on other project modules. (The\nI/O classifier that reads generated files off disk to decide the status stays\nhand-written and constructs the `StatusEntry` values this module renders.)\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `statusclass_render/`:\n`statusclass_render/Cargo.toml` (package name `statusclass_render`) and\n`statusclass_render/src/lib.rs`. Touch nothing outside `statusclass_render/`.\nEnsure `cargo test` passes from the workspace root before finishing.\n\n## The status enum\n\nExpose a public enum `FileStatus` (deriving at least `Debug`, `Clone`, `Copy`,\n`PartialEq`, `Eq`) with exactly these variants:\n\n- `Clean` — locked, attributed, and the prompt matches its last gen.\n- `PromptStale` — not generated, or the prompt changed since gen.\n- `Drift` — a generated file was edited or deleted.\n- `Unattributed` — generated files exist but attribution failed.\n\nEach variant has a fixed lowercase-ish **label** used when rendering:\n\n- `Clean` → `clean`\n- `PromptStale` → `prompt-stale`\n- `Drift` → `DRIFT` (uppercase — it is an error state)\n- `Unattributed` → `unattributed`\n\n## The status entry\n\nExpose a public struct `StatusEntry` with public fields:\n\n- `file: String` — the prompt path relative to the project root.\n- `status: FileStatus`\n- `detail: String` — a human-facing detail, possibly empty.\n\n### `line(&self) -> String`\n\nRender the entry exactly as the CLI prints one status line: the status **label**\nleft-aligned and padded with spaces to a minimum width of **12** columns, then a\nsingle space, then the `file`, then — only when `detail` is non-empty — a space\nand the detail wrapped in parentheses. When `detail` is empty there is no trailing\nspace and no parentheses.\n\nConcretely, the format is `{label:<12} {file}{suffix}` where `suffix` is empty for\nan empty detail and ` ({detail})` otherwise. Byte-exact examples:\n\n- `clean` + `examples/greeting.napl` + empty detail →\n  `clean        examples/greeting.napl` (the label `clean` is 5 characters, so 7\n  spaces pad it to 12, then one separating space).\n- `prompt-stale` + `examples/greeting.napl` + `never generated` →\n  `prompt-stale examples/greeting.napl (never generated)` (the label is already 12\n  characters, so exactly one separating space follows).\n- `DRIFT` + `examples/greeting.napl` + `typescript: x was edited` →\n  `DRIFT        examples/greeting.napl (typescript: x was edited)`.\n- `unattributed` + `examples/greeting.napl` + `run napl gen typescript --force` →\n  `unattributed examples/greeting.napl (run napl gen typescript --force)`.\n\n### `is_error(&self) -> bool`\n\nWhether this status fails the CI gate: `true` for `Drift` and `Unattributed`,\n`false` for `Clean` and `PromptStale`.\n</content>\n"
+    },
+    "events": [
+      {
+        "type": "task",
+        "task": "napl gen rust → statusclass_render"
+      },
+      {
+        "type": "diff",
+        "path": "statusclass_render/Cargo.toml",
+        "patch": "@@ -0,0 +1,6 @@\n+[package]\n+name = \"statusclass_render\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]"
+      },
+      {
+        "type": "file-edit",
+        "path": "statusclass_render/Cargo.toml",
+        "content": "[package]\nname = \"statusclass_render\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n"
+      },
+      {
+        "type": "diff",
+        "path": "statusclass_render/src/lib.rs",
+        "patch": "@@ -0,0 +1,149 @@\n+//! The pure rendering core of the CLI's status command.\n+//!\n+//! Holds the status enum and the one-line rendering of a classified prompt.\n+//! Pure — no filesystem access, no hashing, no dependencies on other modules.\n+\n+/// The classification of a prompt relative to its generated files.\n+#[derive(Debug, Clone, Copy, PartialEq, Eq)]\n+pub enum FileStatus {\n+    /// Locked, attributed, and the prompt matches its last gen.\n+    Clean,\n+    /// Not generated, or the prompt changed since gen.\n+    PromptStale,\n+    /// A generated file was edited or deleted.\n+    Drift,\n+    /// Generated files exist but attribution failed.\n+    Unattributed,\n+}\n+\n+impl FileStatus {\n+    /// The fixed label used when rendering this status.\n+    pub fn label(self) -> &'static str {\n+        match self {\n+            FileStatus::Clean => \"clean\",\n+            FileStatus::PromptStale => \"prompt-stale\",\n+            FileStatus::Drift => \"DRIFT\",\n+            FileStatus::Unattributed => \"unattributed\",\n+        }\n+    }\n+\n+    /// Whether this status fails the CI gate.\n+    pub fn is_error(self) -> bool {\n+        matches!(self, FileStatus::Drift | FileStatus::Unattributed)\n+    }\n+}\n+\n+/// A classified prompt ready to be printed as one status line.\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct StatusEntry {\n+    /// The prompt path relative to the project root.\n+    pub file: String,\n+    pub status: FileStatus,\n+    /// A human-facing detail, possibly empty.\n+    pub detail: String,\n+}\n+\n+impl StatusEntry {\n+    /// Render the entry exactly as the CLI prints one status line.\n+    pub fn line(&self) -> String {\n+        let suffix = if self.detail.is_empty() {\n+            String::new()\n+        } else {\n+            format!(\" ({})\", self.detail)\n+        };\n+        format!(\"{:<12} {}{}\", self.status.label(), self.file, suffix)\n+    }\n+\n+    /// Whether this status fails the CI gate.\n+    pub fn is_error(&self) -> bool {\n+        self.status.is_error()\n+    }\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn labels_are_fixed() {\n+        assert_eq!(FileStatus::Clean.label(), \"clean\");\n+        assert_eq!(FileStatus::PromptStale.label(), \"prompt-stale\");\n+        assert_eq!(FileStatus::Drift.label(), \"DRIFT\");\n+        assert_eq!(FileStatus::Unattributed.label(), \"unattributed\");\n+    }\n+\n+    fn entry(status: FileStatus, detail: &str) -> StatusEntry {\n+        StatusEntry {\n+            file: \"examples/greeting.napl\".to_string(),\n+            status,\n+            detail: detail.to_string(),\n+        }\n+    }\n+\n+    #[test]\n+    fn line_clean_empty_detail() {\n+        assert_eq!(\n+            entry(FileStatus::Clean, \"\").line(),\n+            \"clean        examples/greeting.napl\"\n+        );\n+    }\n+\n+    #[test]\n+    fn line_prompt_stale_with_detail_has_single_separator() {\n+        assert_eq!(\n+            entry(FileStatus::PromptStale, \"never generated\").line(),\n+            \"prompt-stale examples/greeting.napl (never generated)\"\n+        );\n+    }\n+\n+    #[test]\n+    fn line_drift_with_detail() {\n+        assert_eq!(\n+            entry(FileStatus::Drift, \"typescript: x was edited\").line(),\n+            \"DRIFT        examples/greeting.napl (typescript: x was edited)\"\n+        );\n+    }\n+\n+    #[test]\n+    fn line_unattributed_with_detail() {\n+        assert_eq!(\n+            entry(FileStatus::Unattributed, \"run napl gen typescript --force\").line(),\n+            \"unattributed examples/greeting.napl (run napl gen typescript --force)\"\n+        );\n+    }\n+\n+    #[test]\n+    fn line_no_detail_has_no_trailing_space_or_parens() {\n+        let rendered = entry(FileStatus::Drift, \"\").line();\n+        assert_eq!(rendered, \"DRIFT        examples/greeting.napl\");\n+        assert!(!rendered.ends_with(' '));\n+        assert!(!rendered.contains('('));\n+    }\n+\n+    #[test]\n+    fn line_exact_twelve_char_label_gets_single_separator() {\n+        assert_eq!(FileStatus::PromptStale.label().len(), 12);\n+        let rendered = entry(FileStatus::PromptStale, \"\").line();\n+        assert_eq!(rendered, \"prompt-stale examples/greeting.napl\");\n+    }\n+\n+    #[test]\n+    fn line_shorter_labels_pad_to_width_twelve() {\n+        let prefix = \"clean        \";\n+        assert_eq!(prefix.len(), 13);\n+        assert!(entry(FileStatus::Clean, \"\").line().starts_with(prefix));\n+    }\n+\n+    #[test]\n+    fn is_error_for_all_variants() {\n+        assert!(!entry(FileStatus::Clean, \"\").is_error());\n+        assert!(!entry(FileStatus::PromptStale, \"\").is_error());\n+        assert!(entry(FileStatus::Drift, \"\").is_error());\n+        assert!(entry(FileStatus::Unattributed, \"\").is_error());\n+\n+        assert!(!FileStatus::Clean.is_error());\n+        assert!(!FileStatus::PromptStale.is_error());\n+        assert!(FileStatus::Drift.is_error());\n+        assert!(FileStatus::Unattributed.is_error());\n+    }\n+}"
+      },
+      {
+        "type": "file-edit",
+        "path": "statusclass_render/src/lib.rs",
+        "content": "//! The pure rendering core of the CLI's status command.\n//!\n//! Holds the status enum and the one-line rendering of a classified prompt.\n//! Pure — no filesystem access, no hashing, no dependencies on other modules.\n\n/// The classification of a prompt relative to its generated files.\n#[derive(Debug, Clone, Copy, PartialEq, Eq)]\npub enum FileStatus {\n    /// Locked, attributed, and the prompt matches its last gen.\n    Clean,\n    /// Not generated, or the prompt changed since gen.\n    PromptStale,\n    /// A generated file was edited or deleted.\n    Drift,\n    /// Generated files exist but attribution failed.\n    Unattributed,\n}\n\nimpl FileStatus {\n    /// The fixed label used when rendering this status.\n    pub fn label(self) -> &'static str {\n        match self {\n            FileStatus::Clean => \"clean\",\n            FileStatus::PromptStale => \"prompt-stale\",\n            FileStatus::Drift => \"DRIFT\",\n            FileStatus::Unattributed => \"unattributed\",\n        }\n    }\n\n    /// Whether this status fails the CI gate.\n    pub fn is_error(self) -> bool {\n        matches!(self, FileStatus::Drift | FileStatus::Unattributed)\n    }\n}\n\n/// A classified prompt ready to be printed as one status line.\n#[derive(Debug, Clone, PartialEq, Eq)]\npub struct StatusEntry {\n    /// The prompt path relative to the project root.\n    pub file: String,\n    pub status: FileStatus,\n    /// A human-facing detail, possibly empty.\n    pub detail: String,\n}\n\nimpl StatusEntry {\n    /// Render the entry exactly as the CLI prints one status line.\n    pub fn line(&self) -> String {\n        let suffix = if self.detail.is_empty() {\n            String::new()\n        } else {\n            format!(\" ({})\", self.detail)\n        };\n        format!(\"{:<12} {}{}\", self.status.label(), self.file, suffix)\n    }\n\n    /// Whether this status fails the CI gate.\n    pub fn is_error(&self) -> bool {\n        self.status.is_error()\n    }\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn labels_are_fixed() {\n        assert_eq!(FileStatus::Clean.label(), \"clean\");\n        assert_eq!(FileStatus::PromptStale.label(), \"prompt-stale\");\n        assert_eq!(FileStatus::Drift.label(), \"DRIFT\");\n        assert_eq!(FileStatus::Unattributed.label(), \"unattributed\");\n    }\n\n    fn entry(status: FileStatus, detail: &str) -> StatusEntry {\n        StatusEntry {\n            file: \"examples/greeting.napl\".to_string(),\n            status,\n            detail: detail.to_string(),\n        }\n    }\n\n    #[test]\n    fn line_clean_empty_detail() {\n        assert_eq!(\n            entry(FileStatus::Clean, \"\").line(),\n            \"clean        examples/greeting.napl\"\n        );\n    }\n\n    #[test]\n    fn line_prompt_stale_with_detail_has_single_separator() {\n        assert_eq!(\n            entry(FileStatus::PromptStale, \"never generated\").line(),\n            \"prompt-stale examples/greeting.napl (never generated)\"\n        );\n    }\n\n    #[test]\n    fn line_drift_with_detail() {\n        assert_eq!(\n            entry(FileStatus::Drift, \"typescript: x was edited\").line(),\n            \"DRIFT        examples/greeting.napl (typescript: x was edited)\"\n        );\n    }\n\n    #[test]\n    fn line_unattributed_with_detail() {\n        assert_eq!(\n            entry(FileStatus::Unattributed, \"run napl gen typescript --force\").line(),\n            \"unattributed examples/greeting.napl (run napl gen typescript --force)\"\n        );\n    }\n\n    #[test]\n    fn line_no_detail_has_no_trailing_space_or_parens() {\n        let rendered = entry(FileStatus::Drift, \"\").line();\n        assert_eq!(rendered, \"DRIFT        examples/greeting.napl\");\n        assert!(!rendered.ends_with(' '));\n        assert!(!rendered.contains('('));\n    }\n\n    #[test]\n    fn line_exact_twelve_char_label_gets_single_separator() {\n        assert_eq!(FileStatus::PromptStale.label().len(), 12);\n        let rendered = entry(FileStatus::PromptStale, \"\").line();\n        assert_eq!(rendered, \"prompt-stale examples/greeting.napl\");\n    }\n\n    #[test]\n    fn line_shorter_labels_pad_to_width_twelve() {\n        let prefix = \"clean        \";\n        assert_eq!(prefix.len(), 13);\n        assert!(entry(FileStatus::Clean, \"\").line().starts_with(prefix));\n    }\n\n    #[test]\n    fn is_error_for_all_variants() {\n        assert!(!entry(FileStatus::Clean, \"\").is_error());\n        assert!(!entry(FileStatus::PromptStale, \"\").is_error());\n        assert!(entry(FileStatus::Drift, \"\").is_error());\n        assert!(entry(FileStatus::Unattributed, \"\").is_error());\n\n        assert!(!FileStatus::Clean.is_error());\n        assert!(!FileStatus::PromptStale.is_error());\n        assert!(FileStatus::Drift.is_error());\n        assert!(FileStatus::Unattributed.is_error());\n    }\n}\n"
+      },
+      {
+        "type": "attribution",
+        "module": "statusclass_render",
+        "target": "rust",
+        "entries": [
+          {
+            "promptLines": [
+              20,
+              21
+            ],
+            "file": "statusclass_render/src/lib.rs",
+            "lines": [
+              7,
+              8
+            ],
+            "note": "enum decl with required derives"
+          },
+          {
+            "promptLines": [
+              22,
+              27
+            ],
+            "file": "statusclass_render/src/lib.rs",
+            "lines": [
+              9,
+              17
+            ],
+            "note": "four variants with doc comments"
+          },
+          {
+            "promptLines": [
+              28,
+              33
+            ],
+            "file": "statusclass_render/src/lib.rs",
+            "lines": [
+              20,
+              28
+            ],
+            "note": "label() match per variant"
+          },
+          {
+            "promptLines": [
+              37,
+              41
+            ],
+            "file": "statusclass_render/src/lib.rs",
+            "lines": [
+              37,
+              44
+            ],
+            "note": "StatusEntry struct fields"
+          },
+          {
+            "promptLines": [
+              43,
+              49
+            ],
+            "file": "statusclass_render/src/lib.rs",
+            "lines": [
+              48,
+              55
+            ],
+            "note": "line() renders padded label + file + optional detail"
+          },
+          {
+            "promptLines": [
+              51,
+              52
+            ],
+            "file": "statusclass_render/src/lib.rs",
+            "lines": [
+              49,
+              54
+            ],
+            "note": "suffix format and format string"
+          },
+          {
+            "promptLines": [
+              54,
+              56
+            ],
+            "file": "statusclass_render/src/lib.rs",
+            "lines": [
+              84,
+              89
+            ],
+            "note": "byte-exact example test, clean empty detail"
+          },
+          {
+            "promptLines": [
+              57,
+              59
+            ],
+            "file": "statusclass_render/src/lib.rs",
+            "lines": [
+              91,
+              97
+            ],
+            "note": "byte-exact example test, prompt-stale with detail"
+          },
+          {
+            "promptLines": [
+              60,
+              61
+            ],
+            "file": "statusclass_render/src/lib.rs",
+            "lines": [
+              99,
+              105
+            ],
+            "note": "byte-exact example test, DRIFT with detail"
+          },
+          {
+            "promptLines": [
+              62,
+              63
+            ],
+            "file": "statusclass_render/src/lib.rs",
+            "lines": [
+              107,
+              113
+            ],
+            "note": "byte-exact example test, unattributed with detail"
+          },
+          {
+            "promptLines": [
+              65,
+              68
+            ],
+            "file": "statusclass_render/src/lib.rs",
+            "lines": [
+              31,
+              33
+            ],
+            "note": "is_error true for Drift/Unattributed"
+          },
+          {
+            "promptLines": [
+              65,
+              68
+            ],
+            "file": "statusclass_render/src/lib.rs",
+            "lines": [
+              58,
+              60
+            ],
+            "note": "StatusEntry::is_error delegates to status"
+          },
+          {
+            "promptLines": [
+              65,
+              68
+            ],
+            "file": "statusclass_render/src/lib.rs",
+            "lines": [
+              137,
+              148
+            ],
+            "note": "is_error test for all variants"
+          }
+        ]
+      },
+      {
+        "type": "mapl-entry",
+        "path": "statusclass_render.mapl",
+        "entry": {
+          "promptLines": [
+            1,
+            69
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "Prompt fully clear, spec map straight to Rust code 1:1.",
+          "reasoning": "Enum variants, labels, struct fields, line() format, is_error() rules all spelled exact with byte examples. Agent build match, tests match examples verbatim. No gap found."
+        }
+      },
+      {
+        "type": "lock",
+        "module": "statusclass_render",
+        "target": "rust",
+        "files": [
+          {
+            "path": "statusclass_render/Cargo.toml",
+            "hash": "77933484f70605c4364ee04cac6bdc2c47c7b81d878c50d45eeb1daf7c522540"
+          },
+          {
+            "path": "statusclass_render/src/lib.rs",
+            "hash": "ad33ac52ed8dd654476f9d822c95f983cd8003bf2e1472f526840405ec1884c6"
+          }
+        ]
+      }
+    ]
+  }
+}

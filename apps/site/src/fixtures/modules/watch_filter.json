@@ -1,0 +1,506 @@
+{
+  "module": "watch_filter",
+  "collection": "selfhost",
+  "target": "rust",
+  "targets": [
+    "rust"
+  ],
+  "prompt": {
+    "file": "watch_filter.napl",
+    "path": "cli/watch_filter.napl",
+    "content": "---\nmodule: watch_filter\ndeps: []\ntargets: [rust]\ntests:\n  - name: paths under toolchain or vcs directories are ignored at any depth\n    given:\n      root: \"/proj\"\n      paths:\n        - \"/proj/node_modules/dep.js\"\n        - \"/proj/.napl/src/rust/x.rs\"\n        - \"/proj/.git/HEAD\"\n        - \"/proj/src/a/.napl/b\"\n    expect: { ignored: [true, true, true, true] }\n  - name: ordinary prompt and source paths are kept\n    given:\n      root: \"/proj\"\n      paths:\n        - \"/proj/examples/greeting.napl\"\n        - \"/proj/src/lib.rs\"\n    expect: { ignored: [false, false] }\n---\n# The watch ignore filter\n\nThis module is the **pure** path-decision core of the CLI's watch command: it\ndecides whether a filesystem event on a given path should be ignored because the\npath lives inside a toolchain-owned or version-control directory. It is pure — no\nfilesystem access, no dependencies on other project modules. The I/O shell\nreceives real filesystem events and consults this predicate before deciding\nwhether a changed path is a prompt worth recompiling.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `watch_filter/`: `watch_filter/Cargo.toml`\n(package name `watch_filter`) and `watch_filter/src/lib.rs`. Touch nothing\noutside `watch_filter/`. Ensure `cargo test` passes from the workspace root\nbefore finishing.\n\n## The ignored directory names\n\nExpose a public constant array of the directory names that are always ignored,\nin exactly this order: `node_modules`, `.napl`, `.git`. A path is ignored when\n**any** path component (relative to the project root) exactly matches one of\nthese names — so an ignored directory anywhere along the path, at any depth,\ncauses the whole path to be ignored.\n\n## `is_ignored(path: &std::path::Path, root: &std::path::Path) -> bool`\n\nCompute the path of `path` relative to `root` by stripping the `root` prefix; if\n`path` does not start with `root`, use `path` unchanged. Then return `true` when\nany component of that (possibly relative) path exactly equals one of the ignored\ndirectory names, and `false` otherwise. Compare component names as strings.\n\n### Worked decisions\n\nWith `root = /proj`:\n\n- `/proj/node_modules/dep.js` → `true` (the `node_modules` component matches).\n- `/proj/.napl/src/rust/x.rs` → `true` (`.napl` matches).\n- `/proj/.git/HEAD` → `true` (`.git` matches).\n- `/proj/src/a/.napl/b` → `true` (a nested `.napl` matches — depth does not\n  matter).\n- `/proj/examples/greeting.napl` → `false` (no component is an ignored directory;\n  the `.napl` **file extension** is not a `.napl` directory component).\n- `/proj/src/lib.rs` → `false`.\n"
+  },
+  "promptAtGen": "# The watch ignore filter\n\nThis module is the **pure** path-decision core of the CLI's watch command: it\ndecides whether a filesystem event on a given path should be ignored because the\npath lives inside a toolchain-owned or version-control directory. It is pure — no\nfilesystem access, no dependencies on other project modules. The I/O shell\nreceives real filesystem events and consults this predicate before deciding\nwhether a changed path is a prompt worth recompiling.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `watch_filter/`: `watch_filter/Cargo.toml`\n(package name `watch_filter`) and `watch_filter/src/lib.rs`. Touch nothing\noutside `watch_filter/`. Ensure `cargo test` passes from the workspace root\nbefore finishing.\n\n## The ignored directory names\n\nExpose a public constant array of the directory names that are always ignored,\nin exactly this order: `node_modules`, `.napl`, `.git`. A path is ignored when\n**any** path component (relative to the project root) exactly matches one of\nthese names — so an ignored directory anywhere along the path, at any depth,\ncauses the whole path to be ignored.\n\n## `is_ignored(path: &std::path::Path, root: &std::path::Path) -> bool`\n\nCompute the path of `path` relative to `root` by stripping the `root` prefix; if\n`path` does not start with `root`, use `path` unchanged. Then return `true` when\nany component of that (possibly relative) path exactly equals one of the ignored\ndirectory names, and `false` otherwise. Compare component names as strings.\n\n### Worked decisions\n\nWith `root = /proj`:\n\n- `/proj/node_modules/dep.js` → `true` (the `node_modules` component matches).\n- `/proj/.napl/src/rust/x.rs` → `true` (`.napl` matches).\n- `/proj/.git/HEAD` → `true` (`.git` matches).\n- `/proj/src/a/.napl/b` → `true` (a nested `.napl` matches — depth does not\n  matter).\n- `/proj/examples/greeting.napl` → `false` (no component is an ignored directory;\n  the `.napl` **file extension** is not a `.napl` directory component).\n- `/proj/src/lib.rs` → `false`.\n",
+  "summary": "The watch ignore filter",
+  "files": [
+    {
+      "path": "watch_filter/Cargo.toml",
+      "journalPath": ".napl/src/rust/watch_filter/Cargo.toml",
+      "content": "# GENERATED BY NAPL from watch_filter.napl — edit the prompt, not this file\n[package]\nname = \"watch_filter\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n",
+      "language": "toml"
+    },
+    {
+      "path": "watch_filter/src/lib.rs",
+      "journalPath": ".napl/src/rust/watch_filter/src/lib.rs",
+      "content": "// GENERATED BY NAPL from watch_filter.napl — edit the prompt, not this file\n\nuse std::path::Path;\n\n/// Directory names that are always ignored, in this exact order.\npub const IGNORED_DIRS: [&str; 3] = [\"node_modules\", \".napl\", \".git\"];\n\n/// `true` when `path`, made relative to `root`, contains a component that\n/// exactly matches one of [`IGNORED_DIRS`] at any depth.\npub fn is_ignored(path: &Path, root: &Path) -> bool {\n    let relative = path.strip_prefix(root).unwrap_or(path);\n    relative\n        .components()\n        .any(|component| {\n            let name = component.as_os_str().to_string_lossy();\n            IGNORED_DIRS.iter().any(|ignored| name == *ignored)\n        })\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n    use std::path::PathBuf;\n\n    fn check(root: &str, path: &str) -> bool {\n        is_ignored(&PathBuf::from(path), &PathBuf::from(root))\n    }\n\n    #[test]\n    fn node_modules_component_ignored() {\n        assert!(check(\"/proj\", \"/proj/node_modules/dep.js\"));\n    }\n\n    #[test]\n    fn dot_napl_component_ignored() {\n        assert!(check(\"/proj\", \"/proj/.napl/src/rust/x.rs\"));\n    }\n\n    #[test]\n    fn dot_git_component_ignored() {\n        assert!(check(\"/proj\", \"/proj/.git/HEAD\"));\n    }\n\n    #[test]\n    fn nested_ignored_dir_at_any_depth() {\n        assert!(check(\"/proj\", \"/proj/src/a/.napl/b\"));\n    }\n\n    #[test]\n    fn napl_file_extension_is_not_a_directory_match() {\n        assert!(!check(\"/proj\", \"/proj/examples/greeting.napl\"));\n    }\n\n    #[test]\n    fn plain_source_file_not_ignored() {\n        assert!(!check(\"/proj\", \"/proj/src/lib.rs\"));\n    }\n\n    #[test]\n    fn path_not_under_root_used_unchanged() {\n        assert!(check(\"/proj\", \"/other/node_modules/x\"));\n        assert!(!check(\"/proj\", \"/other/src/x\"));\n    }\n\n    #[test]\n    fn ignored_dirs_constant_order() {\n        assert_eq!(IGNORED_DIRS, [\"node_modules\", \".napl\", \".git\"]);\n    }\n}\n",
+      "language": "rust"
+    }
+  ],
+  "attribution": [
+    {
+      "promptLines": [
+        3,
+        8
+      ],
+      "file": "watch_filter/src/lib.rs",
+      "lines": [
+        1,
+        3
+      ],
+      "note": "module intent/header, pure predicate, no I/O deps"
+    },
+    {
+      "promptLines": [
+        12,
+        17
+      ],
+      "file": "watch_filter/src/lib.rs",
+      "lines": [
+        1,
+        1
+      ],
+      "note": "workspace member crate location marker (generated-file banner)"
+    },
+    {
+      "promptLines": [
+        21,
+        25
+      ],
+      "file": "watch_filter/src/lib.rs",
+      "lines": [
+        5,
+        6
+      ],
+      "note": "public IGNORED_DIRS constant, exact order"
+    },
+    {
+      "promptLines": [
+        27,
+        28
+      ],
+      "file": "watch_filter/src/lib.rs",
+      "lines": [
+        8,
+        10
+      ],
+      "note": "is_ignored function signature and doc comment"
+    },
+    {
+      "promptLines": [
+        29,
+        30
+      ],
+      "file": "watch_filter/src/lib.rs",
+      "lines": [
+        11,
+        11
+      ],
+      "note": "strip root prefix, fallback to unchanged path"
+    },
+    {
+      "promptLines": [
+        30,
+        32
+      ],
+      "file": "watch_filter/src/lib.rs",
+      "lines": [
+        12,
+        18
+      ],
+      "note": "check any component matches ignored dir names as strings"
+    },
+    {
+      "promptLines": [
+        36,
+        38
+      ],
+      "file": "watch_filter/src/lib.rs",
+      "lines": [
+        30,
+        32
+      ],
+      "note": "node_modules component ignored test"
+    },
+    {
+      "promptLines": [
+        36,
+        39
+      ],
+      "file": "watch_filter/src/lib.rs",
+      "lines": [
+        34,
+        37
+      ],
+      "note": ".napl component ignored test"
+    },
+    {
+      "promptLines": [
+        36,
+        40
+      ],
+      "file": "watch_filter/src/lib.rs",
+      "lines": [
+        39,
+        42
+      ],
+      "note": ".git component ignored test"
+    },
+    {
+      "promptLines": [
+        41,
+        42
+      ],
+      "file": "watch_filter/src/lib.rs",
+      "lines": [
+        44,
+        47
+      ],
+      "note": "nested ignored dir at any depth test"
+    },
+    {
+      "promptLines": [
+        43,
+        44
+      ],
+      "file": "watch_filter/src/lib.rs",
+      "lines": [
+        49,
+        52
+      ],
+      "note": ".napl file extension not a directory match test"
+    },
+    {
+      "promptLines": [
+        45,
+        45
+      ],
+      "file": "watch_filter/src/lib.rs",
+      "lines": [
+        54,
+        57
+      ],
+      "note": "plain source file not ignored test"
+    },
+    {
+      "promptLines": [
+        29,
+        30
+      ],
+      "file": "watch_filter/src/lib.rs",
+      "lines": [
+        59,
+        63
+      ],
+      "note": "path not under root used unchanged test"
+    },
+    {
+      "promptLines": [
+        21,
+        22
+      ],
+      "file": "watch_filter/src/lib.rs",
+      "lines": [
+        65,
+        68
+      ],
+      "note": "constant order assertion test"
+    }
+  ],
+  "attributionYaml": "module: watch_filter\ntarget: rust\nentries:\n  - promptLines:\n      - 3\n      - 8\n    file: watch_filter/src/lib.rs\n    lines:\n      - 1\n      - 3\n    note: module intent/header, pure predicate, no I/O deps\n  - promptLines:\n      - 12\n      - 17\n    file: watch_filter/src/lib.rs\n    lines:\n      - 1\n      - 1\n    note: workspace member crate location marker (generated-file banner)\n  - promptLines:\n      - 21\n      - 25\n    file: watch_filter/src/lib.rs\n    lines:\n      - 5\n      - 6\n    note: public IGNORED_DIRS constant, exact order\n  - promptLines:\n      - 27\n      - 28\n    file: watch_filter/src/lib.rs\n    lines:\n      - 8\n      - 10\n    note: is_ignored function signature and doc comment\n  - promptLines:\n      - 29\n      - 30\n    file: watch_filter/src/lib.rs\n    lines:\n      - 11\n      - 11\n    note: strip root prefix, fallback to unchanged path\n  - promptLines:\n      - 30\n      - 32\n    file: watch_filter/src/lib.rs\n    lines:\n      - 12\n      - 18\n    note: check any component matches ignored dir names as strings\n  - promptLines:\n      - 36\n      - 38\n    file: watch_filter/src/lib.rs\n    lines:\n      - 30\n      - 32\n    note: node_modules component ignored test\n  - promptLines:\n      - 36\n      - 39\n    file: watch_filter/src/lib.rs\n    lines:\n      - 34\n      - 37\n    note: .napl component ignored test\n  - promptLines:\n      - 36\n      - 40\n    file: watch_filter/src/lib.rs\n    lines:\n      - 39\n      - 42\n    note: .git component ignored test\n  - promptLines:\n      - 41\n      - 42\n    file: watch_filter/src/lib.rs\n    lines:\n      - 44\n      - 47\n    note: nested ignored dir at any depth test\n  - promptLines:\n      - 43\n      - 44\n    file: watch_filter/src/lib.rs\n    lines:\n      - 49\n      - 52\n    note: .napl file extension not a directory match test\n  - promptLines:\n      - 45\n      - 45\n    file: watch_filter/src/lib.rs\n    lines:\n      - 54\n      - 57\n    note: plain source file not ignored test\n  - promptLines:\n      - 29\n      - 30\n    file: watch_filter/src/lib.rs\n    lines:\n      - 59\n      - 63\n    note: path not under root used unchanged test\n  - promptLines:\n      - 21\n      - 22\n    file: watch_filter/src/lib.rs\n    lines:\n      - 65\n      - 68\n    note: constant order assertion test\n",
+  "mapl": [
+    {
+      "promptLines": [
+        29,
+        32
+      ],
+      "kind": "assumption",
+      "severity": "warning",
+      "message": "Prefix stripping implemented as component-wise (Path::strip_prefix), not raw string prefix.",
+      "reasoning": "Prompt says \"stripping the root prefix\" and \"if path does not start with root, use path unchanged\" without specifying whether this is a string-level or path-component-level operation. The agent used std::path::Path::strip_prefix, which matches by path components (so e.g. \"/proj2\" would NOT be treated as starting with root \"/proj\" even though the string does). This is the natural Rust interpretation given the function signature takes &Path, but the prompt never states it explicitly. ",
+      "suggestion": "Clarify: \"Use Path::strip_prefix (component-wise, not raw string prefix) to compute the relative path.\" "
+    },
+    {
+      "promptLines": [
+        32,
+        32
+      ],
+      "kind": "assumption",
+      "severity": "warning",
+      "message": "Non-UTF8 path components handled via lossy string conversion, unspecified by prompt.",
+      "reasoning": "\"Compare component names as strings\" doesn't address what happens with non-UTF8 OsStr components. The agent used to_string_lossy(), which silently replaces invalid UTF-8 with replacement characters rather than failing or handling bytes directly. This is a reasonable default but was not dictated by the prompt.\n",
+      "suggestion": "State whether non-UTF8 path components should be handled losslessly, rejected, or are out of scope."
+    }
+  ],
+  "journal": [
+    {
+      "gen": 33,
+      "timestamp": "2026-07-24T09:39:44.937Z",
+      "mode": "full",
+      "promptHash": "0fd7a885b0a99d6c35bd18152b4ba93746068afc1528c8509a3b545908e230ba",
+      "files": [
+        {
+          "path": "watch_filter/Cargo.toml",
+          "journalPath": ".napl/src/rust/watch_filter/Cargo.toml",
+          "patch": "@@ -0,0 +1,7 @@\n+# GENERATED BY NAPL from watch_filter.napl — edit the prompt, not this file\n+[package]\n+name = \"watch_filter\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]"
+        },
+        {
+          "path": "watch_filter/src/lib.rs",
+          "journalPath": ".napl/src/rust/watch_filter/src/lib.rs",
+          "patch": "@@ -0,0 +1,69 @@\n+// GENERATED BY NAPL from watch_filter.napl — edit the prompt, not this file\n+\n+use std::path::Path;\n+\n+/// Directory names that are always ignored, in this exact order.\n+pub const IGNORED_DIRS: [&str; 3] = [\"node_modules\", \".napl\", \".git\"];\n+\n+/// `true` when `path`, made relative to `root`, contains a component that\n+/// exactly matches one of [`IGNORED_DIRS`] at any depth.\n+pub fn is_ignored(path: &Path, root: &Path) -> bool {\n+    let relative = path.strip_prefix(root).unwrap_or(path);\n+    relative\n+        .components()\n+        .any(|component| {\n+            let name = component.as_os_str().to_string_lossy();\n+            IGNORED_DIRS.iter().any(|ignored| name == *ignored)\n+        })\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+    use std::path::PathBuf;\n+\n+    fn check(root: &str, path: &str) -> bool {\n+        is_ignored(&PathBuf::from(path), &PathBuf::from(root))\n+    }\n+\n+    #[test]\n+    fn node_modules_component_ignored() {\n+        assert!(check(\"/proj\", \"/proj/node_modules/dep.js\"));\n+    }\n+\n+    #[test]\n+    fn dot_napl_component_ignored() {\n+        assert!(check(\"/proj\", \"/proj/.napl/src/rust/x.rs\"));\n+    }\n+\n+    #[test]\n+    fn dot_git_component_ignored() {\n+        assert!(check(\"/proj\", \"/proj/.git/HEAD\"));\n+    }\n+\n+    #[test]\n+    fn nested_ignored_dir_at_any_depth() {\n+        assert!(check(\"/proj\", \"/proj/src/a/.napl/b\"));\n+    }\n+\n+    #[test]\n+    fn napl_file_extension_is_not_a_directory_match() {\n+        assert!(!check(\"/proj\", \"/proj/examples/greeting.napl\"));\n+    }\n+\n+    #[test]\n+    fn plain_source_file_not_ignored() {\n+        assert!(!check(\"/proj\", \"/proj/src/lib.rs\"));\n+    }\n+\n+    #[test]\n+    fn path_not_under_root_used_unchanged() {\n+        assert!(check(\"/proj\", \"/other/node_modules/x\"));\n+        assert!(!check(\"/proj\", \"/other/src/x\"));\n+    }\n+\n+    #[test]\n+    fn ignored_dirs_constant_order() {\n+        assert_eq!(IGNORED_DIRS, [\"node_modules\", \".napl\", \".git\"]);\n+    }\n+}"
+        }
+      ]
+    }
+  ],
+  "lock": [
+    {
+      "path": "watch_filter/Cargo.toml",
+      "hash": "af97bfde25feec193531cfea9619cc31e3a78e208a1caadbe0a3d4c8e572a6d9"
+    },
+    {
+      "path": "watch_filter/src/lib.rs",
+      "hash": "42bbabb26a13a889ac7714d55db601adc22c540942274be9cda2ca222891a160"
+    }
+  ],
+  "session": {
+    "task": "napl gen rust → watch_filter",
+    "files": {
+      "watch_filter.napl": "---\nmodule: watch_filter\ndeps: []\ntargets: [rust]\ntests:\n  - name: paths under toolchain or vcs directories are ignored at any depth\n    given:\n      root: \"/proj\"\n      paths:\n        - \"/proj/node_modules/dep.js\"\n        - \"/proj/.napl/src/rust/x.rs\"\n        - \"/proj/.git/HEAD\"\n        - \"/proj/src/a/.napl/b\"\n    expect: { ignored: [true, true, true, true] }\n  - name: ordinary prompt and source paths are kept\n    given:\n      root: \"/proj\"\n      paths:\n        - \"/proj/examples/greeting.napl\"\n        - \"/proj/src/lib.rs\"\n    expect: { ignored: [false, false] }\n---\n# The watch ignore filter\n\nThis module is the **pure** path-decision core of the CLI's watch command: it\ndecides whether a filesystem event on a given path should be ignored because the\npath lives inside a toolchain-owned or version-control directory. It is pure — no\nfilesystem access, no dependencies on other project modules. The I/O shell\nreceives real filesystem events and consults this predicate before deciding\nwhether a changed path is a prompt worth recompiling.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `watch_filter/`: `watch_filter/Cargo.toml`\n(package name `watch_filter`) and `watch_filter/src/lib.rs`. Touch nothing\noutside `watch_filter/`. Ensure `cargo test` passes from the workspace root\nbefore finishing.\n\n## The ignored directory names\n\nExpose a public constant array of the directory names that are always ignored,\nin exactly this order: `node_modules`, `.napl`, `.git`. A path is ignored when\n**any** path component (relative to the project root) exactly matches one of\nthese names — so an ignored directory anywhere along the path, at any depth,\ncauses the whole path to be ignored.\n\n## `is_ignored(path: &std::path::Path, root: &std::path::Path) -> bool`\n\nCompute the path of `path` relative to `root` by stripping the `root` prefix; if\n`path` does not start with `root`, use `path` unchanged. Then return `true` when\nany component of that (possibly relative) path exactly equals one of the ignored\ndirectory names, and `false` otherwise. Compare component names as strings.\n\n### Worked decisions\n\nWith `root = /proj`:\n\n- `/proj/node_modules/dep.js` → `true` (the `node_modules` component matches).\n- `/proj/.napl/src/rust/x.rs` → `true` (`.napl` matches).\n- `/proj/.git/HEAD` → `true` (`.git` matches).\n- `/proj/src/a/.napl/b` → `true` (a nested `.napl` matches — depth does not\n  matter).\n- `/proj/examples/greeting.napl` → `false` (no component is an ignored directory;\n  the `.napl` **file extension** is not a `.napl` directory component).\n- `/proj/src/lib.rs` → `false`.\n"
+    },
+    "events": [
+      {
+        "type": "task",
+        "task": "napl gen rust → watch_filter"
+      },
+      {
+        "type": "diff",
+        "path": "watch_filter/Cargo.toml",
+        "patch": "@@ -0,0 +1,7 @@\n+# GENERATED BY NAPL from watch_filter.napl — edit the prompt, not this file\n+[package]\n+name = \"watch_filter\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]"
+      },
+      {
+        "type": "file-edit",
+        "path": "watch_filter/Cargo.toml",
+        "content": "# GENERATED BY NAPL from watch_filter.napl — edit the prompt, not this file\n[package]\nname = \"watch_filter\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n"
+      },
+      {
+        "type": "diff",
+        "path": "watch_filter/src/lib.rs",
+        "patch": "@@ -0,0 +1,69 @@\n+// GENERATED BY NAPL from watch_filter.napl — edit the prompt, not this file\n+\n+use std::path::Path;\n+\n+/// Directory names that are always ignored, in this exact order.\n+pub const IGNORED_DIRS: [&str; 3] = [\"node_modules\", \".napl\", \".git\"];\n+\n+/// `true` when `path`, made relative to `root`, contains a component that\n+/// exactly matches one of [`IGNORED_DIRS`] at any depth.\n+pub fn is_ignored(path: &Path, root: &Path) -> bool {\n+    let relative = path.strip_prefix(root).unwrap_or(path);\n+    relative\n+        .components()\n+        .any(|component| {\n+            let name = component.as_os_str().to_string_lossy();\n+            IGNORED_DIRS.iter().any(|ignored| name == *ignored)\n+        })\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+    use std::path::PathBuf;\n+\n+    fn check(root: &str, path: &str) -> bool {\n+        is_ignored(&PathBuf::from(path), &PathBuf::from(root))\n+    }\n+\n+    #[test]\n+    fn node_modules_component_ignored() {\n+        assert!(check(\"/proj\", \"/proj/node_modules/dep.js\"));\n+    }\n+\n+    #[test]\n+    fn dot_napl_component_ignored() {\n+        assert!(check(\"/proj\", \"/proj/.napl/src/rust/x.rs\"));\n+    }\n+\n+    #[test]\n+    fn dot_git_component_ignored() {\n+        assert!(check(\"/proj\", \"/proj/.git/HEAD\"));\n+    }\n+\n+    #[test]\n+    fn nested_ignored_dir_at_any_depth() {\n+        assert!(check(\"/proj\", \"/proj/src/a/.napl/b\"));\n+    }\n+\n+    #[test]\n+    fn napl_file_extension_is_not_a_directory_match() {\n+        assert!(!check(\"/proj\", \"/proj/examples/greeting.napl\"));\n+    }\n+\n+    #[test]\n+    fn plain_source_file_not_ignored() {\n+        assert!(!check(\"/proj\", \"/proj/src/lib.rs\"));\n+    }\n+\n+    #[test]\n+    fn path_not_under_root_used_unchanged() {\n+        assert!(check(\"/proj\", \"/other/node_modules/x\"));\n+        assert!(!check(\"/proj\", \"/other/src/x\"));\n+    }\n+\n+    #[test]\n+    fn ignored_dirs_constant_order() {\n+        assert_eq!(IGNORED_DIRS, [\"node_modules\", \".napl\", \".git\"]);\n+    }\n+}"
+      },
+      {
+        "type": "file-edit",
+        "path": "watch_filter/src/lib.rs",
+        "content": "// GENERATED BY NAPL from watch_filter.napl — edit the prompt, not this file\n\nuse std::path::Path;\n\n/// Directory names that are always ignored, in this exact order.\npub const IGNORED_DIRS: [&str; 3] = [\"node_modules\", \".napl\", \".git\"];\n\n/// `true` when `path`, made relative to `root`, contains a component that\n/// exactly matches one of [`IGNORED_DIRS`] at any depth.\npub fn is_ignored(path: &Path, root: &Path) -> bool {\n    let relative = path.strip_prefix(root).unwrap_or(path);\n    relative\n        .components()\n        .any(|component| {\n            let name = component.as_os_str().to_string_lossy();\n            IGNORED_DIRS.iter().any(|ignored| name == *ignored)\n        })\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n    use std::path::PathBuf;\n\n    fn check(root: &str, path: &str) -> bool {\n        is_ignored(&PathBuf::from(path), &PathBuf::from(root))\n    }\n\n    #[test]\n    fn node_modules_component_ignored() {\n        assert!(check(\"/proj\", \"/proj/node_modules/dep.js\"));\n    }\n\n    #[test]\n    fn dot_napl_component_ignored() {\n        assert!(check(\"/proj\", \"/proj/.napl/src/rust/x.rs\"));\n    }\n\n    #[test]\n    fn dot_git_component_ignored() {\n        assert!(check(\"/proj\", \"/proj/.git/HEAD\"));\n    }\n\n    #[test]\n    fn nested_ignored_dir_at_any_depth() {\n        assert!(check(\"/proj\", \"/proj/src/a/.napl/b\"));\n    }\n\n    #[test]\n    fn napl_file_extension_is_not_a_directory_match() {\n        assert!(!check(\"/proj\", \"/proj/examples/greeting.napl\"));\n    }\n\n    #[test]\n    fn plain_source_file_not_ignored() {\n        assert!(!check(\"/proj\", \"/proj/src/lib.rs\"));\n    }\n\n    #[test]\n    fn path_not_under_root_used_unchanged() {\n        assert!(check(\"/proj\", \"/other/node_modules/x\"));\n        assert!(!check(\"/proj\", \"/other/src/x\"));\n    }\n\n    #[test]\n    fn ignored_dirs_constant_order() {\n        assert_eq!(IGNORED_DIRS, [\"node_modules\", \".napl\", \".git\"]);\n    }\n}\n"
+      },
+      {
+        "type": "attribution",
+        "module": "watch_filter",
+        "target": "rust",
+        "entries": [
+          {
+            "promptLines": [
+              3,
+              8
+            ],
+            "file": "watch_filter/src/lib.rs",
+            "lines": [
+              1,
+              3
+            ],
+            "note": "module intent/header, pure predicate, no I/O deps"
+          },
+          {
+            "promptLines": [
+              12,
+              17
+            ],
+            "file": "watch_filter/src/lib.rs",
+            "lines": [
+              1,
+              1
+            ],
+            "note": "workspace member crate location marker (generated-file banner)"
+          },
+          {
+            "promptLines": [
+              21,
+              25
+            ],
+            "file": "watch_filter/src/lib.rs",
+            "lines": [
+              5,
+              6
+            ],
+            "note": "public IGNORED_DIRS constant, exact order"
+          },
+          {
+            "promptLines": [
+              27,
+              28
+            ],
+            "file": "watch_filter/src/lib.rs",
+            "lines": [
+              8,
+              10
+            ],
+            "note": "is_ignored function signature and doc comment"
+          },
+          {
+            "promptLines": [
+              29,
+              30
+            ],
+            "file": "watch_filter/src/lib.rs",
+            "lines": [
+              11,
+              11
+            ],
+            "note": "strip root prefix, fallback to unchanged path"
+          },
+          {
+            "promptLines": [
+              30,
+              32
+            ],
+            "file": "watch_filter/src/lib.rs",
+            "lines": [
+              12,
+              18
+            ],
+            "note": "check any component matches ignored dir names as strings"
+          },
+          {
+            "promptLines": [
+              36,
+              38
+            ],
+            "file": "watch_filter/src/lib.rs",
+            "lines": [
+              30,
+              32
+            ],
+            "note": "node_modules component ignored test"
+          },
+          {
+            "promptLines": [
+              36,
+              39
+            ],
+            "file": "watch_filter/src/lib.rs",
+            "lines": [
+              34,
+              37
+            ],
+            "note": ".napl component ignored test"
+          },
+          {
+            "promptLines": [
+              36,
+              40
+            ],
+            "file": "watch_filter/src/lib.rs",
+            "lines": [
+              39,
+              42
+            ],
+            "note": ".git component ignored test"
+          },
+          {
+            "promptLines": [
+              41,
+              42
+            ],
+            "file": "watch_filter/src/lib.rs",
+            "lines": [
+              44,
+              47
+            ],
+            "note": "nested ignored dir at any depth test"
+          },
+          {
+            "promptLines": [
+              43,
+              44
+            ],
+            "file": "watch_filter/src/lib.rs",
+            "lines": [
+              49,
+              52
+            ],
+            "note": ".napl file extension not a directory match test"
+          },
+          {
+            "promptLines": [
+              45,
+              45
+            ],
+            "file": "watch_filter/src/lib.rs",
+            "lines": [
+              54,
+              57
+            ],
+            "note": "plain source file not ignored test"
+          },
+          {
+            "promptLines": [
+              29,
+              30
+            ],
+            "file": "watch_filter/src/lib.rs",
+            "lines": [
+              59,
+              63
+            ],
+            "note": "path not under root used unchanged test"
+          },
+          {
+            "promptLines": [
+              21,
+              22
+            ],
+            "file": "watch_filter/src/lib.rs",
+            "lines": [
+              65,
+              68
+            ],
+            "note": "constant order assertion test"
+          }
+        ]
+      },
+      {
+        "type": "mapl-entry",
+        "path": "watch_filter.mapl",
+        "entry": {
+          "promptLines": [
+            29,
+            32
+          ],
+          "kind": "assumption",
+          "severity": "warning",
+          "message": "Prefix stripping implemented as component-wise (Path::strip_prefix), not raw string prefix.",
+          "reasoning": "Prompt says \"stripping the root prefix\" and \"if path does not start with root, use path unchanged\" without specifying whether this is a string-level or path-component-level operation. The agent used std::path::Path::strip_prefix, which matches by path components (so e.g. \"/proj2\" would NOT be treated as starting with root \"/proj\" even though the string does). This is the natural Rust interpretation given the function signature takes &Path, but the prompt never states it explicitly. ",
+          "suggestion": "Clarify: \"Use Path::strip_prefix (component-wise, not raw string prefix) to compute the relative path.\" "
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "watch_filter.mapl",
+        "entry": {
+          "promptLines": [
+            32,
+            32
+          ],
+          "kind": "assumption",
+          "severity": "warning",
+          "message": "Non-UTF8 path components handled via lossy string conversion, unspecified by prompt.",
+          "reasoning": "\"Compare component names as strings\" doesn't address what happens with non-UTF8 OsStr components. The agent used to_string_lossy(), which silently replaces invalid UTF-8 with replacement characters rather than failing or handling bytes directly. This is a reasonable default but was not dictated by the prompt.\n",
+          "suggestion": "State whether non-UTF8 path components should be handled losslessly, rejected, or are out of scope."
+        }
+      },
+      {
+        "type": "lock",
+        "module": "watch_filter",
+        "target": "rust",
+        "files": [
+          {
+            "path": "watch_filter/Cargo.toml",
+            "hash": "af97bfde25feec193531cfea9619cc31e3a78e208a1caadbe0a3d4c8e572a6d9"
+          },
+          {
+            "path": "watch_filter/src/lib.rs",
+            "hash": "42bbabb26a13a889ac7714d55db601adc22c540942274be9cda2ca222891a160"
+          }
+        ]
+      }
+    ]
+  }
+}

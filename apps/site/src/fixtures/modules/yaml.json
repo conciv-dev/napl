@@ -1,0 +1,912 @@
+{
+  "module": "yaml",
+  "collection": "selfhost",
+  "target": "rust",
+  "targets": [
+    "rust"
+  ],
+  "prompt": {
+    "file": "yaml.napl",
+    "path": "core/yaml.napl",
+    "content": "---\nmodule: yaml\ndeps: [schemas_attribution, schemas_ir, schemas_ml, schemas_line_range]\ntargets: [rust]\ntests:\n  - name: plain scalars stay plain and unquoted\n    given: { scalars: [\"Returns the string Hello, name!\", \"nothing to add\", \"it's fine\", \"state the exact emphasis, e.g. all caps\", \"yes\", \"colon:nospace\", \"on\", \"Off\", \"no\"] }\n    expect: { plain: true }\n  - name: strings needing quoting are double-quoted\n    given: { scalars: [\"greet(name: string): string\", \"#leadinghash\", \" leadingspace\", \"trailingspace \", \"true\", \"123\", \"null\", \"a: b\", \"has # hash\", \"- dashlead\", \"end colon:\", \"1.5\", \"0x10\", \".inf\", \"~\", \"only ' apostrophe: with colon\"] }\n    expect: { double_quoted: true }\n  - name: a plain-rejected string with a double quote and no apostrophe is single-quoted\n    given: { scalar: \"\\\"loudly\\\" is vague\" }\n    expect: { emitted: \"'\\\"loudly\\\" is vague'\" }\n  - name: the empty string is double-quoted\n    given: { scalar: \"\" }\n    expect: { emitted: \"\\\"\\\"\" }\n  - name: attribution serializes to its pinned block bytes\n    given: { doc: attribution }\n    expect: { bytes: \"module: greeting\\ntarget: typescript\\nentries:\\n  - promptLines:\\n      - 1\\n      - 1\\n    file: greet.ts\\n    lines:\\n      - 1\\n      - 1\\n    note: builds the greeting string\\n\" }\n  - name: IR serializes to its pinned block bytes with empty collections inline\n    given: { doc: ir }\n    expect: { bytes: \"module: greeting\\ndeps: []\\ntypes: []\\nfunctions:\\n  - name: greet\\n    signature: \\\"greet(name: string): string\\\"\\n    behavior: Returns the string Hello, name!\\ntests: []\\n\" }\n  - name: an empty machine layer serializes with inline empty entries\n    given: { doc: ml_empty }\n    expect: { bytes: \"module: greeting\\ntarget: typescript\\nentries: []\\n\" }\n  - name: a machine layer with entries serializes to its pinned block bytes\n    given: { doc: ml_entries }\n    expect: { bytes: \"module: greeting\\ntarget: typescript\\nentries:\\n  - promptLines:\\n      - 1\\n      - 1\\n    kind: ambiguity\\n    message: '\\\"loudly\\\" is vague'\\n    reasoning: unclear whether to uppercase, add punctuation, or both\\n    suggestion: state the exact emphasis, e.g. all caps\\n  - promptLines:\\n      - 1\\n      - 1\\n    kind: no-op\\n    message: requirement already satisfied by existing code\\n    reasoning: the greeting is already emphatic enough; no edit was needed\\n\" }\n---\n# A focused YAML emitter matching `eemeli/yaml` block style\n\nThis module renders NAPL's on-disk documents (attribution, IR, machine-layer) as\nYAML **byte-for-byte identical** to what the JavaScript `yaml` package\n(`eemeli/yaml`) `stringify` produces for these document shapes. The exact bytes\nare load-bearing — the corpus pins them — so reproduce the block style and scalar\nheuristics precisely. It is pure: no I/O. Bring in `serde_json`.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `yaml/`: `yaml/Cargo.toml` (package name `yaml`)\nand `yaml/src/lib.rs`. Touch nothing outside `yaml/`. Ensure `cargo test` passes\nfrom the workspace root before finishing.\n\n## Builds on four modules of this workspace\n\nEach is a sibling member crate generated into this same workspace. Add a path\ndependency on each in your `Cargo.toml` (workspace siblings, not external\ncrates.io dependencies), read their public fields to drive serialization, and do\n**not** reimplement them or depend on any hand-written crate.\n\n- **`schemas_line_range`** (`../schemas_line_range`): `LineRange`, an inclusive\n  1-based range with public `start`/`end` fields (`u32`).\n- **`schemas_attribution`** (`../schemas_attribution`): `Attribution` with public\n  fields `module: String`, `target: String`, `entries: Vec<AttributionEntry>`;\n  and `AttributionEntry` with public `prompt_lines: LineRange`, `file: String`,\n  `lines: LineRange`, `note: String`.\n- **`schemas_ir`** (`../schemas_ir`): `Ir` with public `module: String`,\n  `deps: Vec<String>`, `types: Vec<IrType>`, `functions: Vec<IrFunction>`,\n  `tests: Vec<IrTest>`; `IrType` with public `name`/`description`; `IrFunction`\n  with public `name`/`signature`/`behavior`; `IrTest` with public `name` and\n  `given`/`expect` (each a `serde_json::Value`).\n- **`schemas_ml`** (`../schemas_ml`): `Ml` with public `module: String`,\n  `target: String`, `entries: Vec<MlEntry>`; `MlEntry` with public\n  `prompt_lines: LineRange`, `kind: MlKind`, `message: String`,\n  `reasoning: String`, `suggestion: Option<String>`; and `MlKind` with variants\n  `Ambiguity`, `Assumption`, `Note`, `NoOp`.\n\n## The value model\n\nExpose a public enum `Yaml` (`Debug`, `Clone`, `PartialEq`) with variants:\n`Null`, `Bool(bool)`, `Int(i64)`, `Float(f64)`, `Str(String)`, `Seq(Vec<Yaml>)`,\nand `Map(Vec<(String, Yaml)>)` (a mapping whose key insertion order is preserved).\n\n## Scalar rendering\n\nA **string scalar** renders as follows:\n\n- The empty string renders as `\"\"` (two double quotes).\n- If the string is *plain-representable* (rules below), it renders verbatim, with\n  no quoting.\n- Otherwise, if it contains a double-quote character and no apostrophe, it renders\n  single-quoted: wrap in `'…'`, doubling any apostrophe (there are none in this\n  branch). So `\"loudly\" is vague` → `'\"loudly\" is vague'`.\n- Otherwise it renders double-quoted: wrap in `\"…\"`, escaping `\"`→`\\\"`, `\\`→`\\\\`,\n  newline→`\\n`, tab→`\\t`, carriage-return→`\\r`; other characters pass through.\n\nA non-empty string is **plain-representable** only when ALL of these hold:\n\n- Its first and last characters are not whitespace.\n- It contains no newline and no control character (a control character is any\n  codepoint below `0x20` other than newline, or the codepoint `0x7f`).\n- Its first character is none of these indicators:\n  `,` `[` `]` `{` `}` `#` `&` `*` `!` `|` `>` `'` `\"` `%` `@` `` ` ``.\n- If its first character is `-`, `?`, or `:`, it has a second character and that\n  second character is not a space. (So `-`, `- x`, `: `, etc. are not plain, but\n  `colon:nospace` is — the leading char is a letter.)\n- It does not contain `\": \"` (colon followed by space), does not end with `:`, and\n  does not contain `\" #\"` (space followed by hash).\n- It does not resolve as a non-string core-schema value (rule below).\n\nA string **resolves as a non-string** when it is exactly one of the null/boolean\nliterals `null`, `Null`, `NULL`, `~`, `true`, `True`, `TRUE`, `false`, `False`,\n`FALSE`; OR it parses as a **core integer**; OR it parses as a **core float**:\n\n- **Core integer**: after stripping a single leading `+` or `-`: a `0x` prefix\n  followed by one or more ASCII hex digits; or a `0o` prefix followed by one or\n  more octal digits (`0`–`7`); or one or more ASCII decimal digits.\n- **Core float**: after stripping a single leading `+` or `-`, the body is\n  `.inf`/`.Inf`/`.INF`, or the whole string is `.nan`/`.NaN`/`.NAN`; otherwise\n  split the body on `e`/`E` into a mantissa and optional exponent — the mantissa\n  must contain a `.` with all-digit (possibly empty) integer and fraction parts\n  and at least one digit overall (a body with no `.` is an integer, not a float),\n  and if an exponent is present it must be one or more digits after an optional\n  sign.\n\nSo `yes`, `on`, `Off`, `no`, `it's fine`, `colon:nospace`, and\n`Returns the string Hello, name!` stay plain; while `true`, `123`, `null`, `~`,\n`1.5`, `0x10`, `.inf`, `greet(name: string): string`, `a: b`, `has # hash`,\n`- dashlead`, `end colon:`, `#leadinghash`, `\" leadingspace\"`,\n`\"trailingspace \"`, and `only ' apostrophe: with colon` are double-quoted.\n\nA **non-string** scalar renders as: `Null` → `null`; `Bool` → `true`/`false`;\n`Int` → its decimal form; `Float` → its Rust `f64` `to_string` form.\n\n## Document rendering\n\n`to_yaml_document(node: &Yaml) -> String` renders a whole document in block style\nwith a trailing newline (`\\n`). Build the body as a list of lines joined by `\\n`,\nthen append one `\\n`.\n\n- A **non-empty map** renders as block entries at indent 0. An **empty map**\n  renders inline as `{}`. A **non-empty sequence** renders as block items at\n  indent 0. An **empty sequence** renders inline as `[]`. Any other node (a\n  scalar) renders as its single scalar line.\n\nBlock **map** emission at a given indent, for each `(key, value)` in order (the\nkey rendered as a string scalar by the rules above):\n\n- If the value is a non-empty sequence: emit `{indent}{key}:` then the sequence as\n  a block indented by `indent + 2`.\n- If the value is a non-empty map: emit `{indent}{key}:` then the map as a block\n  indented by `indent + 2`.\n- Otherwise emit `{indent}{key}: {scalar}` on one line, where an empty sequence\n  value is `[]`, an empty map value is `{}`, and any other value is its scalar\n  rendering.\n\nBlock **sequence** emission at a given indent, for each item in order:\n\n- If the item is a non-empty map: emit the map as a block at `indent + 2`, then\n  turn its first line into a `- ` item — the first emitted line is\n  `{indent}- {firstLineWithoutItsLeadingIndentOfIndent+2}` and the remaining\n  lines follow unchanged.\n- If the item is a non-empty sequence: emit `{indent}-` then the inner sequence as\n  a block at `indent + 2`.\n- Otherwise emit `{indent}- {scalar}` (empty sequence → `[]`, empty map → `{}`,\n  else the scalar rendering).\n\nIndentation is spaces; each nesting level adds 2.\n\n## Document serializers\n\n`line_range(range: LineRange) -> Yaml` builds `Seq[Int(start), Int(end)]` (each\nendpoint as an `Int`).\n\n`attribution_to_yaml(attribution: &Attribution) -> String` renders the document\n`Map` with keys in this order: `module` (string), `target` (string), `entries`\n(a sequence; each entry is a `Map` with keys `promptLines` = `line_range(prompt_lines)`,\n`file` = string, `lines` = `line_range(lines)`, `note` = string). It produces\nexactly, for module `greeting`, target `typescript`, and one entry (promptLines\n`[1,1]`, file `greet.ts`, lines `[1,1]`, note `builds the greeting string`):\n\n```\nmodule: greeting\ntarget: typescript\nentries:\n  - promptLines:\n      - 1\n      - 1\n    file: greet.ts\n    lines:\n      - 1\n      - 1\n    note: builds the greeting string\n```\n\n`ml_to_yaml(ml: &Ml) -> String` renders a `Map` with keys `module`, `target`,\n`entries`. Each entry is a `Map` with keys, in order: `promptLines` =\n`line_range(prompt_lines)`, `kind` = the kind string (`Ambiguity`→`ambiguity`,\n`Assumption`→`assumption`, `Note`→`note`, `NoOp`→`no-op`), `message`,\n`reasoning`, and — only when `suggestion` is `Some` — `suggestion`. An empty\nentries list renders as `entries: []`.\n\n`ir_to_yaml(ir: &Ir) -> String` renders a `Map` with keys, in order: `module`\n(string), `deps` (a sequence of strings), `types` (a sequence of `Map`s with\n`name`, `description`), `functions` (a sequence of `Map`s with `name`,\n`signature`, `behavior`), and `tests` (a sequence of `Map`s with `name`, `given`,\n`expect`, where `given`/`expect` are each a `serde_json::Value` converted to\n`Yaml` by the rule below). Empty sequences render inline as `[]`.\n\n`json_to_yaml(value: &serde_json::Value) -> Yaml` converts a JSON value: JSON\nnull → `Null`; bool → `Bool`; a number that is an exact `i64` → `Int`, else\n`Float` (of its `f64`); string → `Str`; array → `Seq` of converted items; object\n→ `Map` of converted entries preserving key order.\n"
+  },
+  "promptAtGen": "# A focused YAML emitter matching `eemeli/yaml` block style\n\nThis module renders NAPL's on-disk documents (attribution, IR, machine-layer) as\nYAML **byte-for-byte identical** to what the JavaScript `yaml` package\n(`eemeli/yaml`) `stringify` produces for these document shapes. The exact bytes\nare load-bearing — the corpus pins them — so reproduce the block style and scalar\nheuristics precisely. It is pure: no I/O. Bring in `serde_json`.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `yaml/`: `yaml/Cargo.toml` (package name `yaml`)\nand `yaml/src/lib.rs`. Touch nothing outside `yaml/`. Ensure `cargo test` passes\nfrom the workspace root before finishing.\n\n## Builds on four modules of this workspace\n\nEach is a sibling member crate generated into this same workspace. Add a path\ndependency on each in your `Cargo.toml` (workspace siblings, not external\ncrates.io dependencies), read their public fields to drive serialization, and do\n**not** reimplement them or depend on any hand-written crate.\n\n- **`schemas_line_range`** (`../schemas_line_range`): `LineRange`, an inclusive\n  1-based range with public `start`/`end` fields (`u32`).\n- **`schemas_attribution`** (`../schemas_attribution`): `Attribution` with public\n  fields `module: String`, `target: String`, `entries: Vec<AttributionEntry>`;\n  and `AttributionEntry` with public `prompt_lines: LineRange`, `file: String`,\n  `lines: LineRange`, `note: String`.\n- **`schemas_ir`** (`../schemas_ir`): `Ir` with public `module: String`,\n  `deps: Vec<String>`, `types: Vec<IrType>`, `functions: Vec<IrFunction>`,\n  `tests: Vec<IrTest>`; `IrType` with public `name`/`description`; `IrFunction`\n  with public `name`/`signature`/`behavior`; `IrTest` with public `name` and\n  `given`/`expect` (each a `serde_json::Value`).\n- **`schemas_ml`** (`../schemas_ml`): `Ml` with public `module: String`,\n  `target: String`, `entries: Vec<MlEntry>`; `MlEntry` with public\n  `prompt_lines: LineRange`, `kind: MlKind`, `message: String`,\n  `reasoning: String`, `suggestion: Option<String>`; and `MlKind` with variants\n  `Ambiguity`, `Assumption`, `Note`, `NoOp`.\n\n## The value model\n\nExpose a public enum `Yaml` (`Debug`, `Clone`, `PartialEq`) with variants:\n`Null`, `Bool(bool)`, `Int(i64)`, `Float(f64)`, `Str(String)`, `Seq(Vec<Yaml>)`,\nand `Map(Vec<(String, Yaml)>)` (a mapping whose key insertion order is preserved).\n\n## Scalar rendering\n\nA **string scalar** renders as follows:\n\n- The empty string renders as `\"\"` (two double quotes).\n- If the string is *plain-representable* (rules below), it renders verbatim, with\n  no quoting.\n- Otherwise, if it contains a double-quote character and no apostrophe, it renders\n  single-quoted: wrap in `'…'`, doubling any apostrophe (there are none in this\n  branch). So `\"loudly\" is vague` → `'\"loudly\" is vague'`.\n- Otherwise it renders double-quoted: wrap in `\"…\"`, escaping `\"`→`\\\"`, `\\`→`\\\\`,\n  newline→`\\n`, tab→`\\t`, carriage-return→`\\r`; other characters pass through.\n\nA non-empty string is **plain-representable** only when ALL of these hold:\n\n- Its first and last characters are not whitespace.\n- It contains no newline and no control character (a control character is any\n  codepoint below `0x20` other than newline, or the codepoint `0x7f`).\n- Its first character is none of these indicators:\n  `,` `[` `]` `{` `}` `#` `&` `*` `!` `|` `>` `'` `\"` `%` `@` `` ` ``.\n- If its first character is `-`, `?`, or `:`, it has a second character and that\n  second character is not a space. (So `-`, `- x`, `: `, etc. are not plain, but\n  `colon:nospace` is — the leading char is a letter.)\n- It does not contain `\": \"` (colon followed by space), does not end with `:`, and\n  does not contain `\" #\"` (space followed by hash).\n- It does not resolve as a non-string core-schema value (rule below).\n\nA string **resolves as a non-string** when it is exactly one of the null/boolean\nliterals `null`, `Null`, `NULL`, `~`, `true`, `True`, `TRUE`, `false`, `False`,\n`FALSE`; OR it parses as a **core integer**; OR it parses as a **core float**:\n\n- **Core integer**: after stripping a single leading `+` or `-`: a `0x` prefix\n  followed by one or more ASCII hex digits; or a `0o` prefix followed by one or\n  more octal digits (`0`–`7`); or one or more ASCII decimal digits.\n- **Core float**: after stripping a single leading `+` or `-`, the body is\n  `.inf`/`.Inf`/`.INF`, or the whole string is `.nan`/`.NaN`/`.NAN`; otherwise\n  split the body on `e`/`E` into a mantissa and optional exponent — the mantissa\n  must contain a `.` with all-digit (possibly empty) integer and fraction parts\n  and at least one digit overall (a body with no `.` is an integer, not a float),\n  and if an exponent is present it must be one or more digits after an optional\n  sign.\n\nSo `yes`, `on`, `Off`, `no`, `it's fine`, `colon:nospace`, and\n`Returns the string Hello, name!` stay plain; while `true`, `123`, `null`, `~`,\n`1.5`, `0x10`, `.inf`, `greet(name: string): string`, `a: b`, `has # hash`,\n`- dashlead`, `end colon:`, `#leadinghash`, `\" leadingspace\"`,\n`\"trailingspace \"`, and `only ' apostrophe: with colon` are double-quoted.\n\nA **non-string** scalar renders as: `Null` → `null`; `Bool` → `true`/`false`;\n`Int` → its decimal form; `Float` → its Rust `f64` `to_string` form.\n\n## Document rendering\n\n`to_yaml_document(node: &Yaml) -> String` renders a whole document in block style\nwith a trailing newline (`\\n`). Build the body as a list of lines joined by `\\n`,\nthen append one `\\n`.\n\n- A **non-empty map** renders as block entries at indent 0. An **empty map**\n  renders inline as `{}`. A **non-empty sequence** renders as block items at\n  indent 0. An **empty sequence** renders inline as `[]`. Any other node (a\n  scalar) renders as its single scalar line.\n\nBlock **map** emission at a given indent, for each `(key, value)` in order (the\nkey rendered as a string scalar by the rules above):\n\n- If the value is a non-empty sequence: emit `{indent}{key}:` then the sequence as\n  a block indented by `indent + 2`.\n- If the value is a non-empty map: emit `{indent}{key}:` then the map as a block\n  indented by `indent + 2`.\n- Otherwise emit `{indent}{key}: {scalar}` on one line, where an empty sequence\n  value is `[]`, an empty map value is `{}`, and any other value is its scalar\n  rendering.\n\nBlock **sequence** emission at a given indent, for each item in order:\n\n- If the item is a non-empty map: emit the map as a block at `indent + 2`, then\n  turn its first line into a `- ` item — the first emitted line is\n  `{indent}- {firstLineWithoutItsLeadingIndentOfIndent+2}` and the remaining\n  lines follow unchanged.\n- If the item is a non-empty sequence: emit `{indent}-` then the inner sequence as\n  a block at `indent + 2`.\n- Otherwise emit `{indent}- {scalar}` (empty sequence → `[]`, empty map → `{}`,\n  else the scalar rendering).\n\nIndentation is spaces; each nesting level adds 2.\n\n## Document serializers\n\n`line_range(range: LineRange) -> Yaml` builds `Seq[Int(start), Int(end)]` (each\nendpoint as an `Int`).\n\n`attribution_to_yaml(attribution: &Attribution) -> String` renders the document\n`Map` with keys in this order: `module` (string), `target` (string), `entries`\n(a sequence; each entry is a `Map` with keys `promptLines` = `line_range(prompt_lines)`,\n`file` = string, `lines` = `line_range(lines)`, `note` = string). It produces\nexactly, for module `greeting`, target `typescript`, and one entry (promptLines\n`[1,1]`, file `greet.ts`, lines `[1,1]`, note `builds the greeting string`):\n\n```\nmodule: greeting\ntarget: typescript\nentries:\n  - promptLines:\n      - 1\n      - 1\n    file: greet.ts\n    lines:\n      - 1\n      - 1\n    note: builds the greeting string\n```\n\n`ml_to_yaml(ml: &Ml) -> String` renders a `Map` with keys `module`, `target`,\n`entries`. Each entry is a `Map` with keys, in order: `promptLines` =\n`line_range(prompt_lines)`, `kind` = the kind string (`Ambiguity`→`ambiguity`,\n`Assumption`→`assumption`, `Note`→`note`, `NoOp`→`no-op`), `message`,\n`reasoning`, and — only when `suggestion` is `Some` — `suggestion`. An empty\nentries list renders as `entries: []`.\n\n`ir_to_yaml(ir: &Ir) -> String` renders a `Map` with keys, in order: `module`\n(string), `deps` (a sequence of strings), `types` (a sequence of `Map`s with\n`name`, `description`), `functions` (a sequence of `Map`s with `name`,\n`signature`, `behavior`), and `tests` (a sequence of `Map`s with `name`, `given`,\n`expect`, where `given`/`expect` are each a `serde_json::Value` converted to\n`Yaml` by the rule below). Empty sequences render inline as `[]`.\n\n`json_to_yaml(value: &serde_json::Value) -> Yaml` converts a JSON value: JSON\nnull → `Null`; bool → `Bool`; a number that is an exact `i64` → `Int`, else\n`Float` (of its `f64`); string → `Str`; array → `Seq` of converted items; object\n→ `Map` of converted entries preserving key order.\n",
+  "summary": "A focused YAML emitter matching `eemeli/yaml` block style",
+  "files": [
+    {
+      "path": "yaml/Cargo.toml",
+      "journalPath": ".napl/src/rust/yaml/Cargo.toml",
+      "content": "[package]\nname = \"yaml\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\nserde_json = \"1\"\nschemas_line_range = { path = \"../schemas_line_range\" }\nschemas_attribution = { path = \"../schemas_attribution\" }\nschemas_ir = { path = \"../schemas_ir\" }\nschemas_ml = { path = \"../schemas_ml\" }\n",
+      "language": "toml"
+    },
+    {
+      "path": "yaml/src/lib.rs",
+      "journalPath": ".napl/src/rust/yaml/src/lib.rs",
+      "content": "// GENERATED BY NAPL from yaml.napl — edit the prompt, not this file\n\nuse schemas_attribution::Attribution;\nuse schemas_ir::Ir;\nuse schemas_line_range::LineRange;\nuse schemas_ml::{Ml, MlKind};\nuse serde_json::Value;\n\n#[derive(Debug, Clone, PartialEq)]\npub enum Yaml {\n    Null,\n    Bool(bool),\n    Int(i64),\n    Float(f64),\n    Str(String),\n    Seq(Vec<Yaml>),\n    Map(Vec<(String, Yaml)>),\n}\n\nconst PLAIN_LEADING_INDICATORS: &[char] =\n    &[',', '[', ']', '{', '}', '#', '&', '*', '!', '|', '>', '\\'', '\"', '%', '@', '`'];\n\nfn is_control_char(c: char) -> bool {\n    (c != '\\n' && (c as u32) < 0x20) || c == '\\u{7f}'\n}\n\nfn strip_single_sign(s: &str) -> &str {\n    s.strip_prefix('+').or_else(|| s.strip_prefix('-')).unwrap_or(s)\n}\n\nfn is_core_integer(s: &str) -> bool {\n    let body = strip_single_sign(s);\n    if let Some(rest) = body.strip_prefix(\"0x\") {\n        return !rest.is_empty() && rest.chars().all(|c| c.is_ascii_hexdigit());\n    }\n    if let Some(rest) = body.strip_prefix(\"0o\") {\n        return !rest.is_empty() && rest.chars().all(|c| ('0'..='7').contains(&c));\n    }\n    !body.is_empty() && body.chars().all(|c| c.is_ascii_digit())\n}\n\nfn is_core_float(s: &str) -> bool {\n    let body = strip_single_sign(s);\n    if body == \".inf\" || body == \".Inf\" || body == \".INF\" {\n        return true;\n    }\n    if s == \".nan\" || s == \".NaN\" || s == \".NAN\" {\n        return true;\n    }\n    let mut parts = body.splitn(2, |c| c == 'e' || c == 'E');\n    let mantissa = parts.next().unwrap_or(\"\");\n    let exponent = parts.next();\n\n    if mantissa.matches('.').count() != 1 {\n        return false;\n    }\n    let mut mantissa_parts = mantissa.splitn(2, '.');\n    let int_part = mantissa_parts.next().unwrap_or(\"\");\n    let frac_part = mantissa_parts.next().unwrap_or(\"\");\n    if !int_part.chars().all(|c| c.is_ascii_digit()) || !frac_part.chars().all(|c| c.is_ascii_digit()) {\n        return false;\n    }\n    if int_part.is_empty() && frac_part.is_empty() {\n        return false;\n    }\n\n    if let Some(exp) = exponent {\n        let exp_body = strip_single_sign(exp);\n        if exp_body.is_empty() || !exp_body.chars().all(|c| c.is_ascii_digit()) {\n            return false;\n        }\n    }\n\n    true\n}\n\nfn resolves_as_non_string(s: &str) -> bool {\n    matches!(\n        s,\n        \"null\" | \"Null\" | \"NULL\" | \"~\" | \"true\" | \"True\" | \"TRUE\" | \"false\" | \"False\" | \"FALSE\"\n    ) || is_core_integer(s)\n        || is_core_float(s)\n}\n\nfn is_plain_representable(s: &str) -> bool {\n    let first = s.chars().next().unwrap();\n    let last = s.chars().last().unwrap();\n    if first.is_whitespace() || last.is_whitespace() {\n        return false;\n    }\n    if s.chars().any(|c| c == '\\n' || is_control_char(c)) {\n        return false;\n    }\n    if PLAIN_LEADING_INDICATORS.contains(&first) {\n        return false;\n    }\n    if first == '-' || first == '?' || first == ':' {\n        match s.chars().nth(1) {\n            None => return false,\n            Some(c2) if c2 == ' ' => return false,\n            _ => {}\n        }\n    }\n    if s.contains(\": \") || s.ends_with(':') || s.contains(\" #\") {\n        return false;\n    }\n    if resolves_as_non_string(s) {\n        return false;\n    }\n    true\n}\n\nfn render_string_scalar(s: &str) -> String {\n    if s.is_empty() {\n        return \"\\\"\\\"\".to_string();\n    }\n    if is_plain_representable(s) {\n        return s.to_string();\n    }\n    if s.contains('\"') && !s.contains('\\'') {\n        return format!(\"'{}'\", s.replace('\\'', \"''\"));\n    }\n    let mut out = String::from(\"\\\"\");\n    for c in s.chars() {\n        match c {\n            '\"' => out.push_str(\"\\\\\\\"\"),\n            '\\\\' => out.push_str(\"\\\\\\\\\"),\n            '\\n' => out.push_str(\"\\\\n\"),\n            '\\t' => out.push_str(\"\\\\t\"),\n            '\\r' => out.push_str(\"\\\\r\"),\n            _ => out.push(c),\n        }\n    }\n    out.push('\"');\n    out\n}\n\nfn render_scalar(node: &Yaml) -> String {\n    match node {\n        Yaml::Null => \"null\".to_string(),\n        Yaml::Bool(b) => b.to_string(),\n        Yaml::Int(i) => i.to_string(),\n        Yaml::Float(f) => f.to_string(),\n        Yaml::Str(s) => render_string_scalar(s),\n        Yaml::Seq(_) | Yaml::Map(_) => unreachable!(\"render_scalar called on a container\"),\n    }\n}\n\nfn inline_scalar(node: &Yaml) -> String {\n    match node {\n        Yaml::Seq(items) if items.is_empty() => \"[]\".to_string(),\n        Yaml::Map(entries) if entries.is_empty() => \"{}\".to_string(),\n        other => render_scalar(other),\n    }\n}\n\nfn emit_map(entries: &[(String, Yaml)], indent: usize) -> Vec<String> {\n    let ind = \" \".repeat(indent);\n    let mut lines = Vec::new();\n    for (key, value) in entries {\n        let key_str = render_string_scalar(key);\n        match value {\n            Yaml::Seq(items) if !items.is_empty() => {\n                lines.push(format!(\"{ind}{key_str}:\"));\n                lines.extend(emit_seq(items, indent + 2));\n            }\n            Yaml::Map(inner) if !inner.is_empty() => {\n                lines.push(format!(\"{ind}{key_str}:\"));\n                lines.extend(emit_map(inner, indent + 2));\n            }\n            other => {\n                lines.push(format!(\"{ind}{key_str}: {}\", inline_scalar(other)));\n            }\n        }\n    }\n    lines\n}\n\nfn emit_seq(items: &[Yaml], indent: usize) -> Vec<String> {\n    let ind = \" \".repeat(indent);\n    let mut lines = Vec::new();\n    for item in items {\n        match item {\n            Yaml::Map(entries) if !entries.is_empty() => {\n                let inner = emit_map(entries, indent + 2);\n                let mut inner_iter = inner.into_iter();\n                let first = inner_iter.next().unwrap();\n                let stripped = &first[(indent + 2)..];\n                lines.push(format!(\"{ind}- {stripped}\"));\n                lines.extend(inner_iter);\n            }\n            Yaml::Seq(inner) if !inner.is_empty() => {\n                lines.push(format!(\"{ind}-\"));\n                lines.extend(emit_seq(inner, indent + 2));\n            }\n            other => {\n                lines.push(format!(\"{ind}- {}\", inline_scalar(other)));\n            }\n        }\n    }\n    lines\n}\n\npub fn to_yaml_document(node: &Yaml) -> String {\n    let lines = match node {\n        Yaml::Map(entries) if !entries.is_empty() => emit_map(entries, 0),\n        Yaml::Map(_) => vec![\"{}\".to_string()],\n        Yaml::Seq(items) if !items.is_empty() => emit_seq(items, 0),\n        Yaml::Seq(_) => vec![\"[]\".to_string()],\n        other => vec![render_scalar(other)],\n    };\n    let mut doc = lines.join(\"\\n\");\n    doc.push('\\n');\n    doc\n}\n\npub fn line_range(range: LineRange) -> Yaml {\n    Yaml::Seq(vec![Yaml::Int(range.start as i64), Yaml::Int(range.end as i64)])\n}\n\nfn ml_kind_str(kind: MlKind) -> &'static str {\n    match kind {\n        MlKind::Ambiguity => \"ambiguity\",\n        MlKind::Assumption => \"assumption\",\n        MlKind::Note => \"note\",\n        MlKind::NoOp => \"no-op\",\n    }\n}\n\npub fn attribution_to_yaml(attribution: &Attribution) -> String {\n    let entries = attribution\n        .entries\n        .iter()\n        .map(|entry| {\n            Yaml::Map(vec![\n                (\"promptLines\".to_string(), line_range(entry.prompt_lines)),\n                (\"file\".to_string(), Yaml::Str(entry.file.clone())),\n                (\"lines\".to_string(), line_range(entry.lines)),\n                (\"note\".to_string(), Yaml::Str(entry.note.clone())),\n            ])\n        })\n        .collect();\n    let doc = Yaml::Map(vec![\n        (\"module\".to_string(), Yaml::Str(attribution.module.clone())),\n        (\"target\".to_string(), Yaml::Str(attribution.target.clone())),\n        (\"entries\".to_string(), Yaml::Seq(entries)),\n    ]);\n    to_yaml_document(&doc)\n}\n\npub fn ml_to_yaml(ml: &Ml) -> String {\n    let entries = ml\n        .entries\n        .iter()\n        .map(|entry| {\n            let mut fields = vec![\n                (\"promptLines\".to_string(), line_range(entry.prompt_lines)),\n                (\"kind\".to_string(), Yaml::Str(ml_kind_str(entry.kind).to_string())),\n                (\"message\".to_string(), Yaml::Str(entry.message.clone())),\n                (\"reasoning\".to_string(), Yaml::Str(entry.reasoning.clone())),\n            ];\n            if let Some(suggestion) = &entry.suggestion {\n                fields.push((\"suggestion\".to_string(), Yaml::Str(suggestion.clone())));\n            }\n            Yaml::Map(fields)\n        })\n        .collect();\n    let doc = Yaml::Map(vec![\n        (\"module\".to_string(), Yaml::Str(ml.module.clone())),\n        (\"target\".to_string(), Yaml::Str(ml.target.clone())),\n        (\"entries\".to_string(), Yaml::Seq(entries)),\n    ]);\n    to_yaml_document(&doc)\n}\n\npub fn json_to_yaml(value: &Value) -> Yaml {\n    match value {\n        Value::Null => Yaml::Null,\n        Value::Bool(b) => Yaml::Bool(*b),\n        Value::Number(n) => match n.as_i64() {\n            Some(i) => Yaml::Int(i),\n            None => Yaml::Float(n.as_f64().unwrap_or(0.0)),\n        },\n        Value::String(s) => Yaml::Str(s.clone()),\n        Value::Array(items) => Yaml::Seq(items.iter().map(json_to_yaml).collect()),\n        Value::Object(map) => Yaml::Map(map.iter().map(|(k, v)| (k.clone(), json_to_yaml(v))).collect()),\n    }\n}\n\npub fn ir_to_yaml(ir: &Ir) -> String {\n    let deps = ir.deps.iter().map(|d| Yaml::Str(d.clone())).collect();\n    let types = ir\n        .types\n        .iter()\n        .map(|t| {\n            Yaml::Map(vec![\n                (\"name\".to_string(), Yaml::Str(t.name.clone())),\n                (\"description\".to_string(), Yaml::Str(t.description.clone())),\n            ])\n        })\n        .collect();\n    let functions = ir\n        .functions\n        .iter()\n        .map(|f| {\n            Yaml::Map(vec![\n                (\"name\".to_string(), Yaml::Str(f.name.clone())),\n                (\"signature\".to_string(), Yaml::Str(f.signature.clone())),\n                (\"behavior\".to_string(), Yaml::Str(f.behavior.clone())),\n            ])\n        })\n        .collect();\n    let tests = ir\n        .tests\n        .iter()\n        .map(|t| {\n            Yaml::Map(vec![\n                (\"name\".to_string(), Yaml::Str(t.name.clone())),\n                (\"given\".to_string(), json_to_yaml(&t.given)),\n                (\"expect\".to_string(), json_to_yaml(&t.expect)),\n            ])\n        })\n        .collect();\n    let doc = Yaml::Map(vec![\n        (\"module\".to_string(), Yaml::Str(ir.module.clone())),\n        (\"deps\".to_string(), Yaml::Seq(deps)),\n        (\"types\".to_string(), Yaml::Seq(types)),\n        (\"functions\".to_string(), Yaml::Seq(functions)),\n        (\"tests\".to_string(), Yaml::Seq(tests)),\n    ]);\n    to_yaml_document(&doc)\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n    use schemas_attribution::validate_attribution;\n    use schemas_ir::validate_ir;\n    use schemas_ml::validate_ml;\n    use serde_json::json;\n\n    #[test]\n    fn empty_string_is_double_quoted_empty() {\n        assert_eq!(render_string_scalar(\"\"), \"\\\"\\\"\");\n    }\n\n    #[test]\n    fn plain_strings_stay_plain() {\n        for s in [\n            \"yes\",\n            \"on\",\n            \"Off\",\n            \"no\",\n            \"it's fine\",\n            \"colon:nospace\",\n            \"Returns the string Hello, name!\",\n        ] {\n            assert_eq!(render_string_scalar(s), s, \"expected {s} to stay plain\");\n        }\n    }\n\n    #[test]\n    fn non_plain_strings_are_quoted() {\n        assert_eq!(render_string_scalar(\"true\"), \"\\\"true\\\"\");\n        assert_eq!(render_string_scalar(\"123\"), \"\\\"123\\\"\");\n        assert_eq!(render_string_scalar(\"null\"), \"\\\"null\\\"\");\n        assert_eq!(render_string_scalar(\"~\"), \"\\\"~\\\"\");\n        assert_eq!(render_string_scalar(\"1.5\"), \"\\\"1.5\\\"\");\n        assert_eq!(render_string_scalar(\"0x10\"), \"\\\"0x10\\\"\");\n        assert_eq!(render_string_scalar(\".inf\"), \"\\\".inf\\\"\");\n        assert_eq!(\n            render_string_scalar(\"greet(name: string): string\"),\n            \"\\\"greet(name: string): string\\\"\"\n        );\n        assert_eq!(render_string_scalar(\"a: b\"), \"\\\"a: b\\\"\");\n        assert_eq!(render_string_scalar(\"has # hash\"), \"\\\"has # hash\\\"\");\n        assert_eq!(render_string_scalar(\"- dashlead\"), \"\\\"- dashlead\\\"\");\n        assert_eq!(render_string_scalar(\"end colon:\"), \"\\\"end colon:\\\"\");\n        assert_eq!(render_string_scalar(\"#leadinghash\"), \"\\\"#leadinghash\\\"\");\n        assert_eq!(render_string_scalar(\" leadingspace\"), \"\\\" leadingspace\\\"\");\n        assert_eq!(render_string_scalar(\"trailingspace \"), \"\\\"trailingspace \\\"\");\n        assert_eq!(\n            render_string_scalar(\"only ' apostrophe: with colon\"),\n            \"\\\"only ' apostrophe: with colon\\\"\"\n        );\n    }\n\n    #[test]\n    fn double_quote_without_apostrophe_becomes_single_quoted() {\n        assert_eq!(\n            render_string_scalar(\"\\\"loudly\\\" is vague\"),\n            \"'\\\"loudly\\\" is vague'\"\n        );\n    }\n\n    #[test]\n    fn double_quoted_escapes_special_characters() {\n        // the embedded newline forces quoting (plain forbids newlines); every other\n        // special character in the string must be escaped once quoting kicks in.\n        assert_eq!(\n            render_string_scalar(\"a\\nb\\tc\\rd\\\\e\"),\n            \"\\\"a\\\\nb\\\\tc\\\\rd\\\\\\\\e\\\"\"\n        );\n        // leading quote forces quoting; presence of an apostrophe rules out the\n        // single-quote branch, so this falls to double-quoted with `\"` escaped.\n        assert_eq!(\n            render_string_scalar(\"\\\"hi\\\" it's ok\"),\n            \"\\\"\\\\\\\"hi\\\\\\\" it's ok\\\"\"\n        );\n    }\n\n    #[test]\n    fn non_string_scalars_render_directly() {\n        assert_eq!(render_scalar(&Yaml::Null), \"null\");\n        assert_eq!(render_scalar(&Yaml::Bool(true)), \"true\");\n        assert_eq!(render_scalar(&Yaml::Bool(false)), \"false\");\n        assert_eq!(render_scalar(&Yaml::Int(-42)), \"-42\");\n        assert_eq!(render_scalar(&Yaml::Float(1.5)), \"1.5\");\n    }\n\n    #[test]\n    fn document_empty_map_and_seq_are_inline() {\n        assert_eq!(to_yaml_document(&Yaml::Map(vec![])), \"{}\\n\");\n        assert_eq!(to_yaml_document(&Yaml::Seq(vec![])), \"[]\\n\");\n    }\n\n    #[test]\n    fn document_scalar_root() {\n        assert_eq!(to_yaml_document(&Yaml::Str(\"hello\".to_string())), \"hello\\n\");\n        assert_eq!(to_yaml_document(&Yaml::Int(7)), \"7\\n\");\n    }\n\n    #[test]\n    fn document_flat_map() {\n        let doc = Yaml::Map(vec![\n            (\"a\".to_string(), Yaml::Str(\"x\".to_string())),\n            (\"b\".to_string(), Yaml::Int(3)),\n        ]);\n        assert_eq!(to_yaml_document(&doc), \"a: x\\nb: 3\\n\");\n    }\n\n    #[test]\n    fn document_nested_seq_of_maps() {\n        let doc = Yaml::Map(vec![(\n            \"items\".to_string(),\n            Yaml::Seq(vec![\n                Yaml::Map(vec![(\"k\".to_string(), Yaml::Int(1))]),\n                Yaml::Map(vec![(\"k\".to_string(), Yaml::Int(2))]),\n            ]),\n        )]);\n        assert_eq!(to_yaml_document(&doc), \"items:\\n  - k: 1\\n  - k: 2\\n\");\n    }\n\n    #[test]\n    fn document_seq_of_seq() {\n        let doc = Yaml::Seq(vec![Yaml::Seq(vec![Yaml::Int(1), Yaml::Int(2)])]);\n        assert_eq!(to_yaml_document(&doc), \"-\\n  - 1\\n  - 2\\n\");\n    }\n\n    #[test]\n    fn attribution_matches_expected_bytes() {\n        let attribution = validate_attribution(json!({\n            \"module\": \"greeting\",\n            \"target\": \"typescript\",\n            \"entries\": [\n                {\n                    \"promptLines\": [1, 1],\n                    \"file\": \"greet.ts\",\n                    \"lines\": [1, 1],\n                    \"note\": \"builds the greeting string\"\n                }\n            ]\n        }))\n        .unwrap();\n\n        let expected = concat!(\n            \"module: greeting\\n\",\n            \"target: typescript\\n\",\n            \"entries:\\n\",\n            \"  - promptLines:\\n\",\n            \"      - 1\\n\",\n            \"      - 1\\n\",\n            \"    file: greet.ts\\n\",\n            \"    lines:\\n\",\n            \"      - 1\\n\",\n            \"      - 1\\n\",\n            \"    note: builds the greeting string\\n\",\n        );\n\n        assert_eq!(attribution_to_yaml(&attribution), expected);\n    }\n\n    #[test]\n    fn ml_empty_entries_render_inline() {\n        let ml = validate_ml(json!({\"module\": \"m\", \"target\": \"t\"})).unwrap();\n        assert_eq!(ml_to_yaml(&ml), \"module: m\\ntarget: t\\nentries: []\\n\");\n    }\n\n    #[test]\n    fn ml_entry_kinds_and_optional_suggestion() {\n        let ml = validate_ml(json!({\n            \"module\": \"m\",\n            \"target\": \"t\",\n            \"entries\": [\n                {\"promptLines\": [1, 2], \"kind\": \"no-op\", \"message\": \"msg\", \"reasoning\": \"why\", \"suggestion\": \"do this\"},\n                {\"promptLines\": 5, \"kind\": \"note\", \"message\": \"m2\"}\n            ]\n        }))\n        .unwrap();\n\n        let expected = concat!(\n            \"module: m\\n\",\n            \"target: t\\n\",\n            \"entries:\\n\",\n            \"  - promptLines:\\n\",\n            \"      - 1\\n\",\n            \"      - 2\\n\",\n            \"    kind: no-op\\n\",\n            \"    message: msg\\n\",\n            \"    reasoning: why\\n\",\n            \"    suggestion: do this\\n\",\n            \"  - promptLines:\\n\",\n            \"      - 5\\n\",\n            \"      - 5\\n\",\n            \"    kind: note\\n\",\n            \"    message: m2\\n\",\n            \"    reasoning: \\\"\\\"\\n\",\n        );\n\n        assert_eq!(ml_to_yaml(&ml), expected);\n    }\n\n    #[test]\n    fn ir_empty_sequences_render_inline() {\n        let ir = validate_ir(json!({\"module\": \"m\"})).unwrap();\n        assert_eq!(\n            ir_to_yaml(&ir),\n            \"module: m\\ndeps: []\\ntypes: []\\nfunctions: []\\ntests: []\\n\"\n        );\n    }\n\n    #[test]\n    fn ir_with_content_and_json_test_values() {\n        let ir = validate_ir(json!({\n            \"module\": \"greeting\",\n            \"deps\": [\"a\", \"b\"],\n            \"types\": [{\"name\": \"T\", \"description\": \"desc\"}],\n            \"functions\": [{\"name\": \"f\", \"signature\": \"f(): string\", \"behavior\": \"returns\"}],\n            \"tests\": [{\"name\": \"t1\", \"given\": {\"x\": 1, \"y\": [1, 2]}, \"expect\": \"ok\"}]\n        }))\n        .unwrap();\n\n        let expected = concat!(\n            \"module: greeting\\n\",\n            \"deps:\\n\",\n            \"  - a\\n\",\n            \"  - b\\n\",\n            \"types:\\n\",\n            \"  - name: T\\n\",\n            \"    description: desc\\n\",\n            \"functions:\\n\",\n            \"  - name: f\\n\",\n            \"    signature: \\\"f(): string\\\"\\n\",\n            \"    behavior: returns\\n\",\n            \"tests:\\n\",\n            \"  - name: t1\\n\",\n            \"    given:\\n\",\n            \"      x: 1\\n\",\n            \"      y:\\n\",\n            \"        - 1\\n\",\n            \"        - 2\\n\",\n            \"    expect: ok\\n\",\n        );\n\n        assert_eq!(ir_to_yaml(&ir), expected);\n    }\n\n    #[test]\n    fn json_to_yaml_converts_all_value_kinds() {\n        assert_eq!(json_to_yaml(&json!(null)), Yaml::Null);\n        assert_eq!(json_to_yaml(&json!(true)), Yaml::Bool(true));\n        assert_eq!(json_to_yaml(&json!(5)), Yaml::Int(5));\n        assert_eq!(json_to_yaml(&json!(1.5)), Yaml::Float(1.5));\n        assert_eq!(json_to_yaml(&json!(\"s\")), Yaml::Str(\"s\".to_string()));\n        assert_eq!(\n            json_to_yaml(&json!([1, \"a\"])),\n            Yaml::Seq(vec![Yaml::Int(1), Yaml::Str(\"a\".to_string())])\n        );\n        assert_eq!(\n            json_to_yaml(&json!({\"k\": 1})),\n            Yaml::Map(vec![(\"k\".to_string(), Yaml::Int(1))])\n        );\n    }\n\n    #[test]\n    fn line_range_builds_two_int_seq() {\n        assert_eq!(\n            line_range(LineRange::new(3, 9)),\n            Yaml::Seq(vec![Yaml::Int(3), Yaml::Int(9)])\n        );\n    }\n}\n",
+      "language": "rust"
+    }
+  ],
+  "attribution": [
+    {
+      "promptLines": [
+        43,
+        45
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        9,
+        18
+      ],
+      "note": "Yaml enum with variants"
+    },
+    {
+      "promptLines": [
+        51,
+        51
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        114,
+        116
+      ],
+      "note": "empty string renders as double-quoted empty"
+    },
+    {
+      "promptLines": [
+        52,
+        53
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        117,
+        119
+      ],
+      "note": "plain-representable strings render verbatim"
+    },
+    {
+      "promptLines": [
+        54,
+        56
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        120,
+        122
+      ],
+      "note": "single-quote branch for double-quote without apostrophe"
+    },
+    {
+      "promptLines": [
+        57,
+        58
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        123,
+        136
+      ],
+      "note": "double-quoted escaping of special chars"
+    },
+    {
+      "promptLines": [
+        62,
+        62
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        86,
+        90
+      ],
+      "note": "first/last char whitespace check"
+    },
+    {
+      "promptLines": [
+        63,
+        64
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        23,
+        25
+      ],
+      "note": "control character detection"
+    },
+    {
+      "promptLines": [
+        63,
+        64
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        91,
+        93
+      ],
+      "note": "reject newline/control chars"
+    },
+    {
+      "promptLines": [
+        65,
+        66
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        20,
+        21
+      ],
+      "note": "plain leading indicator chars list"
+    },
+    {
+      "promptLines": [
+        65,
+        66
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        94,
+        96
+      ],
+      "note": "reject leading indicator char"
+    },
+    {
+      "promptLines": [
+        67,
+        69
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        97,
+        103
+      ],
+      "note": "leading -/?/: needs non-space second char"
+    },
+    {
+      "promptLines": [
+        70,
+        71
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        104,
+        106
+      ],
+      "note": "reject colon-space, trailing colon, space-hash"
+    },
+    {
+      "promptLines": [
+        72,
+        72
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        107,
+        109
+      ],
+      "note": "reject non-string-resolving values"
+    },
+    {
+      "promptLines": [
+        74,
+        76
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        77,
+        83
+      ],
+      "note": "null/bool literal and core int/float resolution"
+    },
+    {
+      "promptLines": [
+        78,
+        80
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        27,
+        40
+      ],
+      "note": "core integer parsing"
+    },
+    {
+      "promptLines": [
+        81,
+        87
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        42,
+        75
+      ],
+      "note": "core float parsing"
+    },
+    {
+      "promptLines": [
+        89,
+        93
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        348,
+        386
+      ],
+      "note": "plain vs quoted string test cases"
+    },
+    {
+      "promptLines": [
+        95,
+        96
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        138,
+        147
+      ],
+      "note": "non-string scalar rendering"
+    },
+    {
+      "promptLines": [
+        100,
+        102
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        204,
+        215
+      ],
+      "note": "document rendering with trailing newline"
+    },
+    {
+      "promptLines": [
+        104,
+        107
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        204,
+        211
+      ],
+      "note": "empty/non-empty map and seq handling at root"
+    },
+    {
+      "promptLines": [
+        109,
+        118
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        157,
+        177
+      ],
+      "note": "block map emission rules"
+    },
+    {
+      "promptLines": [
+        116,
+        118
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        149,
+        155
+      ],
+      "note": "inline scalar for empty seq/map"
+    },
+    {
+      "promptLines": [
+        120,
+        129
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        179,
+        202
+      ],
+      "note": "block sequence emission rules"
+    },
+    {
+      "promptLines": [
+        122,
+        125
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        184,
+        191
+      ],
+      "note": "sequence item as map turns first line into dash item"
+    },
+    {
+      "promptLines": [
+        131,
+        131
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        158,
+        158
+      ],
+      "note": "indent as spaces, 2 per level"
+    },
+    {
+      "promptLines": [
+        135,
+        136
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        217,
+        219
+      ],
+      "note": "line_range builds Seq of two Ints"
+    },
+    {
+      "promptLines": [
+        138,
+        157
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        230,
+        249
+      ],
+      "note": "attribution_to_yaml document structure"
+    },
+    {
+      "promptLines": [
+        159,
+        164
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        221,
+        274
+      ],
+      "note": "ml_to_yaml with kind string mapping and optional suggestion"
+    },
+    {
+      "promptLines": [
+        166,
+        171
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        290,
+        332
+      ],
+      "note": "ir_to_yaml document structure"
+    },
+    {
+      "promptLines": [
+        173,
+        176
+      ],
+      "file": "yaml/src/lib.rs",
+      "lines": [
+        276,
+        288
+      ],
+      "note": "json_to_yaml conversion rules"
+    }
+  ],
+  "attributionYaml": "module: yaml\ntarget: rust\nentries:\n  - promptLines:\n      - 43\n      - 45\n    file: yaml/src/lib.rs\n    lines:\n      - 9\n      - 18\n    note: Yaml enum with variants\n  - promptLines:\n      - 51\n      - 51\n    file: yaml/src/lib.rs\n    lines:\n      - 114\n      - 116\n    note: empty string renders as double-quoted empty\n  - promptLines:\n      - 52\n      - 53\n    file: yaml/src/lib.rs\n    lines:\n      - 117\n      - 119\n    note: plain-representable strings render verbatim\n  - promptLines:\n      - 54\n      - 56\n    file: yaml/src/lib.rs\n    lines:\n      - 120\n      - 122\n    note: single-quote branch for double-quote without apostrophe\n  - promptLines:\n      - 57\n      - 58\n    file: yaml/src/lib.rs\n    lines:\n      - 123\n      - 136\n    note: double-quoted escaping of special chars\n  - promptLines:\n      - 62\n      - 62\n    file: yaml/src/lib.rs\n    lines:\n      - 86\n      - 90\n    note: first/last char whitespace check\n  - promptLines:\n      - 63\n      - 64\n    file: yaml/src/lib.rs\n    lines:\n      - 23\n      - 25\n    note: control character detection\n  - promptLines:\n      - 63\n      - 64\n    file: yaml/src/lib.rs\n    lines:\n      - 91\n      - 93\n    note: reject newline/control chars\n  - promptLines:\n      - 65\n      - 66\n    file: yaml/src/lib.rs\n    lines:\n      - 20\n      - 21\n    note: plain leading indicator chars list\n  - promptLines:\n      - 65\n      - 66\n    file: yaml/src/lib.rs\n    lines:\n      - 94\n      - 96\n    note: reject leading indicator char\n  - promptLines:\n      - 67\n      - 69\n    file: yaml/src/lib.rs\n    lines:\n      - 97\n      - 103\n    note: \"leading -/?/: needs non-space second char\"\n  - promptLines:\n      - 70\n      - 71\n    file: yaml/src/lib.rs\n    lines:\n      - 104\n      - 106\n    note: reject colon-space, trailing colon, space-hash\n  - promptLines:\n      - 72\n      - 72\n    file: yaml/src/lib.rs\n    lines:\n      - 107\n      - 109\n    note: reject non-string-resolving values\n  - promptLines:\n      - 74\n      - 76\n    file: yaml/src/lib.rs\n    lines:\n      - 77\n      - 83\n    note: null/bool literal and core int/float resolution\n  - promptLines:\n      - 78\n      - 80\n    file: yaml/src/lib.rs\n    lines:\n      - 27\n      - 40\n    note: core integer parsing\n  - promptLines:\n      - 81\n      - 87\n    file: yaml/src/lib.rs\n    lines:\n      - 42\n      - 75\n    note: core float parsing\n  - promptLines:\n      - 89\n      - 93\n    file: yaml/src/lib.rs\n    lines:\n      - 348\n      - 386\n    note: plain vs quoted string test cases\n  - promptLines:\n      - 95\n      - 96\n    file: yaml/src/lib.rs\n    lines:\n      - 138\n      - 147\n    note: non-string scalar rendering\n  - promptLines:\n      - 100\n      - 102\n    file: yaml/src/lib.rs\n    lines:\n      - 204\n      - 215\n    note: document rendering with trailing newline\n  - promptLines:\n      - 104\n      - 107\n    file: yaml/src/lib.rs\n    lines:\n      - 204\n      - 211\n    note: empty/non-empty map and seq handling at root\n  - promptLines:\n      - 109\n      - 118\n    file: yaml/src/lib.rs\n    lines:\n      - 157\n      - 177\n    note: block map emission rules\n  - promptLines:\n      - 116\n      - 118\n    file: yaml/src/lib.rs\n    lines:\n      - 149\n      - 155\n    note: inline scalar for empty seq/map\n  - promptLines:\n      - 120\n      - 129\n    file: yaml/src/lib.rs\n    lines:\n      - 179\n      - 202\n    note: block sequence emission rules\n  - promptLines:\n      - 122\n      - 125\n    file: yaml/src/lib.rs\n    lines:\n      - 184\n      - 191\n    note: sequence item as map turns first line into dash item\n  - promptLines:\n      - 131\n      - 131\n    file: yaml/src/lib.rs\n    lines:\n      - 158\n      - 158\n    note: indent as spaces, 2 per level\n  - promptLines:\n      - 135\n      - 136\n    file: yaml/src/lib.rs\n    lines:\n      - 217\n      - 219\n    note: line_range builds Seq of two Ints\n  - promptLines:\n      - 138\n      - 157\n    file: yaml/src/lib.rs\n    lines:\n      - 230\n      - 249\n    note: attribution_to_yaml document structure\n  - promptLines:\n      - 159\n      - 164\n    file: yaml/src/lib.rs\n    lines:\n      - 221\n      - 274\n    note: ml_to_yaml with kind string mapping and optional suggestion\n  - promptLines:\n      - 166\n      - 171\n    file: yaml/src/lib.rs\n    lines:\n      - 290\n      - 332\n    note: ir_to_yaml document structure\n  - promptLines:\n      - 173\n      - 176\n    file: yaml/src/lib.rs\n    lines:\n      - 276\n      - 288\n    note: json_to_yaml conversion rules\n",
+  "mapl": [
+    {
+      "promptLines": [
+        20,
+        22
+      ],
+      "kind": "ambiguity",
+      "severity": "error",
+      "message": "'any hand-written crate' is a vague, oddly-placed restriction",
+      "reasoning": "The instruction to not \"depend on any hand-written crate\" is unclear in scope — the crate itself is hand-written (this whole module is authored by a coding agent from a prompt), and no other hand-written crates are mentioned anywhere else in the spec. The agent reasonably interpreted this as \"only depend on the four listed sibling schema crates plus serde_json, nothing else,\" which is what it did (Cargo.toml deps not shown but code only imports the four schemas_* crates and serde_json). ",
+      "suggestion": "Depend only on the four sibling crates listed below and serde_json — no other crates."
+    },
+    {
+      "promptLines": [
+        81,
+        87
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "Asymmetric .inf/.nan sign-stripping rule was implemented literally, not smoothed over",
+      "reasoning": "The spec deliberately distinguishes: `.inf` variants are checked against the sign-stripped body, while `.nan` variants are checked against the whole original string `s` (no sign stripping) — per line 82's exact wording \"the whole string is .nan/.NaN/.NAN\". The agent preserved this asymmetry exactly (is_core_float checks `body == \".inf\"` but `s == \".nan\"`), which is easy to miss/normalize away by mistake. Confirms this subtle distinction was intentional and honored.\n"
+    },
+    {
+      "promptLines": [
+        54,
+        56
+      ],
+      "kind": "ambiguity",
+      "severity": "error",
+      "message": "Parenthetical '(there are none in this branch)' reads like a stray internal note",
+      "reasoning": "Line 55's aside about apostrophe-doubling is inert given the branch precondition (no apostrophe in this branch by construction), so it can never fire. It's not wrong, just an unusual bit of self-referential commentary embedded in a spec line rather than an example or requirement. The agent implemented the doubling logic anyway (`s.replace('\\'', \"''\")`) as dead-but-harmless code satisfying the literal instruction, which is the safe reading."
+    }
+  ],
+  "journal": [
+    {
+      "gen": 23,
+      "timestamp": "2026-07-24T08:01:14.990Z",
+      "mode": "full",
+      "promptHash": "fa89048b5a8f28ac704bfe83b7e4b466425569da27067fbf7f4d2d2339ca577c",
+      "files": [
+        {
+          "path": "yaml/Cargo.toml",
+          "journalPath": ".napl/src/rust/yaml/Cargo.toml",
+          "patch": "@@ -0,0 +1,11 @@\n+[package]\n+name = \"yaml\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]\n+serde_json = \"1\"\n+schemas_line_range = { path = \"../schemas_line_range\" }\n+schemas_attribution = { path = \"../schemas_attribution\" }\n+schemas_ir = { path = \"../schemas_ir\" }\n+schemas_ml = { path = \"../schemas_ml\" }"
+        },
+        {
+          "path": "yaml/src/lib.rs",
+          "journalPath": ".napl/src/rust/yaml/src/lib.rs",
+          "patch": "@@ -0,0 +1,602 @@\n+// GENERATED BY NAPL from yaml.napl — edit the prompt, not this file\n+\n+use schemas_attribution::Attribution;\n+use schemas_ir::Ir;\n+use schemas_line_range::LineRange;\n+use schemas_ml::{Ml, MlKind};\n+use serde_json::Value;\n+\n+#[derive(Debug, Clone, PartialEq)]\n+pub enum Yaml {\n+    Null,\n+    Bool(bool),\n+    Int(i64),\n+    Float(f64),\n+    Str(String),\n+    Seq(Vec<Yaml>),\n+    Map(Vec<(String, Yaml)>),\n+}\n+\n+const PLAIN_LEADING_INDICATORS: &[char] =\n+    &[',', '[', ']', '{', '}', '#', '&', '*', '!', '|', '>', '\\'', '\"', '%', '@', '`'];\n+\n+fn is_control_char(c: char) -> bool {\n+    (c != '\\n' && (c as u32) < 0x20) || c == '\\u{7f}'\n+}\n+\n+fn strip_single_sign(s: &str) -> &str {\n+    s.strip_prefix('+').or_else(|| s.strip_prefix('-')).unwrap_or(s)\n+}\n+\n+fn is_core_integer(s: &str) -> bool {\n+    let body = strip_single_sign(s);\n+    if let Some(rest) = body.strip_prefix(\"0x\") {\n+        return !rest.is_empty() && rest.chars().all(|c| c.is_ascii_hexdigit());\n+    }\n+    if let Some(rest) = body.strip_prefix(\"0o\") {\n+        return !rest.is_empty() && rest.chars().all(|c| ('0'..='7').contains(&c));\n+    }\n+    !body.is_empty() && body.chars().all(|c| c.is_ascii_digit())\n+}\n+\n+fn is_core_float(s: &str) -> bool {\n+    let body = strip_single_sign(s);\n+    if body == \".inf\" || body == \".Inf\" || body == \".INF\" {\n+        return true;\n+    }\n+    if s == \".nan\" || s == \".NaN\" || s == \".NAN\" {\n+        return true;\n+    }\n+    let mut parts = body.splitn(2, |c| c == 'e' || c == 'E');\n+    let mantissa = parts.next().unwrap_or(\"\");\n+    let exponent = parts.next();\n+\n+    if mantissa.matches('.').count() != 1 {\n+        return false;\n+    }\n+    let mut mantissa_parts = mantissa.splitn(2, '.');\n+    let int_part = mantissa_parts.next().unwrap_or(\"\");\n+    let frac_part = mantissa_parts.next().unwrap_or(\"\");\n+    if !int_part.chars().all(|c| c.is_ascii_digit()) || !frac_part.chars().all(|c| c.is_ascii_digit()) {\n+        return false;\n+    }\n+    if int_part.is_empty() && frac_part.is_empty() {\n+        return false;\n+    }\n+\n+    if let Some(exp) = exponent {\n+        let exp_body = strip_single_sign(exp);\n+        if exp_body.is_empty() || !exp_body.chars().all(|c| c.is_ascii_digit()) {\n+            return false;\n+        }\n+    }\n+\n+    true\n+}\n+\n+fn resolves_as_non_string(s: &str) -> bool {\n+    matches!(\n+        s,\n+        \"null\" | \"Null\" | \"NULL\" | \"~\" | \"true\" | \"True\" | \"TRUE\" | \"false\" | \"False\" | \"FALSE\"\n+    ) || is_core_integer(s)\n+        || is_core_float(s)\n+}\n+\n+fn is_plain_representable(s: &str) -> bool {\n+    let first = s.chars().next().unwrap();\n+    let last = s.chars().last().unwrap();\n+    if first.is_whitespace() || last.is_whitespace() {\n+        return false;\n+    }\n+    if s.chars().any(|c| c == '\\n' || is_control_char(c)) {\n+        return false;\n+    }\n+    if PLAIN_LEADING_INDICATORS.contains(&first) {\n+        return false;\n+    }\n+    if first == '-' || first == '?' || first == ':' {\n+        match s.chars().nth(1) {\n+            None => return false,\n+            Some(c2) if c2 == ' ' => return false,\n+            _ => {}\n+        }\n+    }\n+    if s.contains(\": \") || s.ends_with(':') || s.contains(\" #\") {\n+        return false;\n+    }\n+    if resolves_as_non_string(s) {\n+        return false;\n+    }\n+    true\n+}\n+\n+fn render_string_scalar(s: &str) -> String {\n+    if s.is_empty() {\n+        return \"\\\"\\\"\".to_string();\n+    }\n+    if is_plain_representable(s) {\n+        return s.to_string();\n+    }\n+    if s.contains('\"') && !s.contains('\\'') {\n+        return format!(\"'{}'\", s.replace('\\'', \"''\"));\n+    }\n+    let mut out = String::from(\"\\\"\");\n+    for c in s.chars() {\n+        match c {\n+            '\"' => out.push_str(\"\\\\\\\"\"),\n+            '\\\\' => out.push_str(\"\\\\\\\\\"),\n+            '\\n' => out.push_str(\"\\\\n\"),\n+            '\\t' => out.push_str(\"\\\\t\"),\n+            '\\r' => out.push_str(\"\\\\r\"),\n+            _ => out.push(c),\n+        }\n+    }\n+    out.push('\"');\n+    out\n+}\n+\n+fn render_scalar(node: &Yaml) -> String {\n+    match node {\n+        Yaml::Null => \"null\".to_string(),\n+        Yaml::Bool(b) => b.to_string(),\n+        Yaml::Int(i) => i.to_string(),\n+        Yaml::Float(f) => f.to_string(),\n+        Yaml::Str(s) => render_string_scalar(s),\n+        Yaml::Seq(_) | Yaml::Map(_) => unreachable!(\"render_scalar called on a container\"),\n+    }\n+}\n+\n+fn inline_scalar(node: &Yaml) -> String {\n+    match node {\n+        Yaml::Seq(items) if items.is_empty() => \"[]\".to_string(),\n+        Yaml::Map(entries) if entries.is_empty() => \"{}\".to_string(),\n+        other => render_scalar(other),\n+    }\n+}\n+\n+fn emit_map(entries: &[(String, Yaml)], indent: usize) -> Vec<String> {\n+    let ind = \" \".repeat(indent);\n+    let mut lines = Vec::new();\n+    for (key, value) in entries {\n+        let key_str = render_string_scalar(key);\n+        match value {\n+            Yaml::Seq(items) if !items.is_empty() => {\n+                lines.push(format!(\"{ind}{key_str}:\"));\n+                lines.extend(emit_seq(items, indent + 2));\n+            }\n+            Yaml::Map(inner) if !inner.is_empty() => {\n+                lines.push(format!(\"{ind}{key_str}:\"));\n+                lines.extend(emit_map(inner, indent + 2));\n+            }\n+            other => {\n+                lines.push(format!(\"{ind}{key_str}: {}\", inline_scalar(other)));\n+            }\n+        }\n+    }\n+    lines\n+}\n+\n+fn emit_seq(items: &[Yaml], indent: usize) -> Vec<String> {\n+    let ind = \" \".repeat(indent);\n+    let mut lines = Vec::new();\n+    for item in items {\n+        match item {\n+            Yaml::Map(entries) if !entries.is_empty() => {\n+                let inner = emit_map(entries, indent + 2);\n+                let mut inner_iter = inner.into_iter();\n+                let first = inner_iter.next().unwrap();\n+                let stripped = &first[(indent + 2)..];\n+                lines.push(format!(\"{ind}- {stripped}\"));\n+                lines.extend(inner_iter);\n+            }\n+            Yaml::Seq(inner) if !inner.is_empty() => {\n+                lines.push(format!(\"{ind}-\"));\n+                lines.extend(emit_seq(inner, indent + 2));\n+            }\n+            other => {\n+                lines.push(format!(\"{ind}- {}\", inline_scalar(other)));\n+            }\n+        }\n+    }\n+    lines\n+}\n+\n+pub fn to_yaml_document(node: &Yaml) -> String {\n+    let lines = match node {\n+        Yaml::Map(entries) if !entries.is_empty() => emit_map(entries, 0),\n+        Yaml::Map(_) => vec![\"{}\".to_string()],\n+        Yaml::Seq(items) if !items.is_empty() => emit_seq(items, 0),\n+        Yaml::Seq(_) => vec![\"[]\".to_string()],\n+        other => vec![render_scalar(other)],\n+    };\n+    let mut doc = lines.join(\"\\n\");\n+    doc.push('\\n');\n+    doc\n+}\n+\n+pub fn line_range(range: LineRange) -> Yaml {\n+    Yaml::Seq(vec![Yaml::Int(range.start as i64), Yaml::Int(range.end as i64)])\n+}\n+\n+fn ml_kind_str(kind: MlKind) -> &'static str {\n+    match kind {\n+        MlKind::Ambiguity => \"ambiguity\",\n+        MlKind::Assumption => \"assumption\",\n+        MlKind::Note => \"note\",\n+        MlKind::NoOp => \"no-op\",\n+    }\n+}\n+\n+pub fn attribution_to_yaml(attribution: &Attribution) -> String {\n+    let entries = attribution\n+        .entries\n+        .iter()\n+        .map(|entry| {\n+            Yaml::Map(vec![\n+                (\"promptLines\".to_string(), line_range(entry.prompt_lines)),\n+                (\"file\".to_string(), Yaml::Str(entry.file.clone())),\n+                (\"lines\".to_string(), line_range(entry.lines)),\n+                (\"note\".to_string(), Yaml::Str(entry.note.clone())),\n+            ])\n+        })\n+        .collect();\n+    let doc = Yaml::Map(vec![\n+        (\"module\".to_string(), Yaml::Str(attribution.module.clone())),\n+        (\"target\".to_string(), Yaml::Str(attribution.target.clone())),\n+        (\"entries\".to_string(), Yaml::Seq(entries)),\n+    ]);\n+    to_yaml_document(&doc)\n+}\n+\n+pub fn ml_to_yaml(ml: &Ml) -> String {\n+    let entries = ml\n+        .entries\n+        .iter()\n+        .map(|entry| {\n+            let mut fields = vec![\n+                (\"promptLines\".to_string(), line_range(entry.prompt_lines)),\n+                (\"kind\".to_string(), Yaml::Str(ml_kind_str(entry.kind).to_string())),\n+                (\"message\".to_string(), Yaml::Str(entry.message.clone())),\n+                (\"reasoning\".to_string(), Yaml::Str(entry.reasoning.clone())),\n+            ];\n+            if let Some(suggestion) = &entry.suggestion {\n+                fields.push((\"suggestion\".to_string(), Yaml::Str(suggestion.clone())));\n+            }\n+            Yaml::Map(fields)\n+        })\n+        .collect();\n+    let doc = Yaml::Map(vec![\n+        (\"module\".to_string(), Yaml::Str(ml.module.clone())),\n+        (\"target\".to_string(), Yaml::Str(ml.target.clone())),\n+        (\"entries\".to_string(), Yaml::Seq(entries)),\n+    ]);\n+    to_yaml_document(&doc)\n+}\n+\n+pub fn json_to_yaml(value: &Value) -> Yaml {\n+    match value {\n+        Value::Null => Yaml::Null,\n+        Value::Bool(b) => Yaml::Bool(*b),\n+        Value::Number(n) => match n.as_i64() {\n+            Some(i) => Yaml::Int(i),\n+            None => Yaml::Float(n.as_f64().unwrap_or(0.0)),\n+        },\n+        Value::String(s) => Yaml::Str(s.clone()),\n+        Value::Array(items) => Yaml::Seq(items.iter().map(json_to_yaml).collect()),\n+        Value::Object(map) => Yaml::Map(map.iter().map(|(k, v)| (k.clone(), json_to_yaml(v))).collect()),\n+    }\n+}\n+\n+pub fn ir_to_yaml(ir: &Ir) -> String {\n+    let deps = ir.deps.iter().map(|d| Yaml::Str(d.clone())).collect();\n+    let types = ir\n+        .types\n+        .iter()\n+        .map(|t| {\n+            Yaml::Map(vec![\n+                (\"name\".to_string(), Yaml::Str(t.name.clone())),\n+                (\"description\".to_string(), Yaml::Str(t.description.clone())),\n+            ])\n+        })\n+        .collect();\n+    let functions = ir\n+        .functions\n+        .iter()\n+        .map(|f| {\n+            Yaml::Map(vec![\n+                (\"name\".to_string(), Yaml::Str(f.name.clone())),\n+                (\"signature\".to_string(), Yaml::Str(f.signature.clone())),\n+                (\"behavior\".to_string(), Yaml::Str(f.behavior.clone())),\n+            ])\n+        })\n+        .collect();\n+    let tests = ir\n+        .tests\n+        .iter()\n+        .map(|t| {\n+            Yaml::Map(vec![\n+                (\"name\".to_string(), Yaml::Str(t.name.clone())),\n+                (\"given\".to_string(), json_to_yaml(&t.given)),\n+                (\"expect\".to_string(), json_to_yaml(&t.expect)),\n+            ])\n+        })\n+        .collect();\n+    let doc = Yaml::Map(vec![\n+        (\"module\".to_string(), Yaml::Str(ir.module.clone())),\n+        (\"deps\".to_string(), Yaml::Seq(deps)),\n+        (\"types\".to_string(), Yaml::Seq(types)),\n+        (\"functions\".to_string(), Yaml::Seq(functions)),\n+        (\"tests\".to_string(), Yaml::Seq(tests)),\n+    ]);\n+    to_yaml_document(&doc)\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+    use schemas_attribution::validate_attribution;\n+    use schemas_ir::validate_ir;\n+    use schemas_ml::validate_ml;\n+    use serde_json::json;\n+\n+    #[test]\n+    fn empty_string_is_double_quoted_empty() {\n+        assert_eq!(render_string_scalar(\"\"), \"\\\"\\\"\");\n+    }\n+\n+    #[test]\n+    fn plain_strings_stay_plain() {\n+        for s in [\n+            \"yes\",\n+            \"on\",\n+            \"Off\",\n+            \"no\",\n+            \"it's fine\",\n+            \"colon:nospace\",\n+            \"Returns the string Hello, name!\",\n+        ] {\n+            assert_eq!(render_string_scalar(s), s, \"expected {s} to stay plain\");\n+        }\n+    }\n+\n+    #[test]\n+    fn non_plain_strings_are_quoted() {\n+        assert_eq!(render_string_scalar(\"true\"), \"\\\"true\\\"\");\n+        assert_eq!(render_string_scalar(\"123\"), \"\\\"123\\\"\");\n+        assert_eq!(render_string_scalar(\"null\"), \"\\\"null\\\"\");\n+        assert_eq!(render_string_scalar(\"~\"), \"\\\"~\\\"\");\n+        assert_eq!(render_string_scalar(\"1.5\"), \"\\\"1.5\\\"\");\n+        assert_eq!(render_string_scalar(\"0x10\"), \"\\\"0x10\\\"\");\n+        assert_eq!(render_string_scalar(\".inf\"), \"\\\".inf\\\"\");\n+        assert_eq!(\n+            render_string_scalar(\"greet(name: string): string\"),\n+            \"\\\"greet(name: string): string\\\"\"\n+        );\n+        assert_eq!(render_string_scalar(\"a: b\"), \"\\\"a: b\\\"\");\n+        assert_eq!(render_string_scalar(\"has # hash\"), \"\\\"has # hash\\\"\");\n+        assert_eq!(render_string_scalar(\"- dashlead\"), \"\\\"- dashlead\\\"\");\n+        assert_eq!(render_string_scalar(\"end colon:\"), \"\\\"end colon:\\\"\");\n+        assert_eq!(render_string_scalar(\"#leadinghash\"), \"\\\"#leadinghash\\\"\");\n+        assert_eq!(render_string_scalar(\" leadingspace\"), \"\\\" leadingspace\\\"\");\n+        assert_eq!(render_string_scalar(\"trailingspace \"), \"\\\"trailingspace \\\"\");\n+        assert_eq!(\n+            render_string_scalar(\"only ' apostrophe: with colon\"),\n+            \"\\\"only ' apostrophe: with colon\\\"\"\n+        );\n+    }\n+\n+    #[test]\n+    fn double_quote_without_apostrophe_becomes_single_quoted() {\n+        assert_eq!(\n+            render_string_scalar(\"\\\"loudly\\\" is vague\"),\n+            \"'\\\"loudly\\\" is vague'\"\n+        );\n+    }\n+\n+    #[test]\n+    fn double_quoted_escapes_special_characters() {\n+        // the embedded newline forces quoting (plain forbids newlines); every other\n+        // special character in the string must be escaped once quoting kicks in.\n+        assert_eq!(\n+            render_string_scalar(\"a\\nb\\tc\\rd\\\\e\"),\n+            \"\\\"a\\\\nb\\\\tc\\\\rd\\\\\\\\e\\\"\"\n+        );\n+        // leading quote forces quoting; presence of an apostrophe rules out the\n+        // single-quote branch, so this falls to double-quoted with `\"` escaped.\n+        assert_eq!(\n+            render_string_scalar(\"\\\"hi\\\" it's ok\"),\n+            \"\\\"\\\\\\\"hi\\\\\\\" it's ok\\\"\"\n+        );\n+    }\n+\n+    #[test]\n+    fn non_string_scalars_render_directly() {\n+        assert_eq!(render_scalar(&Yaml::Null), \"null\");\n+        assert_eq!(render_scalar(&Yaml::Bool(true)), \"true\");\n+        assert_eq!(render_scalar(&Yaml::Bool(false)), \"false\");\n+        assert_eq!(render_scalar(&Yaml::Int(-42)), \"-42\");\n+        assert_eq!(render_scalar(&Yaml::Float(1.5)), \"1.5\");\n+    }\n+\n+    #[test]\n+    fn document_empty_map_and_seq_are_inline() {\n+        assert_eq!(to_yaml_document(&Yaml::Map(vec![])), \"{}\\n\");\n+        assert_eq!(to_yaml_document(&Yaml::Seq(vec![])), \"[]\\n\");\n+    }\n+\n+    #[test]\n+    fn document_scalar_root() {\n+        assert_eq!(to_yaml_document(&Yaml::Str(\"hello\".to_string())), \"hello\\n\");\n+        assert_eq!(to_yaml_document(&Yaml::Int(7)), \"7\\n\");\n+    }\n+\n+    #[test]\n+    fn document_flat_map() {\n+        let doc = Yaml::Map(vec![\n+            (\"a\".to_string(), Yaml::Str(\"x\".to_string())),\n+            (\"b\".to_string(), Yaml::Int(3)),\n+        ]);\n+        assert_eq!(to_yaml_document(&doc), \"a: x\\nb: 3\\n\");\n+    }\n+\n+    #[test]\n+    fn document_nested_seq_of_maps() {\n+        let doc = Yaml::Map(vec![(\n+            \"items\".to_string(),\n+            Yaml::Seq(vec![\n+                Yaml::Map(vec![(\"k\".to_string(), Yaml::Int(1))]),\n+                Yaml::Map(vec![(\"k\".to_string(), Yaml::Int(2))]),\n+            ]),\n+        )]);\n+        assert_eq!(to_yaml_document(&doc), \"items:\\n  - k: 1\\n  - k: 2\\n\");\n+    }\n+\n+    #[test]\n+    fn document_seq_of_seq() {\n+        let doc = Yaml::Seq(vec![Yaml::Seq(vec![Yaml::Int(1), Yaml::Int(2)])]);\n+        assert_eq!(to_yaml_document(&doc), \"-\\n  - 1\\n  - 2\\n\");\n+    }\n+\n+    #[test]\n+    fn attribution_matches_expected_bytes() {\n+        let attribution = validate_attribution(json!({\n+            \"module\": \"greeting\",\n+            \"target\": \"typescript\",\n+            \"entries\": [\n+                {\n+                    \"promptLines\": [1, 1],\n+                    \"file\": \"greet.ts\",\n+                    \"lines\": [1, 1],\n+                    \"note\": \"builds the greeting string\"\n+                }\n+            ]\n+        }))\n+        .unwrap();\n+\n+        let expected = concat!(\n+            \"module: greeting\\n\",\n+            \"target: typescript\\n\",\n+            \"entries:\\n\",\n+            \"  - promptLines:\\n\",\n+            \"      - 1\\n\",\n+            \"      - 1\\n\",\n+            \"    file: greet.ts\\n\",\n+            \"    lines:\\n\",\n+            \"      - 1\\n\",\n+            \"      - 1\\n\",\n+            \"    note: builds the greeting string\\n\",\n+        );\n+\n+        assert_eq!(attribution_to_yaml(&attribution), expected);\n+    }\n+\n+    #[test]\n+    fn ml_empty_entries_render_inline() {\n+        let ml = validate_ml(json!({\"module\": \"m\", \"target\": \"t\"})).unwrap();\n+        assert_eq!(ml_to_yaml(&ml), \"module: m\\ntarget: t\\nentries: []\\n\");\n+    }\n+\n+    #[test]\n+    fn ml_entry_kinds_and_optional_suggestion() {\n+        let ml = validate_ml(json!({\n+            \"module\": \"m\",\n+            \"target\": \"t\",\n+            \"entries\": [\n+                {\"promptLines\": [1, 2], \"kind\": \"no-op\", \"message\": \"msg\", \"reasoning\": \"why\", \"suggestion\": \"do this\"},\n+                {\"promptLines\": 5, \"kind\": \"note\", \"message\": \"m2\"}\n+            ]\n+        }))\n+        .unwrap();\n+\n+        let expected = concat!(\n+            \"module: m\\n\",\n+            \"target: t\\n\",\n+            \"entries:\\n\",\n+            \"  - promptLines:\\n\",\n+            \"      - 1\\n\",\n+            \"      - 2\\n\",\n+            \"    kind: no-op\\n\",\n+            \"    message: msg\\n\",\n+            \"    reasoning: why\\n\",\n+            \"    suggestion: do this\\n\",\n+            \"  - promptLines:\\n\",\n+            \"      - 5\\n\",\n+            \"      - 5\\n\",\n+            \"    kind: note\\n\",\n+            \"    message: m2\\n\",\n+            \"    reasoning: \\\"\\\"\\n\",\n+        );\n+\n+        assert_eq!(ml_to_yaml(&ml), expected);\n+    }\n+\n+    #[test]\n+    fn ir_empty_sequences_render_inline() {\n+        let ir = validate_ir(json!({\"module\": \"m\"})).unwrap();\n+        assert_eq!(\n+            ir_to_yaml(&ir),\n+            \"module: m\\ndeps: []\\ntypes: []\\nfunctions: []\\ntests: []\\n\"\n+        );\n+    }\n+\n+    #[test]\n+    fn ir_with_content_and_json_test_values() {\n+        let ir = validate_ir(json!({\n+            \"module\": \"greeting\",\n+            \"deps\": [\"a\", \"b\"],\n+            \"types\": [{\"name\": \"T\", \"description\": \"desc\"}],\n+            \"functions\": [{\"name\": \"f\", \"signature\": \"f(): string\", \"behavior\": \"returns\"}],\n+            \"tests\": [{\"name\": \"t1\", \"given\": {\"x\": 1, \"y\": [1, 2]}, \"expect\": \"ok\"}]\n+        }))\n+        .unwrap();\n+\n+        let expected = concat!(\n+            \"module: greeting\\n\",\n+            \"deps:\\n\",\n+            \"  - a\\n\",\n+            \"  - b\\n\",\n+            \"types:\\n\",\n+            \"  - name: T\\n\",\n+            \"    description: desc\\n\",\n+            \"functions:\\n\",\n+            \"  - name: f\\n\",\n+            \"    signature: \\\"f(): string\\\"\\n\",\n+            \"    behavior: returns\\n\",\n+            \"tests:\\n\",\n+            \"  - name: t1\\n\",\n+            \"    given:\\n\",\n+            \"      x: 1\\n\",\n+            \"      y:\\n\",\n+            \"        - 1\\n\",\n+            \"        - 2\\n\",\n+            \"    expect: ok\\n\",\n+        );\n+\n+        assert_eq!(ir_to_yaml(&ir), expected);\n+    }\n+\n+    #[test]\n+    fn json_to_yaml_converts_all_value_kinds() {\n+        assert_eq!(json_to_yaml(&json!(null)), Yaml::Null);\n+        assert_eq!(json_to_yaml(&json!(true)), Yaml::Bool(true));\n+        assert_eq!(json_to_yaml(&json!(5)), Yaml::Int(5));\n+        assert_eq!(json_to_yaml(&json!(1.5)), Yaml::Float(1.5));\n+        assert_eq!(json_to_yaml(&json!(\"s\")), Yaml::Str(\"s\".to_string()));\n+        assert_eq!(\n+            json_to_yaml(&json!([1, \"a\"])),\n+            Yaml::Seq(vec![Yaml::Int(1), Yaml::Str(\"a\".to_string())])\n+        );\n+        assert_eq!(\n+            json_to_yaml(&json!({\"k\": 1})),\n+            Yaml::Map(vec![(\"k\".to_string(), Yaml::Int(1))])\n+        );\n+    }\n+\n+    #[test]\n+    fn line_range_builds_two_int_seq() {\n+        assert_eq!(\n+            line_range(LineRange::new(3, 9)),\n+            Yaml::Seq(vec![Yaml::Int(3), Yaml::Int(9)])\n+        );\n+    }\n+}"
+        }
+      ]
+    }
+  ],
+  "lock": [
+    {
+      "path": "yaml/Cargo.toml",
+      "hash": "cd00f12e24e0d2bb97c580e9e88dfe568d18bd2bdbffc20db568d7d73e638cb0"
+    },
+    {
+      "path": "yaml/src/lib.rs",
+      "hash": "7fd8d24dfccf033d3000496f79921a549012a8494e30f57ba110892f0b874778"
+    }
+  ],
+  "session": {
+    "task": "napl gen rust → yaml",
+    "files": {
+      "yaml.napl": "---\nmodule: yaml\ndeps: [schemas_attribution, schemas_ir, schemas_ml, schemas_line_range]\ntargets: [rust]\ntests:\n  - name: plain scalars stay plain and unquoted\n    given: { scalars: [\"Returns the string Hello, name!\", \"nothing to add\", \"it's fine\", \"state the exact emphasis, e.g. all caps\", \"yes\", \"colon:nospace\", \"on\", \"Off\", \"no\"] }\n    expect: { plain: true }\n  - name: strings needing quoting are double-quoted\n    given: { scalars: [\"greet(name: string): string\", \"#leadinghash\", \" leadingspace\", \"trailingspace \", \"true\", \"123\", \"null\", \"a: b\", \"has # hash\", \"- dashlead\", \"end colon:\", \"1.5\", \"0x10\", \".inf\", \"~\", \"only ' apostrophe: with colon\"] }\n    expect: { double_quoted: true }\n  - name: a plain-rejected string with a double quote and no apostrophe is single-quoted\n    given: { scalar: \"\\\"loudly\\\" is vague\" }\n    expect: { emitted: \"'\\\"loudly\\\" is vague'\" }\n  - name: the empty string is double-quoted\n    given: { scalar: \"\" }\n    expect: { emitted: \"\\\"\\\"\" }\n  - name: attribution serializes to its pinned block bytes\n    given: { doc: attribution }\n    expect: { bytes: \"module: greeting\\ntarget: typescript\\nentries:\\n  - promptLines:\\n      - 1\\n      - 1\\n    file: greet.ts\\n    lines:\\n      - 1\\n      - 1\\n    note: builds the greeting string\\n\" }\n  - name: IR serializes to its pinned block bytes with empty collections inline\n    given: { doc: ir }\n    expect: { bytes: \"module: greeting\\ndeps: []\\ntypes: []\\nfunctions:\\n  - name: greet\\n    signature: \\\"greet(name: string): string\\\"\\n    behavior: Returns the string Hello, name!\\ntests: []\\n\" }\n  - name: an empty machine layer serializes with inline empty entries\n    given: { doc: ml_empty }\n    expect: { bytes: \"module: greeting\\ntarget: typescript\\nentries: []\\n\" }\n  - name: a machine layer with entries serializes to its pinned block bytes\n    given: { doc: ml_entries }\n    expect: { bytes: \"module: greeting\\ntarget: typescript\\nentries:\\n  - promptLines:\\n      - 1\\n      - 1\\n    kind: ambiguity\\n    message: '\\\"loudly\\\" is vague'\\n    reasoning: unclear whether to uppercase, add punctuation, or both\\n    suggestion: state the exact emphasis, e.g. all caps\\n  - promptLines:\\n      - 1\\n      - 1\\n    kind: no-op\\n    message: requirement already satisfied by existing code\\n    reasoning: the greeting is already emphatic enough; no edit was needed\\n\" }\n---\n# A focused YAML emitter matching `eemeli/yaml` block style\n\nThis module renders NAPL's on-disk documents (attribution, IR, machine-layer) as\nYAML **byte-for-byte identical** to what the JavaScript `yaml` package\n(`eemeli/yaml`) `stringify` produces for these document shapes. The exact bytes\nare load-bearing — the corpus pins them — so reproduce the block style and scalar\nheuristics precisely. It is pure: no I/O. Bring in `serde_json`.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `yaml/`: `yaml/Cargo.toml` (package name `yaml`)\nand `yaml/src/lib.rs`. Touch nothing outside `yaml/`. Ensure `cargo test` passes\nfrom the workspace root before finishing.\n\n## Builds on four modules of this workspace\n\nEach is a sibling member crate generated into this same workspace. Add a path\ndependency on each in your `Cargo.toml` (workspace siblings, not external\ncrates.io dependencies), read their public fields to drive serialization, and do\n**not** reimplement them or depend on any hand-written crate.\n\n- **`schemas_line_range`** (`../schemas_line_range`): `LineRange`, an inclusive\n  1-based range with public `start`/`end` fields (`u32`).\n- **`schemas_attribution`** (`../schemas_attribution`): `Attribution` with public\n  fields `module: String`, `target: String`, `entries: Vec<AttributionEntry>`;\n  and `AttributionEntry` with public `prompt_lines: LineRange`, `file: String`,\n  `lines: LineRange`, `note: String`.\n- **`schemas_ir`** (`../schemas_ir`): `Ir` with public `module: String`,\n  `deps: Vec<String>`, `types: Vec<IrType>`, `functions: Vec<IrFunction>`,\n  `tests: Vec<IrTest>`; `IrType` with public `name`/`description`; `IrFunction`\n  with public `name`/`signature`/`behavior`; `IrTest` with public `name` and\n  `given`/`expect` (each a `serde_json::Value`).\n- **`schemas_ml`** (`../schemas_ml`): `Ml` with public `module: String`,\n  `target: String`, `entries: Vec<MlEntry>`; `MlEntry` with public\n  `prompt_lines: LineRange`, `kind: MlKind`, `message: String`,\n  `reasoning: String`, `suggestion: Option<String>`; and `MlKind` with variants\n  `Ambiguity`, `Assumption`, `Note`, `NoOp`.\n\n## The value model\n\nExpose a public enum `Yaml` (`Debug`, `Clone`, `PartialEq`) with variants:\n`Null`, `Bool(bool)`, `Int(i64)`, `Float(f64)`, `Str(String)`, `Seq(Vec<Yaml>)`,\nand `Map(Vec<(String, Yaml)>)` (a mapping whose key insertion order is preserved).\n\n## Scalar rendering\n\nA **string scalar** renders as follows:\n\n- The empty string renders as `\"\"` (two double quotes).\n- If the string is *plain-representable* (rules below), it renders verbatim, with\n  no quoting.\n- Otherwise, if it contains a double-quote character and no apostrophe, it renders\n  single-quoted: wrap in `'…'`, doubling any apostrophe (there are none in this\n  branch). So `\"loudly\" is vague` → `'\"loudly\" is vague'`.\n- Otherwise it renders double-quoted: wrap in `\"…\"`, escaping `\"`→`\\\"`, `\\`→`\\\\`,\n  newline→`\\n`, tab→`\\t`, carriage-return→`\\r`; other characters pass through.\n\nA non-empty string is **plain-representable** only when ALL of these hold:\n\n- Its first and last characters are not whitespace.\n- It contains no newline and no control character (a control character is any\n  codepoint below `0x20` other than newline, or the codepoint `0x7f`).\n- Its first character is none of these indicators:\n  `,` `[` `]` `{` `}` `#` `&` `*` `!` `|` `>` `'` `\"` `%` `@` `` ` ``.\n- If its first character is `-`, `?`, or `:`, it has a second character and that\n  second character is not a space. (So `-`, `- x`, `: `, etc. are not plain, but\n  `colon:nospace` is — the leading char is a letter.)\n- It does not contain `\": \"` (colon followed by space), does not end with `:`, and\n  does not contain `\" #\"` (space followed by hash).\n- It does not resolve as a non-string core-schema value (rule below).\n\nA string **resolves as a non-string** when it is exactly one of the null/boolean\nliterals `null`, `Null`, `NULL`, `~`, `true`, `True`, `TRUE`, `false`, `False`,\n`FALSE`; OR it parses as a **core integer**; OR it parses as a **core float**:\n\n- **Core integer**: after stripping a single leading `+` or `-`: a `0x` prefix\n  followed by one or more ASCII hex digits; or a `0o` prefix followed by one or\n  more octal digits (`0`–`7`); or one or more ASCII decimal digits.\n- **Core float**: after stripping a single leading `+` or `-`, the body is\n  `.inf`/`.Inf`/`.INF`, or the whole string is `.nan`/`.NaN`/`.NAN`; otherwise\n  split the body on `e`/`E` into a mantissa and optional exponent — the mantissa\n  must contain a `.` with all-digit (possibly empty) integer and fraction parts\n  and at least one digit overall (a body with no `.` is an integer, not a float),\n  and if an exponent is present it must be one or more digits after an optional\n  sign.\n\nSo `yes`, `on`, `Off`, `no`, `it's fine`, `colon:nospace`, and\n`Returns the string Hello, name!` stay plain; while `true`, `123`, `null`, `~`,\n`1.5`, `0x10`, `.inf`, `greet(name: string): string`, `a: b`, `has # hash`,\n`- dashlead`, `end colon:`, `#leadinghash`, `\" leadingspace\"`,\n`\"trailingspace \"`, and `only ' apostrophe: with colon` are double-quoted.\n\nA **non-string** scalar renders as: `Null` → `null`; `Bool` → `true`/`false`;\n`Int` → its decimal form; `Float` → its Rust `f64` `to_string` form.\n\n## Document rendering\n\n`to_yaml_document(node: &Yaml) -> String` renders a whole document in block style\nwith a trailing newline (`\\n`). Build the body as a list of lines joined by `\\n`,\nthen append one `\\n`.\n\n- A **non-empty map** renders as block entries at indent 0. An **empty map**\n  renders inline as `{}`. A **non-empty sequence** renders as block items at\n  indent 0. An **empty sequence** renders inline as `[]`. Any other node (a\n  scalar) renders as its single scalar line.\n\nBlock **map** emission at a given indent, for each `(key, value)` in order (the\nkey rendered as a string scalar by the rules above):\n\n- If the value is a non-empty sequence: emit `{indent}{key}:` then the sequence as\n  a block indented by `indent + 2`.\n- If the value is a non-empty map: emit `{indent}{key}:` then the map as a block\n  indented by `indent + 2`.\n- Otherwise emit `{indent}{key}: {scalar}` on one line, where an empty sequence\n  value is `[]`, an empty map value is `{}`, and any other value is its scalar\n  rendering.\n\nBlock **sequence** emission at a given indent, for each item in order:\n\n- If the item is a non-empty map: emit the map as a block at `indent + 2`, then\n  turn its first line into a `- ` item — the first emitted line is\n  `{indent}- {firstLineWithoutItsLeadingIndentOfIndent+2}` and the remaining\n  lines follow unchanged.\n- If the item is a non-empty sequence: emit `{indent}-` then the inner sequence as\n  a block at `indent + 2`.\n- Otherwise emit `{indent}- {scalar}` (empty sequence → `[]`, empty map → `{}`,\n  else the scalar rendering).\n\nIndentation is spaces; each nesting level adds 2.\n\n## Document serializers\n\n`line_range(range: LineRange) -> Yaml` builds `Seq[Int(start), Int(end)]` (each\nendpoint as an `Int`).\n\n`attribution_to_yaml(attribution: &Attribution) -> String` renders the document\n`Map` with keys in this order: `module` (string), `target` (string), `entries`\n(a sequence; each entry is a `Map` with keys `promptLines` = `line_range(prompt_lines)`,\n`file` = string, `lines` = `line_range(lines)`, `note` = string). It produces\nexactly, for module `greeting`, target `typescript`, and one entry (promptLines\n`[1,1]`, file `greet.ts`, lines `[1,1]`, note `builds the greeting string`):\n\n```\nmodule: greeting\ntarget: typescript\nentries:\n  - promptLines:\n      - 1\n      - 1\n    file: greet.ts\n    lines:\n      - 1\n      - 1\n    note: builds the greeting string\n```\n\n`ml_to_yaml(ml: &Ml) -> String` renders a `Map` with keys `module`, `target`,\n`entries`. Each entry is a `Map` with keys, in order: `promptLines` =\n`line_range(prompt_lines)`, `kind` = the kind string (`Ambiguity`→`ambiguity`,\n`Assumption`→`assumption`, `Note`→`note`, `NoOp`→`no-op`), `message`,\n`reasoning`, and — only when `suggestion` is `Some` — `suggestion`. An empty\nentries list renders as `entries: []`.\n\n`ir_to_yaml(ir: &Ir) -> String` renders a `Map` with keys, in order: `module`\n(string), `deps` (a sequence of strings), `types` (a sequence of `Map`s with\n`name`, `description`), `functions` (a sequence of `Map`s with `name`,\n`signature`, `behavior`), and `tests` (a sequence of `Map`s with `name`, `given`,\n`expect`, where `given`/`expect` are each a `serde_json::Value` converted to\n`Yaml` by the rule below). Empty sequences render inline as `[]`.\n\n`json_to_yaml(value: &serde_json::Value) -> Yaml` converts a JSON value: JSON\nnull → `Null`; bool → `Bool`; a number that is an exact `i64` → `Int`, else\n`Float` (of its `f64`); string → `Str`; array → `Seq` of converted items; object\n→ `Map` of converted entries preserving key order.\n"
+    },
+    "events": [
+      {
+        "type": "task",
+        "task": "napl gen rust → yaml"
+      },
+      {
+        "type": "diff",
+        "path": "yaml/Cargo.toml",
+        "patch": "@@ -0,0 +1,11 @@\n+[package]\n+name = \"yaml\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]\n+serde_json = \"1\"\n+schemas_line_range = { path = \"../schemas_line_range\" }\n+schemas_attribution = { path = \"../schemas_attribution\" }\n+schemas_ir = { path = \"../schemas_ir\" }\n+schemas_ml = { path = \"../schemas_ml\" }"
+      },
+      {
+        "type": "file-edit",
+        "path": "yaml/Cargo.toml",
+        "content": "[package]\nname = \"yaml\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\nserde_json = \"1\"\nschemas_line_range = { path = \"../schemas_line_range\" }\nschemas_attribution = { path = \"../schemas_attribution\" }\nschemas_ir = { path = \"../schemas_ir\" }\nschemas_ml = { path = \"../schemas_ml\" }\n"
+      },
+      {
+        "type": "diff",
+        "path": "yaml/src/lib.rs",
+        "patch": "@@ -0,0 +1,602 @@\n+// GENERATED BY NAPL from yaml.napl — edit the prompt, not this file\n+\n+use schemas_attribution::Attribution;\n+use schemas_ir::Ir;\n+use schemas_line_range::LineRange;\n+use schemas_ml::{Ml, MlKind};\n+use serde_json::Value;\n+\n+#[derive(Debug, Clone, PartialEq)]\n+pub enum Yaml {\n+    Null,\n+    Bool(bool),\n+    Int(i64),\n+    Float(f64),\n+    Str(String),\n+    Seq(Vec<Yaml>),\n+    Map(Vec<(String, Yaml)>),\n+}\n+\n+const PLAIN_LEADING_INDICATORS: &[char] =\n+    &[',', '[', ']', '{', '}', '#', '&', '*', '!', '|', '>', '\\'', '\"', '%', '@', '`'];\n+\n+fn is_control_char(c: char) -> bool {\n+    (c != '\\n' && (c as u32) < 0x20) || c == '\\u{7f}'\n+}\n+\n+fn strip_single_sign(s: &str) -> &str {\n+    s.strip_prefix('+').or_else(|| s.strip_prefix('-')).unwrap_or(s)\n+}\n+\n+fn is_core_integer(s: &str) -> bool {\n+    let body = strip_single_sign(s);\n+    if let Some(rest) = body.strip_prefix(\"0x\") {\n+        return !rest.is_empty() && rest.chars().all(|c| c.is_ascii_hexdigit());\n+    }\n+    if let Some(rest) = body.strip_prefix(\"0o\") {\n+        return !rest.is_empty() && rest.chars().all(|c| ('0'..='7').contains(&c));\n+    }\n+    !body.is_empty() && body.chars().all(|c| c.is_ascii_digit())\n+}\n+\n+fn is_core_float(s: &str) -> bool {\n+    let body = strip_single_sign(s);\n+    if body == \".inf\" || body == \".Inf\" || body == \".INF\" {\n+        return true;\n+    }\n+    if s == \".nan\" || s == \".NaN\" || s == \".NAN\" {\n+        return true;\n+    }\n+    let mut parts = body.splitn(2, |c| c == 'e' || c == 'E');\n+    let mantissa = parts.next().unwrap_or(\"\");\n+    let exponent = parts.next();\n+\n+    if mantissa.matches('.').count() != 1 {\n+        return false;\n+    }\n+    let mut mantissa_parts = mantissa.splitn(2, '.');\n+    let int_part = mantissa_parts.next().unwrap_or(\"\");\n+    let frac_part = mantissa_parts.next().unwrap_or(\"\");\n+    if !int_part.chars().all(|c| c.is_ascii_digit()) || !frac_part.chars().all(|c| c.is_ascii_digit()) {\n+        return false;\n+    }\n+    if int_part.is_empty() && frac_part.is_empty() {\n+        return false;\n+    }\n+\n+    if let Some(exp) = exponent {\n+        let exp_body = strip_single_sign(exp);\n+        if exp_body.is_empty() || !exp_body.chars().all(|c| c.is_ascii_digit()) {\n+            return false;\n+        }\n+    }\n+\n+    true\n+}\n+\n+fn resolves_as_non_string(s: &str) -> bool {\n+    matches!(\n+        s,\n+        \"null\" | \"Null\" | \"NULL\" | \"~\" | \"true\" | \"True\" | \"TRUE\" | \"false\" | \"False\" | \"FALSE\"\n+    ) || is_core_integer(s)\n+        || is_core_float(s)\n+}\n+\n+fn is_plain_representable(s: &str) -> bool {\n+    let first = s.chars().next().unwrap();\n+    let last = s.chars().last().unwrap();\n+    if first.is_whitespace() || last.is_whitespace() {\n+        return false;\n+    }\n+    if s.chars().any(|c| c == '\\n' || is_control_char(c)) {\n+        return false;\n+    }\n+    if PLAIN_LEADING_INDICATORS.contains(&first) {\n+        return false;\n+    }\n+    if first == '-' || first == '?' || first == ':' {\n+        match s.chars().nth(1) {\n+            None => return false,\n+            Some(c2) if c2 == ' ' => return false,\n+            _ => {}\n+        }\n+    }\n+    if s.contains(\": \") || s.ends_with(':') || s.contains(\" #\") {\n+        return false;\n+    }\n+    if resolves_as_non_string(s) {\n+        return false;\n+    }\n+    true\n+}\n+\n+fn render_string_scalar(s: &str) -> String {\n+    if s.is_empty() {\n+        return \"\\\"\\\"\".to_string();\n+    }\n+    if is_plain_representable(s) {\n+        return s.to_string();\n+    }\n+    if s.contains('\"') && !s.contains('\\'') {\n+        return format!(\"'{}'\", s.replace('\\'', \"''\"));\n+    }\n+    let mut out = String::from(\"\\\"\");\n+    for c in s.chars() {\n+        match c {\n+            '\"' => out.push_str(\"\\\\\\\"\"),\n+            '\\\\' => out.push_str(\"\\\\\\\\\"),\n+            '\\n' => out.push_str(\"\\\\n\"),\n+            '\\t' => out.push_str(\"\\\\t\"),\n+            '\\r' => out.push_str(\"\\\\r\"),\n+            _ => out.push(c),\n+        }\n+    }\n+    out.push('\"');\n+    out\n+}\n+\n+fn render_scalar(node: &Yaml) -> String {\n+    match node {\n+        Yaml::Null => \"null\".to_string(),\n+        Yaml::Bool(b) => b.to_string(),\n+        Yaml::Int(i) => i.to_string(),\n+        Yaml::Float(f) => f.to_string(),\n+        Yaml::Str(s) => render_string_scalar(s),\n+        Yaml::Seq(_) | Yaml::Map(_) => unreachable!(\"render_scalar called on a container\"),\n+    }\n+}\n+\n+fn inline_scalar(node: &Yaml) -> String {\n+    match node {\n+        Yaml::Seq(items) if items.is_empty() => \"[]\".to_string(),\n+        Yaml::Map(entries) if entries.is_empty() => \"{}\".to_string(),\n+        other => render_scalar(other),\n+    }\n+}\n+\n+fn emit_map(entries: &[(String, Yaml)], indent: usize) -> Vec<String> {\n+    let ind = \" \".repeat(indent);\n+    let mut lines = Vec::new();\n+    for (key, value) in entries {\n+        let key_str = render_string_scalar(key);\n+        match value {\n+            Yaml::Seq(items) if !items.is_empty() => {\n+                lines.push(format!(\"{ind}{key_str}:\"));\n+                lines.extend(emit_seq(items, indent + 2));\n+            }\n+            Yaml::Map(inner) if !inner.is_empty() => {\n+                lines.push(format!(\"{ind}{key_str}:\"));\n+                lines.extend(emit_map(inner, indent + 2));\n+            }\n+            other => {\n+                lines.push(format!(\"{ind}{key_str}: {}\", inline_scalar(other)));\n+            }\n+        }\n+    }\n+    lines\n+}\n+\n+fn emit_seq(items: &[Yaml], indent: usize) -> Vec<String> {\n+    let ind = \" \".repeat(indent);\n+    let mut lines = Vec::new();\n+    for item in items {\n+        match item {\n+            Yaml::Map(entries) if !entries.is_empty() => {\n+                let inner = emit_map(entries, indent + 2);\n+                let mut inner_iter = inner.into_iter();\n+                let first = inner_iter.next().unwrap();\n+                let stripped = &first[(indent + 2)..];\n+                lines.push(format!(\"{ind}- {stripped}\"));\n+                lines.extend(inner_iter);\n+            }\n+            Yaml::Seq(inner) if !inner.is_empty() => {\n+                lines.push(format!(\"{ind}-\"));\n+                lines.extend(emit_seq(inner, indent + 2));\n+            }\n+            other => {\n+                lines.push(format!(\"{ind}- {}\", inline_scalar(other)));\n+            }\n+        }\n+    }\n+    lines\n+}\n+\n+pub fn to_yaml_document(node: &Yaml) -> String {\n+    let lines = match node {\n+        Yaml::Map(entries) if !entries.is_empty() => emit_map(entries, 0),\n+        Yaml::Map(_) => vec![\"{}\".to_string()],\n+        Yaml::Seq(items) if !items.is_empty() => emit_seq(items, 0),\n+        Yaml::Seq(_) => vec![\"[]\".to_string()],\n+        other => vec![render_scalar(other)],\n+    };\n+    let mut doc = lines.join(\"\\n\");\n+    doc.push('\\n');\n+    doc\n+}\n+\n+pub fn line_range(range: LineRange) -> Yaml {\n+    Yaml::Seq(vec![Yaml::Int(range.start as i64), Yaml::Int(range.end as i64)])\n+}\n+\n+fn ml_kind_str(kind: MlKind) -> &'static str {\n+    match kind {\n+        MlKind::Ambiguity => \"ambiguity\",\n+        MlKind::Assumption => \"assumption\",\n+        MlKind::Note => \"note\",\n+        MlKind::NoOp => \"no-op\",\n+    }\n+}\n+\n+pub fn attribution_to_yaml(attribution: &Attribution) -> String {\n+    let entries = attribution\n+        .entries\n+        .iter()\n+        .map(|entry| {\n+            Yaml::Map(vec![\n+                (\"promptLines\".to_string(), line_range(entry.prompt_lines)),\n+                (\"file\".to_string(), Yaml::Str(entry.file.clone())),\n+                (\"lines\".to_string(), line_range(entry.lines)),\n+                (\"note\".to_string(), Yaml::Str(entry.note.clone())),\n+            ])\n+        })\n+        .collect();\n+    let doc = Yaml::Map(vec![\n+        (\"module\".to_string(), Yaml::Str(attribution.module.clone())),\n+        (\"target\".to_string(), Yaml::Str(attribution.target.clone())),\n+        (\"entries\".to_string(), Yaml::Seq(entries)),\n+    ]);\n+    to_yaml_document(&doc)\n+}\n+\n+pub fn ml_to_yaml(ml: &Ml) -> String {\n+    let entries = ml\n+        .entries\n+        .iter()\n+        .map(|entry| {\n+            let mut fields = vec![\n+                (\"promptLines\".to_string(), line_range(entry.prompt_lines)),\n+                (\"kind\".to_string(), Yaml::Str(ml_kind_str(entry.kind).to_string())),\n+                (\"message\".to_string(), Yaml::Str(entry.message.clone())),\n+                (\"reasoning\".to_string(), Yaml::Str(entry.reasoning.clone())),\n+            ];\n+            if let Some(suggestion) = &entry.suggestion {\n+                fields.push((\"suggestion\".to_string(), Yaml::Str(suggestion.clone())));\n+            }\n+            Yaml::Map(fields)\n+        })\n+        .collect();\n+    let doc = Yaml::Map(vec![\n+        (\"module\".to_string(), Yaml::Str(ml.module.clone())),\n+        (\"target\".to_string(), Yaml::Str(ml.target.clone())),\n+        (\"entries\".to_string(), Yaml::Seq(entries)),\n+    ]);\n+    to_yaml_document(&doc)\n+}\n+\n+pub fn json_to_yaml(value: &Value) -> Yaml {\n+    match value {\n+        Value::Null => Yaml::Null,\n+        Value::Bool(b) => Yaml::Bool(*b),\n+        Value::Number(n) => match n.as_i64() {\n+            Some(i) => Yaml::Int(i),\n+            None => Yaml::Float(n.as_f64().unwrap_or(0.0)),\n+        },\n+        Value::String(s) => Yaml::Str(s.clone()),\n+        Value::Array(items) => Yaml::Seq(items.iter().map(json_to_yaml).collect()),\n+        Value::Object(map) => Yaml::Map(map.iter().map(|(k, v)| (k.clone(), json_to_yaml(v))).collect()),\n+    }\n+}\n+\n+pub fn ir_to_yaml(ir: &Ir) -> String {\n+    let deps = ir.deps.iter().map(|d| Yaml::Str(d.clone())).collect();\n+    let types = ir\n+        .types\n+        .iter()\n+        .map(|t| {\n+            Yaml::Map(vec![\n+                (\"name\".to_string(), Yaml::Str(t.name.clone())),\n+                (\"description\".to_string(), Yaml::Str(t.description.clone())),\n+            ])\n+        })\n+        .collect();\n+    let functions = ir\n+        .functions\n+        .iter()\n+        .map(|f| {\n+            Yaml::Map(vec![\n+                (\"name\".to_string(), Yaml::Str(f.name.clone())),\n+                (\"signature\".to_string(), Yaml::Str(f.signature.clone())),\n+                (\"behavior\".to_string(), Yaml::Str(f.behavior.clone())),\n+            ])\n+        })\n+        .collect();\n+    let tests = ir\n+        .tests\n+        .iter()\n+        .map(|t| {\n+            Yaml::Map(vec![\n+                (\"name\".to_string(), Yaml::Str(t.name.clone())),\n+                (\"given\".to_string(), json_to_yaml(&t.given)),\n+                (\"expect\".to_string(), json_to_yaml(&t.expect)),\n+            ])\n+        })\n+        .collect();\n+    let doc = Yaml::Map(vec![\n+        (\"module\".to_string(), Yaml::Str(ir.module.clone())),\n+        (\"deps\".to_string(), Yaml::Seq(deps)),\n+        (\"types\".to_string(), Yaml::Seq(types)),\n+        (\"functions\".to_string(), Yaml::Seq(functions)),\n+        (\"tests\".to_string(), Yaml::Seq(tests)),\n+    ]);\n+    to_yaml_document(&doc)\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+    use schemas_attribution::validate_attribution;\n+    use schemas_ir::validate_ir;\n+    use schemas_ml::validate_ml;\n+    use serde_json::json;\n+\n+    #[test]\n+    fn empty_string_is_double_quoted_empty() {\n+        assert_eq!(render_string_scalar(\"\"), \"\\\"\\\"\");\n+    }\n+\n+    #[test]\n+    fn plain_strings_stay_plain() {\n+        for s in [\n+            \"yes\",\n+            \"on\",\n+            \"Off\",\n+            \"no\",\n+            \"it's fine\",\n+            \"colon:nospace\",\n+            \"Returns the string Hello, name!\",\n+        ] {\n+            assert_eq!(render_string_scalar(s), s, \"expected {s} to stay plain\");\n+        }\n+    }\n+\n+    #[test]\n+    fn non_plain_strings_are_quoted() {\n+        assert_eq!(render_string_scalar(\"true\"), \"\\\"true\\\"\");\n+        assert_eq!(render_string_scalar(\"123\"), \"\\\"123\\\"\");\n+        assert_eq!(render_string_scalar(\"null\"), \"\\\"null\\\"\");\n+        assert_eq!(render_string_scalar(\"~\"), \"\\\"~\\\"\");\n+        assert_eq!(render_string_scalar(\"1.5\"), \"\\\"1.5\\\"\");\n+        assert_eq!(render_string_scalar(\"0x10\"), \"\\\"0x10\\\"\");\n+        assert_eq!(render_string_scalar(\".inf\"), \"\\\".inf\\\"\");\n+        assert_eq!(\n+            render_string_scalar(\"greet(name: string): string\"),\n+            \"\\\"greet(name: string): string\\\"\"\n+        );\n+        assert_eq!(render_string_scalar(\"a: b\"), \"\\\"a: b\\\"\");\n+        assert_eq!(render_string_scalar(\"has # hash\"), \"\\\"has # hash\\\"\");\n+        assert_eq!(render_string_scalar(\"- dashlead\"), \"\\\"- dashlead\\\"\");\n+        assert_eq!(render_string_scalar(\"end colon:\"), \"\\\"end colon:\\\"\");\n+        assert_eq!(render_string_scalar(\"#leadinghash\"), \"\\\"#leadinghash\\\"\");\n+        assert_eq!(render_string_scalar(\" leadingspace\"), \"\\\" leadingspace\\\"\");\n+        assert_eq!(render_string_scalar(\"trailingspace \"), \"\\\"trailingspace \\\"\");\n+        assert_eq!(\n+            render_string_scalar(\"only ' apostrophe: with colon\"),\n+            \"\\\"only ' apostrophe: with colon\\\"\"\n+        );\n+    }\n+\n+    #[test]\n+    fn double_quote_without_apostrophe_becomes_single_quoted() {\n+        assert_eq!(\n+            render_string_scalar(\"\\\"loudly\\\" is vague\"),\n+            \"'\\\"loudly\\\" is vague'\"\n+        );\n+    }\n+\n+    #[test]\n+    fn double_quoted_escapes_special_characters() {\n+        // the embedded newline forces quoting (plain forbids newlines); every other\n+        // special character in the string must be escaped once quoting kicks in.\n+        assert_eq!(\n+            render_string_scalar(\"a\\nb\\tc\\rd\\\\e\"),\n+            \"\\\"a\\\\nb\\\\tc\\\\rd\\\\\\\\e\\\"\"\n+        );\n+        // leading quote forces quoting; presence of an apostrophe rules out the\n+        // single-quote branch, so this falls to double-quoted with `\"` escaped.\n+        assert_eq!(\n+            render_string_scalar(\"\\\"hi\\\" it's ok\"),\n+            \"\\\"\\\\\\\"hi\\\\\\\" it's ok\\\"\"\n+        );\n+    }\n+\n+    #[test]\n+    fn non_string_scalars_render_directly() {\n+        assert_eq!(render_scalar(&Yaml::Null), \"null\");\n+        assert_eq!(render_scalar(&Yaml::Bool(true)), \"true\");\n+        assert_eq!(render_scalar(&Yaml::Bool(false)), \"false\");\n+        assert_eq!(render_scalar(&Yaml::Int(-42)), \"-42\");\n+        assert_eq!(render_scalar(&Yaml::Float(1.5)), \"1.5\");\n+    }\n+\n+    #[test]\n+    fn document_empty_map_and_seq_are_inline() {\n+        assert_eq!(to_yaml_document(&Yaml::Map(vec![])), \"{}\\n\");\n+        assert_eq!(to_yaml_document(&Yaml::Seq(vec![])), \"[]\\n\");\n+    }\n+\n+    #[test]\n+    fn document_scalar_root() {\n+        assert_eq!(to_yaml_document(&Yaml::Str(\"hello\".to_string())), \"hello\\n\");\n+        assert_eq!(to_yaml_document(&Yaml::Int(7)), \"7\\n\");\n+    }\n+\n+    #[test]\n+    fn document_flat_map() {\n+        let doc = Yaml::Map(vec![\n+            (\"a\".to_string(), Yaml::Str(\"x\".to_string())),\n+            (\"b\".to_string(), Yaml::Int(3)),\n+        ]);\n+        assert_eq!(to_yaml_document(&doc), \"a: x\\nb: 3\\n\");\n+    }\n+\n+    #[test]\n+    fn document_nested_seq_of_maps() {\n+        let doc = Yaml::Map(vec![(\n+            \"items\".to_string(),\n+            Yaml::Seq(vec![\n+                Yaml::Map(vec![(\"k\".to_string(), Yaml::Int(1))]),\n+                Yaml::Map(vec![(\"k\".to_string(), Yaml::Int(2))]),\n+            ]),\n+        )]);\n+        assert_eq!(to_yaml_document(&doc), \"items:\\n  - k: 1\\n  - k: 2\\n\");\n+    }\n+\n+    #[test]\n+    fn document_seq_of_seq() {\n+        let doc = Yaml::Seq(vec![Yaml::Seq(vec![Yaml::Int(1), Yaml::Int(2)])]);\n+        assert_eq!(to_yaml_document(&doc), \"-\\n  - 1\\n  - 2\\n\");\n+    }\n+\n+    #[test]\n+    fn attribution_matches_expected_bytes() {\n+        let attribution = validate_attribution(json!({\n+            \"module\": \"greeting\",\n+            \"target\": \"typescript\",\n+            \"entries\": [\n+                {\n+                    \"promptLines\": [1, 1],\n+                    \"file\": \"greet.ts\",\n+                    \"lines\": [1, 1],\n+                    \"note\": \"builds the greeting string\"\n+                }\n+            ]\n+        }))\n+        .unwrap();\n+\n+        let expected = concat!(\n+            \"module: greeting\\n\",\n+            \"target: typescript\\n\",\n+            \"entries:\\n\",\n+            \"  - promptLines:\\n\",\n+            \"      - 1\\n\",\n+            \"      - 1\\n\",\n+            \"    file: greet.ts\\n\",\n+            \"    lines:\\n\",\n+            \"      - 1\\n\",\n+            \"      - 1\\n\",\n+            \"    note: builds the greeting string\\n\",\n+        );\n+\n+        assert_eq!(attribution_to_yaml(&attribution), expected);\n+    }\n+\n+    #[test]\n+    fn ml_empty_entries_render_inline() {\n+        let ml = validate_ml(json!({\"module\": \"m\", \"target\": \"t\"})).unwrap();\n+        assert_eq!(ml_to_yaml(&ml), \"module: m\\ntarget: t\\nentries: []\\n\");\n+    }\n+\n+    #[test]\n+    fn ml_entry_kinds_and_optional_suggestion() {\n+        let ml = validate_ml(json!({\n+            \"module\": \"m\",\n+            \"target\": \"t\",\n+            \"entries\": [\n+                {\"promptLines\": [1, 2], \"kind\": \"no-op\", \"message\": \"msg\", \"reasoning\": \"why\", \"suggestion\": \"do this\"},\n+                {\"promptLines\": 5, \"kind\": \"note\", \"message\": \"m2\"}\n+            ]\n+        }))\n+        .unwrap();\n+\n+        let expected = concat!(\n+            \"module: m\\n\",\n+            \"target: t\\n\",\n+            \"entries:\\n\",\n+            \"  - promptLines:\\n\",\n+            \"      - 1\\n\",\n+            \"      - 2\\n\",\n+            \"    kind: no-op\\n\",\n+            \"    message: msg\\n\",\n+            \"    reasoning: why\\n\",\n+            \"    suggestion: do this\\n\",\n+            \"  - promptLines:\\n\",\n+            \"      - 5\\n\",\n+            \"      - 5\\n\",\n+            \"    kind: note\\n\",\n+            \"    message: m2\\n\",\n+            \"    reasoning: \\\"\\\"\\n\",\n+        );\n+\n+        assert_eq!(ml_to_yaml(&ml), expected);\n+    }\n+\n+    #[test]\n+    fn ir_empty_sequences_render_inline() {\n+        let ir = validate_ir(json!({\"module\": \"m\"})).unwrap();\n+        assert_eq!(\n+            ir_to_yaml(&ir),\n+            \"module: m\\ndeps: []\\ntypes: []\\nfunctions: []\\ntests: []\\n\"\n+        );\n+    }\n+\n+    #[test]\n+    fn ir_with_content_and_json_test_values() {\n+        let ir = validate_ir(json!({\n+            \"module\": \"greeting\",\n+            \"deps\": [\"a\", \"b\"],\n+            \"types\": [{\"name\": \"T\", \"description\": \"desc\"}],\n+            \"functions\": [{\"name\": \"f\", \"signature\": \"f(): string\", \"behavior\": \"returns\"}],\n+            \"tests\": [{\"name\": \"t1\", \"given\": {\"x\": 1, \"y\": [1, 2]}, \"expect\": \"ok\"}]\n+        }))\n+        .unwrap();\n+\n+        let expected = concat!(\n+            \"module: greeting\\n\",\n+            \"deps:\\n\",\n+            \"  - a\\n\",\n+            \"  - b\\n\",\n+            \"types:\\n\",\n+            \"  - name: T\\n\",\n+            \"    description: desc\\n\",\n+            \"functions:\\n\",\n+            \"  - name: f\\n\",\n+            \"    signature: \\\"f(): string\\\"\\n\",\n+            \"    behavior: returns\\n\",\n+            \"tests:\\n\",\n+            \"  - name: t1\\n\",\n+            \"    given:\\n\",\n+            \"      x: 1\\n\",\n+            \"      y:\\n\",\n+            \"        - 1\\n\",\n+            \"        - 2\\n\",\n+            \"    expect: ok\\n\",\n+        );\n+\n+        assert_eq!(ir_to_yaml(&ir), expected);\n+    }\n+\n+    #[test]\n+    fn json_to_yaml_converts_all_value_kinds() {\n+        assert_eq!(json_to_yaml(&json!(null)), Yaml::Null);\n+        assert_eq!(json_to_yaml(&json!(true)), Yaml::Bool(true));\n+        assert_eq!(json_to_yaml(&json!(5)), Yaml::Int(5));\n+        assert_eq!(json_to_yaml(&json!(1.5)), Yaml::Float(1.5));\n+        assert_eq!(json_to_yaml(&json!(\"s\")), Yaml::Str(\"s\".to_string()));\n+        assert_eq!(\n+            json_to_yaml(&json!([1, \"a\"])),\n+            Yaml::Seq(vec![Yaml::Int(1), Yaml::Str(\"a\".to_string())])\n+        );\n+        assert_eq!(\n+            json_to_yaml(&json!({\"k\": 1})),\n+            Yaml::Map(vec![(\"k\".to_string(), Yaml::Int(1))])\n+        );\n+    }\n+\n+    #[test]\n+    fn line_range_builds_two_int_seq() {\n+        assert_eq!(\n+            line_range(LineRange::new(3, 9)),\n+            Yaml::Seq(vec![Yaml::Int(3), Yaml::Int(9)])\n+        );\n+    }\n+}"
+      },
+      {
+        "type": "file-edit",
+        "path": "yaml/src/lib.rs",
+        "content": "// GENERATED BY NAPL from yaml.napl — edit the prompt, not this file\n\nuse schemas_attribution::Attribution;\nuse schemas_ir::Ir;\nuse schemas_line_range::LineRange;\nuse schemas_ml::{Ml, MlKind};\nuse serde_json::Value;\n\n#[derive(Debug, Clone, PartialEq)]\npub enum Yaml {\n    Null,\n    Bool(bool),\n    Int(i64),\n    Float(f64),\n    Str(String),\n    Seq(Vec<Yaml>),\n    Map(Vec<(String, Yaml)>),\n}\n\nconst PLAIN_LEADING_INDICATORS: &[char] =\n    &[',', '[', ']', '{', '}', '#', '&', '*', '!', '|', '>', '\\'', '\"', '%', '@', '`'];\n\nfn is_control_char(c: char) -> bool {\n    (c != '\\n' && (c as u32) < 0x20) || c == '\\u{7f}'\n}\n\nfn strip_single_sign(s: &str) -> &str {\n    s.strip_prefix('+').or_else(|| s.strip_prefix('-')).unwrap_or(s)\n}\n\nfn is_core_integer(s: &str) -> bool {\n    let body = strip_single_sign(s);\n    if let Some(rest) = body.strip_prefix(\"0x\") {\n        return !rest.is_empty() && rest.chars().all(|c| c.is_ascii_hexdigit());\n    }\n    if let Some(rest) = body.strip_prefix(\"0o\") {\n        return !rest.is_empty() && rest.chars().all(|c| ('0'..='7').contains(&c));\n    }\n    !body.is_empty() && body.chars().all(|c| c.is_ascii_digit())\n}\n\nfn is_core_float(s: &str) -> bool {\n    let body = strip_single_sign(s);\n    if body == \".inf\" || body == \".Inf\" || body == \".INF\" {\n        return true;\n    }\n    if s == \".nan\" || s == \".NaN\" || s == \".NAN\" {\n        return true;\n    }\n    let mut parts = body.splitn(2, |c| c == 'e' || c == 'E');\n    let mantissa = parts.next().unwrap_or(\"\");\n    let exponent = parts.next();\n\n    if mantissa.matches('.').count() != 1 {\n        return false;\n    }\n    let mut mantissa_parts = mantissa.splitn(2, '.');\n    let int_part = mantissa_parts.next().unwrap_or(\"\");\n    let frac_part = mantissa_parts.next().unwrap_or(\"\");\n    if !int_part.chars().all(|c| c.is_ascii_digit()) || !frac_part.chars().all(|c| c.is_ascii_digit()) {\n        return false;\n    }\n    if int_part.is_empty() && frac_part.is_empty() {\n        return false;\n    }\n\n    if let Some(exp) = exponent {\n        let exp_body = strip_single_sign(exp);\n        if exp_body.is_empty() || !exp_body.chars().all(|c| c.is_ascii_digit()) {\n            return false;\n        }\n    }\n\n    true\n}\n\nfn resolves_as_non_string(s: &str) -> bool {\n    matches!(\n        s,\n        \"null\" | \"Null\" | \"NULL\" | \"~\" | \"true\" | \"True\" | \"TRUE\" | \"false\" | \"False\" | \"FALSE\"\n    ) || is_core_integer(s)\n        || is_core_float(s)\n}\n\nfn is_plain_representable(s: &str) -> bool {\n    let first = s.chars().next().unwrap();\n    let last = s.chars().last().unwrap();\n    if first.is_whitespace() || last.is_whitespace() {\n        return false;\n    }\n    if s.chars().any(|c| c == '\\n' || is_control_char(c)) {\n        return false;\n    }\n    if PLAIN_LEADING_INDICATORS.contains(&first) {\n        return false;\n    }\n    if first == '-' || first == '?' || first == ':' {\n        match s.chars().nth(1) {\n            None => return false,\n            Some(c2) if c2 == ' ' => return false,\n            _ => {}\n        }\n    }\n    if s.contains(\": \") || s.ends_with(':') || s.contains(\" #\") {\n        return false;\n    }\n    if resolves_as_non_string(s) {\n        return false;\n    }\n    true\n}\n\nfn render_string_scalar(s: &str) -> String {\n    if s.is_empty() {\n        return \"\\\"\\\"\".to_string();\n    }\n    if is_plain_representable(s) {\n        return s.to_string();\n    }\n    if s.contains('\"') && !s.contains('\\'') {\n        return format!(\"'{}'\", s.replace('\\'', \"''\"));\n    }\n    let mut out = String::from(\"\\\"\");\n    for c in s.chars() {\n        match c {\n            '\"' => out.push_str(\"\\\\\\\"\"),\n            '\\\\' => out.push_str(\"\\\\\\\\\"),\n            '\\n' => out.push_str(\"\\\\n\"),\n            '\\t' => out.push_str(\"\\\\t\"),\n            '\\r' => out.push_str(\"\\\\r\"),\n            _ => out.push(c),\n        }\n    }\n    out.push('\"');\n    out\n}\n\nfn render_scalar(node: &Yaml) -> String {\n    match node {\n        Yaml::Null => \"null\".to_string(),\n        Yaml::Bool(b) => b.to_string(),\n        Yaml::Int(i) => i.to_string(),\n        Yaml::Float(f) => f.to_string(),\n        Yaml::Str(s) => render_string_scalar(s),\n        Yaml::Seq(_) | Yaml::Map(_) => unreachable!(\"render_scalar called on a container\"),\n    }\n}\n\nfn inline_scalar(node: &Yaml) -> String {\n    match node {\n        Yaml::Seq(items) if items.is_empty() => \"[]\".to_string(),\n        Yaml::Map(entries) if entries.is_empty() => \"{}\".to_string(),\n        other => render_scalar(other),\n    }\n}\n\nfn emit_map(entries: &[(String, Yaml)], indent: usize) -> Vec<String> {\n    let ind = \" \".repeat(indent);\n    let mut lines = Vec::new();\n    for (key, value) in entries {\n        let key_str = render_string_scalar(key);\n        match value {\n            Yaml::Seq(items) if !items.is_empty() => {\n                lines.push(format!(\"{ind}{key_str}:\"));\n                lines.extend(emit_seq(items, indent + 2));\n            }\n            Yaml::Map(inner) if !inner.is_empty() => {\n                lines.push(format!(\"{ind}{key_str}:\"));\n                lines.extend(emit_map(inner, indent + 2));\n            }\n            other => {\n                lines.push(format!(\"{ind}{key_str}: {}\", inline_scalar(other)));\n            }\n        }\n    }\n    lines\n}\n\nfn emit_seq(items: &[Yaml], indent: usize) -> Vec<String> {\n    let ind = \" \".repeat(indent);\n    let mut lines = Vec::new();\n    for item in items {\n        match item {\n            Yaml::Map(entries) if !entries.is_empty() => {\n                let inner = emit_map(entries, indent + 2);\n                let mut inner_iter = inner.into_iter();\n                let first = inner_iter.next().unwrap();\n                let stripped = &first[(indent + 2)..];\n                lines.push(format!(\"{ind}- {stripped}\"));\n                lines.extend(inner_iter);\n            }\n            Yaml::Seq(inner) if !inner.is_empty() => {\n                lines.push(format!(\"{ind}-\"));\n                lines.extend(emit_seq(inner, indent + 2));\n            }\n            other => {\n                lines.push(format!(\"{ind}- {}\", inline_scalar(other)));\n            }\n        }\n    }\n    lines\n}\n\npub fn to_yaml_document(node: &Yaml) -> String {\n    let lines = match node {\n        Yaml::Map(entries) if !entries.is_empty() => emit_map(entries, 0),\n        Yaml::Map(_) => vec![\"{}\".to_string()],\n        Yaml::Seq(items) if !items.is_empty() => emit_seq(items, 0),\n        Yaml::Seq(_) => vec![\"[]\".to_string()],\n        other => vec![render_scalar(other)],\n    };\n    let mut doc = lines.join(\"\\n\");\n    doc.push('\\n');\n    doc\n}\n\npub fn line_range(range: LineRange) -> Yaml {\n    Yaml::Seq(vec![Yaml::Int(range.start as i64), Yaml::Int(range.end as i64)])\n}\n\nfn ml_kind_str(kind: MlKind) -> &'static str {\n    match kind {\n        MlKind::Ambiguity => \"ambiguity\",\n        MlKind::Assumption => \"assumption\",\n        MlKind::Note => \"note\",\n        MlKind::NoOp => \"no-op\",\n    }\n}\n\npub fn attribution_to_yaml(attribution: &Attribution) -> String {\n    let entries = attribution\n        .entries\n        .iter()\n        .map(|entry| {\n            Yaml::Map(vec![\n                (\"promptLines\".to_string(), line_range(entry.prompt_lines)),\n                (\"file\".to_string(), Yaml::Str(entry.file.clone())),\n                (\"lines\".to_string(), line_range(entry.lines)),\n                (\"note\".to_string(), Yaml::Str(entry.note.clone())),\n            ])\n        })\n        .collect();\n    let doc = Yaml::Map(vec![\n        (\"module\".to_string(), Yaml::Str(attribution.module.clone())),\n        (\"target\".to_string(), Yaml::Str(attribution.target.clone())),\n        (\"entries\".to_string(), Yaml::Seq(entries)),\n    ]);\n    to_yaml_document(&doc)\n}\n\npub fn ml_to_yaml(ml: &Ml) -> String {\n    let entries = ml\n        .entries\n        .iter()\n        .map(|entry| {\n            let mut fields = vec![\n                (\"promptLines\".to_string(), line_range(entry.prompt_lines)),\n                (\"kind\".to_string(), Yaml::Str(ml_kind_str(entry.kind).to_string())),\n                (\"message\".to_string(), Yaml::Str(entry.message.clone())),\n                (\"reasoning\".to_string(), Yaml::Str(entry.reasoning.clone())),\n            ];\n            if let Some(suggestion) = &entry.suggestion {\n                fields.push((\"suggestion\".to_string(), Yaml::Str(suggestion.clone())));\n            }\n            Yaml::Map(fields)\n        })\n        .collect();\n    let doc = Yaml::Map(vec![\n        (\"module\".to_string(), Yaml::Str(ml.module.clone())),\n        (\"target\".to_string(), Yaml::Str(ml.target.clone())),\n        (\"entries\".to_string(), Yaml::Seq(entries)),\n    ]);\n    to_yaml_document(&doc)\n}\n\npub fn json_to_yaml(value: &Value) -> Yaml {\n    match value {\n        Value::Null => Yaml::Null,\n        Value::Bool(b) => Yaml::Bool(*b),\n        Value::Number(n) => match n.as_i64() {\n            Some(i) => Yaml::Int(i),\n            None => Yaml::Float(n.as_f64().unwrap_or(0.0)),\n        },\n        Value::String(s) => Yaml::Str(s.clone()),\n        Value::Array(items) => Yaml::Seq(items.iter().map(json_to_yaml).collect()),\n        Value::Object(map) => Yaml::Map(map.iter().map(|(k, v)| (k.clone(), json_to_yaml(v))).collect()),\n    }\n}\n\npub fn ir_to_yaml(ir: &Ir) -> String {\n    let deps = ir.deps.iter().map(|d| Yaml::Str(d.clone())).collect();\n    let types = ir\n        .types\n        .iter()\n        .map(|t| {\n            Yaml::Map(vec![\n                (\"name\".to_string(), Yaml::Str(t.name.clone())),\n                (\"description\".to_string(), Yaml::Str(t.description.clone())),\n            ])\n        })\n        .collect();\n    let functions = ir\n        .functions\n        .iter()\n        .map(|f| {\n            Yaml::Map(vec![\n                (\"name\".to_string(), Yaml::Str(f.name.clone())),\n                (\"signature\".to_string(), Yaml::Str(f.signature.clone())),\n                (\"behavior\".to_string(), Yaml::Str(f.behavior.clone())),\n            ])\n        })\n        .collect();\n    let tests = ir\n        .tests\n        .iter()\n        .map(|t| {\n            Yaml::Map(vec![\n                (\"name\".to_string(), Yaml::Str(t.name.clone())),\n                (\"given\".to_string(), json_to_yaml(&t.given)),\n                (\"expect\".to_string(), json_to_yaml(&t.expect)),\n            ])\n        })\n        .collect();\n    let doc = Yaml::Map(vec![\n        (\"module\".to_string(), Yaml::Str(ir.module.clone())),\n        (\"deps\".to_string(), Yaml::Seq(deps)),\n        (\"types\".to_string(), Yaml::Seq(types)),\n        (\"functions\".to_string(), Yaml::Seq(functions)),\n        (\"tests\".to_string(), Yaml::Seq(tests)),\n    ]);\n    to_yaml_document(&doc)\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n    use schemas_attribution::validate_attribution;\n    use schemas_ir::validate_ir;\n    use schemas_ml::validate_ml;\n    use serde_json::json;\n\n    #[test]\n    fn empty_string_is_double_quoted_empty() {\n        assert_eq!(render_string_scalar(\"\"), \"\\\"\\\"\");\n    }\n\n    #[test]\n    fn plain_strings_stay_plain() {\n        for s in [\n            \"yes\",\n            \"on\",\n            \"Off\",\n            \"no\",\n            \"it's fine\",\n            \"colon:nospace\",\n            \"Returns the string Hello, name!\",\n        ] {\n            assert_eq!(render_string_scalar(s), s, \"expected {s} to stay plain\");\n        }\n    }\n\n    #[test]\n    fn non_plain_strings_are_quoted() {\n        assert_eq!(render_string_scalar(\"true\"), \"\\\"true\\\"\");\n        assert_eq!(render_string_scalar(\"123\"), \"\\\"123\\\"\");\n        assert_eq!(render_string_scalar(\"null\"), \"\\\"null\\\"\");\n        assert_eq!(render_string_scalar(\"~\"), \"\\\"~\\\"\");\n        assert_eq!(render_string_scalar(\"1.5\"), \"\\\"1.5\\\"\");\n        assert_eq!(render_string_scalar(\"0x10\"), \"\\\"0x10\\\"\");\n        assert_eq!(render_string_scalar(\".inf\"), \"\\\".inf\\\"\");\n        assert_eq!(\n            render_string_scalar(\"greet(name: string): string\"),\n            \"\\\"greet(name: string): string\\\"\"\n        );\n        assert_eq!(render_string_scalar(\"a: b\"), \"\\\"a: b\\\"\");\n        assert_eq!(render_string_scalar(\"has # hash\"), \"\\\"has # hash\\\"\");\n        assert_eq!(render_string_scalar(\"- dashlead\"), \"\\\"- dashlead\\\"\");\n        assert_eq!(render_string_scalar(\"end colon:\"), \"\\\"end colon:\\\"\");\n        assert_eq!(render_string_scalar(\"#leadinghash\"), \"\\\"#leadinghash\\\"\");\n        assert_eq!(render_string_scalar(\" leadingspace\"), \"\\\" leadingspace\\\"\");\n        assert_eq!(render_string_scalar(\"trailingspace \"), \"\\\"trailingspace \\\"\");\n        assert_eq!(\n            render_string_scalar(\"only ' apostrophe: with colon\"),\n            \"\\\"only ' apostrophe: with colon\\\"\"\n        );\n    }\n\n    #[test]\n    fn double_quote_without_apostrophe_becomes_single_quoted() {\n        assert_eq!(\n            render_string_scalar(\"\\\"loudly\\\" is vague\"),\n            \"'\\\"loudly\\\" is vague'\"\n        );\n    }\n\n    #[test]\n    fn double_quoted_escapes_special_characters() {\n        // the embedded newline forces quoting (plain forbids newlines); every other\n        // special character in the string must be escaped once quoting kicks in.\n        assert_eq!(\n            render_string_scalar(\"a\\nb\\tc\\rd\\\\e\"),\n            \"\\\"a\\\\nb\\\\tc\\\\rd\\\\\\\\e\\\"\"\n        );\n        // leading quote forces quoting; presence of an apostrophe rules out the\n        // single-quote branch, so this falls to double-quoted with `\"` escaped.\n        assert_eq!(\n            render_string_scalar(\"\\\"hi\\\" it's ok\"),\n            \"\\\"\\\\\\\"hi\\\\\\\" it's ok\\\"\"\n        );\n    }\n\n    #[test]\n    fn non_string_scalars_render_directly() {\n        assert_eq!(render_scalar(&Yaml::Null), \"null\");\n        assert_eq!(render_scalar(&Yaml::Bool(true)), \"true\");\n        assert_eq!(render_scalar(&Yaml::Bool(false)), \"false\");\n        assert_eq!(render_scalar(&Yaml::Int(-42)), \"-42\");\n        assert_eq!(render_scalar(&Yaml::Float(1.5)), \"1.5\");\n    }\n\n    #[test]\n    fn document_empty_map_and_seq_are_inline() {\n        assert_eq!(to_yaml_document(&Yaml::Map(vec![])), \"{}\\n\");\n        assert_eq!(to_yaml_document(&Yaml::Seq(vec![])), \"[]\\n\");\n    }\n\n    #[test]\n    fn document_scalar_root() {\n        assert_eq!(to_yaml_document(&Yaml::Str(\"hello\".to_string())), \"hello\\n\");\n        assert_eq!(to_yaml_document(&Yaml::Int(7)), \"7\\n\");\n    }\n\n    #[test]\n    fn document_flat_map() {\n        let doc = Yaml::Map(vec![\n            (\"a\".to_string(), Yaml::Str(\"x\".to_string())),\n            (\"b\".to_string(), Yaml::Int(3)),\n        ]);\n        assert_eq!(to_yaml_document(&doc), \"a: x\\nb: 3\\n\");\n    }\n\n    #[test]\n    fn document_nested_seq_of_maps() {\n        let doc = Yaml::Map(vec![(\n            \"items\".to_string(),\n            Yaml::Seq(vec![\n                Yaml::Map(vec![(\"k\".to_string(), Yaml::Int(1))]),\n                Yaml::Map(vec![(\"k\".to_string(), Yaml::Int(2))]),\n            ]),\n        )]);\n        assert_eq!(to_yaml_document(&doc), \"items:\\n  - k: 1\\n  - k: 2\\n\");\n    }\n\n    #[test]\n    fn document_seq_of_seq() {\n        let doc = Yaml::Seq(vec![Yaml::Seq(vec![Yaml::Int(1), Yaml::Int(2)])]);\n        assert_eq!(to_yaml_document(&doc), \"-\\n  - 1\\n  - 2\\n\");\n    }\n\n    #[test]\n    fn attribution_matches_expected_bytes() {\n        let attribution = validate_attribution(json!({\n            \"module\": \"greeting\",\n            \"target\": \"typescript\",\n            \"entries\": [\n                {\n                    \"promptLines\": [1, 1],\n                    \"file\": \"greet.ts\",\n                    \"lines\": [1, 1],\n                    \"note\": \"builds the greeting string\"\n                }\n            ]\n        }))\n        .unwrap();\n\n        let expected = concat!(\n            \"module: greeting\\n\",\n            \"target: typescript\\n\",\n            \"entries:\\n\",\n            \"  - promptLines:\\n\",\n            \"      - 1\\n\",\n            \"      - 1\\n\",\n            \"    file: greet.ts\\n\",\n            \"    lines:\\n\",\n            \"      - 1\\n\",\n            \"      - 1\\n\",\n            \"    note: builds the greeting string\\n\",\n        );\n\n        assert_eq!(attribution_to_yaml(&attribution), expected);\n    }\n\n    #[test]\n    fn ml_empty_entries_render_inline() {\n        let ml = validate_ml(json!({\"module\": \"m\", \"target\": \"t\"})).unwrap();\n        assert_eq!(ml_to_yaml(&ml), \"module: m\\ntarget: t\\nentries: []\\n\");\n    }\n\n    #[test]\n    fn ml_entry_kinds_and_optional_suggestion() {\n        let ml = validate_ml(json!({\n            \"module\": \"m\",\n            \"target\": \"t\",\n            \"entries\": [\n                {\"promptLines\": [1, 2], \"kind\": \"no-op\", \"message\": \"msg\", \"reasoning\": \"why\", \"suggestion\": \"do this\"},\n                {\"promptLines\": 5, \"kind\": \"note\", \"message\": \"m2\"}\n            ]\n        }))\n        .unwrap();\n\n        let expected = concat!(\n            \"module: m\\n\",\n            \"target: t\\n\",\n            \"entries:\\n\",\n            \"  - promptLines:\\n\",\n            \"      - 1\\n\",\n            \"      - 2\\n\",\n            \"    kind: no-op\\n\",\n            \"    message: msg\\n\",\n            \"    reasoning: why\\n\",\n            \"    suggestion: do this\\n\",\n            \"  - promptLines:\\n\",\n            \"      - 5\\n\",\n            \"      - 5\\n\",\n            \"    kind: note\\n\",\n            \"    message: m2\\n\",\n            \"    reasoning: \\\"\\\"\\n\",\n        );\n\n        assert_eq!(ml_to_yaml(&ml), expected);\n    }\n\n    #[test]\n    fn ir_empty_sequences_render_inline() {\n        let ir = validate_ir(json!({\"module\": \"m\"})).unwrap();\n        assert_eq!(\n            ir_to_yaml(&ir),\n            \"module: m\\ndeps: []\\ntypes: []\\nfunctions: []\\ntests: []\\n\"\n        );\n    }\n\n    #[test]\n    fn ir_with_content_and_json_test_values() {\n        let ir = validate_ir(json!({\n            \"module\": \"greeting\",\n            \"deps\": [\"a\", \"b\"],\n            \"types\": [{\"name\": \"T\", \"description\": \"desc\"}],\n            \"functions\": [{\"name\": \"f\", \"signature\": \"f(): string\", \"behavior\": \"returns\"}],\n            \"tests\": [{\"name\": \"t1\", \"given\": {\"x\": 1, \"y\": [1, 2]}, \"expect\": \"ok\"}]\n        }))\n        .unwrap();\n\n        let expected = concat!(\n            \"module: greeting\\n\",\n            \"deps:\\n\",\n            \"  - a\\n\",\n            \"  - b\\n\",\n            \"types:\\n\",\n            \"  - name: T\\n\",\n            \"    description: desc\\n\",\n            \"functions:\\n\",\n            \"  - name: f\\n\",\n            \"    signature: \\\"f(): string\\\"\\n\",\n            \"    behavior: returns\\n\",\n            \"tests:\\n\",\n            \"  - name: t1\\n\",\n            \"    given:\\n\",\n            \"      x: 1\\n\",\n            \"      y:\\n\",\n            \"        - 1\\n\",\n            \"        - 2\\n\",\n            \"    expect: ok\\n\",\n        );\n\n        assert_eq!(ir_to_yaml(&ir), expected);\n    }\n\n    #[test]\n    fn json_to_yaml_converts_all_value_kinds() {\n        assert_eq!(json_to_yaml(&json!(null)), Yaml::Null);\n        assert_eq!(json_to_yaml(&json!(true)), Yaml::Bool(true));\n        assert_eq!(json_to_yaml(&json!(5)), Yaml::Int(5));\n        assert_eq!(json_to_yaml(&json!(1.5)), Yaml::Float(1.5));\n        assert_eq!(json_to_yaml(&json!(\"s\")), Yaml::Str(\"s\".to_string()));\n        assert_eq!(\n            json_to_yaml(&json!([1, \"a\"])),\n            Yaml::Seq(vec![Yaml::Int(1), Yaml::Str(\"a\".to_string())])\n        );\n        assert_eq!(\n            json_to_yaml(&json!({\"k\": 1})),\n            Yaml::Map(vec![(\"k\".to_string(), Yaml::Int(1))])\n        );\n    }\n\n    #[test]\n    fn line_range_builds_two_int_seq() {\n        assert_eq!(\n            line_range(LineRange::new(3, 9)),\n            Yaml::Seq(vec![Yaml::Int(3), Yaml::Int(9)])\n        );\n    }\n}\n"
+      },
+      {
+        "type": "attribution",
+        "module": "yaml",
+        "target": "rust",
+        "entries": [
+          {
+            "promptLines": [
+              43,
+              45
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              9,
+              18
+            ],
+            "note": "Yaml enum with variants"
+          },
+          {
+            "promptLines": [
+              51,
+              51
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              114,
+              116
+            ],
+            "note": "empty string renders as double-quoted empty"
+          },
+          {
+            "promptLines": [
+              52,
+              53
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              117,
+              119
+            ],
+            "note": "plain-representable strings render verbatim"
+          },
+          {
+            "promptLines": [
+              54,
+              56
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              120,
+              122
+            ],
+            "note": "single-quote branch for double-quote without apostrophe"
+          },
+          {
+            "promptLines": [
+              57,
+              58
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              123,
+              136
+            ],
+            "note": "double-quoted escaping of special chars"
+          },
+          {
+            "promptLines": [
+              62,
+              62
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              86,
+              90
+            ],
+            "note": "first/last char whitespace check"
+          },
+          {
+            "promptLines": [
+              63,
+              64
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              23,
+              25
+            ],
+            "note": "control character detection"
+          },
+          {
+            "promptLines": [
+              63,
+              64
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              91,
+              93
+            ],
+            "note": "reject newline/control chars"
+          },
+          {
+            "promptLines": [
+              65,
+              66
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              20,
+              21
+            ],
+            "note": "plain leading indicator chars list"
+          },
+          {
+            "promptLines": [
+              65,
+              66
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              94,
+              96
+            ],
+            "note": "reject leading indicator char"
+          },
+          {
+            "promptLines": [
+              67,
+              69
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              97,
+              103
+            ],
+            "note": "leading -/?/: needs non-space second char"
+          },
+          {
+            "promptLines": [
+              70,
+              71
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              104,
+              106
+            ],
+            "note": "reject colon-space, trailing colon, space-hash"
+          },
+          {
+            "promptLines": [
+              72,
+              72
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              107,
+              109
+            ],
+            "note": "reject non-string-resolving values"
+          },
+          {
+            "promptLines": [
+              74,
+              76
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              77,
+              83
+            ],
+            "note": "null/bool literal and core int/float resolution"
+          },
+          {
+            "promptLines": [
+              78,
+              80
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              27,
+              40
+            ],
+            "note": "core integer parsing"
+          },
+          {
+            "promptLines": [
+              81,
+              87
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              42,
+              75
+            ],
+            "note": "core float parsing"
+          },
+          {
+            "promptLines": [
+              89,
+              93
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              348,
+              386
+            ],
+            "note": "plain vs quoted string test cases"
+          },
+          {
+            "promptLines": [
+              95,
+              96
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              138,
+              147
+            ],
+            "note": "non-string scalar rendering"
+          },
+          {
+            "promptLines": [
+              100,
+              102
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              204,
+              215
+            ],
+            "note": "document rendering with trailing newline"
+          },
+          {
+            "promptLines": [
+              104,
+              107
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              204,
+              211
+            ],
+            "note": "empty/non-empty map and seq handling at root"
+          },
+          {
+            "promptLines": [
+              109,
+              118
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              157,
+              177
+            ],
+            "note": "block map emission rules"
+          },
+          {
+            "promptLines": [
+              116,
+              118
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              149,
+              155
+            ],
+            "note": "inline scalar for empty seq/map"
+          },
+          {
+            "promptLines": [
+              120,
+              129
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              179,
+              202
+            ],
+            "note": "block sequence emission rules"
+          },
+          {
+            "promptLines": [
+              122,
+              125
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              184,
+              191
+            ],
+            "note": "sequence item as map turns first line into dash item"
+          },
+          {
+            "promptLines": [
+              131,
+              131
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              158,
+              158
+            ],
+            "note": "indent as spaces, 2 per level"
+          },
+          {
+            "promptLines": [
+              135,
+              136
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              217,
+              219
+            ],
+            "note": "line_range builds Seq of two Ints"
+          },
+          {
+            "promptLines": [
+              138,
+              157
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              230,
+              249
+            ],
+            "note": "attribution_to_yaml document structure"
+          },
+          {
+            "promptLines": [
+              159,
+              164
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              221,
+              274
+            ],
+            "note": "ml_to_yaml with kind string mapping and optional suggestion"
+          },
+          {
+            "promptLines": [
+              166,
+              171
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              290,
+              332
+            ],
+            "note": "ir_to_yaml document structure"
+          },
+          {
+            "promptLines": [
+              173,
+              176
+            ],
+            "file": "yaml/src/lib.rs",
+            "lines": [
+              276,
+              288
+            ],
+            "note": "json_to_yaml conversion rules"
+          }
+        ]
+      },
+      {
+        "type": "mapl-entry",
+        "path": "yaml.mapl",
+        "entry": {
+          "promptLines": [
+            20,
+            22
+          ],
+          "kind": "ambiguity",
+          "severity": "error",
+          "message": "'any hand-written crate' is a vague, oddly-placed restriction",
+          "reasoning": "The instruction to not \"depend on any hand-written crate\" is unclear in scope — the crate itself is hand-written (this whole module is authored by a coding agent from a prompt), and no other hand-written crates are mentioned anywhere else in the spec. The agent reasonably interpreted this as \"only depend on the four listed sibling schema crates plus serde_json, nothing else,\" which is what it did (Cargo.toml deps not shown but code only imports the four schemas_* crates and serde_json). ",
+          "suggestion": "Depend only on the four sibling crates listed below and serde_json — no other crates."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "yaml.mapl",
+        "entry": {
+          "promptLines": [
+            81,
+            87
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "Asymmetric .inf/.nan sign-stripping rule was implemented literally, not smoothed over",
+          "reasoning": "The spec deliberately distinguishes: `.inf` variants are checked against the sign-stripped body, while `.nan` variants are checked against the whole original string `s` (no sign stripping) — per line 82's exact wording \"the whole string is .nan/.NaN/.NAN\". The agent preserved this asymmetry exactly (is_core_float checks `body == \".inf\"` but `s == \".nan\"`), which is easy to miss/normalize away by mistake. Confirms this subtle distinction was intentional and honored.\n"
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "yaml.mapl",
+        "entry": {
+          "promptLines": [
+            54,
+            56
+          ],
+          "kind": "ambiguity",
+          "severity": "error",
+          "message": "Parenthetical '(there are none in this branch)' reads like a stray internal note",
+          "reasoning": "Line 55's aside about apostrophe-doubling is inert given the branch precondition (no apostrophe in this branch by construction), so it can never fire. It's not wrong, just an unusual bit of self-referential commentary embedded in a spec line rather than an example or requirement. The agent implemented the doubling logic anyway (`s.replace('\\'', \"''\")`) as dead-but-harmless code satisfying the literal instruction, which is the safe reading."
+        }
+      },
+      {
+        "type": "lock",
+        "module": "yaml",
+        "target": "rust",
+        "files": [
+          {
+            "path": "yaml/Cargo.toml",
+            "hash": "cd00f12e24e0d2bb97c580e9e88dfe568d18bd2bdbffc20db568d7d73e638cb0"
+          },
+          {
+            "path": "yaml/src/lib.rs",
+            "hash": "7fd8d24dfccf033d3000496f79921a549012a8494e30f57ba110892f0b874778"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+---
+title: Playground
+description: Run real NAPL machinery in the browser — live frontmatter diagnostics, attribution hover, and a replayed generation of a real self-hosted module.
+icon: Play
+---
+
+The playground runs the actual NAPL toolchain compiled to WebAssembly. The prompt
+tab is live: edit the frontmatter and the same validator the CLI uses flags
+problems as you type. Hover a body sentence to see the generated lines it is
+attributed to.
+
+Press **Run gen** to replay a real recorded generation of the `gen_prompt_diff`
+module — a small pure Rust function the NAPL toolchain generated from its own
+prompt. The diffs, the attribution mapping, the machine-layer notes, and the
+final lock are all derived from the repository's actual journal, attribution, and
+mapl state. Nothing here is hand-authored.
+
+<NaplPlayground module="gen_prompt_diff" />
+
+The generated Rust on the right is read-only on purpose: in NAPL the code is a
+build artifact. You change behavior by editing the prompt, never the output. What
+you watch replay is exactly what `napl gen rust` recorded when it generated this
+module for real — see the [self-host showcase](/selfhost) for all 36 modules.

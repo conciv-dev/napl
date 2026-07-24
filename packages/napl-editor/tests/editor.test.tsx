@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { StringStream } from '@codemirror/language';
 import { forEachDiagnostic, forceLinting } from '@codemirror/lint';
@@ -10,8 +10,36 @@ import { PlaygroundShell } from '../src/PlaygroundShell.tsx';
 import { naplLinter } from '../src/editor-extensions.ts';
 import { naplStreamParser, type NaplStreamState } from '../src/napl-language.ts';
 
-const sample = (): string =>
-  readFileSync(resolve(process.cwd(), '../../selfhost/body_lines.napl'), 'utf8');
+const findPrompt = (dir: string, moduleName: string): string | null => {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name === 'node_modules' || entry.name === 'target' || entry.name === '.napl') {
+      continue;
+    }
+    const full = resolve(dir, entry.name);
+    if (entry.isDirectory()) {
+      const nested = findPrompt(full, moduleName);
+      if (nested) {
+        return nested;
+      }
+      continue;
+    }
+    if (entry.name.endsWith('.napl')) {
+      const content = readFileSync(full, 'utf8');
+      if (new RegExp(`^module:\\s*${moduleName}\\s*$`, 'm').test(content)) {
+        return content;
+      }
+    }
+  }
+  return null;
+};
+
+const sample = (): string => {
+  const content = findPrompt(resolve(process.cwd(), '../../selfhost'), 'body_lines');
+  if (!content) {
+    throw new Error('could not locate the body_lines prompt under selfhost/');
+  }
+  return content;
+};
 
 interface Token {
   text: string;

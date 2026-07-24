@@ -1,4 +1,8 @@
-export { NaplEditor, type NaplEditorProps } from './NaplEditor.tsx';
+export {
+  NaplEditor,
+  type HighlightRange,
+  type NaplEditorProps,
+} from './NaplEditor.tsx';
 export {
   PlaygroundShell,
   type PlaygroundFile,
@@ -35,3 +39,14 @@ export {
   type MaplKind,
   type RecordedSession,
 } from './gen-engine.ts';
+export {
+  createReplayEngine,
+  projectState,
+  type ProjectedAttribution,
+  type ProjectedLock,
+  type ProjectedMapl,
+  type ProjectedState,
+  type ReplayEngine,
+  type ReplayOptions,
+  type ReplaySnapshot,
+} from './replay-engine.ts';

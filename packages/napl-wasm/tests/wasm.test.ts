@@ -1,4 +1,6 @@
 import { readFile } from 'node:fs/promises';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 import {
@@ -19,13 +21,43 @@ const repoFile = (path: string): string =>
 
 const read = (path: string): Promise<string> => readFile(repoFile(path), 'utf8');
 
+const findPrompt = (dir: string, moduleName: string): string | null => {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name === 'node_modules' || entry.name === 'target' || entry.name === '.napl') {
+      continue;
+    }
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      const nested = findPrompt(full, moduleName);
+      if (nested) {
+        return nested;
+      }
+      continue;
+    }
+    if (entry.name.endsWith('.napl') || entry.name.endsWith('.🧑')) {
+      if (new RegExp(`^module:\\s*${moduleName}\\s*$`, 'm').test(readFileSync(full, 'utf8'))) {
+        return full;
+      }
+    }
+  }
+  return null;
+};
+
+const readPrompt = (moduleName: string): Promise<string> => {
+  const found = findPrompt(repoFile('selfhost'), moduleName);
+  if (!found) {
+    throw new Error(`could not locate the ${moduleName} prompt under selfhost/`);
+  }
+  return readFile(found, 'utf8');
+};
+
 beforeAll(async () => {
   await initNaplWasm();
 });
 
 describe('@napl/wasm bindings over real selfhost fixtures', () => {
   it('reports no frontmatter diagnostics for a valid prompt', async () => {
-    const content = await read('selfhost/body_lines.napl');
+    const content = await readPrompt('body_lines');
     expect(parseFrontmatterDiagnostics(content)).toEqual([]);
   });
 
@@ -36,7 +68,7 @@ describe('@napl/wasm bindings over real selfhost fixtures', () => {
   });
 
   it('scans module value and regions from a real prompt', async () => {
-    const content = await read('selfhost/body_lines.napl');
+    const content = await readPrompt('body_lines');
     const scan = scanDocument(content);
     expect(scan.frontmatter.present).toBe(true);
     expect(scan.body.present).toBe(true);
@@ -44,7 +76,7 @@ describe('@napl/wasm bindings over real selfhost fixtures', () => {
   });
 
   it('maps document body lines', async () => {
-    const content = await read('selfhost/body_lines.napl');
+    const content = await readPrompt('body_lines');
     const map = bodyLineMap(content);
     expect(map.body_start_line).toBeGreaterThan(0);
     expect(map.lines.length).toBeGreaterThan(0);

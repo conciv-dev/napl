@@ -1,0 +1,648 @@
+{
+  "module": "schemas_ordered_map",
+  "collection": "selfhost",
+  "target": "rust",
+  "targets": [
+    "rust"
+  ],
+  "prompt": {
+    "file": "schemas_ordered_map.napl",
+    "path": "schemas/schemas_ordered_map.napl",
+    "content": "---\nmodule: schemas_ordered_map\ndeps: []\ntargets: [rust]\ntests:\n  - name: preserves insertion order regardless of key ordering\n    given: { inserts: [[\"z\", 1], [\"a\", 2], [\"m\", 3]] }\n    expect: { keys: [\"z\", \"a\", \"m\"] }\n  - name: re-inserting an existing key replaces in place without moving it\n    given: { inserts: [[\"a\", 1], [\"b\", 2], [\"a\", 9]] }\n    expect: { getA: 9, keys: [\"a\", \"b\"] }\n  - name: removing a key deletes it and returns its value\n    given: { inserts: [[\"a\", 1], [\"b\", 2]], remove: \"a\" }\n    expect: { removed: 1, containsA: false, keys: [\"b\"] }\n  - name: JSON serialization and round-trip preserve insertion order\n    given: { inserts: [[\"z\", 1], [\"a\", 2]] }\n    expect: { json: \"{\\\"z\\\":1,\\\"a\\\":2}\", roundTripsEqual: true }\n---\n# An insertion-order-preserving string-keyed map\n\nThis module provides a small generic map type that remembers the order in which\nkeys were first inserted, rather than sorting them or using hash order. Some of\nthe toolchain's on-disk formats depend on a stable, insertion-ordered listing of\nstring keys (for example the order files are listed for a module), so a plain\nhash map or a sorted map would both be wrong here. It is pure: no I/O and no\ndependencies on other project modules. Bring in `serde` (and, for the tests,\n`serde_json`) since the type must serialize as a map.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `schemas_ordered_map/`:\n`schemas_ordered_map/Cargo.toml` (package name `schemas_ordered_map`) and\n`schemas_ordered_map/src/lib.rs`. Touch nothing outside `schemas_ordered_map/`.\nEnsure `cargo test` passes from the workspace root before finishing.\n\n## The type\n\nExpose a public generic type `OrderedMap<V>` — a map from owned `String` keys to\nvalues of type `V`. It preserves **first-insertion order**: iterating the map,\nits keys, or its values always visits entries in the order their keys were first\ninserted. Provide a `Default` implementation (an empty map) and a `new()`\nconstructor that returns the same empty map.\n\n## Query and mutation methods\n\n- `len()` — the number of entries.\n- `is_empty()` — whether there are no entries.\n- `contains_key(key: &str)` — whether the key is present.\n- `get(key: &str)` — a shared reference to the value for a key, or nothing.\n- `get_mut(key: &str)` — a mutable reference to the value for a key, or nothing.\n- `insert(key: String, value: V)` — set the value for a key. If the key is\n  already present, replace its value **in place**, keeping the key at its\n  existing position; otherwise append it at the end (a new last entry).\n- `remove(key: &str)` — remove a key, returning its value if it was present\n  (otherwise nothing), and closing the gap so the remaining keys keep their\n  relative order.\n- `iter()` — visit `(&String, &V)` pairs in insertion order.\n- `keys()` — visit `&String` keys in insertion order.\n- `values()` — visit `&V` values in insertion order.\n\n## Worked behavior to reproduce exactly\n\n- Insert `z`, then `a`, then `m`; the keys iterate as `z`, `a`, `m` — insertion\n  order, not sorted order.\n- Insert `a` = 1, `b` = 2, then `a` = 9; `get(\"a\")` is `9` and the keys are still\n  `a`, `b` (re-inserting `a` did not move it to the end).\n- Insert `a` = 1, `b` = 2, then remove `a`; the removal returns the value `1`,\n  the map no longer contains `a`, and the remaining key is `b`.\n\n## Serialization\n\nImplement `serde::Serialize` and `serde::Deserialize` for `OrderedMap<V>` so it\nserializes as an ordinary map (object), emitting its entries in insertion order,\nand deserializes from a map by reading entries in the order they appear, keeping\nthat order. With a JSON serializer, an `OrderedMap` built by inserting `z` = 1\nthen `a` = 2 serializes to exactly the string `{\"z\":1,\"a\":2}` (note: `z` before\n`a`), and deserializing that string back yields a map equal to the original.\nSupport equality comparison (`PartialEq`) so two maps with the same entries in\nthe same order compare equal.\n"
+  },
+  "promptAtGen": "# An insertion-order-preserving string-keyed map\n\nThis module provides a small generic map type that remembers the order in which\nkeys were first inserted, rather than sorting them or using hash order. Some of\nthe toolchain's on-disk formats depend on a stable, insertion-ordered listing of\nstring keys (for example the order files are listed for a module), so a plain\nhash map or a sorted map would both be wrong here. It is pure: no I/O and no\ndependencies on other project modules. Bring in `serde` (and, for the tests,\n`serde_json`) since the type must serialize as a map.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `schemas_ordered_map/`:\n`schemas_ordered_map/Cargo.toml` (package name `schemas_ordered_map`) and\n`schemas_ordered_map/src/lib.rs`. Touch nothing outside `schemas_ordered_map/`.\nEnsure `cargo test` passes from the workspace root before finishing.\n\n## The type\n\nExpose a public generic type `OrderedMap<V>` — a map from owned `String` keys to\nvalues of type `V`. It preserves **first-insertion order**: iterating the map,\nits keys, or its values always visits entries in the order their keys were first\ninserted. Provide a `Default` implementation (an empty map) and a `new()`\nconstructor that returns the same empty map.\n\n## Query and mutation methods\n\n- `len()` — the number of entries.\n- `is_empty()` — whether there are no entries.\n- `contains_key(key: &str)` — whether the key is present.\n- `get(key: &str)` — a shared reference to the value for a key, or nothing.\n- `get_mut(key: &str)` — a mutable reference to the value for a key, or nothing.\n- `insert(key: String, value: V)` — set the value for a key. If the key is\n  already present, replace its value **in place**, keeping the key at its\n  existing position; otherwise append it at the end (a new last entry).\n- `remove(key: &str)` — remove a key, returning its value if it was present\n  (otherwise nothing), and closing the gap so the remaining keys keep their\n  relative order.\n- `iter()` — visit `(&String, &V)` pairs in insertion order.\n- `keys()` — visit `&String` keys in insertion order.\n- `values()` — visit `&V` values in insertion order.\n\n## Worked behavior to reproduce exactly\n\n- Insert `z`, then `a`, then `m`; the keys iterate as `z`, `a`, `m` — insertion\n  order, not sorted order.\n- Insert `a` = 1, `b` = 2, then `a` = 9; `get(\"a\")` is `9` and the keys are still\n  `a`, `b` (re-inserting `a` did not move it to the end).\n- Insert `a` = 1, `b` = 2, then remove `a`; the removal returns the value `1`,\n  the map no longer contains `a`, and the remaining key is `b`.\n\n## Serialization\n\nImplement `serde::Serialize` and `serde::Deserialize` for `OrderedMap<V>` so it\nserializes as an ordinary map (object), emitting its entries in insertion order,\nand deserializes from a map by reading entries in the order they appear, keeping\nthat order. With a JSON serializer, an `OrderedMap` built by inserting `z` = 1\nthen `a` = 2 serializes to exactly the string `{\"z\":1,\"a\":2}` (note: `z` before\n`a`), and deserializing that string back yields a map equal to the original.\nSupport equality comparison (`PartialEq`) so two maps with the same entries in\nthe same order compare equal.\n",
+  "summary": "An insertion-order-preserving string-keyed map",
+  "files": [
+    {
+      "path": "schemas_ordered_map/Cargo.toml",
+      "journalPath": ".napl/src/rust/schemas_ordered_map/Cargo.toml",
+      "content": "[package]\nname = \"schemas_ordered_map\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\nserde = { version = \"1\" }\n\n[dev-dependencies]\nserde_json = \"1\"\n",
+      "language": "toml"
+    },
+    {
+      "path": "schemas_ordered_map/src/lib.rs",
+      "journalPath": ".napl/src/rust/schemas_ordered_map/src/lib.rs",
+      "content": "// GENERATED BY NAPL from schemas_ordered_map.napl — edit the prompt, not this file\n\nuse std::fmt;\nuse std::marker::PhantomData;\n\nuse serde::de::{Deserialize, Deserializer, MapAccess, Visitor};\nuse serde::ser::{Serialize, SerializeMap, Serializer};\n\n/// A string-keyed map that preserves first-insertion order.\n#[derive(Debug, Clone, PartialEq, Eq)]\npub struct OrderedMap<V> {\n    entries: Vec<(String, V)>,\n}\n\nimpl<V> Default for OrderedMap<V> {\n    fn default() -> Self {\n        OrderedMap { entries: Vec::new() }\n    }\n}\n\nimpl<V> OrderedMap<V> {\n    pub fn new() -> Self {\n        Self::default()\n    }\n\n    pub fn len(&self) -> usize {\n        self.entries.len()\n    }\n\n    pub fn is_empty(&self) -> bool {\n        self.entries.is_empty()\n    }\n\n    pub fn contains_key(&self, key: &str) -> bool {\n        self.entries.iter().any(|(k, _)| k == key)\n    }\n\n    pub fn get(&self, key: &str) -> Option<&V> {\n        self.entries.iter().find(|(k, _)| k == key).map(|(_, v)| v)\n    }\n\n    pub fn get_mut(&mut self, key: &str) -> Option<&mut V> {\n        self.entries.iter_mut().find(|(k, _)| k == key).map(|(_, v)| v)\n    }\n\n    pub fn insert(&mut self, key: String, value: V) {\n        if let Some(existing) = self.get_mut(&key) {\n            *existing = value;\n        } else {\n            self.entries.push((key, value));\n        }\n    }\n\n    pub fn remove(&mut self, key: &str) -> Option<V> {\n        let pos = self.entries.iter().position(|(k, _)| k == key)?;\n        Some(self.entries.remove(pos).1)\n    }\n\n    pub fn iter(&self) -> impl Iterator<Item = (&String, &V)> {\n        self.entries.iter().map(|(k, v)| (k, v))\n    }\n\n    pub fn keys(&self) -> impl Iterator<Item = &String> {\n        self.entries.iter().map(|(k, _)| k)\n    }\n\n    pub fn values(&self) -> impl Iterator<Item = &V> {\n        self.entries.iter().map(|(_, v)| v)\n    }\n}\n\nimpl<V: Serialize> Serialize for OrderedMap<V> {\n    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>\n    where\n        S: Serializer,\n    {\n        let mut map = serializer.serialize_map(Some(self.entries.len()))?;\n        for (k, v) in &self.entries {\n            map.serialize_entry(k, v)?;\n        }\n        map.end()\n    }\n}\n\nimpl<'de, V: Deserialize<'de>> Deserialize<'de> for OrderedMap<V> {\n    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>\n    where\n        D: Deserializer<'de>,\n    {\n        struct OrderedMapVisitor<V> {\n            marker: PhantomData<V>,\n        }\n\n        impl<'de, V: Deserialize<'de>> Visitor<'de> for OrderedMapVisitor<V> {\n            type Value = OrderedMap<V>;\n\n            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {\n                formatter.write_str(\"a map\")\n            }\n\n            fn visit_map<A>(self, mut access: A) -> Result<Self::Value, A::Error>\n            where\n                A: MapAccess<'de>,\n            {\n                let mut map = OrderedMap::new();\n                while let Some((key, value)) = access.next_entry::<String, V>()? {\n                    map.insert(key, value);\n                }\n                Ok(map)\n            }\n        }\n\n        deserializer.deserialize_map(OrderedMapVisitor { marker: PhantomData })\n    }\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn default_and_new_are_empty() {\n        let m: OrderedMap<i32> = OrderedMap::default();\n        assert!(m.is_empty());\n        assert_eq!(m.len(), 0);\n\n        let m2: OrderedMap<i32> = OrderedMap::new();\n        assert_eq!(m, m2);\n    }\n\n    #[test]\n    fn preserves_first_insertion_order() {\n        let mut m = OrderedMap::new();\n        m.insert(\"z\".to_string(), 1);\n        m.insert(\"a\".to_string(), 2);\n        m.insert(\"m\".to_string(), 3);\n\n        let keys: Vec<&String> = m.keys().collect();\n        assert_eq!(keys, vec![\"z\", \"a\", \"m\"]);\n    }\n\n    #[test]\n    fn reinsert_replaces_in_place_without_moving() {\n        let mut m = OrderedMap::new();\n        m.insert(\"a\".to_string(), 1);\n        m.insert(\"b\".to_string(), 2);\n        m.insert(\"a\".to_string(), 9);\n\n        assert_eq!(m.get(\"a\"), Some(&9));\n        let keys: Vec<&String> = m.keys().collect();\n        assert_eq!(keys, vec![\"a\", \"b\"]);\n    }\n\n    #[test]\n    fn remove_closes_gap_and_returns_value() {\n        let mut m = OrderedMap::new();\n        m.insert(\"a\".to_string(), 1);\n        m.insert(\"b\".to_string(), 2);\n\n        let removed = m.remove(\"a\");\n        assert_eq!(removed, Some(1));\n        assert!(!m.contains_key(\"a\"));\n        let keys: Vec<&String> = m.keys().collect();\n        assert_eq!(keys, vec![\"b\"]);\n    }\n\n    #[test]\n    fn remove_missing_key_returns_none() {\n        let mut m: OrderedMap<i32> = OrderedMap::new();\n        m.insert(\"a\".to_string(), 1);\n        assert_eq!(m.remove(\"nope\"), None);\n    }\n\n    #[test]\n    fn get_mut_updates_value() {\n        let mut m = OrderedMap::new();\n        m.insert(\"a\".to_string(), 1);\n        if let Some(v) = m.get_mut(\"a\") {\n            *v = 42;\n        }\n        assert_eq!(m.get(\"a\"), Some(&42));\n    }\n\n    #[test]\n    fn iter_and_values_follow_insertion_order() {\n        let mut m = OrderedMap::new();\n        m.insert(\"z\".to_string(), 1);\n        m.insert(\"a\".to_string(), 2);\n\n        let pairs: Vec<(&String, &i32)> = m.iter().collect();\n        assert_eq!(pairs, vec![(&\"z\".to_string(), &1), (&\"a\".to_string(), &2)]);\n\n        let values: Vec<&i32> = m.values().collect();\n        assert_eq!(values, vec![&1, &2]);\n    }\n\n    #[test]\n    fn serializes_in_insertion_order() {\n        let mut m = OrderedMap::new();\n        m.insert(\"z\".to_string(), 1);\n        m.insert(\"a\".to_string(), 2);\n\n        let json = serde_json::to_string(&m).unwrap();\n        assert_eq!(json, r#\"{\"z\":1,\"a\":2}\"#);\n    }\n\n    #[test]\n    fn round_trips_through_json_preserving_order() {\n        let mut m = OrderedMap::new();\n        m.insert(\"z\".to_string(), 1);\n        m.insert(\"a\".to_string(), 2);\n\n        let json = serde_json::to_string(&m).unwrap();\n        let decoded: OrderedMap<i32> = serde_json::from_str(&json).unwrap();\n        assert_eq!(decoded, m);\n        let keys: Vec<&String> = decoded.keys().collect();\n        assert_eq!(keys, vec![\"z\", \"a\"]);\n    }\n}\n",
+      "language": "rust"
+    }
+  ],
+  "attribution": [
+    {
+      "promptLines": [
+        22,
+        26
+      ],
+      "file": "schemas_ordered_map/src/lib.rs",
+      "lines": [
+        9,
+        24
+      ],
+      "note": "struct def, Default, new()"
+    },
+    {
+      "promptLines": [
+        30,
+        31
+      ],
+      "file": "schemas_ordered_map/src/lib.rs",
+      "lines": [
+        26,
+        32
+      ],
+      "note": "len/is_empty"
+    },
+    {
+      "promptLines": [
+        32,
+        32
+      ],
+      "file": "schemas_ordered_map/src/lib.rs",
+      "lines": [
+        34,
+        36
+      ],
+      "note": "contains_key"
+    },
+    {
+      "promptLines": [
+        33,
+        33
+      ],
+      "file": "schemas_ordered_map/src/lib.rs",
+      "lines": [
+        38,
+        40
+      ],
+      "note": "get"
+    },
+    {
+      "promptLines": [
+        34,
+        34
+      ],
+      "file": "schemas_ordered_map/src/lib.rs",
+      "lines": [
+        42,
+        44
+      ],
+      "note": "get_mut"
+    },
+    {
+      "promptLines": [
+        35,
+        37
+      ],
+      "file": "schemas_ordered_map/src/lib.rs",
+      "lines": [
+        46,
+        52
+      ],
+      "note": "insert replace-in-place or append"
+    },
+    {
+      "promptLines": [
+        38,
+        40
+      ],
+      "file": "schemas_ordered_map/src/lib.rs",
+      "lines": [
+        54,
+        57
+      ],
+      "note": "remove closing gap"
+    },
+    {
+      "promptLines": [
+        41,
+        41
+      ],
+      "file": "schemas_ordered_map/src/lib.rs",
+      "lines": [
+        59,
+        61
+      ],
+      "note": "iter pairs"
+    },
+    {
+      "promptLines": [
+        42,
+        42
+      ],
+      "file": "schemas_ordered_map/src/lib.rs",
+      "lines": [
+        63,
+        65
+      ],
+      "note": "keys"
+    },
+    {
+      "promptLines": [
+        43,
+        43
+      ],
+      "file": "schemas_ordered_map/src/lib.rs",
+      "lines": [
+        67,
+        69
+      ],
+      "note": "values"
+    },
+    {
+      "promptLines": [
+        47,
+        48
+      ],
+      "file": "schemas_ordered_map/src/lib.rs",
+      "lines": [
+        132,
+        140
+      ],
+      "note": "test insertion order z a m"
+    },
+    {
+      "promptLines": [
+        49,
+        50
+      ],
+      "file": "schemas_ordered_map/src/lib.rs",
+      "lines": [
+        143,
+        152
+      ],
+      "note": "test reinsert replaces in place"
+    },
+    {
+      "promptLines": [
+        51,
+        52
+      ],
+      "file": "schemas_ordered_map/src/lib.rs",
+      "lines": [
+        155,
+        165
+      ],
+      "note": "test remove closes gap"
+    },
+    {
+      "promptLines": [
+        56,
+        58
+      ],
+      "file": "schemas_ordered_map/src/lib.rs",
+      "lines": [
+        72,
+        83
+      ],
+      "note": "Serialize impl as map in insertion order"
+    },
+    {
+      "promptLines": [
+        56,
+        58
+      ],
+      "file": "schemas_ordered_map/src/lib.rs",
+      "lines": [
+        85,
+        115
+      ],
+      "note": "Deserialize impl reading entries in order"
+    },
+    {
+      "promptLines": [
+        59,
+        61
+      ],
+      "file": "schemas_ordered_map/src/lib.rs",
+      "lines": [
+        198,
+        205
+      ],
+      "note": "test exact json serialization z before a"
+    },
+    {
+      "promptLines": [
+        61,
+        61
+      ],
+      "file": "schemas_ordered_map/src/lib.rs",
+      "lines": [
+        208,
+        218
+      ],
+      "note": "test round trip deserialize preserves order"
+    },
+    {
+      "promptLines": [
+        62,
+        63
+      ],
+      "file": "schemas_ordered_map/src/lib.rs",
+      "lines": [
+        10,
+        10
+      ],
+      "note": "derive PartialEq for equality comparison"
+    },
+    {
+      "promptLines": [
+        25,
+        25
+      ],
+      "file": "schemas_ordered_map/src/lib.rs",
+      "lines": [
+        15,
+        19
+      ],
+      "note": "Default impl empty map"
+    },
+    {
+      "promptLines": [
+        22,
+        22
+      ],
+      "file": "schemas_ordered_map/src/lib.rs",
+      "lines": [
+        11,
+        13
+      ],
+      "note": "OrderedMap struct definition with Vec of pairs"
+    }
+  ],
+  "attributionYaml": "module: schemas_ordered_map\ntarget: rust\nentries:\n  - promptLines:\n      - 22\n      - 26\n    file: schemas_ordered_map/src/lib.rs\n    lines:\n      - 9\n      - 24\n    note: struct def, Default, new()\n  - promptLines:\n      - 30\n      - 31\n    file: schemas_ordered_map/src/lib.rs\n    lines:\n      - 26\n      - 32\n    note: len/is_empty\n  - promptLines:\n      - 32\n      - 32\n    file: schemas_ordered_map/src/lib.rs\n    lines:\n      - 34\n      - 36\n    note: contains_key\n  - promptLines:\n      - 33\n      - 33\n    file: schemas_ordered_map/src/lib.rs\n    lines:\n      - 38\n      - 40\n    note: get\n  - promptLines:\n      - 34\n      - 34\n    file: schemas_ordered_map/src/lib.rs\n    lines:\n      - 42\n      - 44\n    note: get_mut\n  - promptLines:\n      - 35\n      - 37\n    file: schemas_ordered_map/src/lib.rs\n    lines:\n      - 46\n      - 52\n    note: insert replace-in-place or append\n  - promptLines:\n      - 38\n      - 40\n    file: schemas_ordered_map/src/lib.rs\n    lines:\n      - 54\n      - 57\n    note: remove closing gap\n  - promptLines:\n      - 41\n      - 41\n    file: schemas_ordered_map/src/lib.rs\n    lines:\n      - 59\n      - 61\n    note: iter pairs\n  - promptLines:\n      - 42\n      - 42\n    file: schemas_ordered_map/src/lib.rs\n    lines:\n      - 63\n      - 65\n    note: keys\n  - promptLines:\n      - 43\n      - 43\n    file: schemas_ordered_map/src/lib.rs\n    lines:\n      - 67\n      - 69\n    note: values\n  - promptLines:\n      - 47\n      - 48\n    file: schemas_ordered_map/src/lib.rs\n    lines:\n      - 132\n      - 140\n    note: test insertion order z a m\n  - promptLines:\n      - 49\n      - 50\n    file: schemas_ordered_map/src/lib.rs\n    lines:\n      - 143\n      - 152\n    note: test reinsert replaces in place\n  - promptLines:\n      - 51\n      - 52\n    file: schemas_ordered_map/src/lib.rs\n    lines:\n      - 155\n      - 165\n    note: test remove closes gap\n  - promptLines:\n      - 56\n      - 58\n    file: schemas_ordered_map/src/lib.rs\n    lines:\n      - 72\n      - 83\n    note: Serialize impl as map in insertion order\n  - promptLines:\n      - 56\n      - 58\n    file: schemas_ordered_map/src/lib.rs\n    lines:\n      - 85\n      - 115\n    note: Deserialize impl reading entries in order\n  - promptLines:\n      - 59\n      - 61\n    file: schemas_ordered_map/src/lib.rs\n    lines:\n      - 198\n      - 205\n    note: test exact json serialization z before a\n  - promptLines:\n      - 61\n      - 61\n    file: schemas_ordered_map/src/lib.rs\n    lines:\n      - 208\n      - 218\n    note: test round trip deserialize preserves order\n  - promptLines:\n      - 62\n      - 63\n    file: schemas_ordered_map/src/lib.rs\n    lines:\n      - 10\n      - 10\n    note: derive PartialEq for equality comparison\n  - promptLines:\n      - 25\n      - 25\n    file: schemas_ordered_map/src/lib.rs\n    lines:\n      - 15\n      - 19\n    note: Default impl empty map\n  - promptLines:\n      - 22\n      - 22\n    file: schemas_ordered_map/src/lib.rs\n    lines:\n      - 11\n      - 13\n    note: OrderedMap struct definition with Vec of pairs\n",
+  "mapl": [
+    {
+      "promptLines": [
+        13,
+        18
+      ],
+      "kind": "ambiguity",
+      "severity": "error",
+      "message": "Prompt says leave workspace root manifest alone, but a new member crate normally must be registered in the root Cargo.toml to be picked up by `cargo test` from the workspace root.",
+      "reasoning": "The prompt instructs not to touch anything outside schemas_ordered_map/ and to leave the root manifest owned by the toolchain untouched, yet also requires `cargo test` to pass from the workspace root. If the root manifest uses explicit `members` (rather than a wildcard/glob that already covers new subdirectories), the new crate would not be included in the workspace build without editing that file. The diff provided only shows lib.rs, not Cargo.toml or any root manifest change, so it's unclear how this was reconciled — likely the workspace already glob-matches subdirectories, but this was assumed rather than confirmed against the actual root manifest content.",
+      "suggestion": "Clarify whether the workspace root manifest already auto-discovers new member crates (e.g. via a `members = [\"*\"]` glob) or whether adding the new crate path to `members` is permitted as the one necessary exception to 'touch nothing outside schemas_ordered_map/'."
+    },
+    {
+      "promptLines": [
+        16,
+        17
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "Only src/lib.rs was shown in the change list; schemas_ordered_map/Cargo.toml's contents (dependencies, edition, package name) were not visible to confirm correctness.",
+      "reasoning": "The prompt requires a new Cargo.toml with package name schemas_ordered_map and serde/serde_json dependencies. The provided change listing only includes lib.rs, so the crate's manifest content (versions, feature flags like serde's 'derive' — explicitly noted by the agent as not needed) could not be independently verified from the given diff, only asserted by the agent's final message."
+    }
+  ],
+  "journal": [
+    {
+      "gen": 7,
+      "timestamp": "2026-07-24T06:31:15.381Z",
+      "mode": "full",
+      "promptHash": "4973abaa008fa2130ccfd3cd7a25f1d4cc0aa9f8e4035b90b1c48b6a7ba3e707",
+      "files": [
+        {
+          "path": "schemas_ordered_map/Cargo.toml",
+          "journalPath": ".napl/src/rust/schemas_ordered_map/Cargo.toml",
+          "patch": "@@ -0,0 +1,10 @@\n+[package]\n+name = \"schemas_ordered_map\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]\n+serde = { version = \"1\" }\n+\n+[dev-dependencies]\n+serde_json = \"1\""
+        },
+        {
+          "path": "schemas_ordered_map/src/lib.rs",
+          "journalPath": ".napl/src/rust/schemas_ordered_map/src/lib.rs",
+          "patch": "@@ -0,0 +1,219 @@\n+// GENERATED BY NAPL from schemas_ordered_map.napl — edit the prompt, not this file\n+\n+use std::fmt;\n+use std::marker::PhantomData;\n+\n+use serde::de::{Deserialize, Deserializer, MapAccess, Visitor};\n+use serde::ser::{Serialize, SerializeMap, Serializer};\n+\n+/// A string-keyed map that preserves first-insertion order.\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct OrderedMap<V> {\n+    entries: Vec<(String, V)>,\n+}\n+\n+impl<V> Default for OrderedMap<V> {\n+    fn default() -> Self {\n+        OrderedMap { entries: Vec::new() }\n+    }\n+}\n+\n+impl<V> OrderedMap<V> {\n+    pub fn new() -> Self {\n+        Self::default()\n+    }\n+\n+    pub fn len(&self) -> usize {\n+        self.entries.len()\n+    }\n+\n+    pub fn is_empty(&self) -> bool {\n+        self.entries.is_empty()\n+    }\n+\n+    pub fn contains_key(&self, key: &str) -> bool {\n+        self.entries.iter().any(|(k, _)| k == key)\n+    }\n+\n+    pub fn get(&self, key: &str) -> Option<&V> {\n+        self.entries.iter().find(|(k, _)| k == key).map(|(_, v)| v)\n+    }\n+\n+    pub fn get_mut(&mut self, key: &str) -> Option<&mut V> {\n+        self.entries.iter_mut().find(|(k, _)| k == key).map(|(_, v)| v)\n+    }\n+\n+    pub fn insert(&mut self, key: String, value: V) {\n+        if let Some(existing) = self.get_mut(&key) {\n+            *existing = value;\n+        } else {\n+            self.entries.push((key, value));\n+        }\n+    }\n+\n+    pub fn remove(&mut self, key: &str) -> Option<V> {\n+        let pos = self.entries.iter().position(|(k, _)| k == key)?;\n+        Some(self.entries.remove(pos).1)\n+    }\n+\n+    pub fn iter(&self) -> impl Iterator<Item = (&String, &V)> {\n+        self.entries.iter().map(|(k, v)| (k, v))\n+    }\n+\n+    pub fn keys(&self) -> impl Iterator<Item = &String> {\n+        self.entries.iter().map(|(k, _)| k)\n+    }\n+\n+    pub fn values(&self) -> impl Iterator<Item = &V> {\n+        self.entries.iter().map(|(_, v)| v)\n+    }\n+}\n+\n+impl<V: Serialize> Serialize for OrderedMap<V> {\n+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>\n+    where\n+        S: Serializer,\n+    {\n+        let mut map = serializer.serialize_map(Some(self.entries.len()))?;\n+        for (k, v) in &self.entries {\n+            map.serialize_entry(k, v)?;\n+        }\n+        map.end()\n+    }\n+}\n+\n+impl<'de, V: Deserialize<'de>> Deserialize<'de> for OrderedMap<V> {\n+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>\n+    where\n+        D: Deserializer<'de>,\n+    {\n+        struct OrderedMapVisitor<V> {\n+            marker: PhantomData<V>,\n+        }\n+\n+        impl<'de, V: Deserialize<'de>> Visitor<'de> for OrderedMapVisitor<V> {\n+            type Value = OrderedMap<V>;\n+\n+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {\n+                formatter.write_str(\"a map\")\n+            }\n+\n+            fn visit_map<A>(self, mut access: A) -> Result<Self::Value, A::Error>\n+            where\n+                A: MapAccess<'de>,\n+            {\n+                let mut map = OrderedMap::new();\n+                while let Some((key, value)) = access.next_entry::<String, V>()? {\n+                    map.insert(key, value);\n+                }\n+                Ok(map)\n+            }\n+        }\n+\n+        deserializer.deserialize_map(OrderedMapVisitor { marker: PhantomData })\n+    }\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn default_and_new_are_empty() {\n+        let m: OrderedMap<i32> = OrderedMap::default();\n+        assert!(m.is_empty());\n+        assert_eq!(m.len(), 0);\n+\n+        let m2: OrderedMap<i32> = OrderedMap::new();\n+        assert_eq!(m, m2);\n+    }\n+\n+    #[test]\n+    fn preserves_first_insertion_order() {\n+        let mut m = OrderedMap::new();\n+        m.insert(\"z\".to_string(), 1);\n+        m.insert(\"a\".to_string(), 2);\n+        m.insert(\"m\".to_string(), 3);\n+\n+        let keys: Vec<&String> = m.keys().collect();\n+        assert_eq!(keys, vec![\"z\", \"a\", \"m\"]);\n+    }\n+\n+    #[test]\n+    fn reinsert_replaces_in_place_without_moving() {\n+        let mut m = OrderedMap::new();\n+        m.insert(\"a\".to_string(), 1);\n+        m.insert(\"b\".to_string(), 2);\n+        m.insert(\"a\".to_string(), 9);\n+\n+        assert_eq!(m.get(\"a\"), Some(&9));\n+        let keys: Vec<&String> = m.keys().collect();\n+        assert_eq!(keys, vec![\"a\", \"b\"]);\n+    }\n+\n+    #[test]\n+    fn remove_closes_gap_and_returns_value() {\n+        let mut m = OrderedMap::new();\n+        m.insert(\"a\".to_string(), 1);\n+        m.insert(\"b\".to_string(), 2);\n+\n+        let removed = m.remove(\"a\");\n+        assert_eq!(removed, Some(1));\n+        assert!(!m.contains_key(\"a\"));\n+        let keys: Vec<&String> = m.keys().collect();\n+        assert_eq!(keys, vec![\"b\"]);\n+    }\n+\n+    #[test]\n+    fn remove_missing_key_returns_none() {\n+        let mut m: OrderedMap<i32> = OrderedMap::new();\n+        m.insert(\"a\".to_string(), 1);\n+        assert_eq!(m.remove(\"nope\"), None);\n+    }\n+\n+    #[test]\n+    fn get_mut_updates_value() {\n+        let mut m = OrderedMap::new();\n+        m.insert(\"a\".to_string(), 1);\n+        if let Some(v) = m.get_mut(\"a\") {\n+            *v = 42;\n+        }\n+        assert_eq!(m.get(\"a\"), Some(&42));\n+    }\n+\n+    #[test]\n+    fn iter_and_values_follow_insertion_order() {\n+        let mut m = OrderedMap::new();\n+        m.insert(\"z\".to_string(), 1);\n+        m.insert(\"a\".to_string(), 2);\n+\n+        let pairs: Vec<(&String, &i32)> = m.iter().collect();\n+        assert_eq!(pairs, vec![(&\"z\".to_string(), &1), (&\"a\".to_string(), &2)]);\n+\n+        let values: Vec<&i32> = m.values().collect();\n+        assert_eq!(values, vec![&1, &2]);\n+    }\n+\n+    #[test]\n+    fn serializes_in_insertion_order() {\n+        let mut m = OrderedMap::new();\n+        m.insert(\"z\".to_string(), 1);\n+        m.insert(\"a\".to_string(), 2);\n+\n+        let json = serde_json::to_string(&m).unwrap();\n+        assert_eq!(json, r#\"{\"z\":1,\"a\":2}\"#);\n+    }\n+\n+    #[test]\n+    fn round_trips_through_json_preserving_order() {\n+        let mut m = OrderedMap::new();\n+        m.insert(\"z\".to_string(), 1);\n+        m.insert(\"a\".to_string(), 2);\n+\n+        let json = serde_json::to_string(&m).unwrap();\n+        let decoded: OrderedMap<i32> = serde_json::from_str(&json).unwrap();\n+        assert_eq!(decoded, m);\n+        let keys: Vec<&String> = decoded.keys().collect();\n+        assert_eq!(keys, vec![\"z\", \"a\"]);\n+    }\n+}"
+        }
+      ]
+    }
+  ],
+  "lock": [
+    {
+      "path": "schemas_ordered_map/Cargo.toml",
+      "hash": "98fadd96d5624c447be9890873322b43a2fb3032ef80fba7730439fe879a3688"
+    },
+    {
+      "path": "schemas_ordered_map/src/lib.rs",
+      "hash": "e8d1e86ccd222b4164de126c3d77699f4fba253480fda19f7ff6a3e1a8b0061f"
+    }
+  ],
+  "session": {
+    "task": "napl gen rust → schemas_ordered_map",
+    "files": {
+      "schemas_ordered_map.napl": "---\nmodule: schemas_ordered_map\ndeps: []\ntargets: [rust]\ntests:\n  - name: preserves insertion order regardless of key ordering\n    given: { inserts: [[\"z\", 1], [\"a\", 2], [\"m\", 3]] }\n    expect: { keys: [\"z\", \"a\", \"m\"] }\n  - name: re-inserting an existing key replaces in place without moving it\n    given: { inserts: [[\"a\", 1], [\"b\", 2], [\"a\", 9]] }\n    expect: { getA: 9, keys: [\"a\", \"b\"] }\n  - name: removing a key deletes it and returns its value\n    given: { inserts: [[\"a\", 1], [\"b\", 2]], remove: \"a\" }\n    expect: { removed: 1, containsA: false, keys: [\"b\"] }\n  - name: JSON serialization and round-trip preserve insertion order\n    given: { inserts: [[\"z\", 1], [\"a\", 2]] }\n    expect: { json: \"{\\\"z\\\":1,\\\"a\\\":2}\", roundTripsEqual: true }\n---\n# An insertion-order-preserving string-keyed map\n\nThis module provides a small generic map type that remembers the order in which\nkeys were first inserted, rather than sorting them or using hash order. Some of\nthe toolchain's on-disk formats depend on a stable, insertion-ordered listing of\nstring keys (for example the order files are listed for a module), so a plain\nhash map or a sorted map would both be wrong here. It is pure: no I/O and no\ndependencies on other project modules. Bring in `serde` (and, for the tests,\n`serde_json`) since the type must serialize as a map.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `schemas_ordered_map/`:\n`schemas_ordered_map/Cargo.toml` (package name `schemas_ordered_map`) and\n`schemas_ordered_map/src/lib.rs`. Touch nothing outside `schemas_ordered_map/`.\nEnsure `cargo test` passes from the workspace root before finishing.\n\n## The type\n\nExpose a public generic type `OrderedMap<V>` — a map from owned `String` keys to\nvalues of type `V`. It preserves **first-insertion order**: iterating the map,\nits keys, or its values always visits entries in the order their keys were first\ninserted. Provide a `Default` implementation (an empty map) and a `new()`\nconstructor that returns the same empty map.\n\n## Query and mutation methods\n\n- `len()` — the number of entries.\n- `is_empty()` — whether there are no entries.\n- `contains_key(key: &str)` — whether the key is present.\n- `get(key: &str)` — a shared reference to the value for a key, or nothing.\n- `get_mut(key: &str)` — a mutable reference to the value for a key, or nothing.\n- `insert(key: String, value: V)` — set the value for a key. If the key is\n  already present, replace its value **in place**, keeping the key at its\n  existing position; otherwise append it at the end (a new last entry).\n- `remove(key: &str)` — remove a key, returning its value if it was present\n  (otherwise nothing), and closing the gap so the remaining keys keep their\n  relative order.\n- `iter()` — visit `(&String, &V)` pairs in insertion order.\n- `keys()` — visit `&String` keys in insertion order.\n- `values()` — visit `&V` values in insertion order.\n\n## Worked behavior to reproduce exactly\n\n- Insert `z`, then `a`, then `m`; the keys iterate as `z`, `a`, `m` — insertion\n  order, not sorted order.\n- Insert `a` = 1, `b` = 2, then `a` = 9; `get(\"a\")` is `9` and the keys are still\n  `a`, `b` (re-inserting `a` did not move it to the end).\n- Insert `a` = 1, `b` = 2, then remove `a`; the removal returns the value `1`,\n  the map no longer contains `a`, and the remaining key is `b`.\n\n## Serialization\n\nImplement `serde::Serialize` and `serde::Deserialize` for `OrderedMap<V>` so it\nserializes as an ordinary map (object), emitting its entries in insertion order,\nand deserializes from a map by reading entries in the order they appear, keeping\nthat order. With a JSON serializer, an `OrderedMap` built by inserting `z` = 1\nthen `a` = 2 serializes to exactly the string `{\"z\":1,\"a\":2}` (note: `z` before\n`a`), and deserializing that string back yields a map equal to the original.\nSupport equality comparison (`PartialEq`) so two maps with the same entries in\nthe same order compare equal.\n"
+    },
+    "events": [
+      {
+        "type": "task",
+        "task": "napl gen rust → schemas_ordered_map"
+      },
+      {
+        "type": "diff",
+        "path": "schemas_ordered_map/Cargo.toml",
+        "patch": "@@ -0,0 +1,10 @@\n+[package]\n+name = \"schemas_ordered_map\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]\n+serde = { version = \"1\" }\n+\n+[dev-dependencies]\n+serde_json = \"1\""
+      },
+      {
+        "type": "file-edit",
+        "path": "schemas_ordered_map/Cargo.toml",
+        "content": "[package]\nname = \"schemas_ordered_map\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\nserde = { version = \"1\" }\n\n[dev-dependencies]\nserde_json = \"1\"\n"
+      },
+      {
+        "type": "diff",
+        "path": "schemas_ordered_map/src/lib.rs",
+        "patch": "@@ -0,0 +1,219 @@\n+// GENERATED BY NAPL from schemas_ordered_map.napl — edit the prompt, not this file\n+\n+use std::fmt;\n+use std::marker::PhantomData;\n+\n+use serde::de::{Deserialize, Deserializer, MapAccess, Visitor};\n+use serde::ser::{Serialize, SerializeMap, Serializer};\n+\n+/// A string-keyed map that preserves first-insertion order.\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct OrderedMap<V> {\n+    entries: Vec<(String, V)>,\n+}\n+\n+impl<V> Default for OrderedMap<V> {\n+    fn default() -> Self {\n+        OrderedMap { entries: Vec::new() }\n+    }\n+}\n+\n+impl<V> OrderedMap<V> {\n+    pub fn new() -> Self {\n+        Self::default()\n+    }\n+\n+    pub fn len(&self) -> usize {\n+        self.entries.len()\n+    }\n+\n+    pub fn is_empty(&self) -> bool {\n+        self.entries.is_empty()\n+    }\n+\n+    pub fn contains_key(&self, key: &str) -> bool {\n+        self.entries.iter().any(|(k, _)| k == key)\n+    }\n+\n+    pub fn get(&self, key: &str) -> Option<&V> {\n+        self.entries.iter().find(|(k, _)| k == key).map(|(_, v)| v)\n+    }\n+\n+    pub fn get_mut(&mut self, key: &str) -> Option<&mut V> {\n+        self.entries.iter_mut().find(|(k, _)| k == key).map(|(_, v)| v)\n+    }\n+\n+    pub fn insert(&mut self, key: String, value: V) {\n+        if let Some(existing) = self.get_mut(&key) {\n+            *existing = value;\n+        } else {\n+            self.entries.push((key, value));\n+        }\n+    }\n+\n+    pub fn remove(&mut self, key: &str) -> Option<V> {\n+        let pos = self.entries.iter().position(|(k, _)| k == key)?;\n+        Some(self.entries.remove(pos).1)\n+    }\n+\n+    pub fn iter(&self) -> impl Iterator<Item = (&String, &V)> {\n+        self.entries.iter().map(|(k, v)| (k, v))\n+    }\n+\n+    pub fn keys(&self) -> impl Iterator<Item = &String> {\n+        self.entries.iter().map(|(k, _)| k)\n+    }\n+\n+    pub fn values(&self) -> impl Iterator<Item = &V> {\n+        self.entries.iter().map(|(_, v)| v)\n+    }\n+}\n+\n+impl<V: Serialize> Serialize for OrderedMap<V> {\n+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>\n+    where\n+        S: Serializer,\n+    {\n+        let mut map = serializer.serialize_map(Some(self.entries.len()))?;\n+        for (k, v) in &self.entries {\n+            map.serialize_entry(k, v)?;\n+        }\n+        map.end()\n+    }\n+}\n+\n+impl<'de, V: Deserialize<'de>> Deserialize<'de> for OrderedMap<V> {\n+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>\n+    where\n+        D: Deserializer<'de>,\n+    {\n+        struct OrderedMapVisitor<V> {\n+            marker: PhantomData<V>,\n+        }\n+\n+        impl<'de, V: Deserialize<'de>> Visitor<'de> for OrderedMapVisitor<V> {\n+            type Value = OrderedMap<V>;\n+\n+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {\n+                formatter.write_str(\"a map\")\n+            }\n+\n+            fn visit_map<A>(self, mut access: A) -> Result<Self::Value, A::Error>\n+            where\n+                A: MapAccess<'de>,\n+            {\n+                let mut map = OrderedMap::new();\n+                while let Some((key, value)) = access.next_entry::<String, V>()? {\n+                    map.insert(key, value);\n+                }\n+                Ok(map)\n+            }\n+        }\n+\n+        deserializer.deserialize_map(OrderedMapVisitor { marker: PhantomData })\n+    }\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn default_and_new_are_empty() {\n+        let m: OrderedMap<i32> = OrderedMap::default();\n+        assert!(m.is_empty());\n+        assert_eq!(m.len(), 0);\n+\n+        let m2: OrderedMap<i32> = OrderedMap::new();\n+        assert_eq!(m, m2);\n+    }\n+\n+    #[test]\n+    fn preserves_first_insertion_order() {\n+        let mut m = OrderedMap::new();\n+        m.insert(\"z\".to_string(), 1);\n+        m.insert(\"a\".to_string(), 2);\n+        m.insert(\"m\".to_string(), 3);\n+\n+        let keys: Vec<&String> = m.keys().collect();\n+        assert_eq!(keys, vec![\"z\", \"a\", \"m\"]);\n+    }\n+\n+    #[test]\n+    fn reinsert_replaces_in_place_without_moving() {\n+        let mut m = OrderedMap::new();\n+        m.insert(\"a\".to_string(), 1);\n+        m.insert(\"b\".to_string(), 2);\n+        m.insert(\"a\".to_string(), 9);\n+\n+        assert_eq!(m.get(\"a\"), Some(&9));\n+        let keys: Vec<&String> = m.keys().collect();\n+        assert_eq!(keys, vec![\"a\", \"b\"]);\n+    }\n+\n+    #[test]\n+    fn remove_closes_gap_and_returns_value() {\n+        let mut m = OrderedMap::new();\n+        m.insert(\"a\".to_string(), 1);\n+        m.insert(\"b\".to_string(), 2);\n+\n+        let removed = m.remove(\"a\");\n+        assert_eq!(removed, Some(1));\n+        assert!(!m.contains_key(\"a\"));\n+        let keys: Vec<&String> = m.keys().collect();\n+        assert_eq!(keys, vec![\"b\"]);\n+    }\n+\n+    #[test]\n+    fn remove_missing_key_returns_none() {\n+        let mut m: OrderedMap<i32> = OrderedMap::new();\n+        m.insert(\"a\".to_string(), 1);\n+        assert_eq!(m.remove(\"nope\"), None);\n+    }\n+\n+    #[test]\n+    fn get_mut_updates_value() {\n+        let mut m = OrderedMap::new();\n+        m.insert(\"a\".to_string(), 1);\n+        if let Some(v) = m.get_mut(\"a\") {\n+            *v = 42;\n+        }\n+        assert_eq!(m.get(\"a\"), Some(&42));\n+    }\n+\n+    #[test]\n+    fn iter_and_values_follow_insertion_order() {\n+        let mut m = OrderedMap::new();\n+        m.insert(\"z\".to_string(), 1);\n+        m.insert(\"a\".to_string(), 2);\n+\n+        let pairs: Vec<(&String, &i32)> = m.iter().collect();\n+        assert_eq!(pairs, vec![(&\"z\".to_string(), &1), (&\"a\".to_string(), &2)]);\n+\n+        let values: Vec<&i32> = m.values().collect();\n+        assert_eq!(values, vec![&1, &2]);\n+    }\n+\n+    #[test]\n+    fn serializes_in_insertion_order() {\n+        let mut m = OrderedMap::new();\n+        m.insert(\"z\".to_string(), 1);\n+        m.insert(\"a\".to_string(), 2);\n+\n+        let json = serde_json::to_string(&m).unwrap();\n+        assert_eq!(json, r#\"{\"z\":1,\"a\":2}\"#);\n+    }\n+\n+    #[test]\n+    fn round_trips_through_json_preserving_order() {\n+        let mut m = OrderedMap::new();\n+        m.insert(\"z\".to_string(), 1);\n+        m.insert(\"a\".to_string(), 2);\n+\n+        let json = serde_json::to_string(&m).unwrap();\n+        let decoded: OrderedMap<i32> = serde_json::from_str(&json).unwrap();\n+        assert_eq!(decoded, m);\n+        let keys: Vec<&String> = decoded.keys().collect();\n+        assert_eq!(keys, vec![\"z\", \"a\"]);\n+    }\n+}"
+      },
+      {
+        "type": "file-edit",
+        "path": "schemas_ordered_map/src/lib.rs",
+        "content": "// GENERATED BY NAPL from schemas_ordered_map.napl — edit the prompt, not this file\n\nuse std::fmt;\nuse std::marker::PhantomData;\n\nuse serde::de::{Deserialize, Deserializer, MapAccess, Visitor};\nuse serde::ser::{Serialize, SerializeMap, Serializer};\n\n/// A string-keyed map that preserves first-insertion order.\n#[derive(Debug, Clone, PartialEq, Eq)]\npub struct OrderedMap<V> {\n    entries: Vec<(String, V)>,\n}\n\nimpl<V> Default for OrderedMap<V> {\n    fn default() -> Self {\n        OrderedMap { entries: Vec::new() }\n    }\n}\n\nimpl<V> OrderedMap<V> {\n    pub fn new() -> Self {\n        Self::default()\n    }\n\n    pub fn len(&self) -> usize {\n        self.entries.len()\n    }\n\n    pub fn is_empty(&self) -> bool {\n        self.entries.is_empty()\n    }\n\n    pub fn contains_key(&self, key: &str) -> bool {\n        self.entries.iter().any(|(k, _)| k == key)\n    }\n\n    pub fn get(&self, key: &str) -> Option<&V> {\n        self.entries.iter().find(|(k, _)| k == key).map(|(_, v)| v)\n    }\n\n    pub fn get_mut(&mut self, key: &str) -> Option<&mut V> {\n        self.entries.iter_mut().find(|(k, _)| k == key).map(|(_, v)| v)\n    }\n\n    pub fn insert(&mut self, key: String, value: V) {\n        if let Some(existing) = self.get_mut(&key) {\n            *existing = value;\n        } else {\n            self.entries.push((key, value));\n        }\n    }\n\n    pub fn remove(&mut self, key: &str) -> Option<V> {\n        let pos = self.entries.iter().position(|(k, _)| k == key)?;\n        Some(self.entries.remove(pos).1)\n    }\n\n    pub fn iter(&self) -> impl Iterator<Item = (&String, &V)> {\n        self.entries.iter().map(|(k, v)| (k, v))\n    }\n\n    pub fn keys(&self) -> impl Iterator<Item = &String> {\n        self.entries.iter().map(|(k, _)| k)\n    }\n\n    pub fn values(&self) -> impl Iterator<Item = &V> {\n        self.entries.iter().map(|(_, v)| v)\n    }\n}\n\nimpl<V: Serialize> Serialize for OrderedMap<V> {\n    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>\n    where\n        S: Serializer,\n    {\n        let mut map = serializer.serialize_map(Some(self.entries.len()))?;\n        for (k, v) in &self.entries {\n            map.serialize_entry(k, v)?;\n        }\n        map.end()\n    }\n}\n\nimpl<'de, V: Deserialize<'de>> Deserialize<'de> for OrderedMap<V> {\n    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>\n    where\n        D: Deserializer<'de>,\n    {\n        struct OrderedMapVisitor<V> {\n            marker: PhantomData<V>,\n        }\n\n        impl<'de, V: Deserialize<'de>> Visitor<'de> for OrderedMapVisitor<V> {\n            type Value = OrderedMap<V>;\n\n            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {\n                formatter.write_str(\"a map\")\n            }\n\n            fn visit_map<A>(self, mut access: A) -> Result<Self::Value, A::Error>\n            where\n                A: MapAccess<'de>,\n            {\n                let mut map = OrderedMap::new();\n                while let Some((key, value)) = access.next_entry::<String, V>()? {\n                    map.insert(key, value);\n                }\n                Ok(map)\n            }\n        }\n\n        deserializer.deserialize_map(OrderedMapVisitor { marker: PhantomData })\n    }\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn default_and_new_are_empty() {\n        let m: OrderedMap<i32> = OrderedMap::default();\n        assert!(m.is_empty());\n        assert_eq!(m.len(), 0);\n\n        let m2: OrderedMap<i32> = OrderedMap::new();\n        assert_eq!(m, m2);\n    }\n\n    #[test]\n    fn preserves_first_insertion_order() {\n        let mut m = OrderedMap::new();\n        m.insert(\"z\".to_string(), 1);\n        m.insert(\"a\".to_string(), 2);\n        m.insert(\"m\".to_string(), 3);\n\n        let keys: Vec<&String> = m.keys().collect();\n        assert_eq!(keys, vec![\"z\", \"a\", \"m\"]);\n    }\n\n    #[test]\n    fn reinsert_replaces_in_place_without_moving() {\n        let mut m = OrderedMap::new();\n        m.insert(\"a\".to_string(), 1);\n        m.insert(\"b\".to_string(), 2);\n        m.insert(\"a\".to_string(), 9);\n\n        assert_eq!(m.get(\"a\"), Some(&9));\n        let keys: Vec<&String> = m.keys().collect();\n        assert_eq!(keys, vec![\"a\", \"b\"]);\n    }\n\n    #[test]\n    fn remove_closes_gap_and_returns_value() {\n        let mut m = OrderedMap::new();\n        m.insert(\"a\".to_string(), 1);\n        m.insert(\"b\".to_string(), 2);\n\n        let removed = m.remove(\"a\");\n        assert_eq!(removed, Some(1));\n        assert!(!m.contains_key(\"a\"));\n        let keys: Vec<&String> = m.keys().collect();\n        assert_eq!(keys, vec![\"b\"]);\n    }\n\n    #[test]\n    fn remove_missing_key_returns_none() {\n        let mut m: OrderedMap<i32> = OrderedMap::new();\n        m.insert(\"a\".to_string(), 1);\n        assert_eq!(m.remove(\"nope\"), None);\n    }\n\n    #[test]\n    fn get_mut_updates_value() {\n        let mut m = OrderedMap::new();\n        m.insert(\"a\".to_string(), 1);\n        if let Some(v) = m.get_mut(\"a\") {\n            *v = 42;\n        }\n        assert_eq!(m.get(\"a\"), Some(&42));\n    }\n\n    #[test]\n    fn iter_and_values_follow_insertion_order() {\n        let mut m = OrderedMap::new();\n        m.insert(\"z\".to_string(), 1);\n        m.insert(\"a\".to_string(), 2);\n\n        let pairs: Vec<(&String, &i32)> = m.iter().collect();\n        assert_eq!(pairs, vec![(&\"z\".to_string(), &1), (&\"a\".to_string(), &2)]);\n\n        let values: Vec<&i32> = m.values().collect();\n        assert_eq!(values, vec![&1, &2]);\n    }\n\n    #[test]\n    fn serializes_in_insertion_order() {\n        let mut m = OrderedMap::new();\n        m.insert(\"z\".to_string(), 1);\n        m.insert(\"a\".to_string(), 2);\n\n        let json = serde_json::to_string(&m).unwrap();\n        assert_eq!(json, r#\"{\"z\":1,\"a\":2}\"#);\n    }\n\n    #[test]\n    fn round_trips_through_json_preserving_order() {\n        let mut m = OrderedMap::new();\n        m.insert(\"z\".to_string(), 1);\n        m.insert(\"a\".to_string(), 2);\n\n        let json = serde_json::to_string(&m).unwrap();\n        let decoded: OrderedMap<i32> = serde_json::from_str(&json).unwrap();\n        assert_eq!(decoded, m);\n        let keys: Vec<&String> = decoded.keys().collect();\n        assert_eq!(keys, vec![\"z\", \"a\"]);\n    }\n}\n"
+      },
+      {
+        "type": "attribution",
+        "module": "schemas_ordered_map",
+        "target": "rust",
+        "entries": [
+          {
+            "promptLines": [
+              22,
+              26
+            ],
+            "file": "schemas_ordered_map/src/lib.rs",
+            "lines": [
+              9,
+              24
+            ],
+            "note": "struct def, Default, new()"
+          },
+          {
+            "promptLines": [
+              30,
+              31
+            ],
+            "file": "schemas_ordered_map/src/lib.rs",
+            "lines": [
+              26,
+              32
+            ],
+            "note": "len/is_empty"
+          },
+          {
+            "promptLines": [
+              32,
+              32
+            ],
+            "file": "schemas_ordered_map/src/lib.rs",
+            "lines": [
+              34,
+              36
+            ],
+            "note": "contains_key"
+          },
+          {
+            "promptLines": [
+              33,
+              33
+            ],
+            "file": "schemas_ordered_map/src/lib.rs",
+            "lines": [
+              38,
+              40
+            ],
+            "note": "get"
+          },
+          {
+            "promptLines": [
+              34,
+              34
+            ],
+            "file": "schemas_ordered_map/src/lib.rs",
+            "lines": [
+              42,
+              44
+            ],
+            "note": "get_mut"
+          },
+          {
+            "promptLines": [
+              35,
+              37
+            ],
+            "file": "schemas_ordered_map/src/lib.rs",
+            "lines": [
+              46,
+              52
+            ],
+            "note": "insert replace-in-place or append"
+          },
+          {
+            "promptLines": [
+              38,
+              40
+            ],
+            "file": "schemas_ordered_map/src/lib.rs",
+            "lines": [
+              54,
+              57
+            ],
+            "note": "remove closing gap"
+          },
+          {
+            "promptLines": [
+              41,
+              41
+            ],
+            "file": "schemas_ordered_map/src/lib.rs",
+            "lines": [
+              59,
+              61
+            ],
+            "note": "iter pairs"
+          },
+          {
+            "promptLines": [
+              42,
+              42
+            ],
+            "file": "schemas_ordered_map/src/lib.rs",
+            "lines": [
+              63,
+              65
+            ],
+            "note": "keys"
+          },
+          {
+            "promptLines": [
+              43,
+              43
+            ],
+            "file": "schemas_ordered_map/src/lib.rs",
+            "lines": [
+              67,
+              69
+            ],
+            "note": "values"
+          },
+          {
+            "promptLines": [
+              47,
+              48
+            ],
+            "file": "schemas_ordered_map/src/lib.rs",
+            "lines": [
+              132,
+              140
+            ],
+            "note": "test insertion order z a m"
+          },
+          {
+            "promptLines": [
+              49,
+              50
+            ],
+            "file": "schemas_ordered_map/src/lib.rs",
+            "lines": [
+              143,
+              152
+            ],
+            "note": "test reinsert replaces in place"
+          },
+          {
+            "promptLines": [
+              51,
+              52
+            ],
+            "file": "schemas_ordered_map/src/lib.rs",
+            "lines": [
+              155,
+              165
+            ],
+            "note": "test remove closes gap"
+          },
+          {
+            "promptLines": [
+              56,
+              58
+            ],
+            "file": "schemas_ordered_map/src/lib.rs",
+            "lines": [
+              72,
+              83
+            ],
+            "note": "Serialize impl as map in insertion order"
+          },
+          {
+            "promptLines": [
+              56,
+              58
+            ],
+            "file": "schemas_ordered_map/src/lib.rs",
+            "lines": [
+              85,
+              115
+            ],
+            "note": "Deserialize impl reading entries in order"
+          },
+          {
+            "promptLines": [
+              59,
+              61
+            ],
+            "file": "schemas_ordered_map/src/lib.rs",
+            "lines": [
+              198,
+              205
+            ],
+            "note": "test exact json serialization z before a"
+          },
+          {
+            "promptLines": [
+              61,
+              61
+            ],
+            "file": "schemas_ordered_map/src/lib.rs",
+            "lines": [
+              208,
+              218
+            ],
+            "note": "test round trip deserialize preserves order"
+          },
+          {
+            "promptLines": [
+              62,
+              63
+            ],
+            "file": "schemas_ordered_map/src/lib.rs",
+            "lines": [
+              10,
+              10
+            ],
+            "note": "derive PartialEq for equality comparison"
+          },
+          {
+            "promptLines": [
+              25,
+              25
+            ],
+            "file": "schemas_ordered_map/src/lib.rs",
+            "lines": [
+              15,
+              19
+            ],
+            "note": "Default impl empty map"
+          },
+          {
+            "promptLines": [
+              22,
+              22
+            ],
+            "file": "schemas_ordered_map/src/lib.rs",
+            "lines": [
+              11,
+              13
+            ],
+            "note": "OrderedMap struct definition with Vec of pairs"
+          }
+        ]
+      },
+      {
+        "type": "mapl-entry",
+        "path": "schemas_ordered_map.mapl",
+        "entry": {
+          "promptLines": [
+            13,
+            18
+          ],
+          "kind": "ambiguity",
+          "severity": "error",
+          "message": "Prompt says leave workspace root manifest alone, but a new member crate normally must be registered in the root Cargo.toml to be picked up by `cargo test` from the workspace root.",
+          "reasoning": "The prompt instructs not to touch anything outside schemas_ordered_map/ and to leave the root manifest owned by the toolchain untouched, yet also requires `cargo test` to pass from the workspace root. If the root manifest uses explicit `members` (rather than a wildcard/glob that already covers new subdirectories), the new crate would not be included in the workspace build without editing that file. The diff provided only shows lib.rs, not Cargo.toml or any root manifest change, so it's unclear how this was reconciled — likely the workspace already glob-matches subdirectories, but this was assumed rather than confirmed against the actual root manifest content.",
+          "suggestion": "Clarify whether the workspace root manifest already auto-discovers new member crates (e.g. via a `members = [\"*\"]` glob) or whether adding the new crate path to `members` is permitted as the one necessary exception to 'touch nothing outside schemas_ordered_map/'."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "schemas_ordered_map.mapl",
+        "entry": {
+          "promptLines": [
+            16,
+            17
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "Only src/lib.rs was shown in the change list; schemas_ordered_map/Cargo.toml's contents (dependencies, edition, package name) were not visible to confirm correctness.",
+          "reasoning": "The prompt requires a new Cargo.toml with package name schemas_ordered_map and serde/serde_json dependencies. The provided change listing only includes lib.rs, so the crate's manifest content (versions, feature flags like serde's 'derive' — explicitly noted by the agent as not needed) could not be independently verified from the given diff, only asserted by the agent's final message."
+        }
+      },
+      {
+        "type": "lock",
+        "module": "schemas_ordered_map",
+        "target": "rust",
+        "files": [
+          {
+            "path": "schemas_ordered_map/Cargo.toml",
+            "hash": "98fadd96d5624c447be9890873322b43a2fb3032ef80fba7730439fe879a3688"
+          },
+          {
+            "path": "schemas_ordered_map/src/lib.rs",
+            "hash": "e8d1e86ccd222b4164de126c3d77699f4fba253480fda19f7ff6a3e1a8b0061f"
+          }
+        ]
+      }
+    ]
+  }
+}

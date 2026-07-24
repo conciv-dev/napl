@@ -1,0 +1,321 @@
+{
+  "module": "greeting",
+  "collection": "example",
+  "target": "typescript",
+  "targets": [
+    "typescript"
+  ],
+  "prompt": {
+    "file": "greeting.🧑",
+    "path": "examples/greeting.🧑",
+    "content": "---\nmodule: greeting\ndeps: []\ntargets: [typescript]\ntests:\n  - name: greets by name\n    given: { name: World }\n    expect: { message: \"Hello, World!\" }\n  - name: trims surrounding whitespace\n    given: { name: \"  Ada  \" }\n    expect: { message: \"Hello, Ada!\" }\n---\n# Greeting\n\nExpose a `greet` function that takes a person's name and returns a friendly\ngreeting message.\n\n- The greeting has the form `Hello, <name>!`.\n- Leading and trailing whitespace in the name is trimmed before use.\n- An empty or whitespace-only name is rejected with an error.\n"
+  },
+  "promptAtGen": "# Greeting\n\nExpose a `greet` function that takes a person's name and returns a friendly\ngreeting message.\n\n- The greeting has the form `Hello, <name>!`.\n- Leading and trailing whitespace in the name is trimmed before use.\n- An empty or whitespace-only name is rejected with an error.\n",
+  "summary": "Greeting",
+  "files": [
+    {
+      "path": "package.json",
+      "journalPath": ".napl/src/typescript/package.json",
+      "content": "{\n  \"name\": \"greeting\",\n  \"version\": \"0.1.0\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"scripts\": {\n    \"test\": \"vitest run\"\n  },\n  \"devDependencies\": {\n    \"typescript\": \"^5.6.0\",\n    \"vitest\": \"^2.1.0\"\n  }\n}\n",
+      "language": "json"
+    },
+    {
+      "path": "src/greeting.test.ts",
+      "journalPath": ".napl/src/typescript/src/greeting.test.ts",
+      "content": "import { describe, expect, it } from \"vitest\";\nimport { greet } from \"./greeting.js\";\n\ndescribe(\"greet\", () => {\n  it(\"returns a friendly greeting\", () => {\n    expect(greet(\"Alice\")).toBe(\"Hello, Alice!\");\n  });\n\n  it(\"trims leading and trailing whitespace\", () => {\n    expect(greet(\"  Bob  \")).toBe(\"Hello, Bob!\");\n  });\n\n  it(\"rejects an empty name\", () => {\n    expect(() => greet(\"\")).toThrow();\n  });\n\n  it(\"rejects a whitespace-only name\", () => {\n    expect(() => greet(\"   \")).toThrow();\n  });\n});\n",
+      "language": "typescript"
+    },
+    {
+      "path": "src/greeting.ts",
+      "journalPath": ".napl/src/typescript/src/greeting.ts",
+      "content": "export function greet(name: string): string {\n  const trimmed = name.trim();\n  if (trimmed.length === 0) {\n    throw new Error(\"Name must not be empty\");\n  }\n  return `Hello, ${trimmed}!`;\n}\n",
+      "language": "typescript"
+    },
+    {
+      "path": "tsconfig.json",
+      "journalPath": ".napl/src/typescript/tsconfig.json",
+      "content": "{\n  \"compilerOptions\": {\n    \"target\": \"ES2022\",\n    \"module\": \"ESNext\",\n    \"moduleResolution\": \"Bundler\",\n    \"strict\": true,\n    \"esModuleInterop\": true,\n    \"skipLibCheck\": true,\n    \"forceConsistentCasingInFileNames\": true,\n    \"noUnusedLocals\": true,\n    \"noUnusedParameters\": true,\n    \"declaration\": true,\n    \"outDir\": \"dist\"\n  },\n  \"include\": [\"src\"]\n}\n",
+      "language": "json"
+    },
+    {
+      "path": "vitest.config.ts",
+      "journalPath": ".napl/src/typescript/vitest.config.ts",
+      "content": "import { defineConfig } from \"vitest/config\";\n\nexport default defineConfig({\n  test: {\n    include: [\"src/**/*.test.ts\"],\n  },\n});\n",
+      "language": "typescript"
+    }
+  ],
+  "attribution": [
+    {
+      "promptLines": [
+        3,
+        4
+      ],
+      "file": "src/greeting.ts",
+      "lines": [
+        1,
+        1
+      ],
+      "note": "greet function signature"
+    },
+    {
+      "promptLines": [
+        6,
+        6
+      ],
+      "file": "src/greeting.ts",
+      "lines": [
+        6,
+        6
+      ],
+      "note": "builds Hello, <name>! message"
+    },
+    {
+      "promptLines": [
+        6,
+        6
+      ],
+      "file": "src/greeting.test.ts",
+      "lines": [
+        5,
+        7
+      ],
+      "note": "test greeting form"
+    },
+    {
+      "promptLines": [
+        7,
+        7
+      ],
+      "file": "src/greeting.ts",
+      "lines": [
+        2,
+        2
+      ],
+      "note": "trims whitespace from name"
+    },
+    {
+      "promptLines": [
+        7,
+        7
+      ],
+      "file": "src/greeting.test.ts",
+      "lines": [
+        9,
+        11
+      ],
+      "note": "test trimming whitespace"
+    },
+    {
+      "promptLines": [
+        8,
+        8
+      ],
+      "file": "src/greeting.ts",
+      "lines": [
+        3,
+        5
+      ],
+      "note": "rejects empty/whitespace-only name with error"
+    },
+    {
+      "promptLines": [
+        8,
+        8
+      ],
+      "file": "src/greeting.test.ts",
+      "lines": [
+        13,
+        19
+      ],
+      "note": "tests rejection of empty and whitespace-only names"
+    }
+  ],
+  "attributionYaml": "module: greeting\ntarget: typescript\nentries:\n  - promptLines:\n      - 3\n      - 4\n    file: src/greeting.ts\n    lines:\n      - 1\n      - 1\n    note: greet function signature\n  - promptLines:\n      - 6\n      - 6\n    file: src/greeting.ts\n    lines:\n      - 6\n      - 6\n    note: builds Hello, <name>! message\n  - promptLines:\n      - 6\n      - 6\n    file: src/greeting.test.ts\n    lines:\n      - 5\n      - 7\n    note: test greeting form\n  - promptLines:\n      - 7\n      - 7\n    file: src/greeting.ts\n    lines:\n      - 2\n      - 2\n    note: trims whitespace from name\n  - promptLines:\n      - 7\n      - 7\n    file: src/greeting.test.ts\n    lines:\n      - 9\n      - 11\n    note: test trimming whitespace\n  - promptLines:\n      - 8\n      - 8\n    file: src/greeting.ts\n    lines:\n      - 3\n      - 5\n    note: rejects empty/whitespace-only name with error\n  - promptLines:\n      - 8\n      - 8\n    file: src/greeting.test.ts\n    lines:\n      - 13\n      - 19\n    note: tests rejection of empty and whitespace-only names\n",
+  "mapl": [
+    {
+      "promptLines": [
+        1,
+        9
+      ],
+      "kind": "no-op",
+      "severity": "warning",
+      "message": "Code already implements spec; no diff needed.",
+      "reasoning": "Agent found greet function already matches all requirements (format, trim, empty-name rejection) and 4/4 tests pass. Nothing to change."
+    }
+  ],
+  "journal": [
+    {
+      "gen": 1,
+      "timestamp": "2026-07-23T21:08:33.571Z",
+      "mode": "incremental",
+      "promptHash": "443f0123d4ff15853a5db10a68caabbe3def50cf6a1a6f3a45a765d7b21dae75",
+      "files": []
+    }
+  ],
+  "lock": [
+    {
+      "path": "package.json",
+      "hash": "039802cb0ea43e50e1ed9075689a8af985bba3285a107d63864775aae4cb469d"
+    },
+    {
+      "path": "src/greeting.test.ts",
+      "hash": "5f8acc89d6245e13e8a24e483204fe9e41b6d8e120c9dc3bfb798c8e18b3c8d4"
+    },
+    {
+      "path": "src/greeting.ts",
+      "hash": "601018e6eb4c66a811f03d3d1b2433cea9814e182e08896720bba9b1bdd3c15f"
+    },
+    {
+      "path": "tsconfig.json",
+      "hash": "8004cc6311ac28b448638414bcd61b1f773b36f22dbe4c2c91f730b0aca0c655"
+    },
+    {
+      "path": "vitest.config.ts",
+      "hash": "aa7858f05b2261348f1502fa076550b0930672e0df3f054a22e8a8d9b68fb32e"
+    }
+  ],
+  "session": {
+    "task": "napl gen typescript → greeting",
+    "files": {
+      "greeting.🧑": "---\nmodule: greeting\ndeps: []\ntargets: [typescript]\ntests:\n  - name: greets by name\n    given: { name: World }\n    expect: { message: \"Hello, World!\" }\n  - name: trims surrounding whitespace\n    given: { name: \"  Ada  \" }\n    expect: { message: \"Hello, Ada!\" }\n---\n# Greeting\n\nExpose a `greet` function that takes a person's name and returns a friendly\ngreeting message.\n\n- The greeting has the form `Hello, <name>!`.\n- Leading and trailing whitespace in the name is trimmed before use.\n- An empty or whitespace-only name is rejected with an error.\n"
+    },
+    "events": [
+      {
+        "type": "task",
+        "task": "napl gen typescript → greeting"
+      },
+      {
+        "type": "attribution",
+        "module": "greeting",
+        "target": "typescript",
+        "entries": [
+          {
+            "promptLines": [
+              3,
+              4
+            ],
+            "file": "src/greeting.ts",
+            "lines": [
+              1,
+              1
+            ],
+            "note": "greet function signature"
+          },
+          {
+            "promptLines": [
+              6,
+              6
+            ],
+            "file": "src/greeting.ts",
+            "lines": [
+              6,
+              6
+            ],
+            "note": "builds Hello, <name>! message"
+          },
+          {
+            "promptLines": [
+              6,
+              6
+            ],
+            "file": "src/greeting.test.ts",
+            "lines": [
+              5,
+              7
+            ],
+            "note": "test greeting form"
+          },
+          {
+            "promptLines": [
+              7,
+              7
+            ],
+            "file": "src/greeting.ts",
+            "lines": [
+              2,
+              2
+            ],
+            "note": "trims whitespace from name"
+          },
+          {
+            "promptLines": [
+              7,
+              7
+            ],
+            "file": "src/greeting.test.ts",
+            "lines": [
+              9,
+              11
+            ],
+            "note": "test trimming whitespace"
+          },
+          {
+            "promptLines": [
+              8,
+              8
+            ],
+            "file": "src/greeting.ts",
+            "lines": [
+              3,
+              5
+            ],
+            "note": "rejects empty/whitespace-only name with error"
+          },
+          {
+            "promptLines": [
+              8,
+              8
+            ],
+            "file": "src/greeting.test.ts",
+            "lines": [
+              13,
+              19
+            ],
+            "note": "tests rejection of empty and whitespace-only names"
+          }
+        ]
+      },
+      {
+        "type": "mapl-entry",
+        "path": "greeting.mapl",
+        "entry": {
+          "promptLines": [
+            1,
+            9
+          ],
+          "kind": "no-op",
+          "severity": "warning",
+          "message": "Code already implements spec; no diff needed.",
+          "reasoning": "Agent found greet function already matches all requirements (format, trim, empty-name rejection) and 4/4 tests pass. Nothing to change."
+        }
+      },
+      {
+        "type": "lock",
+        "module": "greeting",
+        "target": "typescript",
+        "files": [
+          {
+            "path": "package.json",
+            "hash": "039802cb0ea43e50e1ed9075689a8af985bba3285a107d63864775aae4cb469d"
+          },
+          {
+            "path": "src/greeting.test.ts",
+            "hash": "5f8acc89d6245e13e8a24e483204fe9e41b6d8e120c9dc3bfb798c8e18b3c8d4"
+          },
+          {
+            "path": "src/greeting.ts",
+            "hash": "601018e6eb4c66a811f03d3d1b2433cea9814e182e08896720bba9b1bdd3c15f"
+          },
+          {
+            "path": "tsconfig.json",
+            "hash": "8004cc6311ac28b448638414bcd61b1f773b36f22dbe4c2c91f730b0aca0c655"
+          },
+          {
+            "path": "vitest.config.ts",
+            "hash": "aa7858f05b2261348f1502fa076550b0930672e0df3f054a22e8a8d9b68fb32e"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -18,10 +18,13 @@
     "deploy": "vite build && wrangler deploy",
     "cf-typegen": "wrangler types",
     "typecheck": "fumadocs-mdx && tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:fixtures": "node scripts/build-fixtures.mjs"
   },
   "dependencies": {
+    "@napl/editor": "workspace:*",
     "@napl/grammar": "workspace:*",
+    "@napl/wasm": "workspace:*",
     "@tanstack/react-router": "1.170.15",
     "@tanstack/react-start": "1.168.25",
     "clsx": "^2.1.1",
@@ -38,11 +41,14 @@
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.42.4",
     "@tailwindcss/vite": "^4.3.0",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/react": "^16.2.0",
     "@types/mdx": "^2.0.14",
     "@types/node": "^22.19.21",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
+    "jsdom": "^25.0.1",
     "shiki": "^4.2.0",
     "tailwindcss": "^4.3.0",
     "typescript": "^7.0.2",

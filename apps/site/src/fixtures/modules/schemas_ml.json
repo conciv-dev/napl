@@ -1,0 +1,722 @@
+{
+  "module": "schemas_ml",
+  "collection": "selfhost",
+  "target": "rust",
+  "targets": [
+    "rust"
+  ],
+  "prompt": {
+    "file": "schemas_ml.napl",
+    "path": "schemas/schemas_ml.napl",
+    "content": "---\nmodule: schemas_ml\ndeps: [schemas_line_range]\ntargets: [rust]\ntests:\n  - name: a valid document with a scalar prompt line normalizes the range\n    given: { entry: \"{promptLines:18, kind:ambiguity, message:'odd phrase', reasoning:unclear}\" }\n    expect: { promptLines: [18, 18], kind: ambiguity, suggestion: null }\n  - name: entries default to an empty list when absent\n    given: { module: m, target: react }\n    expect: { entries: 0 }\n  - name: all four kinds including no-op are accepted\n    given: { kinds: [ambiguity, assumption, note, \"no-op\"] }\n    expect: { accepts: true }\n  - name: an unknown kind is rejected\n    given: { entry: \"{promptLines:[1,1], kind:bogus, message:x}\" }\n    expect: { accepts: false }\n  - name: an empty message is rejected\n    given: { entry: \"{promptLines:[1,1], kind:note, message:''}\" }\n    expect: { accepts: false }\n  - name: parse-entries accepts a list and treats a non-list as empty\n    given: { list: \"[{promptLines:[2,3], kind:assumption, message:a}]\", nonlist: \"{}\" }\n    expect: { list: 1, nonlist: 0 }\n  - name: a malformed entry list is rejected\n    given: { list: \"[{promptLines:'nope', kind:note, message:x}]\" }\n    expect: { accepts: false }\n  - name: entries-at-body-line returns every entry whose range covers the line\n    given: { body_line: 6 }\n    expect: { messages: [b] }\n---\n# The machine-layer (mapl) schema: model annotations keyed to prompt lines\n\nThis module defines the serde types and validators for a NAPL **machine-layer\ndocument** (the `.mapl` sidecar): the list of model-authored annotations that\nflag, for a range of prompt body lines, an ambiguity, an assumption, a note, or a\nno-op. It is pure: no I/O. Bring in `serde`, `serde_json`.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `schemas_ml/`: `schemas_ml/Cargo.toml` (package\nname `schemas_ml`) and `schemas_ml/src/lib.rs`. Touch nothing outside\n`schemas_ml/`. Ensure `cargo test` passes from the workspace root before\nfinishing.\n\n## Builds on the `schemas_line_range` module of this workspace\n\nEvery annotation is keyed to an inclusive 1-based line range that accepts several\nJSON spellings (a bare number `n` meaning `n..=n`, a one-element array `[n]`\nmeaning `n..=n`, or a two-element array `[a, b]`), each endpoint an integer at\nleast 1. That value type — and its lenient deserializer — is the\n**`schemas_line_range`** module of this same workspace, generated as a sibling\nmember crate in the `schemas_line_range/` directory (so `../schemas_line_range`\nrelative to this crate). It exposes a public type `LineRange` with public `start`\nand `end` fields (`u32`), a `new(start, end)` constructor, equality, copy, and a\nserde `Deserialize` performing exactly that normalization.\n\nAdd a path dependency on that sibling member crate in your `Cargo.toml` (depend\non the `schemas_line_range` crate by path — it lives at `../schemas_line_range`)\nand use its `LineRange` for the line-range field below. Do **not** reimplement\nline-range parsing here, and do not depend on any hand-written crate — depend\nonly on the generated sibling `schemas_line_range` member crate. This sibling\npath dependency is part of the same workspace, not an external crates.io\ndependency, so add it even though the general guidance is to avoid outside\ndependencies.\n\n## The types\n\nExpose these public types:\n\n- `MlKind`: an enum of four annotation kinds, deserializable, comparable, copy:\n  `Ambiguity`, `Assumption`, `Note`, and `NoOp`. Their JSON spellings are\n  **kebab-case**: `\"ambiguity\"`, `\"assumption\"`, `\"note\"`, and — for `NoOp` — the\n  literal `\"no-op\"`.\n- `MlEntry`: one annotation, deserializable, comparable, cloneable, with public\n  fields:\n  - `prompt_lines: LineRange` whose JSON key is **`promptLines`** (camelCase).\n  - `kind: MlKind`.\n  - `message: String`.\n  - `reasoning: String` defaulting to the empty string when absent.\n  - `suggestion: Option<String>` defaulting to `None` when absent.\n- `Ml`: a whole document, deserializable, comparable, cloneable, with public\n  fields:\n  - `module: String`.\n  - `target: String`.\n  - `entries: Vec<MlEntry>` defaulting to empty when absent.\n\n## Validation\n\n- `validate_ml(value: serde_json::Value) -> Result<Ml, _>`: deserialize the JSON\n  value into an `Ml`, then validate. `module` must not be empty, `target` must\n  not be empty, and every entry's `message` must not be empty. A structurally\n  invalid value — an unknown `kind` such as `\"bogus\"`, or a `promptLines` that is\n  a string — is a deserialization error. Rejection is an error, not a panic. A\n  scalar `promptLines` such as `18` normalizes to `18..=18`; an absent\n  `suggestion` is `None`.\n- `parse_ml_entries(value: serde_json::Value) -> Result<Vec<MlEntry>, _>`: if the\n  value is **not** a JSON array, return an empty list (no error). Otherwise\n  deserialize it as a list of entries and validate each entry's non-empty\n  `message`. A malformed list is an error.\n\n## Lookup\n\n- `ml_entries_at_body_line(ml: &Ml, body_line: u32) -> Vec<&MlEntry>`: return\n  references to every entry whose `promptLines` range covers `body_line`\n  (inclusive), in document order.\n\nFor example, given entries `{promptLines:[1,2], message:\"a\"}` and\n`{promptLines:[5,7], message:\"b\"}`, body line 6 yields only \"b\", body line 1\nyields only \"a\", and body line 4 yields none.\n"
+  },
+  "promptAtGen": "# The machine-layer (mapl) schema: model annotations keyed to prompt lines\n\nThis module defines the serde types and validators for a NAPL **machine-layer\ndocument** (the `.mapl` sidecar): the list of model-authored annotations that\nflag, for a range of prompt body lines, an ambiguity, an assumption, a note, or a\nno-op. It is pure: no I/O. Bring in `serde`, `serde_json`.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `schemas_ml/`: `schemas_ml/Cargo.toml` (package\nname `schemas_ml`) and `schemas_ml/src/lib.rs`. Touch nothing outside\n`schemas_ml/`. Ensure `cargo test` passes from the workspace root before\nfinishing.\n\n## Builds on the `schemas_line_range` module of this workspace\n\nEvery annotation is keyed to an inclusive 1-based line range that accepts several\nJSON spellings (a bare number `n` meaning `n..=n`, a one-element array `[n]`\nmeaning `n..=n`, or a two-element array `[a, b]`), each endpoint an integer at\nleast 1. That value type — and its lenient deserializer — is the\n**`schemas_line_range`** module of this same workspace, generated as a sibling\nmember crate in the `schemas_line_range/` directory (so `../schemas_line_range`\nrelative to this crate). It exposes a public type `LineRange` with public `start`\nand `end` fields (`u32`), a `new(start, end)` constructor, equality, copy, and a\nserde `Deserialize` performing exactly that normalization.\n\nAdd a path dependency on that sibling member crate in your `Cargo.toml` (depend\non the `schemas_line_range` crate by path — it lives at `../schemas_line_range`)\nand use its `LineRange` for the line-range field below. Do **not** reimplement\nline-range parsing here, and do not depend on any hand-written crate — depend\nonly on the generated sibling `schemas_line_range` member crate. This sibling\npath dependency is part of the same workspace, not an external crates.io\ndependency, so add it even though the general guidance is to avoid outside\ndependencies.\n\n## The types\n\nExpose these public types:\n\n- `MlKind`: an enum of four annotation kinds, deserializable, comparable, copy:\n  `Ambiguity`, `Assumption`, `Note`, and `NoOp`. Their JSON spellings are\n  **kebab-case**: `\"ambiguity\"`, `\"assumption\"`, `\"note\"`, and — for `NoOp` — the\n  literal `\"no-op\"`.\n- `MlEntry`: one annotation, deserializable, comparable, cloneable, with public\n  fields:\n  - `prompt_lines: LineRange` whose JSON key is **`promptLines`** (camelCase).\n  - `kind: MlKind`.\n  - `message: String`.\n  - `reasoning: String` defaulting to the empty string when absent.\n  - `suggestion: Option<String>` defaulting to `None` when absent.\n- `Ml`: a whole document, deserializable, comparable, cloneable, with public\n  fields:\n  - `module: String`.\n  - `target: String`.\n  - `entries: Vec<MlEntry>` defaulting to empty when absent.\n\n## Validation\n\n- `validate_ml(value: serde_json::Value) -> Result<Ml, _>`: deserialize the JSON\n  value into an `Ml`, then validate. `module` must not be empty, `target` must\n  not be empty, and every entry's `message` must not be empty. A structurally\n  invalid value — an unknown `kind` such as `\"bogus\"`, or a `promptLines` that is\n  a string — is a deserialization error. Rejection is an error, not a panic. A\n  scalar `promptLines` such as `18` normalizes to `18..=18`; an absent\n  `suggestion` is `None`.\n- `parse_ml_entries(value: serde_json::Value) -> Result<Vec<MlEntry>, _>`: if the\n  value is **not** a JSON array, return an empty list (no error). Otherwise\n  deserialize it as a list of entries and validate each entry's non-empty\n  `message`. A malformed list is an error.\n\n## Lookup\n\n- `ml_entries_at_body_line(ml: &Ml, body_line: u32) -> Vec<&MlEntry>`: return\n  references to every entry whose `promptLines` range covers `body_line`\n  (inclusive), in document order.\n\nFor example, given entries `{promptLines:[1,2], message:\"a\"}` and\n`{promptLines:[5,7], message:\"b\"}`, body line 6 yields only \"b\", body line 1\nyields only \"a\", and body line 4 yields none.\n",
+  "summary": "The machine-layer (mapl) schema: model annotations keyed to prompt lines",
+  "files": [
+    {
+      "path": "schemas_ml/Cargo.toml",
+      "journalPath": ".napl/src/rust/schemas_ml/Cargo.toml",
+      "content": "[package]\nname = \"schemas_ml\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\nserde = { version = \"1\", features = [\"derive\"] }\nserde_json = \"1\"\nschemas_line_range = { path = \"../schemas_line_range\" }\n\n[dev-dependencies]\nserde_json = \"1\"\n",
+      "language": "toml"
+    },
+    {
+      "path": "schemas_ml/src/lib.rs",
+      "journalPath": ".napl/src/rust/schemas_ml/src/lib.rs",
+      "content": "// GENERATED BY NAPL from schemas_ml.napl — edit the prompt, not this file\n\nuse schemas_line_range::LineRange;\nuse serde::Deserialize;\n\n#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]\n#[serde(rename_all = \"kebab-case\")]\npub enum MlKind {\n    Ambiguity,\n    Assumption,\n    Note,\n    NoOp,\n}\n\nfn default_reasoning() -> String {\n    String::new()\n}\n\n#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]\npub struct MlEntry {\n    #[serde(rename = \"promptLines\")]\n    pub prompt_lines: LineRange,\n    pub kind: MlKind,\n    pub message: String,\n    #[serde(default = \"default_reasoning\")]\n    pub reasoning: String,\n    #[serde(default)]\n    pub suggestion: Option<String>,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]\npub struct Ml {\n    pub module: String,\n    pub target: String,\n    #[serde(default)]\n    pub entries: Vec<MlEntry>,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq)]\npub enum MlError {\n    Parse(String),\n    EmptyModule,\n    EmptyTarget,\n    EmptyMessage,\n}\n\nimpl std::fmt::Display for MlError {\n    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n        match self {\n            MlError::Parse(msg) => write!(f, \"failed to parse ml document: {msg}\"),\n            MlError::EmptyModule => write!(f, \"module must not be empty\"),\n            MlError::EmptyTarget => write!(f, \"target must not be empty\"),\n            MlError::EmptyMessage => write!(f, \"entry message must not be empty\"),\n        }\n    }\n}\n\nimpl std::error::Error for MlError {}\n\npub fn validate_ml(value: serde_json::Value) -> Result<Ml, MlError> {\n    let ml: Ml = serde_json::from_value(value).map_err(|e| MlError::Parse(e.to_string()))?;\n\n    if ml.module.is_empty() {\n        return Err(MlError::EmptyModule);\n    }\n    if ml.target.is_empty() {\n        return Err(MlError::EmptyTarget);\n    }\n    for entry in &ml.entries {\n        if entry.message.is_empty() {\n            return Err(MlError::EmptyMessage);\n        }\n    }\n\n    Ok(ml)\n}\n\npub fn parse_ml_entries(value: serde_json::Value) -> Result<Vec<MlEntry>, MlError> {\n    if !value.is_array() {\n        return Ok(Vec::new());\n    }\n\n    let entries: Vec<MlEntry> =\n        serde_json::from_value(value).map_err(|e| MlError::Parse(e.to_string()))?;\n\n    for entry in &entries {\n        if entry.message.is_empty() {\n            return Err(MlError::EmptyMessage);\n        }\n    }\n\n    Ok(entries)\n}\n\npub fn ml_entries_at_body_line(ml: &Ml, body_line: u32) -> Vec<&MlEntry> {\n    ml.entries\n        .iter()\n        .filter(|entry| entry.prompt_lines.start <= body_line && body_line <= entry.prompt_lines.end)\n        .collect()\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n    use serde_json::json;\n\n    #[test]\n    fn kind_kebab_case_spellings() {\n        assert_eq!(\n            serde_json::from_value::<MlKind>(json!(\"ambiguity\")).unwrap(),\n            MlKind::Ambiguity\n        );\n        assert_eq!(\n            serde_json::from_value::<MlKind>(json!(\"assumption\")).unwrap(),\n            MlKind::Assumption\n        );\n        assert_eq!(\n            serde_json::from_value::<MlKind>(json!(\"note\")).unwrap(),\n            MlKind::Note\n        );\n        assert_eq!(\n            serde_json::from_value::<MlKind>(json!(\"no-op\")).unwrap(),\n            MlKind::NoOp\n        );\n    }\n\n    #[test]\n    fn unknown_kind_is_error() {\n        assert!(serde_json::from_value::<MlKind>(json!(\"bogus\")).is_err());\n    }\n\n    #[test]\n    fn entry_defaults_reasoning_and_suggestion() {\n        let entry: MlEntry = serde_json::from_value(json!({\n            \"promptLines\": 18,\n            \"kind\": \"note\",\n            \"message\": \"hello\"\n        }))\n        .unwrap();\n        assert_eq!(entry.prompt_lines, LineRange::new(18, 18));\n        assert_eq!(entry.kind, MlKind::Note);\n        assert_eq!(entry.message, \"hello\");\n        assert_eq!(entry.reasoning, \"\");\n        assert_eq!(entry.suggestion, None);\n    }\n\n    #[test]\n    fn entry_with_reasoning_and_suggestion() {\n        let entry: MlEntry = serde_json::from_value(json!({\n            \"promptLines\": [3, 5],\n            \"kind\": \"assumption\",\n            \"message\": \"m\",\n            \"reasoning\": \"r\",\n            \"suggestion\": \"s\"\n        }))\n        .unwrap();\n        assert_eq!(entry.prompt_lines, LineRange::new(3, 5));\n        assert_eq!(entry.reasoning, \"r\");\n        assert_eq!(entry.suggestion, Some(\"s\".to_string()));\n    }\n\n    #[test]\n    fn prompt_lines_string_is_deserialize_error() {\n        let result: Result<MlEntry, _> = serde_json::from_value(json!({\n            \"promptLines\": \"1-2\",\n            \"kind\": \"note\",\n            \"message\": \"m\"\n        }));\n        assert!(result.is_err());\n    }\n\n    #[test]\n    fn validate_ml_accepts_valid_document() {\n        let ml = validate_ml(json!({\n            \"module\": \"m\",\n            \"target\": \"t\",\n            \"entries\": [\n                {\"promptLines\": [1, 2], \"kind\": \"ambiguity\", \"message\": \"a\"}\n            ]\n        }))\n        .unwrap();\n        assert_eq!(ml.module, \"m\");\n        assert_eq!(ml.target, \"t\");\n        assert_eq!(ml.entries.len(), 1);\n    }\n\n    #[test]\n    fn validate_ml_defaults_missing_entries_to_empty() {\n        let ml = validate_ml(json!({\"module\": \"m\", \"target\": \"t\"})).unwrap();\n        assert!(ml.entries.is_empty());\n    }\n\n    #[test]\n    fn validate_ml_rejects_empty_module() {\n        let result = validate_ml(json!({\"module\": \"\", \"target\": \"t\"}));\n        assert_eq!(result.unwrap_err(), MlError::EmptyModule);\n    }\n\n    #[test]\n    fn validate_ml_rejects_empty_target() {\n        let result = validate_ml(json!({\"module\": \"m\", \"target\": \"\"}));\n        assert_eq!(result.unwrap_err(), MlError::EmptyTarget);\n    }\n\n    #[test]\n    fn validate_ml_rejects_empty_entry_message() {\n        let result = validate_ml(json!({\n            \"module\": \"m\",\n            \"target\": \"t\",\n            \"entries\": [{\"promptLines\": 1, \"kind\": \"note\", \"message\": \"\"}]\n        }));\n        assert_eq!(result.unwrap_err(), MlError::EmptyMessage);\n    }\n\n    #[test]\n    fn validate_ml_rejects_unknown_kind() {\n        let result = validate_ml(json!({\n            \"module\": \"m\",\n            \"target\": \"t\",\n            \"entries\": [{\"promptLines\": 1, \"kind\": \"bogus\", \"message\": \"m\"}]\n        }));\n        assert!(matches!(result.unwrap_err(), MlError::Parse(_)));\n    }\n\n    #[test]\n    fn validate_ml_rejects_string_prompt_lines() {\n        let result = validate_ml(json!({\n            \"module\": \"m\",\n            \"target\": \"t\",\n            \"entries\": [{\"promptLines\": \"1-2\", \"kind\": \"note\", \"message\": \"m\"}]\n        }));\n        assert!(matches!(result.unwrap_err(), MlError::Parse(_)));\n    }\n\n    #[test]\n    fn parse_ml_entries_returns_empty_for_non_array() {\n        assert_eq!(parse_ml_entries(json!({\"not\": \"an array\"})).unwrap(), vec![]);\n        assert_eq!(parse_ml_entries(json!(\"string\")).unwrap(), vec![]);\n        assert_eq!(parse_ml_entries(json!(42)).unwrap(), vec![]);\n    }\n\n    #[test]\n    fn parse_ml_entries_parses_valid_array() {\n        let entries = parse_ml_entries(json!([\n            {\"promptLines\": [1, 2], \"kind\": \"note\", \"message\": \"a\"},\n            {\"promptLines\": 5, \"kind\": \"no-op\", \"message\": \"b\"}\n        ]))\n        .unwrap();\n        assert_eq!(entries.len(), 2);\n        assert_eq!(entries[0].message, \"a\");\n        assert_eq!(entries[1].kind, MlKind::NoOp);\n    }\n\n    #[test]\n    fn parse_ml_entries_rejects_empty_message() {\n        let result = parse_ml_entries(json!([{\"promptLines\": 1, \"kind\": \"note\", \"message\": \"\"}]));\n        assert_eq!(result.unwrap_err(), MlError::EmptyMessage);\n    }\n\n    #[test]\n    fn parse_ml_entries_rejects_malformed_list() {\n        let result = parse_ml_entries(json!([{\"promptLines\": 1, \"kind\": \"bogus\", \"message\": \"m\"}]));\n        assert!(matches!(result.unwrap_err(), MlError::Parse(_)));\n    }\n\n    fn sample_ml() -> Ml {\n        validate_ml(json!({\n            \"module\": \"m\",\n            \"target\": \"t\",\n            \"entries\": [\n                {\"promptLines\": [1, 2], \"kind\": \"note\", \"message\": \"a\"},\n                {\"promptLines\": [5, 7], \"kind\": \"note\", \"message\": \"b\"}\n            ]\n        }))\n        .unwrap()\n    }\n\n    #[test]\n    fn lookup_finds_covering_entries_in_order() {\n        let ml = sample_ml();\n        let at1 = ml_entries_at_body_line(&ml, 1);\n        assert_eq!(at1.len(), 1);\n        assert_eq!(at1[0].message, \"a\");\n\n        let at6 = ml_entries_at_body_line(&ml, 6);\n        assert_eq!(at6.len(), 1);\n        assert_eq!(at6[0].message, \"b\");\n    }\n\n    #[test]\n    fn lookup_returns_empty_for_uncovered_line() {\n        let ml = sample_ml();\n        assert!(ml_entries_at_body_line(&ml, 4).is_empty());\n    }\n}\n",
+      "language": "rust"
+    }
+  ],
+  "attribution": [
+    {
+      "promptLines": [
+        1,
+        6
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        1,
+        4
+      ],
+      "note": "module doc, imports serde"
+    },
+    {
+      "promptLines": [
+        19,
+        27
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        3,
+        3
+      ],
+      "note": "use shared LineRange type"
+    },
+    {
+      "promptLines": [
+        42,
+        45
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        6,
+        13
+      ],
+      "note": "MlKind enum kebab-case variants"
+    },
+    {
+      "promptLines": [
+        46,
+        52
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        15,
+        29
+      ],
+      "note": "MlEntry fields, defaults for reasoning/suggestion"
+    },
+    {
+      "promptLines": [
+        48,
+        48
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        21,
+        22
+      ],
+      "note": "promptLines rename camelCase key"
+    },
+    {
+      "promptLines": [
+        51,
+        51
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        15,
+        17
+      ],
+      "note": "default_reasoning fn"
+    },
+    {
+      "promptLines": [
+        51,
+        51
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        25,
+        26
+      ],
+      "note": "reasoning default attr"
+    },
+    {
+      "promptLines": [
+        52,
+        52
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        27,
+        28
+      ],
+      "note": "suggestion default None"
+    },
+    {
+      "promptLines": [
+        53,
+        57
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        31,
+        37
+      ],
+      "note": "Ml document struct, entries default empty"
+    },
+    {
+      "promptLines": [
+        61,
+        67
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        60,
+        76
+      ],
+      "note": "validate_ml deserialize then validate module/target/message"
+    },
+    {
+      "promptLines": [
+        62,
+        63
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        63,
+        65
+      ],
+      "note": "reject empty module"
+    },
+    {
+      "promptLines": [
+        62,
+        63
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        66,
+        68
+      ],
+      "note": "reject empty target"
+    },
+    {
+      "promptLines": [
+        63,
+        63
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        69,
+        73
+      ],
+      "note": "reject empty entry message"
+    },
+    {
+      "promptLines": [
+        64,
+        65
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        39,
+        58
+      ],
+      "note": "MlError enum and error type, deserialization errors surfaced"
+    },
+    {
+      "promptLines": [
+        68,
+        71
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        78,
+        93
+      ],
+      "note": "parse_ml_entries non-array empty list else deserialize and validate"
+    },
+    {
+      "promptLines": [
+        75,
+        77
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        95,
+        100
+      ],
+      "note": "ml_entries_at_body_line lookup filter"
+    },
+    {
+      "promptLines": [
+        79,
+        81
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        266,
+        288
+      ],
+      "note": "example lookup test matching prompt example"
+    },
+    {
+      "promptLines": [
+        42,
+        45
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        108,
+        130
+      ],
+      "note": "tests for kind kebab-case spellings and unknown kind error"
+    },
+    {
+      "promptLines": [
+        51,
+        52
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        133,
+        160
+      ],
+      "note": "tests for entry defaults and explicit reasoning/suggestion"
+    },
+    {
+      "promptLines": [
+        64,
+        66
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        162,
+        170
+      ],
+      "note": "test promptLines string is deserialize error"
+    },
+    {
+      "promptLines": [
+        61,
+        67
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        172,
+        233
+      ],
+      "note": "validate_ml tests for valid doc, defaults, empty fields, unknown kind, string promptLines"
+    },
+    {
+      "promptLines": [
+        68,
+        71
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        236,
+        264
+      ],
+      "note": "parse_ml_entries tests non-array, valid array, empty message, malformed list"
+    },
+    {
+      "promptLines": [
+        75,
+        81
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        278,
+        295
+      ],
+      "note": "lookup tests covering/uncovered lines"
+    }
+  ],
+  "attributionYaml": "module: schemas_ml\ntarget: rust\nentries:\n  - promptLines:\n      - 1\n      - 6\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 1\n      - 4\n    note: module doc, imports serde\n  - promptLines:\n      - 19\n      - 27\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 3\n      - 3\n    note: use shared LineRange type\n  - promptLines:\n      - 42\n      - 45\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 6\n      - 13\n    note: MlKind enum kebab-case variants\n  - promptLines:\n      - 46\n      - 52\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 15\n      - 29\n    note: MlEntry fields, defaults for reasoning/suggestion\n  - promptLines:\n      - 48\n      - 48\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 21\n      - 22\n    note: promptLines rename camelCase key\n  - promptLines:\n      - 51\n      - 51\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 15\n      - 17\n    note: default_reasoning fn\n  - promptLines:\n      - 51\n      - 51\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 25\n      - 26\n    note: reasoning default attr\n  - promptLines:\n      - 52\n      - 52\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 27\n      - 28\n    note: suggestion default None\n  - promptLines:\n      - 53\n      - 57\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 31\n      - 37\n    note: Ml document struct, entries default empty\n  - promptLines:\n      - 61\n      - 67\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 60\n      - 76\n    note: validate_ml deserialize then validate module/target/message\n  - promptLines:\n      - 62\n      - 63\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 63\n      - 65\n    note: reject empty module\n  - promptLines:\n      - 62\n      - 63\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 66\n      - 68\n    note: reject empty target\n  - promptLines:\n      - 63\n      - 63\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 69\n      - 73\n    note: reject empty entry message\n  - promptLines:\n      - 64\n      - 65\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 39\n      - 58\n    note: MlError enum and error type, deserialization errors surfaced\n  - promptLines:\n      - 68\n      - 71\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 78\n      - 93\n    note: parse_ml_entries non-array empty list else deserialize and validate\n  - promptLines:\n      - 75\n      - 77\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 95\n      - 100\n    note: ml_entries_at_body_line lookup filter\n  - promptLines:\n      - 79\n      - 81\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 266\n      - 288\n    note: example lookup test matching prompt example\n  - promptLines:\n      - 42\n      - 45\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 108\n      - 130\n    note: tests for kind kebab-case spellings and unknown kind error\n  - promptLines:\n      - 51\n      - 52\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 133\n      - 160\n    note: tests for entry defaults and explicit reasoning/suggestion\n  - promptLines:\n      - 64\n      - 66\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 162\n      - 170\n    note: test promptLines string is deserialize error\n  - promptLines:\n      - 61\n      - 67\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 172\n      - 233\n    note: validate_ml tests for valid doc, defaults, empty fields, unknown kind, string promptLines\n  - promptLines:\n      - 68\n      - 71\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 236\n      - 264\n    note: parse_ml_entries tests non-array, valid array, empty message, malformed list\n  - promptLines:\n      - 75\n      - 81\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 278\n      - 295\n    note: lookup tests covering/uncovered lines\n",
+  "mapl": [
+    {
+      "promptLines": [
+        59,
+        71
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "Rejection paths match spec exactly — bad kind or promptLines-as-string errors, not panics.",
+      "reasoning": "validate_ml and parse_ml_entries both use serde_json::from_value and map errors to MlError::Parse, satisfying \"rejection is error not panic\" and structural-invalid cases. Tests confirm behavior. No gaps found.",
+      "suggestion": ""
+    },
+    {
+      "promptLines": [
+        17,
+        36
+      ],
+      "kind": "assumption",
+      "severity": "warning",
+      "message": "Assumed schemas_line_range sibling crate already exists with matching API.",
+      "reasoning": "Code depends on schemas_line_range::LineRange via path dep, per spec. Couldn't verify sibling crate's actual contents in this review, just that lib.rs uses it correctly per described API (new, start, end, Deserialize). Assumed prior generation of that module was correct/consistent.",
+      "suggestion": ""
+    }
+  ],
+  "journal": [
+    {
+      "gen": 17,
+      "timestamp": "2026-07-24T07:22:40.593Z",
+      "mode": "full",
+      "promptHash": "7e21ddf6dac1e77e2090f64da1d16de2c1972d221b10d7d7ef2fe2f61c7d832f",
+      "files": [
+        {
+          "path": "schemas_ml/Cargo.toml",
+          "journalPath": ".napl/src/rust/schemas_ml/Cargo.toml",
+          "patch": "@@ -0,0 +1,12 @@\n+[package]\n+name = \"schemas_ml\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]\n+serde = { version = \"1\", features = [\"derive\"] }\n+serde_json = \"1\"\n+schemas_line_range = { path = \"../schemas_line_range\" }\n+\n+[dev-dependencies]\n+serde_json = \"1\""
+        },
+        {
+          "path": "schemas_ml/src/lib.rs",
+          "journalPath": ".napl/src/rust/schemas_ml/src/lib.rs",
+          "patch": "@@ -0,0 +1,295 @@\n+// GENERATED BY NAPL from schemas_ml.napl — edit the prompt, not this file\n+\n+use schemas_line_range::LineRange;\n+use serde::Deserialize;\n+\n+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]\n+#[serde(rename_all = \"kebab-case\")]\n+pub enum MlKind {\n+    Ambiguity,\n+    Assumption,\n+    Note,\n+    NoOp,\n+}\n+\n+fn default_reasoning() -> String {\n+    String::new()\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]\n+pub struct MlEntry {\n+    #[serde(rename = \"promptLines\")]\n+    pub prompt_lines: LineRange,\n+    pub kind: MlKind,\n+    pub message: String,\n+    #[serde(default = \"default_reasoning\")]\n+    pub reasoning: String,\n+    #[serde(default)]\n+    pub suggestion: Option<String>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]\n+pub struct Ml {\n+    pub module: String,\n+    pub target: String,\n+    #[serde(default)]\n+    pub entries: Vec<MlEntry>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub enum MlError {\n+    Parse(String),\n+    EmptyModule,\n+    EmptyTarget,\n+    EmptyMessage,\n+}\n+\n+impl std::fmt::Display for MlError {\n+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n+        match self {\n+            MlError::Parse(msg) => write!(f, \"failed to parse ml document: {msg}\"),\n+            MlError::EmptyModule => write!(f, \"module must not be empty\"),\n+            MlError::EmptyTarget => write!(f, \"target must not be empty\"),\n+            MlError::EmptyMessage => write!(f, \"entry message must not be empty\"),\n+        }\n+    }\n+}\n+\n+impl std::error::Error for MlError {}\n+\n+pub fn validate_ml(value: serde_json::Value) -> Result<Ml, MlError> {\n+    let ml: Ml = serde_json::from_value(value).map_err(|e| MlError::Parse(e.to_string()))?;\n+\n+    if ml.module.is_empty() {\n+        return Err(MlError::EmptyModule);\n+    }\n+    if ml.target.is_empty() {\n+        return Err(MlError::EmptyTarget);\n+    }\n+    for entry in &ml.entries {\n+        if entry.message.is_empty() {\n+            return Err(MlError::EmptyMessage);\n+        }\n+    }\n+\n+    Ok(ml)\n+}\n+\n+pub fn parse_ml_entries(value: serde_json::Value) -> Result<Vec<MlEntry>, MlError> {\n+    if !value.is_array() {\n+        return Ok(Vec::new());\n+    }\n+\n+    let entries: Vec<MlEntry> =\n+        serde_json::from_value(value).map_err(|e| MlError::Parse(e.to_string()))?;\n+\n+    for entry in &entries {\n+        if entry.message.is_empty() {\n+            return Err(MlError::EmptyMessage);\n+        }\n+    }\n+\n+    Ok(entries)\n+}\n+\n+pub fn ml_entries_at_body_line(ml: &Ml, body_line: u32) -> Vec<&MlEntry> {\n+    ml.entries\n+        .iter()\n+        .filter(|entry| entry.prompt_lines.start <= body_line && body_line <= entry.prompt_lines.end)\n+        .collect()\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+    use serde_json::json;\n+\n+    #[test]\n+    fn kind_kebab_case_spellings() {\n+        assert_eq!(\n+            serde_json::from_value::<MlKind>(json!(\"ambiguity\")).unwrap(),\n+            MlKind::Ambiguity\n+        );\n+        assert_eq!(\n+            serde_json::from_value::<MlKind>(json!(\"assumption\")).unwrap(),\n+            MlKind::Assumption\n+        );\n+        assert_eq!(\n+            serde_json::from_value::<MlKind>(json!(\"note\")).unwrap(),\n+            MlKind::Note\n+        );\n+        assert_eq!(\n+            serde_json::from_value::<MlKind>(json!(\"no-op\")).unwrap(),\n+            MlKind::NoOp\n+        );\n+    }\n+\n+    #[test]\n+    fn unknown_kind_is_error() {\n+        assert!(serde_json::from_value::<MlKind>(json!(\"bogus\")).is_err());\n+    }\n+\n+    #[test]\n+    fn entry_defaults_reasoning_and_suggestion() {\n+        let entry: MlEntry = serde_json::from_value(json!({\n+            \"promptLines\": 18,\n+            \"kind\": \"note\",\n+            \"message\": \"hello\"\n+        }))\n+        .unwrap();\n+        assert_eq!(entry.prompt_lines, LineRange::new(18, 18));\n+        assert_eq!(entry.kind, MlKind::Note);\n+        assert_eq!(entry.message, \"hello\");\n+        assert_eq!(entry.reasoning, \"\");\n+        assert_eq!(entry.suggestion, None);\n+    }\n+\n+    #[test]\n+    fn entry_with_reasoning_and_suggestion() {\n+        let entry: MlEntry = serde_json::from_value(json!({\n+            \"promptLines\": [3, 5],\n+            \"kind\": \"assumption\",\n+            \"message\": \"m\",\n+            \"reasoning\": \"r\",\n+            \"suggestion\": \"s\"\n+        }))\n+        .unwrap();\n+        assert_eq!(entry.prompt_lines, LineRange::new(3, 5));\n+        assert_eq!(entry.reasoning, \"r\");\n+        assert_eq!(entry.suggestion, Some(\"s\".to_string()));\n+    }\n+\n+    #[test]\n+    fn prompt_lines_string_is_deserialize_error() {\n+        let result: Result<MlEntry, _> = serde_json::from_value(json!({\n+            \"promptLines\": \"1-2\",\n+            \"kind\": \"note\",\n+            \"message\": \"m\"\n+        }));\n+        assert!(result.is_err());\n+    }\n+\n+    #[test]\n+    fn validate_ml_accepts_valid_document() {\n+        let ml = validate_ml(json!({\n+            \"module\": \"m\",\n+            \"target\": \"t\",\n+            \"entries\": [\n+                {\"promptLines\": [1, 2], \"kind\": \"ambiguity\", \"message\": \"a\"}\n+            ]\n+        }))\n+        .unwrap();\n+        assert_eq!(ml.module, \"m\");\n+        assert_eq!(ml.target, \"t\");\n+        assert_eq!(ml.entries.len(), 1);\n+    }\n+\n+    #[test]\n+    fn validate_ml_defaults_missing_entries_to_empty() {\n+        let ml = validate_ml(json!({\"module\": \"m\", \"target\": \"t\"})).unwrap();\n+        assert!(ml.entries.is_empty());\n+    }\n+\n+    #[test]\n+    fn validate_ml_rejects_empty_module() {\n+        let result = validate_ml(json!({\"module\": \"\", \"target\": \"t\"}));\n+        assert_eq!(result.unwrap_err(), MlError::EmptyModule);\n+    }\n+\n+    #[test]\n+    fn validate_ml_rejects_empty_target() {\n+        let result = validate_ml(json!({\"module\": \"m\", \"target\": \"\"}));\n+        assert_eq!(result.unwrap_err(), MlError::EmptyTarget);\n+    }\n+\n+    #[test]\n+    fn validate_ml_rejects_empty_entry_message() {\n+        let result = validate_ml(json!({\n+            \"module\": \"m\",\n+            \"target\": \"t\",\n+            \"entries\": [{\"promptLines\": 1, \"kind\": \"note\", \"message\": \"\"}]\n+        }));\n+        assert_eq!(result.unwrap_err(), MlError::EmptyMessage);\n+    }\n+\n+    #[test]\n+    fn validate_ml_rejects_unknown_kind() {\n+        let result = validate_ml(json!({\n+            \"module\": \"m\",\n+            \"target\": \"t\",\n+            \"entries\": [{\"promptLines\": 1, \"kind\": \"bogus\", \"message\": \"m\"}]\n+        }));\n+        assert!(matches!(result.unwrap_err(), MlError::Parse(_)));\n+    }\n+\n+    #[test]\n+    fn validate_ml_rejects_string_prompt_lines() {\n+        let result = validate_ml(json!({\n+            \"module\": \"m\",\n+            \"target\": \"t\",\n+            \"entries\": [{\"promptLines\": \"1-2\", \"kind\": \"note\", \"message\": \"m\"}]\n+        }));\n+        assert!(matches!(result.unwrap_err(), MlError::Parse(_)));\n+    }\n+\n+    #[test]\n+    fn parse_ml_entries_returns_empty_for_non_array() {\n+        assert_eq!(parse_ml_entries(json!({\"not\": \"an array\"})).unwrap(), vec![]);\n+        assert_eq!(parse_ml_entries(json!(\"string\")).unwrap(), vec![]);\n+        assert_eq!(parse_ml_entries(json!(42)).unwrap(), vec![]);\n+    }\n+\n+    #[test]\n+    fn parse_ml_entries_parses_valid_array() {\n+        let entries = parse_ml_entries(json!([\n+            {\"promptLines\": [1, 2], \"kind\": \"note\", \"message\": \"a\"},\n+            {\"promptLines\": 5, \"kind\": \"no-op\", \"message\": \"b\"}\n+        ]))\n+        .unwrap();\n+        assert_eq!(entries.len(), 2);\n+        assert_eq!(entries[0].message, \"a\");\n+        assert_eq!(entries[1].kind, MlKind::NoOp);\n+    }\n+\n+    #[test]\n+    fn parse_ml_entries_rejects_empty_message() {\n+        let result = parse_ml_entries(json!([{\"promptLines\": 1, \"kind\": \"note\", \"message\": \"\"}]));\n+        assert_eq!(result.unwrap_err(), MlError::EmptyMessage);\n+    }\n+\n+    #[test]\n+    fn parse_ml_entries_rejects_malformed_list() {\n+        let result = parse_ml_entries(json!([{\"promptLines\": 1, \"kind\": \"bogus\", \"message\": \"m\"}]));\n+        assert!(matches!(result.unwrap_err(), MlError::Parse(_)));\n+    }\n+\n+    fn sample_ml() -> Ml {\n+        validate_ml(json!({\n+            \"module\": \"m\",\n+            \"target\": \"t\",\n+            \"entries\": [\n+                {\"promptLines\": [1, 2], \"kind\": \"note\", \"message\": \"a\"},\n+                {\"promptLines\": [5, 7], \"kind\": \"note\", \"message\": \"b\"}\n+            ]\n+        }))\n+        .unwrap()\n+    }\n+\n+    #[test]\n+    fn lookup_finds_covering_entries_in_order() {\n+        let ml = sample_ml();\n+        let at1 = ml_entries_at_body_line(&ml, 1);\n+        assert_eq!(at1.len(), 1);\n+        assert_eq!(at1[0].message, \"a\");\n+\n+        let at6 = ml_entries_at_body_line(&ml, 6);\n+        assert_eq!(at6.len(), 1);\n+        assert_eq!(at6[0].message, \"b\");\n+    }\n+\n+    #[test]\n+    fn lookup_returns_empty_for_uncovered_line() {\n+        let ml = sample_ml();\n+        assert!(ml_entries_at_body_line(&ml, 4).is_empty());\n+    }\n+}"
+        }
+      ]
+    }
+  ],
+  "lock": [
+    {
+      "path": "schemas_ml/Cargo.toml",
+      "hash": "8a1c56b5209e988c75c6fb5f2e7d68983d9e86dda9a48520478bbce270450cc4"
+    },
+    {
+      "path": "schemas_ml/src/lib.rs",
+      "hash": "3c71293936ba91d83c94305ba6cb6d6e832e0ad851039836916373b5dd88f180"
+    }
+  ],
+  "session": {
+    "task": "napl gen rust → schemas_ml",
+    "files": {
+      "schemas_ml.napl": "---\nmodule: schemas_ml\ndeps: [schemas_line_range]\ntargets: [rust]\ntests:\n  - name: a valid document with a scalar prompt line normalizes the range\n    given: { entry: \"{promptLines:18, kind:ambiguity, message:'odd phrase', reasoning:unclear}\" }\n    expect: { promptLines: [18, 18], kind: ambiguity, suggestion: null }\n  - name: entries default to an empty list when absent\n    given: { module: m, target: react }\n    expect: { entries: 0 }\n  - name: all four kinds including no-op are accepted\n    given: { kinds: [ambiguity, assumption, note, \"no-op\"] }\n    expect: { accepts: true }\n  - name: an unknown kind is rejected\n    given: { entry: \"{promptLines:[1,1], kind:bogus, message:x}\" }\n    expect: { accepts: false }\n  - name: an empty message is rejected\n    given: { entry: \"{promptLines:[1,1], kind:note, message:''}\" }\n    expect: { accepts: false }\n  - name: parse-entries accepts a list and treats a non-list as empty\n    given: { list: \"[{promptLines:[2,3], kind:assumption, message:a}]\", nonlist: \"{}\" }\n    expect: { list: 1, nonlist: 0 }\n  - name: a malformed entry list is rejected\n    given: { list: \"[{promptLines:'nope', kind:note, message:x}]\" }\n    expect: { accepts: false }\n  - name: entries-at-body-line returns every entry whose range covers the line\n    given: { body_line: 6 }\n    expect: { messages: [b] }\n---\n# The machine-layer (mapl) schema: model annotations keyed to prompt lines\n\nThis module defines the serde types and validators for a NAPL **machine-layer\ndocument** (the `.mapl` sidecar): the list of model-authored annotations that\nflag, for a range of prompt body lines, an ambiguity, an assumption, a note, or a\nno-op. It is pure: no I/O. Bring in `serde`, `serde_json`.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `schemas_ml/`: `schemas_ml/Cargo.toml` (package\nname `schemas_ml`) and `schemas_ml/src/lib.rs`. Touch nothing outside\n`schemas_ml/`. Ensure `cargo test` passes from the workspace root before\nfinishing.\n\n## Builds on the `schemas_line_range` module of this workspace\n\nEvery annotation is keyed to an inclusive 1-based line range that accepts several\nJSON spellings (a bare number `n` meaning `n..=n`, a one-element array `[n]`\nmeaning `n..=n`, or a two-element array `[a, b]`), each endpoint an integer at\nleast 1. That value type — and its lenient deserializer — is the\n**`schemas_line_range`** module of this same workspace, generated as a sibling\nmember crate in the `schemas_line_range/` directory (so `../schemas_line_range`\nrelative to this crate). It exposes a public type `LineRange` with public `start`\nand `end` fields (`u32`), a `new(start, end)` constructor, equality, copy, and a\nserde `Deserialize` performing exactly that normalization.\n\nAdd a path dependency on that sibling member crate in your `Cargo.toml` (depend\non the `schemas_line_range` crate by path — it lives at `../schemas_line_range`)\nand use its `LineRange` for the line-range field below. Do **not** reimplement\nline-range parsing here, and do not depend on any hand-written crate — depend\nonly on the generated sibling `schemas_line_range` member crate. This sibling\npath dependency is part of the same workspace, not an external crates.io\ndependency, so add it even though the general guidance is to avoid outside\ndependencies.\n\n## The types\n\nExpose these public types:\n\n- `MlKind`: an enum of four annotation kinds, deserializable, comparable, copy:\n  `Ambiguity`, `Assumption`, `Note`, and `NoOp`. Their JSON spellings are\n  **kebab-case**: `\"ambiguity\"`, `\"assumption\"`, `\"note\"`, and — for `NoOp` — the\n  literal `\"no-op\"`.\n- `MlEntry`: one annotation, deserializable, comparable, cloneable, with public\n  fields:\n  - `prompt_lines: LineRange` whose JSON key is **`promptLines`** (camelCase).\n  - `kind: MlKind`.\n  - `message: String`.\n  - `reasoning: String` defaulting to the empty string when absent.\n  - `suggestion: Option<String>` defaulting to `None` when absent.\n- `Ml`: a whole document, deserializable, comparable, cloneable, with public\n  fields:\n  - `module: String`.\n  - `target: String`.\n  - `entries: Vec<MlEntry>` defaulting to empty when absent.\n\n## Validation\n\n- `validate_ml(value: serde_json::Value) -> Result<Ml, _>`: deserialize the JSON\n  value into an `Ml`, then validate. `module` must not be empty, `target` must\n  not be empty, and every entry's `message` must not be empty. A structurally\n  invalid value — an unknown `kind` such as `\"bogus\"`, or a `promptLines` that is\n  a string — is a deserialization error. Rejection is an error, not a panic. A\n  scalar `promptLines` such as `18` normalizes to `18..=18`; an absent\n  `suggestion` is `None`.\n- `parse_ml_entries(value: serde_json::Value) -> Result<Vec<MlEntry>, _>`: if the\n  value is **not** a JSON array, return an empty list (no error). Otherwise\n  deserialize it as a list of entries and validate each entry's non-empty\n  `message`. A malformed list is an error.\n\n## Lookup\n\n- `ml_entries_at_body_line(ml: &Ml, body_line: u32) -> Vec<&MlEntry>`: return\n  references to every entry whose `promptLines` range covers `body_line`\n  (inclusive), in document order.\n\nFor example, given entries `{promptLines:[1,2], message:\"a\"}` and\n`{promptLines:[5,7], message:\"b\"}`, body line 6 yields only \"b\", body line 1\nyields only \"a\", and body line 4 yields none.\n"
+    },
+    "events": [
+      {
+        "type": "task",
+        "task": "napl gen rust → schemas_ml"
+      },
+      {
+        "type": "diff",
+        "path": "schemas_ml/Cargo.toml",
+        "patch": "@@ -0,0 +1,12 @@\n+[package]\n+name = \"schemas_ml\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]\n+serde = { version = \"1\", features = [\"derive\"] }\n+serde_json = \"1\"\n+schemas_line_range = { path = \"../schemas_line_range\" }\n+\n+[dev-dependencies]\n+serde_json = \"1\""
+      },
+      {
+        "type": "file-edit",
+        "path": "schemas_ml/Cargo.toml",
+        "content": "[package]\nname = \"schemas_ml\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\nserde = { version = \"1\", features = [\"derive\"] }\nserde_json = \"1\"\nschemas_line_range = { path = \"../schemas_line_range\" }\n\n[dev-dependencies]\nserde_json = \"1\"\n"
+      },
+      {
+        "type": "diff",
+        "path": "schemas_ml/src/lib.rs",
+        "patch": "@@ -0,0 +1,295 @@\n+// GENERATED BY NAPL from schemas_ml.napl — edit the prompt, not this file\n+\n+use schemas_line_range::LineRange;\n+use serde::Deserialize;\n+\n+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]\n+#[serde(rename_all = \"kebab-case\")]\n+pub enum MlKind {\n+    Ambiguity,\n+    Assumption,\n+    Note,\n+    NoOp,\n+}\n+\n+fn default_reasoning() -> String {\n+    String::new()\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]\n+pub struct MlEntry {\n+    #[serde(rename = \"promptLines\")]\n+    pub prompt_lines: LineRange,\n+    pub kind: MlKind,\n+    pub message: String,\n+    #[serde(default = \"default_reasoning\")]\n+    pub reasoning: String,\n+    #[serde(default)]\n+    pub suggestion: Option<String>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]\n+pub struct Ml {\n+    pub module: String,\n+    pub target: String,\n+    #[serde(default)]\n+    pub entries: Vec<MlEntry>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub enum MlError {\n+    Parse(String),\n+    EmptyModule,\n+    EmptyTarget,\n+    EmptyMessage,\n+}\n+\n+impl std::fmt::Display for MlError {\n+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n+        match self {\n+            MlError::Parse(msg) => write!(f, \"failed to parse ml document: {msg}\"),\n+            MlError::EmptyModule => write!(f, \"module must not be empty\"),\n+            MlError::EmptyTarget => write!(f, \"target must not be empty\"),\n+            MlError::EmptyMessage => write!(f, \"entry message must not be empty\"),\n+        }\n+    }\n+}\n+\n+impl std::error::Error for MlError {}\n+\n+pub fn validate_ml(value: serde_json::Value) -> Result<Ml, MlError> {\n+    let ml: Ml = serde_json::from_value(value).map_err(|e| MlError::Parse(e.to_string()))?;\n+\n+    if ml.module.is_empty() {\n+        return Err(MlError::EmptyModule);\n+    }\n+    if ml.target.is_empty() {\n+        return Err(MlError::EmptyTarget);\n+    }\n+    for entry in &ml.entries {\n+        if entry.message.is_empty() {\n+            return Err(MlError::EmptyMessage);\n+        }\n+    }\n+\n+    Ok(ml)\n+}\n+\n+pub fn parse_ml_entries(value: serde_json::Value) -> Result<Vec<MlEntry>, MlError> {\n+    if !value.is_array() {\n+        return Ok(Vec::new());\n+    }\n+\n+    let entries: Vec<MlEntry> =\n+        serde_json::from_value(value).map_err(|e| MlError::Parse(e.to_string()))?;\n+\n+    for entry in &entries {\n+        if entry.message.is_empty() {\n+            return Err(MlError::EmptyMessage);\n+        }\n+    }\n+\n+    Ok(entries)\n+}\n+\n+pub fn ml_entries_at_body_line(ml: &Ml, body_line: u32) -> Vec<&MlEntry> {\n+    ml.entries\n+        .iter()\n+        .filter(|entry| entry.prompt_lines.start <= body_line && body_line <= entry.prompt_lines.end)\n+        .collect()\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+    use serde_json::json;\n+\n+    #[test]\n+    fn kind_kebab_case_spellings() {\n+        assert_eq!(\n+            serde_json::from_value::<MlKind>(json!(\"ambiguity\")).unwrap(),\n+            MlKind::Ambiguity\n+        );\n+        assert_eq!(\n+            serde_json::from_value::<MlKind>(json!(\"assumption\")).unwrap(),\n+            MlKind::Assumption\n+        );\n+        assert_eq!(\n+            serde_json::from_value::<MlKind>(json!(\"note\")).unwrap(),\n+            MlKind::Note\n+        );\n+        assert_eq!(\n+            serde_json::from_value::<MlKind>(json!(\"no-op\")).unwrap(),\n+            MlKind::NoOp\n+        );\n+    }\n+\n+    #[test]\n+    fn unknown_kind_is_error() {\n+        assert!(serde_json::from_value::<MlKind>(json!(\"bogus\")).is_err());\n+    }\n+\n+    #[test]\n+    fn entry_defaults_reasoning_and_suggestion() {\n+        let entry: MlEntry = serde_json::from_value(json!({\n+            \"promptLines\": 18,\n+            \"kind\": \"note\",\n+            \"message\": \"hello\"\n+        }))\n+        .unwrap();\n+        assert_eq!(entry.prompt_lines, LineRange::new(18, 18));\n+        assert_eq!(entry.kind, MlKind::Note);\n+        assert_eq!(entry.message, \"hello\");\n+        assert_eq!(entry.reasoning, \"\");\n+        assert_eq!(entry.suggestion, None);\n+    }\n+\n+    #[test]\n+    fn entry_with_reasoning_and_suggestion() {\n+        let entry: MlEntry = serde_json::from_value(json!({\n+            \"promptLines\": [3, 5],\n+            \"kind\": \"assumption\",\n+            \"message\": \"m\",\n+            \"reasoning\": \"r\",\n+            \"suggestion\": \"s\"\n+        }))\n+        .unwrap();\n+        assert_eq!(entry.prompt_lines, LineRange::new(3, 5));\n+        assert_eq!(entry.reasoning, \"r\");\n+        assert_eq!(entry.suggestion, Some(\"s\".to_string()));\n+    }\n+\n+    #[test]\n+    fn prompt_lines_string_is_deserialize_error() {\n+        let result: Result<MlEntry, _> = serde_json::from_value(json!({\n+            \"promptLines\": \"1-2\",\n+            \"kind\": \"note\",\n+            \"message\": \"m\"\n+        }));\n+        assert!(result.is_err());\n+    }\n+\n+    #[test]\n+    fn validate_ml_accepts_valid_document() {\n+        let ml = validate_ml(json!({\n+            \"module\": \"m\",\n+            \"target\": \"t\",\n+            \"entries\": [\n+                {\"promptLines\": [1, 2], \"kind\": \"ambiguity\", \"message\": \"a\"}\n+            ]\n+        }))\n+        .unwrap();\n+        assert_eq!(ml.module, \"m\");\n+        assert_eq!(ml.target, \"t\");\n+        assert_eq!(ml.entries.len(), 1);\n+    }\n+\n+    #[test]\n+    fn validate_ml_defaults_missing_entries_to_empty() {\n+        let ml = validate_ml(json!({\"module\": \"m\", \"target\": \"t\"})).unwrap();\n+        assert!(ml.entries.is_empty());\n+    }\n+\n+    #[test]\n+    fn validate_ml_rejects_empty_module() {\n+        let result = validate_ml(json!({\"module\": \"\", \"target\": \"t\"}));\n+        assert_eq!(result.unwrap_err(), MlError::EmptyModule);\n+    }\n+\n+    #[test]\n+    fn validate_ml_rejects_empty_target() {\n+        let result = validate_ml(json!({\"module\": \"m\", \"target\": \"\"}));\n+        assert_eq!(result.unwrap_err(), MlError::EmptyTarget);\n+    }\n+\n+    #[test]\n+    fn validate_ml_rejects_empty_entry_message() {\n+        let result = validate_ml(json!({\n+            \"module\": \"m\",\n+            \"target\": \"t\",\n+            \"entries\": [{\"promptLines\": 1, \"kind\": \"note\", \"message\": \"\"}]\n+        }));\n+        assert_eq!(result.unwrap_err(), MlError::EmptyMessage);\n+    }\n+\n+    #[test]\n+    fn validate_ml_rejects_unknown_kind() {\n+        let result = validate_ml(json!({\n+            \"module\": \"m\",\n+            \"target\": \"t\",\n+            \"entries\": [{\"promptLines\": 1, \"kind\": \"bogus\", \"message\": \"m\"}]\n+        }));\n+        assert!(matches!(result.unwrap_err(), MlError::Parse(_)));\n+    }\n+\n+    #[test]\n+    fn validate_ml_rejects_string_prompt_lines() {\n+        let result = validate_ml(json!({\n+            \"module\": \"m\",\n+            \"target\": \"t\",\n+            \"entries\": [{\"promptLines\": \"1-2\", \"kind\": \"note\", \"message\": \"m\"}]\n+        }));\n+        assert!(matches!(result.unwrap_err(), MlError::Parse(_)));\n+    }\n+\n+    #[test]\n+    fn parse_ml_entries_returns_empty_for_non_array() {\n+        assert_eq!(parse_ml_entries(json!({\"not\": \"an array\"})).unwrap(), vec![]);\n+        assert_eq!(parse_ml_entries(json!(\"string\")).unwrap(), vec![]);\n+        assert_eq!(parse_ml_entries(json!(42)).unwrap(), vec![]);\n+    }\n+\n+    #[test]\n+    fn parse_ml_entries_parses_valid_array() {\n+        let entries = parse_ml_entries(json!([\n+            {\"promptLines\": [1, 2], \"kind\": \"note\", \"message\": \"a\"},\n+            {\"promptLines\": 5, \"kind\": \"no-op\", \"message\": \"b\"}\n+        ]))\n+        .unwrap();\n+        assert_eq!(entries.len(), 2);\n+        assert_eq!(entries[0].message, \"a\");\n+        assert_eq!(entries[1].kind, MlKind::NoOp);\n+    }\n+\n+    #[test]\n+    fn parse_ml_entries_rejects_empty_message() {\n+        let result = parse_ml_entries(json!([{\"promptLines\": 1, \"kind\": \"note\", \"message\": \"\"}]));\n+        assert_eq!(result.unwrap_err(), MlError::EmptyMessage);\n+    }\n+\n+    #[test]\n+    fn parse_ml_entries_rejects_malformed_list() {\n+        let result = parse_ml_entries(json!([{\"promptLines\": 1, \"kind\": \"bogus\", \"message\": \"m\"}]));\n+        assert!(matches!(result.unwrap_err(), MlError::Parse(_)));\n+    }\n+\n+    fn sample_ml() -> Ml {\n+        validate_ml(json!({\n+            \"module\": \"m\",\n+            \"target\": \"t\",\n+            \"entries\": [\n+                {\"promptLines\": [1, 2], \"kind\": \"note\", \"message\": \"a\"},\n+                {\"promptLines\": [5, 7], \"kind\": \"note\", \"message\": \"b\"}\n+            ]\n+        }))\n+        .unwrap()\n+    }\n+\n+    #[test]\n+    fn lookup_finds_covering_entries_in_order() {\n+        let ml = sample_ml();\n+        let at1 = ml_entries_at_body_line(&ml, 1);\n+        assert_eq!(at1.len(), 1);\n+        assert_eq!(at1[0].message, \"a\");\n+\n+        let at6 = ml_entries_at_body_line(&ml, 6);\n+        assert_eq!(at6.len(), 1);\n+        assert_eq!(at6[0].message, \"b\");\n+    }\n+\n+    #[test]\n+    fn lookup_returns_empty_for_uncovered_line() {\n+        let ml = sample_ml();\n+        assert!(ml_entries_at_body_line(&ml, 4).is_empty());\n+    }\n+}"
+      },
+      {
+        "type": "file-edit",
+        "path": "schemas_ml/src/lib.rs",
+        "content": "// GENERATED BY NAPL from schemas_ml.napl — edit the prompt, not this file\n\nuse schemas_line_range::LineRange;\nuse serde::Deserialize;\n\n#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]\n#[serde(rename_all = \"kebab-case\")]\npub enum MlKind {\n    Ambiguity,\n    Assumption,\n    Note,\n    NoOp,\n}\n\nfn default_reasoning() -> String {\n    String::new()\n}\n\n#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]\npub struct MlEntry {\n    #[serde(rename = \"promptLines\")]\n    pub prompt_lines: LineRange,\n    pub kind: MlKind,\n    pub message: String,\n    #[serde(default = \"default_reasoning\")]\n    pub reasoning: String,\n    #[serde(default)]\n    pub suggestion: Option<String>,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]\npub struct Ml {\n    pub module: String,\n    pub target: String,\n    #[serde(default)]\n    pub entries: Vec<MlEntry>,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq)]\npub enum MlError {\n    Parse(String),\n    EmptyModule,\n    EmptyTarget,\n    EmptyMessage,\n}\n\nimpl std::fmt::Display for MlError {\n    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n        match self {\n            MlError::Parse(msg) => write!(f, \"failed to parse ml document: {msg}\"),\n            MlError::EmptyModule => write!(f, \"module must not be empty\"),\n            MlError::EmptyTarget => write!(f, \"target must not be empty\"),\n            MlError::EmptyMessage => write!(f, \"entry message must not be empty\"),\n        }\n    }\n}\n\nimpl std::error::Error for MlError {}\n\npub fn validate_ml(value: serde_json::Value) -> Result<Ml, MlError> {\n    let ml: Ml = serde_json::from_value(value).map_err(|e| MlError::Parse(e.to_string()))?;\n\n    if ml.module.is_empty() {\n        return Err(MlError::EmptyModule);\n    }\n    if ml.target.is_empty() {\n        return Err(MlError::EmptyTarget);\n    }\n    for entry in &ml.entries {\n        if entry.message.is_empty() {\n            return Err(MlError::EmptyMessage);\n        }\n    }\n\n    Ok(ml)\n}\n\npub fn parse_ml_entries(value: serde_json::Value) -> Result<Vec<MlEntry>, MlError> {\n    if !value.is_array() {\n        return Ok(Vec::new());\n    }\n\n    let entries: Vec<MlEntry> =\n        serde_json::from_value(value).map_err(|e| MlError::Parse(e.to_string()))?;\n\n    for entry in &entries {\n        if entry.message.is_empty() {\n            return Err(MlError::EmptyMessage);\n        }\n    }\n\n    Ok(entries)\n}\n\npub fn ml_entries_at_body_line(ml: &Ml, body_line: u32) -> Vec<&MlEntry> {\n    ml.entries\n        .iter()\n        .filter(|entry| entry.prompt_lines.start <= body_line && body_line <= entry.prompt_lines.end)\n        .collect()\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n    use serde_json::json;\n\n    #[test]\n    fn kind_kebab_case_spellings() {\n        assert_eq!(\n            serde_json::from_value::<MlKind>(json!(\"ambiguity\")).unwrap(),\n            MlKind::Ambiguity\n        );\n        assert_eq!(\n            serde_json::from_value::<MlKind>(json!(\"assumption\")).unwrap(),\n            MlKind::Assumption\n        );\n        assert_eq!(\n            serde_json::from_value::<MlKind>(json!(\"note\")).unwrap(),\n            MlKind::Note\n        );\n        assert_eq!(\n            serde_json::from_value::<MlKind>(json!(\"no-op\")).unwrap(),\n            MlKind::NoOp\n        );\n    }\n\n    #[test]\n    fn unknown_kind_is_error() {\n        assert!(serde_json::from_value::<MlKind>(json!(\"bogus\")).is_err());\n    }\n\n    #[test]\n    fn entry_defaults_reasoning_and_suggestion() {\n        let entry: MlEntry = serde_json::from_value(json!({\n            \"promptLines\": 18,\n            \"kind\": \"note\",\n            \"message\": \"hello\"\n        }))\n        .unwrap();\n        assert_eq!(entry.prompt_lines, LineRange::new(18, 18));\n        assert_eq!(entry.kind, MlKind::Note);\n        assert_eq!(entry.message, \"hello\");\n        assert_eq!(entry.reasoning, \"\");\n        assert_eq!(entry.suggestion, None);\n    }\n\n    #[test]\n    fn entry_with_reasoning_and_suggestion() {\n        let entry: MlEntry = serde_json::from_value(json!({\n            \"promptLines\": [3, 5],\n            \"kind\": \"assumption\",\n            \"message\": \"m\",\n            \"reasoning\": \"r\",\n            \"suggestion\": \"s\"\n        }))\n        .unwrap();\n        assert_eq!(entry.prompt_lines, LineRange::new(3, 5));\n        assert_eq!(entry.reasoning, \"r\");\n        assert_eq!(entry.suggestion, Some(\"s\".to_string()));\n    }\n\n    #[test]\n    fn prompt_lines_string_is_deserialize_error() {\n        let result: Result<MlEntry, _> = serde_json::from_value(json!({\n            \"promptLines\": \"1-2\",\n            \"kind\": \"note\",\n            \"message\": \"m\"\n        }));\n        assert!(result.is_err());\n    }\n\n    #[test]\n    fn validate_ml_accepts_valid_document() {\n        let ml = validate_ml(json!({\n            \"module\": \"m\",\n            \"target\": \"t\",\n            \"entries\": [\n                {\"promptLines\": [1, 2], \"kind\": \"ambiguity\", \"message\": \"a\"}\n            ]\n        }))\n        .unwrap();\n        assert_eq!(ml.module, \"m\");\n        assert_eq!(ml.target, \"t\");\n        assert_eq!(ml.entries.len(), 1);\n    }\n\n    #[test]\n    fn validate_ml_defaults_missing_entries_to_empty() {\n        let ml = validate_ml(json!({\"module\": \"m\", \"target\": \"t\"})).unwrap();\n        assert!(ml.entries.is_empty());\n    }\n\n    #[test]\n    fn validate_ml_rejects_empty_module() {\n        let result = validate_ml(json!({\"module\": \"\", \"target\": \"t\"}));\n        assert_eq!(result.unwrap_err(), MlError::EmptyModule);\n    }\n\n    #[test]\n    fn validate_ml_rejects_empty_target() {\n        let result = validate_ml(json!({\"module\": \"m\", \"target\": \"\"}));\n        assert_eq!(result.unwrap_err(), MlError::EmptyTarget);\n    }\n\n    #[test]\n    fn validate_ml_rejects_empty_entry_message() {\n        let result = validate_ml(json!({\n            \"module\": \"m\",\n            \"target\": \"t\",\n            \"entries\": [{\"promptLines\": 1, \"kind\": \"note\", \"message\": \"\"}]\n        }));\n        assert_eq!(result.unwrap_err(), MlError::EmptyMessage);\n    }\n\n    #[test]\n    fn validate_ml_rejects_unknown_kind() {\n        let result = validate_ml(json!({\n            \"module\": \"m\",\n            \"target\": \"t\",\n            \"entries\": [{\"promptLines\": 1, \"kind\": \"bogus\", \"message\": \"m\"}]\n        }));\n        assert!(matches!(result.unwrap_err(), MlError::Parse(_)));\n    }\n\n    #[test]\n    fn validate_ml_rejects_string_prompt_lines() {\n        let result = validate_ml(json!({\n            \"module\": \"m\",\n            \"target\": \"t\",\n            \"entries\": [{\"promptLines\": \"1-2\", \"kind\": \"note\", \"message\": \"m\"}]\n        }));\n        assert!(matches!(result.unwrap_err(), MlError::Parse(_)));\n    }\n\n    #[test]\n    fn parse_ml_entries_returns_empty_for_non_array() {\n        assert_eq!(parse_ml_entries(json!({\"not\": \"an array\"})).unwrap(), vec![]);\n        assert_eq!(parse_ml_entries(json!(\"string\")).unwrap(), vec![]);\n        assert_eq!(parse_ml_entries(json!(42)).unwrap(), vec![]);\n    }\n\n    #[test]\n    fn parse_ml_entries_parses_valid_array() {\n        let entries = parse_ml_entries(json!([\n            {\"promptLines\": [1, 2], \"kind\": \"note\", \"message\": \"a\"},\n            {\"promptLines\": 5, \"kind\": \"no-op\", \"message\": \"b\"}\n        ]))\n        .unwrap();\n        assert_eq!(entries.len(), 2);\n        assert_eq!(entries[0].message, \"a\");\n        assert_eq!(entries[1].kind, MlKind::NoOp);\n    }\n\n    #[test]\n    fn parse_ml_entries_rejects_empty_message() {\n        let result = parse_ml_entries(json!([{\"promptLines\": 1, \"kind\": \"note\", \"message\": \"\"}]));\n        assert_eq!(result.unwrap_err(), MlError::EmptyMessage);\n    }\n\n    #[test]\n    fn parse_ml_entries_rejects_malformed_list() {\n        let result = parse_ml_entries(json!([{\"promptLines\": 1, \"kind\": \"bogus\", \"message\": \"m\"}]));\n        assert!(matches!(result.unwrap_err(), MlError::Parse(_)));\n    }\n\n    fn sample_ml() -> Ml {\n        validate_ml(json!({\n            \"module\": \"m\",\n            \"target\": \"t\",\n            \"entries\": [\n                {\"promptLines\": [1, 2], \"kind\": \"note\", \"message\": \"a\"},\n                {\"promptLines\": [5, 7], \"kind\": \"note\", \"message\": \"b\"}\n            ]\n        }))\n        .unwrap()\n    }\n\n    #[test]\n    fn lookup_finds_covering_entries_in_order() {\n        let ml = sample_ml();\n        let at1 = ml_entries_at_body_line(&ml, 1);\n        assert_eq!(at1.len(), 1);\n        assert_eq!(at1[0].message, \"a\");\n\n        let at6 = ml_entries_at_body_line(&ml, 6);\n        assert_eq!(at6.len(), 1);\n        assert_eq!(at6[0].message, \"b\");\n    }\n\n    #[test]\n    fn lookup_returns_empty_for_uncovered_line() {\n        let ml = sample_ml();\n        assert!(ml_entries_at_body_line(&ml, 4).is_empty());\n    }\n}\n"
+      },
+      {
+        "type": "attribution",
+        "module": "schemas_ml",
+        "target": "rust",
+        "entries": [
+          {
+            "promptLines": [
+              1,
+              6
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              1,
+              4
+            ],
+            "note": "module doc, imports serde"
+          },
+          {
+            "promptLines": [
+              19,
+              27
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              3,
+              3
+            ],
+            "note": "use shared LineRange type"
+          },
+          {
+            "promptLines": [
+              42,
+              45
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              6,
+              13
+            ],
+            "note": "MlKind enum kebab-case variants"
+          },
+          {
+            "promptLines": [
+              46,
+              52
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              15,
+              29
+            ],
+            "note": "MlEntry fields, defaults for reasoning/suggestion"
+          },
+          {
+            "promptLines": [
+              48,
+              48
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              21,
+              22
+            ],
+            "note": "promptLines rename camelCase key"
+          },
+          {
+            "promptLines": [
+              51,
+              51
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              15,
+              17
+            ],
+            "note": "default_reasoning fn"
+          },
+          {
+            "promptLines": [
+              51,
+              51
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              25,
+              26
+            ],
+            "note": "reasoning default attr"
+          },
+          {
+            "promptLines": [
+              52,
+              52
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              27,
+              28
+            ],
+            "note": "suggestion default None"
+          },
+          {
+            "promptLines": [
+              53,
+              57
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              31,
+              37
+            ],
+            "note": "Ml document struct, entries default empty"
+          },
+          {
+            "promptLines": [
+              61,
+              67
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              60,
+              76
+            ],
+            "note": "validate_ml deserialize then validate module/target/message"
+          },
+          {
+            "promptLines": [
+              62,
+              63
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              63,
+              65
+            ],
+            "note": "reject empty module"
+          },
+          {
+            "promptLines": [
+              62,
+              63
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              66,
+              68
+            ],
+            "note": "reject empty target"
+          },
+          {
+            "promptLines": [
+              63,
+              63
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              69,
+              73
+            ],
+            "note": "reject empty entry message"
+          },
+          {
+            "promptLines": [
+              64,
+              65
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              39,
+              58
+            ],
+            "note": "MlError enum and error type, deserialization errors surfaced"
+          },
+          {
+            "promptLines": [
+              68,
+              71
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              78,
+              93
+            ],
+            "note": "parse_ml_entries non-array empty list else deserialize and validate"
+          },
+          {
+            "promptLines": [
+              75,
+              77
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              95,
+              100
+            ],
+            "note": "ml_entries_at_body_line lookup filter"
+          },
+          {
+            "promptLines": [
+              79,
+              81
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              266,
+              288
+            ],
+            "note": "example lookup test matching prompt example"
+          },
+          {
+            "promptLines": [
+              42,
+              45
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              108,
+              130
+            ],
+            "note": "tests for kind kebab-case spellings and unknown kind error"
+          },
+          {
+            "promptLines": [
+              51,
+              52
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              133,
+              160
+            ],
+            "note": "tests for entry defaults and explicit reasoning/suggestion"
+          },
+          {
+            "promptLines": [
+              64,
+              66
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              162,
+              170
+            ],
+            "note": "test promptLines string is deserialize error"
+          },
+          {
+            "promptLines": [
+              61,
+              67
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              172,
+              233
+            ],
+            "note": "validate_ml tests for valid doc, defaults, empty fields, unknown kind, string promptLines"
+          },
+          {
+            "promptLines": [
+              68,
+              71
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              236,
+              264
+            ],
+            "note": "parse_ml_entries tests non-array, valid array, empty message, malformed list"
+          },
+          {
+            "promptLines": [
+              75,
+              81
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              278,
+              295
+            ],
+            "note": "lookup tests covering/uncovered lines"
+          }
+        ]
+      },
+      {
+        "type": "mapl-entry",
+        "path": "schemas_ml.mapl",
+        "entry": {
+          "promptLines": [
+            59,
+            71
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "Rejection paths match spec exactly — bad kind or promptLines-as-string errors, not panics.",
+          "reasoning": "validate_ml and parse_ml_entries both use serde_json::from_value and map errors to MlError::Parse, satisfying \"rejection is error not panic\" and structural-invalid cases. Tests confirm behavior. No gaps found.",
+          "suggestion": ""
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "schemas_ml.mapl",
+        "entry": {
+          "promptLines": [
+            17,
+            36
+          ],
+          "kind": "assumption",
+          "severity": "warning",
+          "message": "Assumed schemas_line_range sibling crate already exists with matching API.",
+          "reasoning": "Code depends on schemas_line_range::LineRange via path dep, per spec. Couldn't verify sibling crate's actual contents in this review, just that lib.rs uses it correctly per described API (new, start, end, Deserialize). Assumed prior generation of that module was correct/consistent.",
+          "suggestion": ""
+        }
+      },
+      {
+        "type": "lock",
+        "module": "schemas_ml",
+        "target": "rust",
+        "files": [
+          {
+            "path": "schemas_ml/Cargo.toml",
+            "hash": "8a1c56b5209e988c75c6fb5f2e7d68983d9e86dda9a48520478bbce270450cc4"
+          },
+          {
+            "path": "schemas_ml/src/lib.rs",
+            "hash": "3c71293936ba91d83c94305ba6cb6d6e832e0ad851039836916373b5dd88f180"
+          }
+        ]
+      }
+    ]
+  }
+}

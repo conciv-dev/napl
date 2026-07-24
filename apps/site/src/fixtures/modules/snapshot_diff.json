@@ -1,0 +1,288 @@
+{
+  "module": "snapshot_diff",
+  "collection": "selfhost",
+  "target": "rust",
+  "targets": [
+    "rust"
+  ],
+  "prompt": {
+    "file": "snapshot_diff.napl",
+    "path": "cli/snapshot_diff.napl",
+    "content": "---\nmodule: snapshot_diff\ndeps: []\ntargets: [rust]\ntests:\n  - name: the diff reports added and changed paths, sorted, and omits unchanged\n    given:\n      before: { \"/a\": \"h1\", \"/b\": \"h2\" }\n      after: { \"/a\": \"h1\", \"/b\": \"h2x\", \"/c\": \"h3\" }\n    expect: { changed: [\"/b\", \"/c\"] }\n---\n# Diffing two directory snapshots\n\nThis module is the **pure** comparison core of the CLI's snapshot module: given a\nbefore and an after snapshot (each a map from path to content hash), it reports\nwhich paths changed. It is pure — no filesystem access; the I/O shell walks the\ntree to build the snapshots and calls this to compare them. No dependencies on\nother project modules.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `snapshot_diff/`: `snapshot_diff/Cargo.toml`\n(package name `snapshot_diff`) and `snapshot_diff/src/lib.rs`. Touch nothing\noutside `snapshot_diff/`. Ensure `cargo test` passes from the workspace root\nbefore finishing.\n\n## `diff_snapshots(before, after)`\n\n`diff_snapshots(before: &std::collections::BTreeMap<String, String>, after: &std::collections::BTreeMap<String, String>) -> Vec<String>`:\nthe sorted list of paths whose value in `after` differs from `before`.\n\nWalk every `(path, hash)` in `after` and keep the path when `before` has no entry\nfor it (a newly added path) or has a different hash for it (a changed path). A path\npresent in `before` but absent from `after` is not reported (this diff is\nafter-relative — it lists what appears or changes in `after`, not what was\nremoved). Return the kept paths sorted in ascending order.\n\nFor example, comparing before `{\"/a\": \"h1\", \"/b\": \"h2\"}` with after\n`{\"/a\": \"h1\", \"/b\": \"h2x\", \"/c\": \"h3\"}` yields exactly `[\"/b\", \"/c\"]`: `/a` is\nunchanged and dropped, `/b` changed, `/c` is new.\n</content>\n"
+  },
+  "promptAtGen": "# Diffing two directory snapshots\n\nThis module is the **pure** comparison core of the CLI's snapshot module: given a\nbefore and an after snapshot (each a map from path to content hash), it reports\nwhich paths changed. It is pure — no filesystem access; the I/O shell walks the\ntree to build the snapshots and calls this to compare them. No dependencies on\nother project modules.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `snapshot_diff/`: `snapshot_diff/Cargo.toml`\n(package name `snapshot_diff`) and `snapshot_diff/src/lib.rs`. Touch nothing\noutside `snapshot_diff/`. Ensure `cargo test` passes from the workspace root\nbefore finishing.\n\n## `diff_snapshots(before, after)`\n\n`diff_snapshots(before: &std::collections::BTreeMap<String, String>, after: &std::collections::BTreeMap<String, String>) -> Vec<String>`:\nthe sorted list of paths whose value in `after` differs from `before`.\n\nWalk every `(path, hash)` in `after` and keep the path when `before` has no entry\nfor it (a newly added path) or has a different hash for it (a changed path). A path\npresent in `before` but absent from `after` is not reported (this diff is\nafter-relative — it lists what appears or changes in `after`, not what was\nremoved). Return the kept paths sorted in ascending order.\n\nFor example, comparing before `{\"/a\": \"h1\", \"/b\": \"h2\"}` with after\n`{\"/a\": \"h1\", \"/b\": \"h2x\", \"/c\": \"h3\"}` yields exactly `[\"/b\", \"/c\"]`: `/a` is\nunchanged and dropped, `/b` changed, `/c` is new.\n</content>\n",
+  "summary": "Diffing two directory snapshots",
+  "files": [
+    {
+      "path": "snapshot_diff/Cargo.toml",
+      "journalPath": ".napl/src/rust/snapshot_diff/Cargo.toml",
+      "content": "[package]\nname = \"snapshot_diff\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n",
+      "language": "toml"
+    },
+    {
+      "path": "snapshot_diff/src/lib.rs",
+      "journalPath": ".napl/src/rust/snapshot_diff/src/lib.rs",
+      "content": "//! Diffing two directory snapshots.\n//!\n//! Pure comparison core of the CLI's snapshot module: given a before and an\n//! after snapshot (each a map from path to content hash), reports which paths\n//! changed. No filesystem access; the I/O shell builds the snapshots.\n\nuse std::collections::BTreeMap;\n\n/// The sorted list of paths whose value in `after` differs from `before`.\n///\n/// A path is kept when `before` has no entry for it (newly added) or has a\n/// different hash for it (changed). A path present in `before` but absent\n/// from `after` is not reported — this diff is after-relative.\npub fn diff_snapshots(\n    before: &BTreeMap<String, String>,\n    after: &BTreeMap<String, String>,\n) -> Vec<String> {\n    after\n        .iter()\n        .filter(|(path, hash)| before.get(*path) != Some(*hash))\n        .map(|(path, _)| path.clone())\n        .collect()\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    fn map(pairs: &[(&str, &str)]) -> BTreeMap<String, String> {\n        pairs\n            .iter()\n            .map(|(k, v)| (k.to_string(), v.to_string()))\n            .collect()\n    }\n\n    #[test]\n    fn spec_example() {\n        let before = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2\")]);\n        let after = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2x\"), (\"/c\", \"h3\")]);\n        assert_eq!(diff_snapshots(&before, &after), vec![\"/b\", \"/c\"]);\n    }\n\n    #[test]\n    fn empty_before_and_after() {\n        let before = BTreeMap::new();\n        let after = BTreeMap::new();\n        assert!(diff_snapshots(&before, &after).is_empty());\n    }\n\n    #[test]\n    fn all_new_paths() {\n        let before = BTreeMap::new();\n        let after = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2\")]);\n        assert_eq!(diff_snapshots(&before, &after), vec![\"/a\", \"/b\"]);\n    }\n\n    #[test]\n    fn identical_snapshots_yield_nothing() {\n        let before = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2\")]);\n        let after = before.clone();\n        assert!(diff_snapshots(&before, &after).is_empty());\n    }\n\n    #[test]\n    fn removed_path_not_reported() {\n        let before = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2\")]);\n        let after = map(&[(\"/a\", \"h1\")]);\n        assert!(diff_snapshots(&before, &after).is_empty());\n    }\n\n    #[test]\n    fn result_is_sorted() {\n        let before = BTreeMap::new();\n        let after = map(&[(\"/z\", \"h1\"), (\"/a\", \"h2\"), (\"/m\", \"h3\")]);\n        assert_eq!(diff_snapshots(&before, &after), vec![\"/a\", \"/m\", \"/z\"]);\n    }\n\n    #[test]\n    fn mixed_add_change_unchanged_remove() {\n        let before = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2\"), (\"/d\", \"h4\")]);\n        let after = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2changed\"), (\"/c\", \"h3\")]);\n        assert_eq!(diff_snapshots(&before, &after), vec![\"/b\", \"/c\"]);\n    }\n}\n",
+      "language": "rust"
+    }
+  ],
+  "attribution": [
+    {
+      "promptLines": [
+        3,
+        7
+      ],
+      "file": "snapshot_diff/src/lib.rs",
+      "lines": [
+        1,
+        5
+      ],
+      "note": "module doc, pure comparison core description"
+    },
+    {
+      "promptLines": [
+        18,
+        21
+      ],
+      "file": "snapshot_diff/src/lib.rs",
+      "lines": [
+        9,
+        17
+      ],
+      "note": "fn signature and doc for diff_snapshots"
+    },
+    {
+      "promptLines": [
+        23,
+        24
+      ],
+      "file": "snapshot_diff/src/lib.rs",
+      "lines": [
+        18,
+        20
+      ],
+      "note": "keep path if before missing or hash differs"
+    },
+    {
+      "promptLines": [
+        25,
+        27
+      ],
+      "file": "snapshot_diff/src/lib.rs",
+      "lines": [
+        11,
+        22
+      ],
+      "note": "after-relative, no removed reporting, return kept sorted"
+    },
+    {
+      "promptLines": [
+        27,
+        27
+      ],
+      "file": "snapshot_diff/src/lib.rs",
+      "lines": [
+        21,
+        22
+      ],
+      "note": "sorted output via BTreeMap iteration order"
+    },
+    {
+      "promptLines": [
+        29,
+        31
+      ],
+      "file": "snapshot_diff/src/lib.rs",
+      "lines": [
+        37,
+        41
+      ],
+      "note": "spec example test case"
+    }
+  ],
+  "attributionYaml": "module: snapshot_diff\ntarget: rust\nentries:\n  - promptLines:\n      - 3\n      - 7\n    file: snapshot_diff/src/lib.rs\n    lines:\n      - 1\n      - 5\n    note: module doc, pure comparison core description\n  - promptLines:\n      - 18\n      - 21\n    file: snapshot_diff/src/lib.rs\n    lines:\n      - 9\n      - 17\n    note: fn signature and doc for diff_snapshots\n  - promptLines:\n      - 23\n      - 24\n    file: snapshot_diff/src/lib.rs\n    lines:\n      - 18\n      - 20\n    note: keep path if before missing or hash differs\n  - promptLines:\n      - 25\n      - 27\n    file: snapshot_diff/src/lib.rs\n    lines:\n      - 11\n      - 22\n    note: after-relative, no removed reporting, return kept sorted\n  - promptLines:\n      - 27\n      - 27\n    file: snapshot_diff/src/lib.rs\n    lines:\n      - 21\n      - 22\n    note: sorted output via BTreeMap iteration order\n  - promptLines:\n      - 29\n      - 31\n    file: snapshot_diff/src/lib.rs\n    lines:\n      - 37\n      - 41\n    note: spec example test case\n",
+  "mapl": [
+    {
+      "promptLines": [
+        11,
+        16
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "Agent flagged that snapshot_diff isn't listed in workspace members, yet cargo test still picked it up.",
+      "reasoning": "Prompt says the root Cargo.toml is owned by the toolchain and must be left alone, and that `cargo test` must pass from the workspace root. The agent's final message admits the new crate isn't listed under `[workspace.members]` but claims it \"ran under it — no matter, works,\" without verifying why (likely a wildcard/glob member pattern already present in the root manifest, or default-members behavior). This is worth double-checking: if the root manifest doesn't already glob-include new directories, `cargo test` from the root may not actually be exercising this crate in CI, contradicting the \"ensure cargo test passes from the workspace root\" requirement.\n",
+      "suggestion": "Clarify whether the root workspace manifest already includes new member crates automatically (e.g. via a `snapshot_diff/*` or `*` glob in `[workspace.members]`), or whether the prompt should explicitly state that membership registration is out of scope / already handled."
+    }
+  ],
+  "journal": [
+    {
+      "gen": 30,
+      "timestamp": "2026-07-24T09:11:20.866Z",
+      "mode": "full",
+      "promptHash": "c7d341e8a8e32d38ea733e31a3db55d0ee3e656042e7e66a3dd43e91ebb61d28",
+      "files": [
+        {
+          "path": "snapshot_diff/Cargo.toml",
+          "journalPath": ".napl/src/rust/snapshot_diff/Cargo.toml",
+          "patch": "@@ -0,0 +1,6 @@\n+[package]\n+name = \"snapshot_diff\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]"
+        },
+        {
+          "path": "snapshot_diff/src/lib.rs",
+          "journalPath": ".napl/src/rust/snapshot_diff/src/lib.rs",
+          "patch": "@@ -0,0 +1,84 @@\n+//! Diffing two directory snapshots.\n+//!\n+//! Pure comparison core of the CLI's snapshot module: given a before and an\n+//! after snapshot (each a map from path to content hash), reports which paths\n+//! changed. No filesystem access; the I/O shell builds the snapshots.\n+\n+use std::collections::BTreeMap;\n+\n+/// The sorted list of paths whose value in `after` differs from `before`.\n+///\n+/// A path is kept when `before` has no entry for it (newly added) or has a\n+/// different hash for it (changed). A path present in `before` but absent\n+/// from `after` is not reported — this diff is after-relative.\n+pub fn diff_snapshots(\n+    before: &BTreeMap<String, String>,\n+    after: &BTreeMap<String, String>,\n+) -> Vec<String> {\n+    after\n+        .iter()\n+        .filter(|(path, hash)| before.get(*path) != Some(*hash))\n+        .map(|(path, _)| path.clone())\n+        .collect()\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    fn map(pairs: &[(&str, &str)]) -> BTreeMap<String, String> {\n+        pairs\n+            .iter()\n+            .map(|(k, v)| (k.to_string(), v.to_string()))\n+            .collect()\n+    }\n+\n+    #[test]\n+    fn spec_example() {\n+        let before = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2\")]);\n+        let after = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2x\"), (\"/c\", \"h3\")]);\n+        assert_eq!(diff_snapshots(&before, &after), vec![\"/b\", \"/c\"]);\n+    }\n+\n+    #[test]\n+    fn empty_before_and_after() {\n+        let before = BTreeMap::new();\n+        let after = BTreeMap::new();\n+        assert!(diff_snapshots(&before, &after).is_empty());\n+    }\n+\n+    #[test]\n+    fn all_new_paths() {\n+        let before = BTreeMap::new();\n+        let after = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2\")]);\n+        assert_eq!(diff_snapshots(&before, &after), vec![\"/a\", \"/b\"]);\n+    }\n+\n+    #[test]\n+    fn identical_snapshots_yield_nothing() {\n+        let before = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2\")]);\n+        let after = before.clone();\n+        assert!(diff_snapshots(&before, &after).is_empty());\n+    }\n+\n+    #[test]\n+    fn removed_path_not_reported() {\n+        let before = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2\")]);\n+        let after = map(&[(\"/a\", \"h1\")]);\n+        assert!(diff_snapshots(&before, &after).is_empty());\n+    }\n+\n+    #[test]\n+    fn result_is_sorted() {\n+        let before = BTreeMap::new();\n+        let after = map(&[(\"/z\", \"h1\"), (\"/a\", \"h2\"), (\"/m\", \"h3\")]);\n+        assert_eq!(diff_snapshots(&before, &after), vec![\"/a\", \"/m\", \"/z\"]);\n+    }\n+\n+    #[test]\n+    fn mixed_add_change_unchanged_remove() {\n+        let before = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2\"), (\"/d\", \"h4\")]);\n+        let after = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2changed\"), (\"/c\", \"h3\")]);\n+        assert_eq!(diff_snapshots(&before, &after), vec![\"/b\", \"/c\"]);\n+    }\n+}"
+        }
+      ]
+    }
+  ],
+  "lock": [
+    {
+      "path": "snapshot_diff/Cargo.toml",
+      "hash": "3b9ffd03377d34af4d46add4362680afe93a72fe2f53796975f39f40cac18fad"
+    },
+    {
+      "path": "snapshot_diff/src/lib.rs",
+      "hash": "28144ba2053d71ab1cf583ba92657b500ac8b1e6e6dbd59def533218cdef2ebf"
+    }
+  ],
+  "session": {
+    "task": "napl gen rust → snapshot_diff",
+    "files": {
+      "snapshot_diff.napl": "---\nmodule: snapshot_diff\ndeps: []\ntargets: [rust]\ntests:\n  - name: the diff reports added and changed paths, sorted, and omits unchanged\n    given:\n      before: { \"/a\": \"h1\", \"/b\": \"h2\" }\n      after: { \"/a\": \"h1\", \"/b\": \"h2x\", \"/c\": \"h3\" }\n    expect: { changed: [\"/b\", \"/c\"] }\n---\n# Diffing two directory snapshots\n\nThis module is the **pure** comparison core of the CLI's snapshot module: given a\nbefore and an after snapshot (each a map from path to content hash), it reports\nwhich paths changed. It is pure — no filesystem access; the I/O shell walks the\ntree to build the snapshots and calls this to compare them. No dependencies on\nother project modules.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `snapshot_diff/`: `snapshot_diff/Cargo.toml`\n(package name `snapshot_diff`) and `snapshot_diff/src/lib.rs`. Touch nothing\noutside `snapshot_diff/`. Ensure `cargo test` passes from the workspace root\nbefore finishing.\n\n## `diff_snapshots(before, after)`\n\n`diff_snapshots(before: &std::collections::BTreeMap<String, String>, after: &std::collections::BTreeMap<String, String>) -> Vec<String>`:\nthe sorted list of paths whose value in `after` differs from `before`.\n\nWalk every `(path, hash)` in `after` and keep the path when `before` has no entry\nfor it (a newly added path) or has a different hash for it (a changed path). A path\npresent in `before` but absent from `after` is not reported (this diff is\nafter-relative — it lists what appears or changes in `after`, not what was\nremoved). Return the kept paths sorted in ascending order.\n\nFor example, comparing before `{\"/a\": \"h1\", \"/b\": \"h2\"}` with after\n`{\"/a\": \"h1\", \"/b\": \"h2x\", \"/c\": \"h3\"}` yields exactly `[\"/b\", \"/c\"]`: `/a` is\nunchanged and dropped, `/b` changed, `/c` is new.\n</content>\n"
+    },
+    "events": [
+      {
+        "type": "task",
+        "task": "napl gen rust → snapshot_diff"
+      },
+      {
+        "type": "diff",
+        "path": "snapshot_diff/Cargo.toml",
+        "patch": "@@ -0,0 +1,6 @@\n+[package]\n+name = \"snapshot_diff\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]"
+      },
+      {
+        "type": "file-edit",
+        "path": "snapshot_diff/Cargo.toml",
+        "content": "[package]\nname = \"snapshot_diff\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n"
+      },
+      {
+        "type": "diff",
+        "path": "snapshot_diff/src/lib.rs",
+        "patch": "@@ -0,0 +1,84 @@\n+//! Diffing two directory snapshots.\n+//!\n+//! Pure comparison core of the CLI's snapshot module: given a before and an\n+//! after snapshot (each a map from path to content hash), reports which paths\n+//! changed. No filesystem access; the I/O shell builds the snapshots.\n+\n+use std::collections::BTreeMap;\n+\n+/// The sorted list of paths whose value in `after` differs from `before`.\n+///\n+/// A path is kept when `before` has no entry for it (newly added) or has a\n+/// different hash for it (changed). A path present in `before` but absent\n+/// from `after` is not reported — this diff is after-relative.\n+pub fn diff_snapshots(\n+    before: &BTreeMap<String, String>,\n+    after: &BTreeMap<String, String>,\n+) -> Vec<String> {\n+    after\n+        .iter()\n+        .filter(|(path, hash)| before.get(*path) != Some(*hash))\n+        .map(|(path, _)| path.clone())\n+        .collect()\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    fn map(pairs: &[(&str, &str)]) -> BTreeMap<String, String> {\n+        pairs\n+            .iter()\n+            .map(|(k, v)| (k.to_string(), v.to_string()))\n+            .collect()\n+    }\n+\n+    #[test]\n+    fn spec_example() {\n+        let before = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2\")]);\n+        let after = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2x\"), (\"/c\", \"h3\")]);\n+        assert_eq!(diff_snapshots(&before, &after), vec![\"/b\", \"/c\"]);\n+    }\n+\n+    #[test]\n+    fn empty_before_and_after() {\n+        let before = BTreeMap::new();\n+        let after = BTreeMap::new();\n+        assert!(diff_snapshots(&before, &after).is_empty());\n+    }\n+\n+    #[test]\n+    fn all_new_paths() {\n+        let before = BTreeMap::new();\n+        let after = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2\")]);\n+        assert_eq!(diff_snapshots(&before, &after), vec![\"/a\", \"/b\"]);\n+    }\n+\n+    #[test]\n+    fn identical_snapshots_yield_nothing() {\n+        let before = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2\")]);\n+        let after = before.clone();\n+        assert!(diff_snapshots(&before, &after).is_empty());\n+    }\n+\n+    #[test]\n+    fn removed_path_not_reported() {\n+        let before = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2\")]);\n+        let after = map(&[(\"/a\", \"h1\")]);\n+        assert!(diff_snapshots(&before, &after).is_empty());\n+    }\n+\n+    #[test]\n+    fn result_is_sorted() {\n+        let before = BTreeMap::new();\n+        let after = map(&[(\"/z\", \"h1\"), (\"/a\", \"h2\"), (\"/m\", \"h3\")]);\n+        assert_eq!(diff_snapshots(&before, &after), vec![\"/a\", \"/m\", \"/z\"]);\n+    }\n+\n+    #[test]\n+    fn mixed_add_change_unchanged_remove() {\n+        let before = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2\"), (\"/d\", \"h4\")]);\n+        let after = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2changed\"), (\"/c\", \"h3\")]);\n+        assert_eq!(diff_snapshots(&before, &after), vec![\"/b\", \"/c\"]);\n+    }\n+}"
+      },
+      {
+        "type": "file-edit",
+        "path": "snapshot_diff/src/lib.rs",
+        "content": "//! Diffing two directory snapshots.\n//!\n//! Pure comparison core of the CLI's snapshot module: given a before and an\n//! after snapshot (each a map from path to content hash), reports which paths\n//! changed. No filesystem access; the I/O shell builds the snapshots.\n\nuse std::collections::BTreeMap;\n\n/// The sorted list of paths whose value in `after` differs from `before`.\n///\n/// A path is kept when `before` has no entry for it (newly added) or has a\n/// different hash for it (changed). A path present in `before` but absent\n/// from `after` is not reported — this diff is after-relative.\npub fn diff_snapshots(\n    before: &BTreeMap<String, String>,\n    after: &BTreeMap<String, String>,\n) -> Vec<String> {\n    after\n        .iter()\n        .filter(|(path, hash)| before.get(*path) != Some(*hash))\n        .map(|(path, _)| path.clone())\n        .collect()\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    fn map(pairs: &[(&str, &str)]) -> BTreeMap<String, String> {\n        pairs\n            .iter()\n            .map(|(k, v)| (k.to_string(), v.to_string()))\n            .collect()\n    }\n\n    #[test]\n    fn spec_example() {\n        let before = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2\")]);\n        let after = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2x\"), (\"/c\", \"h3\")]);\n        assert_eq!(diff_snapshots(&before, &after), vec![\"/b\", \"/c\"]);\n    }\n\n    #[test]\n    fn empty_before_and_after() {\n        let before = BTreeMap::new();\n        let after = BTreeMap::new();\n        assert!(diff_snapshots(&before, &after).is_empty());\n    }\n\n    #[test]\n    fn all_new_paths() {\n        let before = BTreeMap::new();\n        let after = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2\")]);\n        assert_eq!(diff_snapshots(&before, &after), vec![\"/a\", \"/b\"]);\n    }\n\n    #[test]\n    fn identical_snapshots_yield_nothing() {\n        let before = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2\")]);\n        let after = before.clone();\n        assert!(diff_snapshots(&before, &after).is_empty());\n    }\n\n    #[test]\n    fn removed_path_not_reported() {\n        let before = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2\")]);\n        let after = map(&[(\"/a\", \"h1\")]);\n        assert!(diff_snapshots(&before, &after).is_empty());\n    }\n\n    #[test]\n    fn result_is_sorted() {\n        let before = BTreeMap::new();\n        let after = map(&[(\"/z\", \"h1\"), (\"/a\", \"h2\"), (\"/m\", \"h3\")]);\n        assert_eq!(diff_snapshots(&before, &after), vec![\"/a\", \"/m\", \"/z\"]);\n    }\n\n    #[test]\n    fn mixed_add_change_unchanged_remove() {\n        let before = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2\"), (\"/d\", \"h4\")]);\n        let after = map(&[(\"/a\", \"h1\"), (\"/b\", \"h2changed\"), (\"/c\", \"h3\")]);\n        assert_eq!(diff_snapshots(&before, &after), vec![\"/b\", \"/c\"]);\n    }\n}\n"
+      },
+      {
+        "type": "attribution",
+        "module": "snapshot_diff",
+        "target": "rust",
+        "entries": [
+          {
+            "promptLines": [
+              3,
+              7
+            ],
+            "file": "snapshot_diff/src/lib.rs",
+            "lines": [
+              1,
+              5
+            ],
+            "note": "module doc, pure comparison core description"
+          },
+          {
+            "promptLines": [
+              18,
+              21
+            ],
+            "file": "snapshot_diff/src/lib.rs",
+            "lines": [
+              9,
+              17
+            ],
+            "note": "fn signature and doc for diff_snapshots"
+          },
+          {
+            "promptLines": [
+              23,
+              24
+            ],
+            "file": "snapshot_diff/src/lib.rs",
+            "lines": [
+              18,
+              20
+            ],
+            "note": "keep path if before missing or hash differs"
+          },
+          {
+            "promptLines": [
+              25,
+              27
+            ],
+            "file": "snapshot_diff/src/lib.rs",
+            "lines": [
+              11,
+              22
+            ],
+            "note": "after-relative, no removed reporting, return kept sorted"
+          },
+          {
+            "promptLines": [
+              27,
+              27
+            ],
+            "file": "snapshot_diff/src/lib.rs",
+            "lines": [
+              21,
+              22
+            ],
+            "note": "sorted output via BTreeMap iteration order"
+          },
+          {
+            "promptLines": [
+              29,
+              31
+            ],
+            "file": "snapshot_diff/src/lib.rs",
+            "lines": [
+              37,
+              41
+            ],
+            "note": "spec example test case"
+          }
+        ]
+      },
+      {
+        "type": "mapl-entry",
+        "path": "snapshot_diff.mapl",
+        "entry": {
+          "promptLines": [
+            11,
+            16
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "Agent flagged that snapshot_diff isn't listed in workspace members, yet cargo test still picked it up.",
+          "reasoning": "Prompt says the root Cargo.toml is owned by the toolchain and must be left alone, and that `cargo test` must pass from the workspace root. The agent's final message admits the new crate isn't listed under `[workspace.members]` but claims it \"ran under it — no matter, works,\" without verifying why (likely a wildcard/glob member pattern already present in the root manifest, or default-members behavior). This is worth double-checking: if the root manifest doesn't already glob-include new directories, `cargo test` from the root may not actually be exercising this crate in CI, contradicting the \"ensure cargo test passes from the workspace root\" requirement.\n",
+          "suggestion": "Clarify whether the root workspace manifest already includes new member crates automatically (e.g. via a `snapshot_diff/*` or `*` glob in `[workspace.members]`), or whether the prompt should explicitly state that membership registration is out of scope / already handled."
+        }
+      },
+      {
+        "type": "lock",
+        "module": "snapshot_diff",
+        "target": "rust",
+        "files": [
+          {
+            "path": "snapshot_diff/Cargo.toml",
+            "hash": "3b9ffd03377d34af4d46add4362680afe93a72fe2f53796975f39f40cac18fad"
+          },
+          {
+            "path": "snapshot_diff/src/lib.rs",
+            "hash": "28144ba2053d71ab1cf583ba92657b500ac8b1e6e6dbd59def533218cdef2ebf"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,362 @@
+[
+  {
+    "module": "body_lines",
+    "target": "rust",
+    "promptFile": "body_lines.napl",
+    "fileCount": 2,
+    "attributionCount": 13,
+    "maplCount": 2,
+    "genCount": 2,
+    "summary": "Body lines"
+  },
+  {
+    "module": "extensions",
+    "target": "rust",
+    "promptFile": "extensions.napl",
+    "fileCount": 2,
+    "attributionCount": 15,
+    "maplCount": 2,
+    "genCount": 1,
+    "summary": "Prompt and machine file extensions"
+  },
+  {
+    "module": "hash",
+    "target": "rust",
+    "promptFile": "hash.napl",
+    "fileCount": 2,
+    "attributionCount": 8,
+    "maplCount": 3,
+    "genCount": 1,
+    "summary": "Content hashing"
+  },
+  {
+    "module": "parse_output",
+    "target": "rust",
+    "promptFile": "parse_output.napl",
+    "fileCount": 2,
+    "attributionCount": 11,
+    "maplCount": 1,
+    "genCount": 1,
+    "summary": "Extracting YAML from an agent response"
+  },
+  {
+    "module": "text_diff",
+    "target": "rust",
+    "promptFile": "text_diff.napl",
+    "fileCount": 2,
+    "attributionCount": 16,
+    "maplCount": 2,
+    "genCount": 1,
+    "summary": "Line-oriented text diffing"
+  },
+  {
+    "module": "schemas_ordered_map",
+    "target": "rust",
+    "promptFile": "schemas_ordered_map.napl",
+    "fileCount": 2,
+    "attributionCount": 20,
+    "maplCount": 2,
+    "genCount": 1,
+    "summary": "An insertion-order-preserving string-keyed map"
+  },
+  {
+    "module": "schemas_line_range",
+    "target": "rust",
+    "promptFile": "schemas_line_range.napl",
+    "fileCount": 2,
+    "attributionCount": 16,
+    "maplCount": 3,
+    "genCount": 1,
+    "summary": "A 1-based inclusive line range"
+  },
+  {
+    "module": "schemas_ir",
+    "target": "rust",
+    "promptFile": "schemas_ir.napl",
+    "fileCount": 2,
+    "attributionCount": 18,
+    "maplCount": 3,
+    "genCount": 1,
+    "summary": "The intermediate-representation (IR) schema"
+  },
+  {
+    "module": "schemas_frontmatter",
+    "target": "rust",
+    "promptFile": "schemas_frontmatter.napl",
+    "fileCount": 2,
+    "attributionCount": 27,
+    "maplCount": 2,
+    "genCount": 1,
+    "summary": "Prompt frontmatter parsing"
+  },
+  {
+    "module": "drift",
+    "target": "rust",
+    "promptFile": "drift.napl",
+    "fileCount": 2,
+    "attributionCount": 20,
+    "maplCount": 3,
+    "genCount": 1,
+    "summary": "Drift model and the guided drift report"
+  },
+  {
+    "module": "guard",
+    "target": "rust",
+    "promptFile": "guard.napl",
+    "fileCount": 2,
+    "attributionCount": 21,
+    "maplCount": 3,
+    "genCount": 1,
+    "summary": "Guard-rail content and Claude settings merge"
+  },
+  {
+    "module": "targets",
+    "target": "rust",
+    "promptFile": "targets.napl",
+    "fileCount": 2,
+    "attributionCount": 29,
+    "maplCount": 3,
+    "genCount": 1,
+    "summary": "Target adapters"
+  },
+  {
+    "module": "scanner",
+    "target": "rust",
+    "promptFile": "scanner.napl",
+    "fileCount": 2,
+    "attributionCount": 30,
+    "maplCount": 3,
+    "genCount": 1,
+    "summary": "Prompt span scanner"
+  },
+  {
+    "module": "schemas_lock",
+    "target": "rust",
+    "promptFile": "schemas_lock.napl",
+    "fileCount": 2,
+    "attributionCount": 28,
+    "maplCount": 2,
+    "genCount": 1,
+    "summary": "The lock document: model / backend / agent / prompt-alias configuration"
+  },
+  {
+    "module": "schemas_attribution",
+    "target": "rust",
+    "promptFile": "schemas_attribution.napl",
+    "fileCount": 2,
+    "attributionCount": 19,
+    "maplCount": 1,
+    "genCount": 1,
+    "summary": "The attribution schema: prompt-line to file-line mappings"
+  },
+  {
+    "module": "schemas_ml",
+    "target": "rust",
+    "promptFile": "schemas_ml.napl",
+    "fileCount": 2,
+    "attributionCount": 23,
+    "maplCount": 2,
+    "genCount": 1,
+    "summary": "The machine-layer (mapl) schema: model annotations keyed to prompt lines"
+  },
+  {
+    "module": "schemas_map",
+    "target": "rust",
+    "promptFile": "schemas_map.napl",
+    "fileCount": 2,
+    "attributionCount": 38,
+    "maplCount": 3,
+    "genCount": 1,
+    "summary": "The NAPL map v2 schema and its pure query/mutation helpers"
+  },
+  {
+    "module": "blame",
+    "target": "rust",
+    "promptFile": "blame.napl",
+    "fileCount": 2,
+    "attributionCount": 21,
+    "maplCount": 2,
+    "genCount": 1,
+    "summary": "Patch-replay line ancestry (\"blame\")"
+  },
+  {
+    "module": "reverse",
+    "target": "rust",
+    "promptFile": "reverse.napl",
+    "fileCount": 2,
+    "attributionCount": 16,
+    "maplCount": 2,
+    "genCount": 1,
+    "summary": "Reverse navigation: from generated code back to the prompt sentence"
+  },
+  {
+    "module": "schemas_journal",
+    "target": "rust",
+    "promptFile": "schemas_journal.napl",
+    "fileCount": 2,
+    "attributionCount": 15,
+    "maplCount": 2,
+    "genCount": 3,
+    "summary": "The generation journal: an append-only JSONL history"
+  },
+  {
+    "module": "incremental",
+    "target": "rust",
+    "promptFile": "incremental.napl",
+    "fileCount": 2,
+    "attributionCount": 15,
+    "maplCount": 3,
+    "genCount": 1,
+    "summary": "Incremental regeneration: body-line diffing and the unlock list"
+  },
+  {
+    "module": "yaml",
+    "target": "rust",
+    "promptFile": "yaml.napl",
+    "fileCount": 2,
+    "attributionCount": 30,
+    "maplCount": 3,
+    "genCount": 1,
+    "summary": "A focused YAML emitter matching `eemeli/yaml` block style"
+  },
+  {
+    "module": "prompts",
+    "target": "rust",
+    "promptFile": "prompts.napl",
+    "fileCount": 2,
+    "attributionCount": 56,
+    "maplCount": 3,
+    "genCount": 1,
+    "summary": "Coding-agent task and derivation-prompt builders"
+  },
+  {
+    "module": "clock_fmt",
+    "target": "rust",
+    "promptFile": "clock_fmt.napl",
+    "fileCount": 2,
+    "attributionCount": 9,
+    "maplCount": 3,
+    "genCount": 1,
+    "summary": "Formatting a Unix timestamp as ISO-8601 UTC"
+  },
+  {
+    "module": "paths_core",
+    "target": "rust",
+    "promptFile": "paths_core.napl",
+    "fileCount": 2,
+    "attributionCount": 18,
+    "maplCount": 2,
+    "genCount": 1,
+    "summary": "Path algebra for the `.napl` project layout"
+  },
+  {
+    "module": "statusclass_render",
+    "target": "rust",
+    "promptFile": "statusclass_render.napl",
+    "fileCount": 2,
+    "attributionCount": 13,
+    "maplCount": 1,
+    "genCount": 1,
+    "summary": "Rendering a prompt's status line"
+  },
+  {
+    "module": "driftdetect_replay",
+    "target": "rust",
+    "promptFile": "driftdetect_replay.napl",
+    "fileCount": 2,
+    "attributionCount": 13,
+    "maplCount": 3,
+    "genCount": 1,
+    "summary": "Reconstructing a generated file from its journal patches"
+  },
+  {
+    "module": "snapshot_diff",
+    "target": "rust",
+    "promptFile": "snapshot_diff.napl",
+    "fileCount": 2,
+    "attributionCount": 6,
+    "maplCount": 1,
+    "genCount": 1,
+    "summary": "Diffing two directory snapshots"
+  },
+  {
+    "module": "snapshot_filter",
+    "target": "rust",
+    "promptFile": "snapshot_filter.napl",
+    "fileCount": 2,
+    "attributionCount": 12,
+    "maplCount": 0,
+    "genCount": 1,
+    "summary": "The snapshot exclusion filter"
+  },
+  {
+    "module": "blame_render",
+    "target": "rust",
+    "promptFile": "blame_render.napl",
+    "fileCount": 2,
+    "attributionCount": 15,
+    "maplCount": 2,
+    "genCount": 1,
+    "summary": "Rendering `napl blame` output"
+  },
+  {
+    "module": "watch_filter",
+    "target": "rust",
+    "promptFile": "watch_filter.napl",
+    "fileCount": 2,
+    "attributionCount": 14,
+    "maplCount": 2,
+    "genCount": 1,
+    "summary": "The watch ignore filter"
+  },
+  {
+    "module": "reconcile_derive",
+    "target": "rust",
+    "promptFile": "reconcile_derive.napl",
+    "fileCount": 2,
+    "attributionCount": 17,
+    "maplCount": 2,
+    "genCount": 1,
+    "summary": "Deriving reconcile inputs from drifted files"
+  },
+  {
+    "module": "gen_classify",
+    "target": "rust",
+    "promptFile": "gen_classify.napl",
+    "fileCount": 2,
+    "attributionCount": 10,
+    "maplCount": 4,
+    "genCount": 1,
+    "summary": "Pure classification and derivation helpers for the generator"
+  },
+  {
+    "module": "gen_prompt_diff",
+    "target": "rust",
+    "promptFile": "gen_prompt_diff.napl",
+    "fileCount": 2,
+    "attributionCount": 7,
+    "maplCount": 1,
+    "genCount": 1,
+    "summary": "Deriving the prompt diff for a journal entry"
+  },
+  {
+    "module": "gen_attribution_check",
+    "target": "rust",
+    "promptFile": "gen_attribution_check.napl",
+    "fileCount": 2,
+    "attributionCount": 13,
+    "maplCount": 1,
+    "genCount": 1,
+    "summary": "The attribution sanity gate"
+  },
+  {
+    "module": "gen_mode",
+    "target": "rust",
+    "promptFile": "gen_mode.napl",
+    "fileCount": 2,
+    "attributionCount": 15,
+    "maplCount": 3,
+    "genCount": 1,
+    "summary": "Full-vs-incremental mode selection"
+  }
+]

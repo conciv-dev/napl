@@ -1,0 +1,598 @@
+{
+  "module": "schemas_attribution",
+  "collection": "selfhost",
+  "target": "rust",
+  "targets": [
+    "rust"
+  ],
+  "prompt": {
+    "file": "schemas_attribution.napl",
+    "path": "schemas/schemas_attribution.napl",
+    "content": "---\nmodule: schemas_attribution\ndeps: [schemas_line_range]\ntargets: [rust]\ntests:\n  - name: a well-formed document with three entries validates\n    given: { module: greeting, target: typescript, entries: 3 }\n    expect: { entries: 3 }\n  - name: an entry missing its file is rejected\n    given: { entry: \"{promptLines:[1,1], lines:[1,1], note:x}\" }\n    expect: { accepts: false }\n  - name: an entry with an empty file string is rejected\n    given: { entry: \"{promptLines:[1,1], file:'', lines:[1,1]}\" }\n    expect: { accepts: false }\n  - name: a non-integer line range is rejected\n    given: { entry: \"{promptLines:[1,1], file:a.ts, lines:[1.5,2]}\" }\n    expect: { accepts: false }\n  - name: a single-line range normalizes to a start-equals-end pair\n    given: { entry: \"{promptLines:[8], file:a.ts, lines:3}\" }\n    expect: { promptLines: [8, 8], lines: [3, 3] }\n  - name: a missing note defaults to the empty string\n    given: { entry: \"{promptLines:[1,1], file:a.ts, lines:[1,1]}\" }\n    expect: { note: \"\" }\n  - name: parsing a non-list of entries yields an empty list\n    given: { entries: \"{}\" }\n    expect: { entries: 0 }\n  - name: a malformed entry list is rejected\n    given: { entries: \"[{promptLines:'nope', file:a, lines:[1,2]}]\" }\n    expect: { accepts: false }\n  - name: entries-at-body-line returns every entry whose prompt range contains the line\n    given: { body_line: 3 }\n    expect: { notes: [\"covers trimming\", \"trims whitespace\"] }\n---\n# The attribution schema: prompt-line to file-line mappings\n\nThis module defines the serde types and validators for a NAPL **attribution\ndocument** — the record mapping ranges of a prompt's body lines to the ranges of\ngenerated file lines they produced. It is pure: no I/O. Bring in `serde`,\n`serde_json`.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `schemas_attribution/`:\n`schemas_attribution/Cargo.toml` (package name `schemas_attribution`) and\n`schemas_attribution/src/lib.rs`. Touch nothing outside `schemas_attribution/`.\nEnsure `cargo test` passes from the workspace root before finishing.\n\n## Builds on the `schemas_line_range` module of this workspace\n\nEvery line range in this schema is an inclusive 1-based line range that accepts\nseveral JSON spellings (a bare number `n` meaning `n..=n`, a one-element array\n`[n]` meaning `n..=n`, or a two-element array `[a, b]`), with each endpoint\nrequired to be an integer at least 1. That value type — and its lenient\ndeserializer — is the **`schemas_line_range`** module of this same workspace,\ngenerated as a sibling member crate in the `schemas_line_range/` directory (so\n`../schemas_line_range` relative to this crate). It exposes a public type\n`LineRange` with public `start` and `end` fields (`u32`), a\n`new(start, end)` constructor, equality, copy, and a serde `Deserialize` that\nperforms exactly the normalization above.\n\nAdd a path dependency on that sibling member crate in your `Cargo.toml` (depend\non the `schemas_line_range` crate by path — it lives at `../schemas_line_range`)\nand use its `LineRange` for every line-range field below. Do **not** reimplement\nline-range parsing here, and do not depend on any hand-written crate — depend\nonly on the generated sibling `schemas_line_range` member crate. This sibling\npath dependency is part of the same workspace, not an external crates.io\ndependency, so add it even though the general guidance is to avoid outside\ndependencies.\n\n## The types\n\nExpose these public types:\n\n- `AttributionEntry`: one mapping entry, deserializable, comparable, cloneable,\n  with public fields:\n  - `prompt_lines: LineRange` whose JSON key is **`promptLines`** (camelCase).\n  - `file: String`.\n  - `lines: LineRange`.\n  - `note: String` defaulting to the empty string when the key is absent.\n- `Attribution`: a whole document, deserializable, comparable, cloneable, with\n  public fields:\n  - `module: String`.\n  - `target: String`.\n  - `entries: Vec<AttributionEntry>` defaulting to empty when absent.\n\n## Validation\n\n- `validate_attribution(value: serde_json::Value) -> Result<Attribution, _>`:\n  deserialize the JSON value into an `Attribution`, then validate it. `module`\n  must not be empty, `target` must not be empty, and every entry's `file` must\n  not be empty. A structurally malformed value (for example a line range that is\n  not an integer, such as `1.5`) is a deserialization error. An entry missing\n  its `file`, or with an empty `file`, is rejected. Rejection is an error, not a\n  panic.\n- `parse_attribution_entries(value: serde_json::Value) -> Result<Vec<AttributionEntry>, _>`:\n  if the value is **not** a JSON array, return an empty list (no error).\n  Otherwise deserialize it as a list of entries and validate each entry's\n  non-empty `file`. A malformed list (an entry whose `promptLines` is a string,\n  say) is an error.\n\nBecause line ranges deserialize leniently, a single-line spelling normalizes:\nan entry with `\"promptLines\": [8]` and `\"lines\": 3` yields `prompt_lines`\n`8..=8` and `lines` `3..=3`. A missing `note` yields the empty string.\n\n## Lookup\n\n- `entries_at_body_line(attribution: &Attribution, body_line: u32) -> Vec<&AttributionEntry>`:\n  return references to every entry whose `promptLines` range contains\n  `body_line` (inclusive on both ends), in document order.\n\nFor example, given a document whose entries are\n`{promptLines:[2,2], note:\"builds the greeting\"}`,\n`{promptLines:[3,4], note:\"trims whitespace\"}`, and\n`{promptLines:[3,3], note:\"covers trimming\"}`, the entries at body line 3 are the\ntwo whose ranges contain 3 (\"trims whitespace\" and \"covers trimming\"), body line\n2 yields only \"builds the greeting\", and body line 9 yields none.\n"
+  },
+  "promptAtGen": "# The attribution schema: prompt-line to file-line mappings\n\nThis module defines the serde types and validators for a NAPL **attribution\ndocument** — the record mapping ranges of a prompt's body lines to the ranges of\ngenerated file lines they produced. It is pure: no I/O. Bring in `serde`,\n`serde_json`.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `schemas_attribution/`:\n`schemas_attribution/Cargo.toml` (package name `schemas_attribution`) and\n`schemas_attribution/src/lib.rs`. Touch nothing outside `schemas_attribution/`.\nEnsure `cargo test` passes from the workspace root before finishing.\n\n## Builds on the `schemas_line_range` module of this workspace\n\nEvery line range in this schema is an inclusive 1-based line range that accepts\nseveral JSON spellings (a bare number `n` meaning `n..=n`, a one-element array\n`[n]` meaning `n..=n`, or a two-element array `[a, b]`), with each endpoint\nrequired to be an integer at least 1. That value type — and its lenient\ndeserializer — is the **`schemas_line_range`** module of this same workspace,\ngenerated as a sibling member crate in the `schemas_line_range/` directory (so\n`../schemas_line_range` relative to this crate). It exposes a public type\n`LineRange` with public `start` and `end` fields (`u32`), a\n`new(start, end)` constructor, equality, copy, and a serde `Deserialize` that\nperforms exactly the normalization above.\n\nAdd a path dependency on that sibling member crate in your `Cargo.toml` (depend\non the `schemas_line_range` crate by path — it lives at `../schemas_line_range`)\nand use its `LineRange` for every line-range field below. Do **not** reimplement\nline-range parsing here, and do not depend on any hand-written crate — depend\nonly on the generated sibling `schemas_line_range` member crate. This sibling\npath dependency is part of the same workspace, not an external crates.io\ndependency, so add it even though the general guidance is to avoid outside\ndependencies.\n\n## The types\n\nExpose these public types:\n\n- `AttributionEntry`: one mapping entry, deserializable, comparable, cloneable,\n  with public fields:\n  - `prompt_lines: LineRange` whose JSON key is **`promptLines`** (camelCase).\n  - `file: String`.\n  - `lines: LineRange`.\n  - `note: String` defaulting to the empty string when the key is absent.\n- `Attribution`: a whole document, deserializable, comparable, cloneable, with\n  public fields:\n  - `module: String`.\n  - `target: String`.\n  - `entries: Vec<AttributionEntry>` defaulting to empty when absent.\n\n## Validation\n\n- `validate_attribution(value: serde_json::Value) -> Result<Attribution, _>`:\n  deserialize the JSON value into an `Attribution`, then validate it. `module`\n  must not be empty, `target` must not be empty, and every entry's `file` must\n  not be empty. A structurally malformed value (for example a line range that is\n  not an integer, such as `1.5`) is a deserialization error. An entry missing\n  its `file`, or with an empty `file`, is rejected. Rejection is an error, not a\n  panic.\n- `parse_attribution_entries(value: serde_json::Value) -> Result<Vec<AttributionEntry>, _>`:\n  if the value is **not** a JSON array, return an empty list (no error).\n  Otherwise deserialize it as a list of entries and validate each entry's\n  non-empty `file`. A malformed list (an entry whose `promptLines` is a string,\n  say) is an error.\n\nBecause line ranges deserialize leniently, a single-line spelling normalizes:\nan entry with `\"promptLines\": [8]` and `\"lines\": 3` yields `prompt_lines`\n`8..=8` and `lines` `3..=3`. A missing `note` yields the empty string.\n\n## Lookup\n\n- `entries_at_body_line(attribution: &Attribution, body_line: u32) -> Vec<&AttributionEntry>`:\n  return references to every entry whose `promptLines` range contains\n  `body_line` (inclusive on both ends), in document order.\n\nFor example, given a document whose entries are\n`{promptLines:[2,2], note:\"builds the greeting\"}`,\n`{promptLines:[3,4], note:\"trims whitespace\"}`, and\n`{promptLines:[3,3], note:\"covers trimming\"}`, the entries at body line 3 are the\ntwo whose ranges contain 3 (\"trims whitespace\" and \"covers trimming\"), body line\n2 yields only \"builds the greeting\", and body line 9 yields none.\n",
+  "summary": "The attribution schema: prompt-line to file-line mappings",
+  "files": [
+    {
+      "path": "schemas_attribution/Cargo.toml",
+      "journalPath": ".napl/src/rust/schemas_attribution/Cargo.toml",
+      "content": "[package]\nname = \"schemas_attribution\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\nserde = { version = \"1\", features = [\"derive\"] }\nserde_json = \"1\"\nschemas_line_range = { path = \"../schemas_line_range\" }\n\n[dev-dependencies]\nserde_json = \"1\"\n",
+      "language": "toml"
+    },
+    {
+      "path": "schemas_attribution/src/lib.rs",
+      "journalPath": ".napl/src/rust/schemas_attribution/src/lib.rs",
+      "content": "// GENERATED BY NAPL from schemas_attribution.napl — edit the prompt, not this file\n\nuse schemas_line_range::LineRange;\nuse serde::Deserialize;\n\nfn default_note() -> String {\n    String::new()\n}\n\n#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]\npub struct AttributionEntry {\n    #[serde(rename = \"promptLines\")]\n    pub prompt_lines: LineRange,\n    pub file: String,\n    pub lines: LineRange,\n    #[serde(default = \"default_note\")]\n    pub note: String,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]\npub struct Attribution {\n    pub module: String,\n    pub target: String,\n    #[serde(default)]\n    pub entries: Vec<AttributionEntry>,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq)]\npub enum AttributionError {\n    Parse(String),\n    EmptyModule,\n    EmptyTarget,\n    EmptyFile,\n}\n\nimpl std::fmt::Display for AttributionError {\n    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n        match self {\n            AttributionError::Parse(msg) => write!(f, \"failed to parse attribution: {msg}\"),\n            AttributionError::EmptyModule => write!(f, \"module must not be empty\"),\n            AttributionError::EmptyTarget => write!(f, \"target must not be empty\"),\n            AttributionError::EmptyFile => write!(f, \"entry file must not be empty\"),\n        }\n    }\n}\n\nimpl std::error::Error for AttributionError {}\n\npub fn validate_attribution(value: serde_json::Value) -> Result<Attribution, AttributionError> {\n    let attribution: Attribution =\n        serde_json::from_value(value).map_err(|e| AttributionError::Parse(e.to_string()))?;\n\n    if attribution.module.is_empty() {\n        return Err(AttributionError::EmptyModule);\n    }\n    if attribution.target.is_empty() {\n        return Err(AttributionError::EmptyTarget);\n    }\n    for entry in &attribution.entries {\n        if entry.file.is_empty() {\n            return Err(AttributionError::EmptyFile);\n        }\n    }\n\n    Ok(attribution)\n}\n\npub fn parse_attribution_entries(\n    value: serde_json::Value,\n) -> Result<Vec<AttributionEntry>, AttributionError> {\n    if !value.is_array() {\n        return Ok(Vec::new());\n    }\n\n    let entries: Vec<AttributionEntry> =\n        serde_json::from_value(value).map_err(|e| AttributionError::Parse(e.to_string()))?;\n\n    for entry in &entries {\n        if entry.file.is_empty() {\n            return Err(AttributionError::EmptyFile);\n        }\n    }\n\n    Ok(entries)\n}\n\npub fn entries_at_body_line(\n    attribution: &Attribution,\n    body_line: u32,\n) -> Vec<&AttributionEntry> {\n    attribution\n        .entries\n        .iter()\n        .filter(|entry| {\n            entry.prompt_lines.start <= body_line && body_line <= entry.prompt_lines.end\n        })\n        .collect()\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n    use serde_json::json;\n\n    fn sample_document() -> serde_json::Value {\n        json!({\n            \"module\": \"m\",\n            \"target\": \"rust\",\n            \"entries\": [\n                {\"promptLines\": [2, 2], \"file\": \"a.rs\", \"lines\": 1, \"note\": \"builds the greeting\"},\n                {\"promptLines\": [3, 4], \"file\": \"a.rs\", \"lines\": 2, \"note\": \"trims whitespace\"},\n                {\"promptLines\": [3, 3], \"file\": \"a.rs\", \"lines\": 3, \"note\": \"covers trimming\"}\n            ]\n        })\n    }\n\n    #[test]\n    fn validates_a_well_formed_document() {\n        let attribution = validate_attribution(sample_document()).unwrap();\n        assert_eq!(attribution.module, \"m\");\n        assert_eq!(attribution.target, \"rust\");\n        assert_eq!(attribution.entries.len(), 3);\n    }\n\n    #[test]\n    fn entry_field_normalization() {\n        let value = json!({\n            \"module\": \"m\",\n            \"target\": \"rust\",\n            \"entries\": [\n                {\"promptLines\": [8], \"file\": \"a.rs\", \"lines\": 3}\n            ]\n        });\n        let attribution = validate_attribution(value).unwrap();\n        let entry = &attribution.entries[0];\n        assert_eq!(entry.prompt_lines, LineRange::new(8, 8));\n        assert_eq!(entry.lines, LineRange::new(3, 3));\n        assert_eq!(entry.note, \"\");\n    }\n\n    #[test]\n    fn entries_default_to_empty_when_absent() {\n        let value = json!({\"module\": \"m\", \"target\": \"rust\"});\n        let attribution = validate_attribution(value).unwrap();\n        assert!(attribution.entries.is_empty());\n    }\n\n    #[test]\n    fn rejects_empty_module() {\n        let value = json!({\"module\": \"\", \"target\": \"rust\", \"entries\": []});\n        assert_eq!(validate_attribution(value), Err(AttributionError::EmptyModule));\n    }\n\n    #[test]\n    fn rejects_empty_target() {\n        let value = json!({\"module\": \"m\", \"target\": \"\", \"entries\": []});\n        assert_eq!(validate_attribution(value), Err(AttributionError::EmptyTarget));\n    }\n\n    #[test]\n    fn rejects_entry_with_empty_file() {\n        let value = json!({\n            \"module\": \"m\",\n            \"target\": \"rust\",\n            \"entries\": [\n                {\"promptLines\": 1, \"file\": \"\", \"lines\": 1}\n            ]\n        });\n        assert_eq!(validate_attribution(value), Err(AttributionError::EmptyFile));\n    }\n\n    #[test]\n    fn rejects_entry_missing_file() {\n        let value = json!({\n            \"module\": \"m\",\n            \"target\": \"rust\",\n            \"entries\": [\n                {\"promptLines\": 1, \"lines\": 1}\n            ]\n        });\n        assert!(matches!(\n            validate_attribution(value),\n            Err(AttributionError::Parse(_))\n        ));\n    }\n\n    #[test]\n    fn rejects_malformed_line_range() {\n        let value = json!({\n            \"module\": \"m\",\n            \"target\": \"rust\",\n            \"entries\": [\n                {\"promptLines\": 1.5, \"file\": \"a.rs\", \"lines\": 1}\n            ]\n        });\n        assert!(matches!(\n            validate_attribution(value),\n            Err(AttributionError::Parse(_))\n        ));\n    }\n\n    #[test]\n    fn parse_entries_returns_empty_for_non_array() {\n        let value = json!({\"not\": \"an array\"});\n        assert_eq!(parse_attribution_entries(value).unwrap(), Vec::new());\n    }\n\n    #[test]\n    fn parse_entries_parses_a_valid_list() {\n        let value = json!([\n            {\"promptLines\": [2, 2], \"file\": \"a.rs\", \"lines\": 1}\n        ]);\n        let entries = parse_attribution_entries(value).unwrap();\n        assert_eq!(entries.len(), 1);\n        assert_eq!(entries[0].file, \"a.rs\");\n    }\n\n    #[test]\n    fn parse_entries_rejects_entry_with_empty_file() {\n        let value = json!([\n            {\"promptLines\": [2, 2], \"file\": \"\", \"lines\": 1}\n        ]);\n        assert_eq!(\n            parse_attribution_entries(value),\n            Err(AttributionError::EmptyFile)\n        );\n    }\n\n    #[test]\n    fn parse_entries_errors_on_malformed_list() {\n        let value = json!([\n            {\"promptLines\": \"nope\", \"file\": \"a.rs\", \"lines\": 1}\n        ]);\n        assert!(matches!(\n            parse_attribution_entries(value),\n            Err(AttributionError::Parse(_))\n        ));\n    }\n\n    #[test]\n    fn entries_at_body_line_finds_all_containing_entries() {\n        let attribution = validate_attribution(sample_document()).unwrap();\n\n        let at_3 = entries_at_body_line(&attribution, 3);\n        assert_eq!(at_3.len(), 2);\n        assert_eq!(at_3[0].note, \"trims whitespace\");\n        assert_eq!(at_3[1].note, \"covers trimming\");\n\n        let at_2 = entries_at_body_line(&attribution, 2);\n        assert_eq!(at_2.len(), 1);\n        assert_eq!(at_2[0].note, \"builds the greeting\");\n\n        let at_9 = entries_at_body_line(&attribution, 9);\n        assert!(at_9.is_empty());\n    }\n}\n",
+      "language": "rust"
+    }
+  ],
+  "attribution": [
+    {
+      "promptLines": [
+        5,
+        6
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        3,
+        4
+      ],
+      "note": "bring in schemas_line_range and serde"
+    },
+    {
+      "promptLines": [
+        43,
+        45
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        10,
+        13
+      ],
+      "note": "AttributionEntry struct with promptLines camelCase rename"
+    },
+    {
+      "promptLines": [
+        46,
+        47
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        14,
+        15
+      ],
+      "note": "file and lines fields"
+    },
+    {
+      "promptLines": [
+        48,
+        48
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        6,
+        8
+      ],
+      "note": "default_note helper for empty-string default"
+    },
+    {
+      "promptLines": [
+        48,
+        48
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        16,
+        17
+      ],
+      "note": "note field defaults via default_note"
+    },
+    {
+      "promptLines": [
+        49,
+        53
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        20,
+        26
+      ],
+      "note": "Attribution struct with module, target, entries default"
+    },
+    {
+      "promptLines": [
+        57,
+        63
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        49,
+        66
+      ],
+      "note": "validate_attribution deserializes then checks non-empty module/target/file"
+    },
+    {
+      "promptLines": [
+        57,
+        63
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        28,
+        47
+      ],
+      "note": "AttributionError enum and Display impl for rejection errors"
+    },
+    {
+      "promptLines": [
+        64,
+        68
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        68,
+        85
+      ],
+      "note": "parse_attribution_entries returns empty for non-array else validates entries"
+    },
+    {
+      "promptLines": [
+        70,
+        72
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        126,
+        139
+      ],
+      "note": "test for single-line spelling normalization and missing note default"
+    },
+    {
+      "promptLines": [
+        76,
+        78
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        87,
+        98
+      ],
+      "note": "entries_at_body_line filters by inclusive range in document order"
+    },
+    {
+      "promptLines": [
+        80,
+        85
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        105,
+        115
+      ],
+      "note": "sample_document fixture matching the example entries"
+    },
+    {
+      "promptLines": [
+        80,
+        85
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        241,
+        255
+      ],
+      "note": "test asserting entries at body lines 3, 2, 9 match the example"
+    },
+    {
+      "promptLines": [
+        60,
+        63
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        160,
+        185
+      ],
+      "note": "tests for empty/missing file rejection"
+    },
+    {
+      "promptLines": [
+        60,
+        60
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        188,
+        200
+      ],
+      "note": "test rejects malformed line range as deserialization error"
+    },
+    {
+      "promptLines": [
+        65,
+        65
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        202,
+        206
+      ],
+      "note": "test parse_entries_returns_empty_for_non_array"
+    },
+    {
+      "promptLines": [
+        66,
+        68
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        208,
+        238
+      ],
+      "note": "tests parsing valid list, empty file rejection, malformed list error"
+    },
+    {
+      "promptLines": [
+        53,
+        53
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        142,
+        146
+      ],
+      "note": "test entries default to empty when absent"
+    },
+    {
+      "promptLines": [
+        58,
+        59
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        148,
+        158
+      ],
+      "note": "tests rejects empty module and empty target"
+    }
+  ],
+  "attributionYaml": "module: schemas_attribution\ntarget: rust\nentries:\n  - promptLines:\n      - 5\n      - 6\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 3\n      - 4\n    note: bring in schemas_line_range and serde\n  - promptLines:\n      - 43\n      - 45\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 10\n      - 13\n    note: AttributionEntry struct with promptLines camelCase rename\n  - promptLines:\n      - 46\n      - 47\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 14\n      - 15\n    note: file and lines fields\n  - promptLines:\n      - 48\n      - 48\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 6\n      - 8\n    note: default_note helper for empty-string default\n  - promptLines:\n      - 48\n      - 48\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 16\n      - 17\n    note: note field defaults via default_note\n  - promptLines:\n      - 49\n      - 53\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 20\n      - 26\n    note: Attribution struct with module, target, entries default\n  - promptLines:\n      - 57\n      - 63\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 49\n      - 66\n    note: validate_attribution deserializes then checks non-empty module/target/file\n  - promptLines:\n      - 57\n      - 63\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 28\n      - 47\n    note: AttributionError enum and Display impl for rejection errors\n  - promptLines:\n      - 64\n      - 68\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 68\n      - 85\n    note: parse_attribution_entries returns empty for non-array else validates entries\n  - promptLines:\n      - 70\n      - 72\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 126\n      - 139\n    note: test for single-line spelling normalization and missing note default\n  - promptLines:\n      - 76\n      - 78\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 87\n      - 98\n    note: entries_at_body_line filters by inclusive range in document order\n  - promptLines:\n      - 80\n      - 85\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 105\n      - 115\n    note: sample_document fixture matching the example entries\n  - promptLines:\n      - 80\n      - 85\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 241\n      - 255\n    note: test asserting entries at body lines 3, 2, 9 match the example\n  - promptLines:\n      - 60\n      - 63\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 160\n      - 185\n    note: tests for empty/missing file rejection\n  - promptLines:\n      - 60\n      - 60\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 188\n      - 200\n    note: test rejects malformed line range as deserialization error\n  - promptLines:\n      - 65\n      - 65\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 202\n      - 206\n    note: test parse_entries_returns_empty_for_non_array\n  - promptLines:\n      - 66\n      - 68\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 208\n      - 238\n    note: tests parsing valid list, empty file rejection, malformed list error\n  - promptLines:\n      - 53\n      - 53\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 142\n      - 146\n    note: test entries default to empty when absent\n  - promptLines:\n      - 58\n      - 59\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 148\n      - 158\n    note: tests rejects empty module and empty target\n",
+  "mapl": [
+    {
+      "promptLines": [
+        1,
+        86
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "Prompt fully implemented, no ambiguity found worth flagging.",
+      "reasoning": "Agent created schemas_attribution/{Cargo.toml,src/lib.rs} with AttributionEntry, Attribution, validate_attribution, parse_attribution_entries, entries_at_body_line exactly matching spec — camelCase rename, note default, entries default, malformed-vs-missing-file error split, non-array returns empty list, inclusive containment lookup. 13 tests cover all documented behaviors including the worked example. No deviations to note."
+    }
+  ],
+  "journal": [
+    {
+      "gen": 16,
+      "timestamp": "2026-07-24T07:19:51.246Z",
+      "mode": "full",
+      "promptHash": "ac240b384587d7549b089bad8cfe0d2128bf41076ed141de95edd689dbd98bfe",
+      "files": [
+        {
+          "path": "schemas_attribution/Cargo.toml",
+          "journalPath": ".napl/src/rust/schemas_attribution/Cargo.toml",
+          "patch": "@@ -0,0 +1,12 @@\n+[package]\n+name = \"schemas_attribution\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]\n+serde = { version = \"1\", features = [\"derive\"] }\n+serde_json = \"1\"\n+schemas_line_range = { path = \"../schemas_line_range\" }\n+\n+[dev-dependencies]\n+serde_json = \"1\""
+        },
+        {
+          "path": "schemas_attribution/src/lib.rs",
+          "journalPath": ".napl/src/rust/schemas_attribution/src/lib.rs",
+          "patch": "@@ -0,0 +1,256 @@\n+// GENERATED BY NAPL from schemas_attribution.napl — edit the prompt, not this file\n+\n+use schemas_line_range::LineRange;\n+use serde::Deserialize;\n+\n+fn default_note() -> String {\n+    String::new()\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]\n+pub struct AttributionEntry {\n+    #[serde(rename = \"promptLines\")]\n+    pub prompt_lines: LineRange,\n+    pub file: String,\n+    pub lines: LineRange,\n+    #[serde(default = \"default_note\")]\n+    pub note: String,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]\n+pub struct Attribution {\n+    pub module: String,\n+    pub target: String,\n+    #[serde(default)]\n+    pub entries: Vec<AttributionEntry>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub enum AttributionError {\n+    Parse(String),\n+    EmptyModule,\n+    EmptyTarget,\n+    EmptyFile,\n+}\n+\n+impl std::fmt::Display for AttributionError {\n+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n+        match self {\n+            AttributionError::Parse(msg) => write!(f, \"failed to parse attribution: {msg}\"),\n+            AttributionError::EmptyModule => write!(f, \"module must not be empty\"),\n+            AttributionError::EmptyTarget => write!(f, \"target must not be empty\"),\n+            AttributionError::EmptyFile => write!(f, \"entry file must not be empty\"),\n+        }\n+    }\n+}\n+\n+impl std::error::Error for AttributionError {}\n+\n+pub fn validate_attribution(value: serde_json::Value) -> Result<Attribution, AttributionError> {\n+    let attribution: Attribution =\n+        serde_json::from_value(value).map_err(|e| AttributionError::Parse(e.to_string()))?;\n+\n+    if attribution.module.is_empty() {\n+        return Err(AttributionError::EmptyModule);\n+    }\n+    if attribution.target.is_empty() {\n+        return Err(AttributionError::EmptyTarget);\n+    }\n+    for entry in &attribution.entries {\n+        if entry.file.is_empty() {\n+            return Err(AttributionError::EmptyFile);\n+        }\n+    }\n+\n+    Ok(attribution)\n+}\n+\n+pub fn parse_attribution_entries(\n+    value: serde_json::Value,\n+) -> Result<Vec<AttributionEntry>, AttributionError> {\n+    if !value.is_array() {\n+        return Ok(Vec::new());\n+    }\n+\n+    let entries: Vec<AttributionEntry> =\n+        serde_json::from_value(value).map_err(|e| AttributionError::Parse(e.to_string()))?;\n+\n+    for entry in &entries {\n+        if entry.file.is_empty() {\n+            return Err(AttributionError::EmptyFile);\n+        }\n+    }\n+\n+    Ok(entries)\n+}\n+\n+pub fn entries_at_body_line(\n+    attribution: &Attribution,\n+    body_line: u32,\n+) -> Vec<&AttributionEntry> {\n+    attribution\n+        .entries\n+        .iter()\n+        .filter(|entry| {\n+            entry.prompt_lines.start <= body_line && body_line <= entry.prompt_lines.end\n+        })\n+        .collect()\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+    use serde_json::json;\n+\n+    fn sample_document() -> serde_json::Value {\n+        json!({\n+            \"module\": \"m\",\n+            \"target\": \"rust\",\n+            \"entries\": [\n+                {\"promptLines\": [2, 2], \"file\": \"a.rs\", \"lines\": 1, \"note\": \"builds the greeting\"},\n+                {\"promptLines\": [3, 4], \"file\": \"a.rs\", \"lines\": 2, \"note\": \"trims whitespace\"},\n+                {\"promptLines\": [3, 3], \"file\": \"a.rs\", \"lines\": 3, \"note\": \"covers trimming\"}\n+            ]\n+        })\n+    }\n+\n+    #[test]\n+    fn validates_a_well_formed_document() {\n+        let attribution = validate_attribution(sample_document()).unwrap();\n+        assert_eq!(attribution.module, \"m\");\n+        assert_eq!(attribution.target, \"rust\");\n+        assert_eq!(attribution.entries.len(), 3);\n+    }\n+\n+    #[test]\n+    fn entry_field_normalization() {\n+        let value = json!({\n+            \"module\": \"m\",\n+            \"target\": \"rust\",\n+            \"entries\": [\n+                {\"promptLines\": [8], \"file\": \"a.rs\", \"lines\": 3}\n+            ]\n+        });\n+        let attribution = validate_attribution(value).unwrap();\n+        let entry = &attribution.entries[0];\n+        assert_eq!(entry.prompt_lines, LineRange::new(8, 8));\n+        assert_eq!(entry.lines, LineRange::new(3, 3));\n+        assert_eq!(entry.note, \"\");\n+    }\n+\n+    #[test]\n+    fn entries_default_to_empty_when_absent() {\n+        let value = json!({\"module\": \"m\", \"target\": \"rust\"});\n+        let attribution = validate_attribution(value).unwrap();\n+        assert!(attribution.entries.is_empty());\n+    }\n+\n+    #[test]\n+    fn rejects_empty_module() {\n+        let value = json!({\"module\": \"\", \"target\": \"rust\", \"entries\": []});\n+        assert_eq!(validate_attribution(value), Err(AttributionError::EmptyModule));\n+    }\n+\n+    #[test]\n+    fn rejects_empty_target() {\n+        let value = json!({\"module\": \"m\", \"target\": \"\", \"entries\": []});\n+        assert_eq!(validate_attribution(value), Err(AttributionError::EmptyTarget));\n+    }\n+\n+    #[test]\n+    fn rejects_entry_with_empty_file() {\n+        let value = json!({\n+            \"module\": \"m\",\n+            \"target\": \"rust\",\n+            \"entries\": [\n+                {\"promptLines\": 1, \"file\": \"\", \"lines\": 1}\n+            ]\n+        });\n+        assert_eq!(validate_attribution(value), Err(AttributionError::EmptyFile));\n+    }\n+\n+    #[test]\n+    fn rejects_entry_missing_file() {\n+        let value = json!({\n+            \"module\": \"m\",\n+            \"target\": \"rust\",\n+            \"entries\": [\n+                {\"promptLines\": 1, \"lines\": 1}\n+            ]\n+        });\n+        assert!(matches!(\n+            validate_attribution(value),\n+            Err(AttributionError::Parse(_))\n+        ));\n+    }\n+\n+    #[test]\n+    fn rejects_malformed_line_range() {\n+        let value = json!({\n+            \"module\": \"m\",\n+            \"target\": \"rust\",\n+            \"entries\": [\n+                {\"promptLines\": 1.5, \"file\": \"a.rs\", \"lines\": 1}\n+            ]\n+        });\n+        assert!(matches!(\n+            validate_attribution(value),\n+            Err(AttributionError::Parse(_))\n+        ));\n+    }\n+\n+    #[test]\n+    fn parse_entries_returns_empty_for_non_array() {\n+        let value = json!({\"not\": \"an array\"});\n+        assert_eq!(parse_attribution_entries(value).unwrap(), Vec::new());\n+    }\n+\n+    #[test]\n+    fn parse_entries_parses_a_valid_list() {\n+        let value = json!([\n+            {\"promptLines\": [2, 2], \"file\": \"a.rs\", \"lines\": 1}\n+        ]);\n+        let entries = parse_attribution_entries(value).unwrap();\n+        assert_eq!(entries.len(), 1);\n+        assert_eq!(entries[0].file, \"a.rs\");\n+    }\n+\n+    #[test]\n+    fn parse_entries_rejects_entry_with_empty_file() {\n+        let value = json!([\n+            {\"promptLines\": [2, 2], \"file\": \"\", \"lines\": 1}\n+        ]);\n+        assert_eq!(\n+            parse_attribution_entries(value),\n+            Err(AttributionError::EmptyFile)\n+        );\n+    }\n+\n+    #[test]\n+    fn parse_entries_errors_on_malformed_list() {\n+        let value = json!([\n+            {\"promptLines\": \"nope\", \"file\": \"a.rs\", \"lines\": 1}\n+        ]);\n+        assert!(matches!(\n+            parse_attribution_entries(value),\n+            Err(AttributionError::Parse(_))\n+        ));\n+    }\n+\n+    #[test]\n+    fn entries_at_body_line_finds_all_containing_entries() {\n+        let attribution = validate_attribution(sample_document()).unwrap();\n+\n+        let at_3 = entries_at_body_line(&attribution, 3);\n+        assert_eq!(at_3.len(), 2);\n+        assert_eq!(at_3[0].note, \"trims whitespace\");\n+        assert_eq!(at_3[1].note, \"covers trimming\");\n+\n+        let at_2 = entries_at_body_line(&attribution, 2);\n+        assert_eq!(at_2.len(), 1);\n+        assert_eq!(at_2[0].note, \"builds the greeting\");\n+\n+        let at_9 = entries_at_body_line(&attribution, 9);\n+        assert!(at_9.is_empty());\n+    }\n+}"
+        }
+      ]
+    }
+  ],
+  "lock": [
+    {
+      "path": "schemas_attribution/Cargo.toml",
+      "hash": "e5808ea935540a22afda52de4a2f8de967d69ad88e366b57220aa3368012057f"
+    },
+    {
+      "path": "schemas_attribution/src/lib.rs",
+      "hash": "00869fe4f11589e2e93e4bc423b1760c546811be7803a4e9b389e4a69eb81de0"
+    }
+  ],
+  "session": {
+    "task": "napl gen rust → schemas_attribution",
+    "files": {
+      "schemas_attribution.napl": "---\nmodule: schemas_attribution\ndeps: [schemas_line_range]\ntargets: [rust]\ntests:\n  - name: a well-formed document with three entries validates\n    given: { module: greeting, target: typescript, entries: 3 }\n    expect: { entries: 3 }\n  - name: an entry missing its file is rejected\n    given: { entry: \"{promptLines:[1,1], lines:[1,1], note:x}\" }\n    expect: { accepts: false }\n  - name: an entry with an empty file string is rejected\n    given: { entry: \"{promptLines:[1,1], file:'', lines:[1,1]}\" }\n    expect: { accepts: false }\n  - name: a non-integer line range is rejected\n    given: { entry: \"{promptLines:[1,1], file:a.ts, lines:[1.5,2]}\" }\n    expect: { accepts: false }\n  - name: a single-line range normalizes to a start-equals-end pair\n    given: { entry: \"{promptLines:[8], file:a.ts, lines:3}\" }\n    expect: { promptLines: [8, 8], lines: [3, 3] }\n  - name: a missing note defaults to the empty string\n    given: { entry: \"{promptLines:[1,1], file:a.ts, lines:[1,1]}\" }\n    expect: { note: \"\" }\n  - name: parsing a non-list of entries yields an empty list\n    given: { entries: \"{}\" }\n    expect: { entries: 0 }\n  - name: a malformed entry list is rejected\n    given: { entries: \"[{promptLines:'nope', file:a, lines:[1,2]}]\" }\n    expect: { accepts: false }\n  - name: entries-at-body-line returns every entry whose prompt range contains the line\n    given: { body_line: 3 }\n    expect: { notes: [\"covers trimming\", \"trims whitespace\"] }\n---\n# The attribution schema: prompt-line to file-line mappings\n\nThis module defines the serde types and validators for a NAPL **attribution\ndocument** — the record mapping ranges of a prompt's body lines to the ranges of\ngenerated file lines they produced. It is pure: no I/O. Bring in `serde`,\n`serde_json`.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `schemas_attribution/`:\n`schemas_attribution/Cargo.toml` (package name `schemas_attribution`) and\n`schemas_attribution/src/lib.rs`. Touch nothing outside `schemas_attribution/`.\nEnsure `cargo test` passes from the workspace root before finishing.\n\n## Builds on the `schemas_line_range` module of this workspace\n\nEvery line range in this schema is an inclusive 1-based line range that accepts\nseveral JSON spellings (a bare number `n` meaning `n..=n`, a one-element array\n`[n]` meaning `n..=n`, or a two-element array `[a, b]`), with each endpoint\nrequired to be an integer at least 1. That value type — and its lenient\ndeserializer — is the **`schemas_line_range`** module of this same workspace,\ngenerated as a sibling member crate in the `schemas_line_range/` directory (so\n`../schemas_line_range` relative to this crate). It exposes a public type\n`LineRange` with public `start` and `end` fields (`u32`), a\n`new(start, end)` constructor, equality, copy, and a serde `Deserialize` that\nperforms exactly the normalization above.\n\nAdd a path dependency on that sibling member crate in your `Cargo.toml` (depend\non the `schemas_line_range` crate by path — it lives at `../schemas_line_range`)\nand use its `LineRange` for every line-range field below. Do **not** reimplement\nline-range parsing here, and do not depend on any hand-written crate — depend\nonly on the generated sibling `schemas_line_range` member crate. This sibling\npath dependency is part of the same workspace, not an external crates.io\ndependency, so add it even though the general guidance is to avoid outside\ndependencies.\n\n## The types\n\nExpose these public types:\n\n- `AttributionEntry`: one mapping entry, deserializable, comparable, cloneable,\n  with public fields:\n  - `prompt_lines: LineRange` whose JSON key is **`promptLines`** (camelCase).\n  - `file: String`.\n  - `lines: LineRange`.\n  - `note: String` defaulting to the empty string when the key is absent.\n- `Attribution`: a whole document, deserializable, comparable, cloneable, with\n  public fields:\n  - `module: String`.\n  - `target: String`.\n  - `entries: Vec<AttributionEntry>` defaulting to empty when absent.\n\n## Validation\n\n- `validate_attribution(value: serde_json::Value) -> Result<Attribution, _>`:\n  deserialize the JSON value into an `Attribution`, then validate it. `module`\n  must not be empty, `target` must not be empty, and every entry's `file` must\n  not be empty. A structurally malformed value (for example a line range that is\n  not an integer, such as `1.5`) is a deserialization error. An entry missing\n  its `file`, or with an empty `file`, is rejected. Rejection is an error, not a\n  panic.\n- `parse_attribution_entries(value: serde_json::Value) -> Result<Vec<AttributionEntry>, _>`:\n  if the value is **not** a JSON array, return an empty list (no error).\n  Otherwise deserialize it as a list of entries and validate each entry's\n  non-empty `file`. A malformed list (an entry whose `promptLines` is a string,\n  say) is an error.\n\nBecause line ranges deserialize leniently, a single-line spelling normalizes:\nan entry with `\"promptLines\": [8]` and `\"lines\": 3` yields `prompt_lines`\n`8..=8` and `lines` `3..=3`. A missing `note` yields the empty string.\n\n## Lookup\n\n- `entries_at_body_line(attribution: &Attribution, body_line: u32) -> Vec<&AttributionEntry>`:\n  return references to every entry whose `promptLines` range contains\n  `body_line` (inclusive on both ends), in document order.\n\nFor example, given a document whose entries are\n`{promptLines:[2,2], note:\"builds the greeting\"}`,\n`{promptLines:[3,4], note:\"trims whitespace\"}`, and\n`{promptLines:[3,3], note:\"covers trimming\"}`, the entries at body line 3 are the\ntwo whose ranges contain 3 (\"trims whitespace\" and \"covers trimming\"), body line\n2 yields only \"builds the greeting\", and body line 9 yields none.\n"
+    },
+    "events": [
+      {
+        "type": "task",
+        "task": "napl gen rust → schemas_attribution"
+      },
+      {
+        "type": "diff",
+        "path": "schemas_attribution/Cargo.toml",
+        "patch": "@@ -0,0 +1,12 @@\n+[package]\n+name = \"schemas_attribution\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]\n+serde = { version = \"1\", features = [\"derive\"] }\n+serde_json = \"1\"\n+schemas_line_range = { path = \"../schemas_line_range\" }\n+\n+[dev-dependencies]\n+serde_json = \"1\""
+      },
+      {
+        "type": "file-edit",
+        "path": "schemas_attribution/Cargo.toml",
+        "content": "[package]\nname = \"schemas_attribution\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\nserde = { version = \"1\", features = [\"derive\"] }\nserde_json = \"1\"\nschemas_line_range = { path = \"../schemas_line_range\" }\n\n[dev-dependencies]\nserde_json = \"1\"\n"
+      },
+      {
+        "type": "diff",
+        "path": "schemas_attribution/src/lib.rs",
+        "patch": "@@ -0,0 +1,256 @@\n+// GENERATED BY NAPL from schemas_attribution.napl — edit the prompt, not this file\n+\n+use schemas_line_range::LineRange;\n+use serde::Deserialize;\n+\n+fn default_note() -> String {\n+    String::new()\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]\n+pub struct AttributionEntry {\n+    #[serde(rename = \"promptLines\")]\n+    pub prompt_lines: LineRange,\n+    pub file: String,\n+    pub lines: LineRange,\n+    #[serde(default = \"default_note\")]\n+    pub note: String,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]\n+pub struct Attribution {\n+    pub module: String,\n+    pub target: String,\n+    #[serde(default)]\n+    pub entries: Vec<AttributionEntry>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub enum AttributionError {\n+    Parse(String),\n+    EmptyModule,\n+    EmptyTarget,\n+    EmptyFile,\n+}\n+\n+impl std::fmt::Display for AttributionError {\n+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n+        match self {\n+            AttributionError::Parse(msg) => write!(f, \"failed to parse attribution: {msg}\"),\n+            AttributionError::EmptyModule => write!(f, \"module must not be empty\"),\n+            AttributionError::EmptyTarget => write!(f, \"target must not be empty\"),\n+            AttributionError::EmptyFile => write!(f, \"entry file must not be empty\"),\n+        }\n+    }\n+}\n+\n+impl std::error::Error for AttributionError {}\n+\n+pub fn validate_attribution(value: serde_json::Value) -> Result<Attribution, AttributionError> {\n+    let attribution: Attribution =\n+        serde_json::from_value(value).map_err(|e| AttributionError::Parse(e.to_string()))?;\n+\n+    if attribution.module.is_empty() {\n+        return Err(AttributionError::EmptyModule);\n+    }\n+    if attribution.target.is_empty() {\n+        return Err(AttributionError::EmptyTarget);\n+    }\n+    for entry in &attribution.entries {\n+        if entry.file.is_empty() {\n+            return Err(AttributionError::EmptyFile);\n+        }\n+    }\n+\n+    Ok(attribution)\n+}\n+\n+pub fn parse_attribution_entries(\n+    value: serde_json::Value,\n+) -> Result<Vec<AttributionEntry>, AttributionError> {\n+    if !value.is_array() {\n+        return Ok(Vec::new());\n+    }\n+\n+    let entries: Vec<AttributionEntry> =\n+        serde_json::from_value(value).map_err(|e| AttributionError::Parse(e.to_string()))?;\n+\n+    for entry in &entries {\n+        if entry.file.is_empty() {\n+            return Err(AttributionError::EmptyFile);\n+        }\n+    }\n+\n+    Ok(entries)\n+}\n+\n+pub fn entries_at_body_line(\n+    attribution: &Attribution,\n+    body_line: u32,\n+) -> Vec<&AttributionEntry> {\n+    attribution\n+        .entries\n+        .iter()\n+        .filter(|entry| {\n+            entry.prompt_lines.start <= body_line && body_line <= entry.prompt_lines.end\n+        })\n+        .collect()\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+    use serde_json::json;\n+\n+    fn sample_document() -> serde_json::Value {\n+        json!({\n+            \"module\": \"m\",\n+            \"target\": \"rust\",\n+            \"entries\": [\n+                {\"promptLines\": [2, 2], \"file\": \"a.rs\", \"lines\": 1, \"note\": \"builds the greeting\"},\n+                {\"promptLines\": [3, 4], \"file\": \"a.rs\", \"lines\": 2, \"note\": \"trims whitespace\"},\n+                {\"promptLines\": [3, 3], \"file\": \"a.rs\", \"lines\": 3, \"note\": \"covers trimming\"}\n+            ]\n+        })\n+    }\n+\n+    #[test]\n+    fn validates_a_well_formed_document() {\n+        let attribution = validate_attribution(sample_document()).unwrap();\n+        assert_eq!(attribution.module, \"m\");\n+        assert_eq!(attribution.target, \"rust\");\n+        assert_eq!(attribution.entries.len(), 3);\n+    }\n+\n+    #[test]\n+    fn entry_field_normalization() {\n+        let value = json!({\n+            \"module\": \"m\",\n+            \"target\": \"rust\",\n+            \"entries\": [\n+                {\"promptLines\": [8], \"file\": \"a.rs\", \"lines\": 3}\n+            ]\n+        });\n+        let attribution = validate_attribution(value).unwrap();\n+        let entry = &attribution.entries[0];\n+        assert_eq!(entry.prompt_lines, LineRange::new(8, 8));\n+        assert_eq!(entry.lines, LineRange::new(3, 3));\n+        assert_eq!(entry.note, \"\");\n+    }\n+\n+    #[test]\n+    fn entries_default_to_empty_when_absent() {\n+        let value = json!({\"module\": \"m\", \"target\": \"rust\"});\n+        let attribution = validate_attribution(value).unwrap();\n+        assert!(attribution.entries.is_empty());\n+    }\n+\n+    #[test]\n+    fn rejects_empty_module() {\n+        let value = json!({\"module\": \"\", \"target\": \"rust\", \"entries\": []});\n+        assert_eq!(validate_attribution(value), Err(AttributionError::EmptyModule));\n+    }\n+\n+    #[test]\n+    fn rejects_empty_target() {\n+        let value = json!({\"module\": \"m\", \"target\": \"\", \"entries\": []});\n+        assert_eq!(validate_attribution(value), Err(AttributionError::EmptyTarget));\n+    }\n+\n+    #[test]\n+    fn rejects_entry_with_empty_file() {\n+        let value = json!({\n+            \"module\": \"m\",\n+            \"target\": \"rust\",\n+            \"entries\": [\n+                {\"promptLines\": 1, \"file\": \"\", \"lines\": 1}\n+            ]\n+        });\n+        assert_eq!(validate_attribution(value), Err(AttributionError::EmptyFile));\n+    }\n+\n+    #[test]\n+    fn rejects_entry_missing_file() {\n+        let value = json!({\n+            \"module\": \"m\",\n+            \"target\": \"rust\",\n+            \"entries\": [\n+                {\"promptLines\": 1, \"lines\": 1}\n+            ]\n+        });\n+        assert!(matches!(\n+            validate_attribution(value),\n+            Err(AttributionError::Parse(_))\n+        ));\n+    }\n+\n+    #[test]\n+    fn rejects_malformed_line_range() {\n+        let value = json!({\n+            \"module\": \"m\",\n+            \"target\": \"rust\",\n+            \"entries\": [\n+                {\"promptLines\": 1.5, \"file\": \"a.rs\", \"lines\": 1}\n+            ]\n+        });\n+        assert!(matches!(\n+            validate_attribution(value),\n+            Err(AttributionError::Parse(_))\n+        ));\n+    }\n+\n+    #[test]\n+    fn parse_entries_returns_empty_for_non_array() {\n+        let value = json!({\"not\": \"an array\"});\n+        assert_eq!(parse_attribution_entries(value).unwrap(), Vec::new());\n+    }\n+\n+    #[test]\n+    fn parse_entries_parses_a_valid_list() {\n+        let value = json!([\n+            {\"promptLines\": [2, 2], \"file\": \"a.rs\", \"lines\": 1}\n+        ]);\n+        let entries = parse_attribution_entries(value).unwrap();\n+        assert_eq!(entries.len(), 1);\n+        assert_eq!(entries[0].file, \"a.rs\");\n+    }\n+\n+    #[test]\n+    fn parse_entries_rejects_entry_with_empty_file() {\n+        let value = json!([\n+            {\"promptLines\": [2, 2], \"file\": \"\", \"lines\": 1}\n+        ]);\n+        assert_eq!(\n+            parse_attribution_entries(value),\n+            Err(AttributionError::EmptyFile)\n+        );\n+    }\n+\n+    #[test]\n+    fn parse_entries_errors_on_malformed_list() {\n+        let value = json!([\n+            {\"promptLines\": \"nope\", \"file\": \"a.rs\", \"lines\": 1}\n+        ]);\n+        assert!(matches!(\n+            parse_attribution_entries(value),\n+            Err(AttributionError::Parse(_))\n+        ));\n+    }\n+\n+    #[test]\n+    fn entries_at_body_line_finds_all_containing_entries() {\n+        let attribution = validate_attribution(sample_document()).unwrap();\n+\n+        let at_3 = entries_at_body_line(&attribution, 3);\n+        assert_eq!(at_3.len(), 2);\n+        assert_eq!(at_3[0].note, \"trims whitespace\");\n+        assert_eq!(at_3[1].note, \"covers trimming\");\n+\n+        let at_2 = entries_at_body_line(&attribution, 2);\n+        assert_eq!(at_2.len(), 1);\n+        assert_eq!(at_2[0].note, \"builds the greeting\");\n+\n+        let at_9 = entries_at_body_line(&attribution, 9);\n+        assert!(at_9.is_empty());\n+    }\n+}"
+      },
+      {
+        "type": "file-edit",
+        "path": "schemas_attribution/src/lib.rs",
+        "content": "// GENERATED BY NAPL from schemas_attribution.napl — edit the prompt, not this file\n\nuse schemas_line_range::LineRange;\nuse serde::Deserialize;\n\nfn default_note() -> String {\n    String::new()\n}\n\n#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]\npub struct AttributionEntry {\n    #[serde(rename = \"promptLines\")]\n    pub prompt_lines: LineRange,\n    pub file: String,\n    pub lines: LineRange,\n    #[serde(default = \"default_note\")]\n    pub note: String,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]\npub struct Attribution {\n    pub module: String,\n    pub target: String,\n    #[serde(default)]\n    pub entries: Vec<AttributionEntry>,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq)]\npub enum AttributionError {\n    Parse(String),\n    EmptyModule,\n    EmptyTarget,\n    EmptyFile,\n}\n\nimpl std::fmt::Display for AttributionError {\n    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n        match self {\n            AttributionError::Parse(msg) => write!(f, \"failed to parse attribution: {msg}\"),\n            AttributionError::EmptyModule => write!(f, \"module must not be empty\"),\n            AttributionError::EmptyTarget => write!(f, \"target must not be empty\"),\n            AttributionError::EmptyFile => write!(f, \"entry file must not be empty\"),\n        }\n    }\n}\n\nimpl std::error::Error for AttributionError {}\n\npub fn validate_attribution(value: serde_json::Value) -> Result<Attribution, AttributionError> {\n    let attribution: Attribution =\n        serde_json::from_value(value).map_err(|e| AttributionError::Parse(e.to_string()))?;\n\n    if attribution.module.is_empty() {\n        return Err(AttributionError::EmptyModule);\n    }\n    if attribution.target.is_empty() {\n        return Err(AttributionError::EmptyTarget);\n    }\n    for entry in &attribution.entries {\n        if entry.file.is_empty() {\n            return Err(AttributionError::EmptyFile);\n        }\n    }\n\n    Ok(attribution)\n}\n\npub fn parse_attribution_entries(\n    value: serde_json::Value,\n) -> Result<Vec<AttributionEntry>, AttributionError> {\n    if !value.is_array() {\n        return Ok(Vec::new());\n    }\n\n    let entries: Vec<AttributionEntry> =\n        serde_json::from_value(value).map_err(|e| AttributionError::Parse(e.to_string()))?;\n\n    for entry in &entries {\n        if entry.file.is_empty() {\n            return Err(AttributionError::EmptyFile);\n        }\n    }\n\n    Ok(entries)\n}\n\npub fn entries_at_body_line(\n    attribution: &Attribution,\n    body_line: u32,\n) -> Vec<&AttributionEntry> {\n    attribution\n        .entries\n        .iter()\n        .filter(|entry| {\n            entry.prompt_lines.start <= body_line && body_line <= entry.prompt_lines.end\n        })\n        .collect()\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n    use serde_json::json;\n\n    fn sample_document() -> serde_json::Value {\n        json!({\n            \"module\": \"m\",\n            \"target\": \"rust\",\n            \"entries\": [\n                {\"promptLines\": [2, 2], \"file\": \"a.rs\", \"lines\": 1, \"note\": \"builds the greeting\"},\n                {\"promptLines\": [3, 4], \"file\": \"a.rs\", \"lines\": 2, \"note\": \"trims whitespace\"},\n                {\"promptLines\": [3, 3], \"file\": \"a.rs\", \"lines\": 3, \"note\": \"covers trimming\"}\n            ]\n        })\n    }\n\n    #[test]\n    fn validates_a_well_formed_document() {\n        let attribution = validate_attribution(sample_document()).unwrap();\n        assert_eq!(attribution.module, \"m\");\n        assert_eq!(attribution.target, \"rust\");\n        assert_eq!(attribution.entries.len(), 3);\n    }\n\n    #[test]\n    fn entry_field_normalization() {\n        let value = json!({\n            \"module\": \"m\",\n            \"target\": \"rust\",\n            \"entries\": [\n                {\"promptLines\": [8], \"file\": \"a.rs\", \"lines\": 3}\n            ]\n        });\n        let attribution = validate_attribution(value).unwrap();\n        let entry = &attribution.entries[0];\n        assert_eq!(entry.prompt_lines, LineRange::new(8, 8));\n        assert_eq!(entry.lines, LineRange::new(3, 3));\n        assert_eq!(entry.note, \"\");\n    }\n\n    #[test]\n    fn entries_default_to_empty_when_absent() {\n        let value = json!({\"module\": \"m\", \"target\": \"rust\"});\n        let attribution = validate_attribution(value).unwrap();\n        assert!(attribution.entries.is_empty());\n    }\n\n    #[test]\n    fn rejects_empty_module() {\n        let value = json!({\"module\": \"\", \"target\": \"rust\", \"entries\": []});\n        assert_eq!(validate_attribution(value), Err(AttributionError::EmptyModule));\n    }\n\n    #[test]\n    fn rejects_empty_target() {\n        let value = json!({\"module\": \"m\", \"target\": \"\", \"entries\": []});\n        assert_eq!(validate_attribution(value), Err(AttributionError::EmptyTarget));\n    }\n\n    #[test]\n    fn rejects_entry_with_empty_file() {\n        let value = json!({\n            \"module\": \"m\",\n            \"target\": \"rust\",\n            \"entries\": [\n                {\"promptLines\": 1, \"file\": \"\", \"lines\": 1}\n            ]\n        });\n        assert_eq!(validate_attribution(value), Err(AttributionError::EmptyFile));\n    }\n\n    #[test]\n    fn rejects_entry_missing_file() {\n        let value = json!({\n            \"module\": \"m\",\n            \"target\": \"rust\",\n            \"entries\": [\n                {\"promptLines\": 1, \"lines\": 1}\n            ]\n        });\n        assert!(matches!(\n            validate_attribution(value),\n            Err(AttributionError::Parse(_))\n        ));\n    }\n\n    #[test]\n    fn rejects_malformed_line_range() {\n        let value = json!({\n            \"module\": \"m\",\n            \"target\": \"rust\",\n            \"entries\": [\n                {\"promptLines\": 1.5, \"file\": \"a.rs\", \"lines\": 1}\n            ]\n        });\n        assert!(matches!(\n            validate_attribution(value),\n            Err(AttributionError::Parse(_))\n        ));\n    }\n\n    #[test]\n    fn parse_entries_returns_empty_for_non_array() {\n        let value = json!({\"not\": \"an array\"});\n        assert_eq!(parse_attribution_entries(value).unwrap(), Vec::new());\n    }\n\n    #[test]\n    fn parse_entries_parses_a_valid_list() {\n        let value = json!([\n            {\"promptLines\": [2, 2], \"file\": \"a.rs\", \"lines\": 1}\n        ]);\n        let entries = parse_attribution_entries(value).unwrap();\n        assert_eq!(entries.len(), 1);\n        assert_eq!(entries[0].file, \"a.rs\");\n    }\n\n    #[test]\n    fn parse_entries_rejects_entry_with_empty_file() {\n        let value = json!([\n            {\"promptLines\": [2, 2], \"file\": \"\", \"lines\": 1}\n        ]);\n        assert_eq!(\n            parse_attribution_entries(value),\n            Err(AttributionError::EmptyFile)\n        );\n    }\n\n    #[test]\n    fn parse_entries_errors_on_malformed_list() {\n        let value = json!([\n            {\"promptLines\": \"nope\", \"file\": \"a.rs\", \"lines\": 1}\n        ]);\n        assert!(matches!(\n            parse_attribution_entries(value),\n            Err(AttributionError::Parse(_))\n        ));\n    }\n\n    #[test]\n    fn entries_at_body_line_finds_all_containing_entries() {\n        let attribution = validate_attribution(sample_document()).unwrap();\n\n        let at_3 = entries_at_body_line(&attribution, 3);\n        assert_eq!(at_3.len(), 2);\n        assert_eq!(at_3[0].note, \"trims whitespace\");\n        assert_eq!(at_3[1].note, \"covers trimming\");\n\n        let at_2 = entries_at_body_line(&attribution, 2);\n        assert_eq!(at_2.len(), 1);\n        assert_eq!(at_2[0].note, \"builds the greeting\");\n\n        let at_9 = entries_at_body_line(&attribution, 9);\n        assert!(at_9.is_empty());\n    }\n}\n"
+      },
+      {
+        "type": "attribution",
+        "module": "schemas_attribution",
+        "target": "rust",
+        "entries": [
+          {
+            "promptLines": [
+              5,
+              6
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              3,
+              4
+            ],
+            "note": "bring in schemas_line_range and serde"
+          },
+          {
+            "promptLines": [
+              43,
+              45
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              10,
+              13
+            ],
+            "note": "AttributionEntry struct with promptLines camelCase rename"
+          },
+          {
+            "promptLines": [
+              46,
+              47
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              14,
+              15
+            ],
+            "note": "file and lines fields"
+          },
+          {
+            "promptLines": [
+              48,
+              48
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              6,
+              8
+            ],
+            "note": "default_note helper for empty-string default"
+          },
+          {
+            "promptLines": [
+              48,
+              48
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              16,
+              17
+            ],
+            "note": "note field defaults via default_note"
+          },
+          {
+            "promptLines": [
+              49,
+              53
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              20,
+              26
+            ],
+            "note": "Attribution struct with module, target, entries default"
+          },
+          {
+            "promptLines": [
+              57,
+              63
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              49,
+              66
+            ],
+            "note": "validate_attribution deserializes then checks non-empty module/target/file"
+          },
+          {
+            "promptLines": [
+              57,
+              63
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              28,
+              47
+            ],
+            "note": "AttributionError enum and Display impl for rejection errors"
+          },
+          {
+            "promptLines": [
+              64,
+              68
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              68,
+              85
+            ],
+            "note": "parse_attribution_entries returns empty for non-array else validates entries"
+          },
+          {
+            "promptLines": [
+              70,
+              72
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              126,
+              139
+            ],
+            "note": "test for single-line spelling normalization and missing note default"
+          },
+          {
+            "promptLines": [
+              76,
+              78
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              87,
+              98
+            ],
+            "note": "entries_at_body_line filters by inclusive range in document order"
+          },
+          {
+            "promptLines": [
+              80,
+              85
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              105,
+              115
+            ],
+            "note": "sample_document fixture matching the example entries"
+          },
+          {
+            "promptLines": [
+              80,
+              85
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              241,
+              255
+            ],
+            "note": "test asserting entries at body lines 3, 2, 9 match the example"
+          },
+          {
+            "promptLines": [
+              60,
+              63
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              160,
+              185
+            ],
+            "note": "tests for empty/missing file rejection"
+          },
+          {
+            "promptLines": [
+              60,
+              60
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              188,
+              200
+            ],
+            "note": "test rejects malformed line range as deserialization error"
+          },
+          {
+            "promptLines": [
+              65,
+              65
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              202,
+              206
+            ],
+            "note": "test parse_entries_returns_empty_for_non_array"
+          },
+          {
+            "promptLines": [
+              66,
+              68
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              208,
+              238
+            ],
+            "note": "tests parsing valid list, empty file rejection, malformed list error"
+          },
+          {
+            "promptLines": [
+              53,
+              53
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              142,
+              146
+            ],
+            "note": "test entries default to empty when absent"
+          },
+          {
+            "promptLines": [
+              58,
+              59
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              148,
+              158
+            ],
+            "note": "tests rejects empty module and empty target"
+          }
+        ]
+      },
+      {
+        "type": "mapl-entry",
+        "path": "schemas_attribution.mapl",
+        "entry": {
+          "promptLines": [
+            1,
+            86
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "Prompt fully implemented, no ambiguity found worth flagging.",
+          "reasoning": "Agent created schemas_attribution/{Cargo.toml,src/lib.rs} with AttributionEntry, Attribution, validate_attribution, parse_attribution_entries, entries_at_body_line exactly matching spec — camelCase rename, note default, entries default, malformed-vs-missing-file error split, non-array returns empty list, inclusive containment lookup. 13 tests cover all documented behaviors including the worked example. No deviations to note."
+        }
+      },
+      {
+        "type": "lock",
+        "module": "schemas_attribution",
+        "target": "rust",
+        "files": [
+          {
+            "path": "schemas_attribution/Cargo.toml",
+            "hash": "e5808ea935540a22afda52de4a2f8de967d69ad88e366b57220aa3368012057f"
+          },
+          {
+            "path": "schemas_attribution/src/lib.rs",
+            "hash": "00869fe4f11589e2e93e4bc423b1760c546811be7803a4e9b389e4a69eb81de0"
+          }
+        ]
+      }
+    ]
+  }
+}

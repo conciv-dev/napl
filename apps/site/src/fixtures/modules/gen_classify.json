@@ -1,0 +1,454 @@
+{
+  "module": "gen_classify",
+  "collection": "selfhost",
+  "target": "rust",
+  "targets": [
+    "rust"
+  ],
+  "prompt": {
+    "file": "gen_classify.napl",
+    "path": "cli/gen_classify.napl",
+    "content": "---\nmodule: gen_classify\ndeps: []\ntargets: [rust]\ntests:\n  - name: known source extensions are source files\n    given: { path: \"src/lib.rs\" }\n    expect: { is_source: true }\n  - name: tsx is a source file\n    given: { path: \"app.tsx\" }\n    expect: { is_source: true }\n  - name: css and html are source files\n    given: { path: \"page.html\" }\n    expect: { is_source: true }\n  - name: config files are excluded\n    given: { path: \"vite.config.ts\" }\n    expect: { is_source: false }\n  - name: unknown extensions are not source files\n    given: { path: \"README.md\" }\n    expect: { is_source: false }\n  - name: extensionless files are not source files\n    given: { path: \"noext\" }\n    expect: { is_source: false }\n  - name: heading markers and surrounding whitespace are stripped for the description\n    given: { body: \"# Title\\n\\nBody line\" }\n    expect: { description: \"Title\" }\n  - name: an empty or blank-only body yields the no-description placeholder\n    given: { body: \"   \\n\\t\\n\" }\n    expect: { description: \"(no description)\" }\n  - name: a CRLF body splits into lines with carriage returns removed\n    given: { content: \"a\\r\\nb\\nc\" }\n    expect: { lines: [\"a\", \"b\", \"c\"] }\n---\n# Pure classification and derivation helpers for the generator\n\nThis module is a small set of **pure** helpers the code-generation command uses to\nclassify files and derive one-line descriptions from prompt bodies. Every function\nis pure — no filesystem access, no process spawning, no dependencies on other\nproject modules. The I/O shell reads files and prompt text off disk, then calls\nthese helpers over the already-read strings.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `gen_classify/`: `gen_classify/Cargo.toml` (package\nname `gen_classify`) and `gen_classify/src/lib.rs`. Touch nothing outside\n`gen_classify/`. Ensure `cargo test` passes from the workspace root before\nfinishing.\n\n## The source-file extensions\n\nExpose a public constant array of the recognized source-file extensions, in\nexactly this order, each including its leading dot: `.ts`, `.tsx`, `.js`, `.jsx`,\n`.css`, `.html`, `.rs`.\n\n## `is_source_file(rel_to_target: &str) -> bool`\n\nDecide whether a path (relative to the generation target directory) names a source\nfile that should be numbered for attribution. Steps:\n\n1. Take the **base name** — the substring after the last `/`, or the whole string\n   when there is no `/`.\n2. If the base name ends with any of these four config suffixes, it is **not** a\n   source file (return `false`): `.config.ts`, `.config.tsx`, `.config.js`,\n   `.config.jsx`.\n3. Find the last `.` in the base name. If there is none, it is not a source file\n   (return `false`).\n4. Otherwise the extension is the base name from that last `.` to the end\n   (including the dot). Return `true` when that extension is one of the recognized\n   source-file extensions above, and `false` otherwise.\n\nWorked decisions: `src/lib.rs` → `true` (`.rs`); `app.tsx` → `true`; `page.html`\n→ `true`; `vite.config.ts` → `false` (config suffix); `README.md` → `false`\n(`.md` is not recognized); `noext` → `false` (no extension).\n\n## `first_meaningful_line(body: &str) -> String`\n\nDerive a one-line description from a prompt body. Split the body on `\\n`. For each\nline, in order: strip a single trailing `\\r` if present, then strip **all** leading\n`#` characters, then trim leading and trailing whitespace. Return the first such\nresult that is non-empty, capped to at most the first 120 Unicode characters. If no\nline produces a non-empty result, return the literal string `(no description)`.\n\nWorked decisions: `# Title\\n\\nBody line` → `Title` (the heading marker and blanks\nare skipped/stripped); `### Deep\\nmore` → `Deep`; a body of only whitespace lines\n→ `(no description)`; a single line of 200 `x` characters → exactly 120 `x`\ncharacters.\n\n## `split_body_lines(content: &str) -> Vec<String>`\n\nSplit content into lines for numbering. Split on `\\n`; for each piece, strip a\nsingle trailing `\\r` if present, and collect the results as owned strings. This is\nthe CRLF-aware line split: `a\\r\\nb\\nc` → `[\"a\", \"b\", \"c\"]`; the empty string →\n`[\"\"]` (one empty line); `x\\r\\n` → `[\"x\", \"\"]` (a trailing newline yields a final\nempty line).\n"
+  },
+  "promptAtGen": "# Pure classification and derivation helpers for the generator\n\nThis module is a small set of **pure** helpers the code-generation command uses to\nclassify files and derive one-line descriptions from prompt bodies. Every function\nis pure — no filesystem access, no process spawning, no dependencies on other\nproject modules. The I/O shell reads files and prompt text off disk, then calls\nthese helpers over the already-read strings.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `gen_classify/`: `gen_classify/Cargo.toml` (package\nname `gen_classify`) and `gen_classify/src/lib.rs`. Touch nothing outside\n`gen_classify/`. Ensure `cargo test` passes from the workspace root before\nfinishing.\n\n## The source-file extensions\n\nExpose a public constant array of the recognized source-file extensions, in\nexactly this order, each including its leading dot: `.ts`, `.tsx`, `.js`, `.jsx`,\n`.css`, `.html`, `.rs`.\n\n## `is_source_file(rel_to_target: &str) -> bool`\n\nDecide whether a path (relative to the generation target directory) names a source\nfile that should be numbered for attribution. Steps:\n\n1. Take the **base name** — the substring after the last `/`, or the whole string\n   when there is no `/`.\n2. If the base name ends with any of these four config suffixes, it is **not** a\n   source file (return `false`): `.config.ts`, `.config.tsx`, `.config.js`,\n   `.config.jsx`.\n3. Find the last `.` in the base name. If there is none, it is not a source file\n   (return `false`).\n4. Otherwise the extension is the base name from that last `.` to the end\n   (including the dot). Return `true` when that extension is one of the recognized\n   source-file extensions above, and `false` otherwise.\n\nWorked decisions: `src/lib.rs` → `true` (`.rs`); `app.tsx` → `true`; `page.html`\n→ `true`; `vite.config.ts` → `false` (config suffix); `README.md` → `false`\n(`.md` is not recognized); `noext` → `false` (no extension).\n\n## `first_meaningful_line(body: &str) -> String`\n\nDerive a one-line description from a prompt body. Split the body on `\\n`. For each\nline, in order: strip a single trailing `\\r` if present, then strip **all** leading\n`#` characters, then trim leading and trailing whitespace. Return the first such\nresult that is non-empty, capped to at most the first 120 Unicode characters. If no\nline produces a non-empty result, return the literal string `(no description)`.\n\nWorked decisions: `# Title\\n\\nBody line` → `Title` (the heading marker and blanks\nare skipped/stripped); `### Deep\\nmore` → `Deep`; a body of only whitespace lines\n→ `(no description)`; a single line of 200 `x` characters → exactly 120 `x`\ncharacters.\n\n## `split_body_lines(content: &str) -> Vec<String>`\n\nSplit content into lines for numbering. Split on `\\n`; for each piece, strip a\nsingle trailing `\\r` if present, and collect the results as owned strings. This is\nthe CRLF-aware line split: `a\\r\\nb\\nc` → `[\"a\", \"b\", \"c\"]`; the empty string →\n`[\"\"]` (one empty line); `x\\r\\n` → `[\"x\", \"\"]` (a trailing newline yields a final\nempty line).\n",
+  "summary": "Pure classification and derivation helpers for the generator",
+  "files": [
+    {
+      "path": "gen_classify/Cargo.toml",
+      "journalPath": ".napl/src/rust/gen_classify/Cargo.toml",
+      "content": "[package]\nname = \"gen_classify\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n",
+      "language": "toml"
+    },
+    {
+      "path": "gen_classify/src/lib.rs",
+      "journalPath": ".napl/src/rust/gen_classify/src/lib.rs",
+      "content": "//! Pure classification and derivation helpers for the generator.\n\n/// Recognized source-file extensions, in priority order.\npub const SOURCE_FILE_EXTENSIONS: [&str; 7] =\n    [\".ts\", \".tsx\", \".js\", \".jsx\", \".css\", \".html\", \".rs\"];\n\nconst CONFIG_SUFFIXES: [&str; 4] = [\".config.ts\", \".config.tsx\", \".config.js\", \".config.jsx\"];\n\n/// Decide whether a path (relative to the generation target directory) names\n/// a source file that should be numbered for attribution.\npub fn is_source_file(rel_to_target: &str) -> bool {\n    let base = match rel_to_target.rsplit_once('/') {\n        Some((_, tail)) => tail,\n        None => rel_to_target,\n    };\n\n    if CONFIG_SUFFIXES.iter().any(|suffix| base.ends_with(suffix)) {\n        return false;\n    }\n\n    let Some(dot_idx) = base.rfind('.') else {\n        return false;\n    };\n\n    let ext = &base[dot_idx..];\n    SOURCE_FILE_EXTENSIONS.contains(&ext)\n}\n\n/// Derive a one-line description from a prompt body.\npub fn first_meaningful_line(body: &str) -> String {\n    for line in body.split('\\n') {\n        let stripped = line.strip_suffix('\\r').unwrap_or(line);\n        let stripped = stripped.trim_start_matches('#');\n        let trimmed = stripped.trim();\n        if !trimmed.is_empty() {\n            let capped: String = trimmed.chars().take(120).collect();\n            return capped;\n        }\n    }\n    \"(no description)\".to_string()\n}\n\n/// Split content into CRLF-aware lines for numbering.\npub fn split_body_lines(content: &str) -> Vec<String> {\n    content\n        .split('\\n')\n        .map(|piece| piece.strip_suffix('\\r').unwrap_or(piece).to_string())\n        .collect()\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn source_file_extensions_order() {\n        assert_eq!(\n            SOURCE_FILE_EXTENSIONS,\n            [\".ts\", \".tsx\", \".js\", \".jsx\", \".css\", \".html\", \".rs\"]\n        );\n    }\n\n    #[test]\n    fn is_source_file_recognizes_extensions() {\n        assert!(is_source_file(\"src/lib.rs\"));\n        assert!(is_source_file(\"app.tsx\"));\n        assert!(is_source_file(\"page.html\"));\n        assert!(is_source_file(\"style.css\"));\n        assert!(is_source_file(\"index.js\"));\n        assert!(is_source_file(\"index.jsx\"));\n        assert!(is_source_file(\"index.ts\"));\n    }\n\n    #[test]\n    fn is_source_file_rejects_config_suffixes() {\n        assert!(!is_source_file(\"vite.config.ts\"));\n        assert!(!is_source_file(\"vite.config.tsx\"));\n        assert!(!is_source_file(\"vite.config.js\"));\n        assert!(!is_source_file(\"vite.config.jsx\"));\n        assert!(!is_source_file(\"path/to/vite.config.ts\"));\n    }\n\n    #[test]\n    fn is_source_file_rejects_unrecognized_extension() {\n        assert!(!is_source_file(\"README.md\"));\n    }\n\n    #[test]\n    fn is_source_file_rejects_no_extension() {\n        assert!(!is_source_file(\"noext\"));\n    }\n\n    #[test]\n    fn is_source_file_uses_base_name_after_last_slash() {\n        assert!(is_source_file(\"a/b/c/main.rs\"));\n        assert!(!is_source_file(\"a/b/c/noext\"));\n    }\n\n    #[test]\n    fn first_meaningful_line_strips_heading_markers() {\n        assert_eq!(first_meaningful_line(\"# Title\\n\\nBody line\"), \"Title\");\n        assert_eq!(first_meaningful_line(\"### Deep\\nmore\"), \"Deep\");\n    }\n\n    #[test]\n    fn first_meaningful_line_whitespace_only_body() {\n        assert_eq!(first_meaningful_line(\"   \\n\\t\\n  \"), \"(no description)\");\n    }\n\n    #[test]\n    fn first_meaningful_line_caps_at_120_chars() {\n        let body = \"x\".repeat(200);\n        let result = first_meaningful_line(&body);\n        assert_eq!(result.chars().count(), 120);\n        assert!(result.chars().all(|c| c == 'x'));\n    }\n\n    #[test]\n    fn first_meaningful_line_empty_body() {\n        assert_eq!(first_meaningful_line(\"\"), \"(no description)\");\n    }\n\n    #[test]\n    fn first_meaningful_line_strips_trailing_cr() {\n        assert_eq!(first_meaningful_line(\"# Title\\r\\nmore\"), \"Title\");\n    }\n\n    #[test]\n    fn split_body_lines_handles_crlf_and_lf() {\n        assert_eq!(\n            split_body_lines(\"a\\r\\nb\\nc\"),\n            vec![\"a\".to_string(), \"b\".to_string(), \"c\".to_string()]\n        );\n    }\n\n    #[test]\n    fn split_body_lines_empty_string() {\n        assert_eq!(split_body_lines(\"\"), vec![\"\".to_string()]);\n    }\n\n    #[test]\n    fn split_body_lines_trailing_newline_yields_final_empty_line() {\n        assert_eq!(\n            split_body_lines(\"x\\r\\n\"),\n            vec![\"x\".to_string(), \"\".to_string()]\n        );\n    }\n}\n",
+      "language": "rust"
+    }
+  ],
+  "attribution": [
+    {
+      "promptLines": [
+        20,
+        22
+      ],
+      "file": "gen_classify/src/lib.rs",
+      "lines": [
+        4,
+        5
+      ],
+      "note": "recognized source-file extensions const array"
+    },
+    {
+      "promptLines": [
+        24,
+        28
+      ],
+      "file": "gen_classify/src/lib.rs",
+      "lines": [
+        11,
+        15
+      ],
+      "note": "is_source_file signature, base name extraction"
+    },
+    {
+      "promptLines": [
+        31,
+        33
+      ],
+      "file": "gen_classify/src/lib.rs",
+      "lines": [
+        7,
+        19
+      ],
+      "note": "config suffix check returns false"
+    },
+    {
+      "promptLines": [
+        34,
+        35
+      ],
+      "file": "gen_classify/src/lib.rs",
+      "lines": [
+        21,
+        23
+      ],
+      "note": "find last dot, no dot -> false"
+    },
+    {
+      "promptLines": [
+        36,
+        38
+      ],
+      "file": "gen_classify/src/lib.rs",
+      "lines": [
+        25,
+        26
+      ],
+      "note": "extension slice, membership check"
+    },
+    {
+      "promptLines": [
+        40,
+        42
+      ],
+      "file": "gen_classify/src/lib.rs",
+      "lines": [
+        65,
+        91
+      ],
+      "note": "worked-decision tests for is_source_file"
+    },
+    {
+      "promptLines": [
+        44,
+        50
+      ],
+      "file": "gen_classify/src/lib.rs",
+      "lines": [
+        30,
+        41
+      ],
+      "note": "first_meaningful_line impl - split, strip CR/#, trim, cap 120, default"
+    },
+    {
+      "promptLines": [
+        52,
+        55
+      ],
+      "file": "gen_classify/src/lib.rs",
+      "lines": [
+        100,
+        116
+      ],
+      "note": "worked-decision tests for first_meaningful_line"
+    },
+    {
+      "promptLines": [
+        57,
+        63
+      ],
+      "file": "gen_classify/src/lib.rs",
+      "lines": [
+        44,
+        49
+      ],
+      "note": "split_body_lines CRLF-aware split impl"
+    },
+    {
+      "promptLines": [
+        61,
+        63
+      ],
+      "file": "gen_classify/src/lib.rs",
+      "lines": [
+        129,
+        147
+      ],
+      "note": "worked-decision tests for split_body_lines"
+    }
+  ],
+  "attributionYaml": "module: gen_classify\ntarget: rust\nentries:\n  - promptLines:\n      - 20\n      - 22\n    file: gen_classify/src/lib.rs\n    lines:\n      - 4\n      - 5\n    note: recognized source-file extensions const array\n  - promptLines:\n      - 24\n      - 28\n    file: gen_classify/src/lib.rs\n    lines:\n      - 11\n      - 15\n    note: is_source_file signature, base name extraction\n  - promptLines:\n      - 31\n      - 33\n    file: gen_classify/src/lib.rs\n    lines:\n      - 7\n      - 19\n    note: config suffix check returns false\n  - promptLines:\n      - 34\n      - 35\n    file: gen_classify/src/lib.rs\n    lines:\n      - 21\n      - 23\n    note: find last dot, no dot -> false\n  - promptLines:\n      - 36\n      - 38\n    file: gen_classify/src/lib.rs\n    lines:\n      - 25\n      - 26\n    note: extension slice, membership check\n  - promptLines:\n      - 40\n      - 42\n    file: gen_classify/src/lib.rs\n    lines:\n      - 65\n      - 91\n    note: worked-decision tests for is_source_file\n  - promptLines:\n      - 44\n      - 50\n    file: gen_classify/src/lib.rs\n    lines:\n      - 30\n      - 41\n    note: first_meaningful_line impl - split, strip CR/#, trim, cap 120, default\n  - promptLines:\n      - 52\n      - 55\n    file: gen_classify/src/lib.rs\n    lines:\n      - 100\n      - 116\n    note: worked-decision tests for first_meaningful_line\n  - promptLines:\n      - 57\n      - 63\n    file: gen_classify/src/lib.rs\n    lines:\n      - 44\n      - 49\n    note: split_body_lines CRLF-aware split impl\n  - promptLines:\n      - 61\n      - 63\n    file: gen_classify/src/lib.rs\n    lines:\n      - 129\n      - 147\n    note: worked-decision tests for split_body_lines\n",
+  "mapl": [
+    {
+      "promptLines": [
+        11,
+        16
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "Crate scaffolded correctly under gen_classify/, workspace untouched.",
+      "reasoning": "Prompt say root manifest owned by toolchain, leave alone, new crate at gen_classify/Cargo.toml + src/lib.rs. Agent output shows only lib.rs touched (Cargo.toml presumably added too); no workspace edits reported. Matches spec."
+    },
+    {
+      "promptLines": [
+        24,
+        42
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "is_source_file logic matches spec exactly, incl. worked examples as tests.",
+      "reasoning": "Base-name extraction, config-suffix check, last-dot extension check all implemented per steps; test suite covers each worked decision line-for-line."
+    },
+    {
+      "promptLines": [
+        44,
+        55
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "first_meaningful_line matches spec, 120-char cap uses char count not byte len.",
+      "reasoning": "chars().take(120) correctly handles Unicode char cap as required; worked examples covered by tests."
+    },
+    {
+      "promptLines": [
+        57,
+        63
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "split_body_lines matches CRLF-aware spec exactly, worked examples covered.",
+      "reasoning": "split('\\n') + strip_suffix('\\r') matches; empty string and trailing-newline cases tested per spec."
+    }
+  ],
+  "journal": [
+    {
+      "gen": 35,
+      "timestamp": "2026-07-24T10:01:01.657Z",
+      "mode": "full",
+      "promptHash": "3627515696a514875f675bff4c4b5d80502695bc2ee3cd1c112a1863e40dc2d1",
+      "files": [
+        {
+          "path": "gen_classify/Cargo.toml",
+          "journalPath": ".napl/src/rust/gen_classify/Cargo.toml",
+          "patch": "@@ -0,0 +1,6 @@\n+[package]\n+name = \"gen_classify\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]"
+        },
+        {
+          "path": "gen_classify/src/lib.rs",
+          "journalPath": ".napl/src/rust/gen_classify/src/lib.rs",
+          "patch": "@@ -0,0 +1,148 @@\n+//! Pure classification and derivation helpers for the generator.\n+\n+/// Recognized source-file extensions, in priority order.\n+pub const SOURCE_FILE_EXTENSIONS: [&str; 7] =\n+    [\".ts\", \".tsx\", \".js\", \".jsx\", \".css\", \".html\", \".rs\"];\n+\n+const CONFIG_SUFFIXES: [&str; 4] = [\".config.ts\", \".config.tsx\", \".config.js\", \".config.jsx\"];\n+\n+/// Decide whether a path (relative to the generation target directory) names\n+/// a source file that should be numbered for attribution.\n+pub fn is_source_file(rel_to_target: &str) -> bool {\n+    let base = match rel_to_target.rsplit_once('/') {\n+        Some((_, tail)) => tail,\n+        None => rel_to_target,\n+    };\n+\n+    if CONFIG_SUFFIXES.iter().any(|suffix| base.ends_with(suffix)) {\n+        return false;\n+    }\n+\n+    let Some(dot_idx) = base.rfind('.') else {\n+        return false;\n+    };\n+\n+    let ext = &base[dot_idx..];\n+    SOURCE_FILE_EXTENSIONS.contains(&ext)\n+}\n+\n+/// Derive a one-line description from a prompt body.\n+pub fn first_meaningful_line(body: &str) -> String {\n+    for line in body.split('\\n') {\n+        let stripped = line.strip_suffix('\\r').unwrap_or(line);\n+        let stripped = stripped.trim_start_matches('#');\n+        let trimmed = stripped.trim();\n+        if !trimmed.is_empty() {\n+            let capped: String = trimmed.chars().take(120).collect();\n+            return capped;\n+        }\n+    }\n+    \"(no description)\".to_string()\n+}\n+\n+/// Split content into CRLF-aware lines for numbering.\n+pub fn split_body_lines(content: &str) -> Vec<String> {\n+    content\n+        .split('\\n')\n+        .map(|piece| piece.strip_suffix('\\r').unwrap_or(piece).to_string())\n+        .collect()\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn source_file_extensions_order() {\n+        assert_eq!(\n+            SOURCE_FILE_EXTENSIONS,\n+            [\".ts\", \".tsx\", \".js\", \".jsx\", \".css\", \".html\", \".rs\"]\n+        );\n+    }\n+\n+    #[test]\n+    fn is_source_file_recognizes_extensions() {\n+        assert!(is_source_file(\"src/lib.rs\"));\n+        assert!(is_source_file(\"app.tsx\"));\n+        assert!(is_source_file(\"page.html\"));\n+        assert!(is_source_file(\"style.css\"));\n+        assert!(is_source_file(\"index.js\"));\n+        assert!(is_source_file(\"index.jsx\"));\n+        assert!(is_source_file(\"index.ts\"));\n+    }\n+\n+    #[test]\n+    fn is_source_file_rejects_config_suffixes() {\n+        assert!(!is_source_file(\"vite.config.ts\"));\n+        assert!(!is_source_file(\"vite.config.tsx\"));\n+        assert!(!is_source_file(\"vite.config.js\"));\n+        assert!(!is_source_file(\"vite.config.jsx\"));\n+        assert!(!is_source_file(\"path/to/vite.config.ts\"));\n+    }\n+\n+    #[test]\n+    fn is_source_file_rejects_unrecognized_extension() {\n+        assert!(!is_source_file(\"README.md\"));\n+    }\n+\n+    #[test]\n+    fn is_source_file_rejects_no_extension() {\n+        assert!(!is_source_file(\"noext\"));\n+    }\n+\n+    #[test]\n+    fn is_source_file_uses_base_name_after_last_slash() {\n+        assert!(is_source_file(\"a/b/c/main.rs\"));\n+        assert!(!is_source_file(\"a/b/c/noext\"));\n+    }\n+\n+    #[test]\n+    fn first_meaningful_line_strips_heading_markers() {\n+        assert_eq!(first_meaningful_line(\"# Title\\n\\nBody line\"), \"Title\");\n+        assert_eq!(first_meaningful_line(\"### Deep\\nmore\"), \"Deep\");\n+    }\n+\n+    #[test]\n+    fn first_meaningful_line_whitespace_only_body() {\n+        assert_eq!(first_meaningful_line(\"   \\n\\t\\n  \"), \"(no description)\");\n+    }\n+\n+    #[test]\n+    fn first_meaningful_line_caps_at_120_chars() {\n+        let body = \"x\".repeat(200);\n+        let result = first_meaningful_line(&body);\n+        assert_eq!(result.chars().count(), 120);\n+        assert!(result.chars().all(|c| c == 'x'));\n+    }\n+\n+    #[test]\n+    fn first_meaningful_line_empty_body() {\n+        assert_eq!(first_meaningful_line(\"\"), \"(no description)\");\n+    }\n+\n+    #[test]\n+    fn first_meaningful_line_strips_trailing_cr() {\n+        assert_eq!(first_meaningful_line(\"# Title\\r\\nmore\"), \"Title\");\n+    }\n+\n+    #[test]\n+    fn split_body_lines_handles_crlf_and_lf() {\n+        assert_eq!(\n+            split_body_lines(\"a\\r\\nb\\nc\"),\n+            vec![\"a\".to_string(), \"b\".to_string(), \"c\".to_string()]\n+        );\n+    }\n+\n+    #[test]\n+    fn split_body_lines_empty_string() {\n+        assert_eq!(split_body_lines(\"\"), vec![\"\".to_string()]);\n+    }\n+\n+    #[test]\n+    fn split_body_lines_trailing_newline_yields_final_empty_line() {\n+        assert_eq!(\n+            split_body_lines(\"x\\r\\n\"),\n+            vec![\"x\".to_string(), \"\".to_string()]\n+        );\n+    }\n+}"
+        }
+      ]
+    }
+  ],
+  "lock": [
+    {
+      "path": "gen_classify/Cargo.toml",
+      "hash": "196eeb541367f2fd7fa40afd882193f21bc9443ec75fa5406f4798edc5e4cc95"
+    },
+    {
+      "path": "gen_classify/src/lib.rs",
+      "hash": "f079dea119b5264c99f0fbefdfc3b7b22ca4e9335941a8176d784091f2c9ff99"
+    }
+  ],
+  "session": {
+    "task": "napl gen rust → gen_classify",
+    "files": {
+      "gen_classify.napl": "---\nmodule: gen_classify\ndeps: []\ntargets: [rust]\ntests:\n  - name: known source extensions are source files\n    given: { path: \"src/lib.rs\" }\n    expect: { is_source: true }\n  - name: tsx is a source file\n    given: { path: \"app.tsx\" }\n    expect: { is_source: true }\n  - name: css and html are source files\n    given: { path: \"page.html\" }\n    expect: { is_source: true }\n  - name: config files are excluded\n    given: { path: \"vite.config.ts\" }\n    expect: { is_source: false }\n  - name: unknown extensions are not source files\n    given: { path: \"README.md\" }\n    expect: { is_source: false }\n  - name: extensionless files are not source files\n    given: { path: \"noext\" }\n    expect: { is_source: false }\n  - name: heading markers and surrounding whitespace are stripped for the description\n    given: { body: \"# Title\\n\\nBody line\" }\n    expect: { description: \"Title\" }\n  - name: an empty or blank-only body yields the no-description placeholder\n    given: { body: \"   \\n\\t\\n\" }\n    expect: { description: \"(no description)\" }\n  - name: a CRLF body splits into lines with carriage returns removed\n    given: { content: \"a\\r\\nb\\nc\" }\n    expect: { lines: [\"a\", \"b\", \"c\"] }\n---\n# Pure classification and derivation helpers for the generator\n\nThis module is a small set of **pure** helpers the code-generation command uses to\nclassify files and derive one-line descriptions from prompt bodies. Every function\nis pure — no filesystem access, no process spawning, no dependencies on other\nproject modules. The I/O shell reads files and prompt text off disk, then calls\nthese helpers over the already-read strings.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `gen_classify/`: `gen_classify/Cargo.toml` (package\nname `gen_classify`) and `gen_classify/src/lib.rs`. Touch nothing outside\n`gen_classify/`. Ensure `cargo test` passes from the workspace root before\nfinishing.\n\n## The source-file extensions\n\nExpose a public constant array of the recognized source-file extensions, in\nexactly this order, each including its leading dot: `.ts`, `.tsx`, `.js`, `.jsx`,\n`.css`, `.html`, `.rs`.\n\n## `is_source_file(rel_to_target: &str) -> bool`\n\nDecide whether a path (relative to the generation target directory) names a source\nfile that should be numbered for attribution. Steps:\n\n1. Take the **base name** — the substring after the last `/`, or the whole string\n   when there is no `/`.\n2. If the base name ends with any of these four config suffixes, it is **not** a\n   source file (return `false`): `.config.ts`, `.config.tsx`, `.config.js`,\n   `.config.jsx`.\n3. Find the last `.` in the base name. If there is none, it is not a source file\n   (return `false`).\n4. Otherwise the extension is the base name from that last `.` to the end\n   (including the dot). Return `true` when that extension is one of the recognized\n   source-file extensions above, and `false` otherwise.\n\nWorked decisions: `src/lib.rs` → `true` (`.rs`); `app.tsx` → `true`; `page.html`\n→ `true`; `vite.config.ts` → `false` (config suffix); `README.md` → `false`\n(`.md` is not recognized); `noext` → `false` (no extension).\n\n## `first_meaningful_line(body: &str) -> String`\n\nDerive a one-line description from a prompt body. Split the body on `\\n`. For each\nline, in order: strip a single trailing `\\r` if present, then strip **all** leading\n`#` characters, then trim leading and trailing whitespace. Return the first such\nresult that is non-empty, capped to at most the first 120 Unicode characters. If no\nline produces a non-empty result, return the literal string `(no description)`.\n\nWorked decisions: `# Title\\n\\nBody line` → `Title` (the heading marker and blanks\nare skipped/stripped); `### Deep\\nmore` → `Deep`; a body of only whitespace lines\n→ `(no description)`; a single line of 200 `x` characters → exactly 120 `x`\ncharacters.\n\n## `split_body_lines(content: &str) -> Vec<String>`\n\nSplit content into lines for numbering. Split on `\\n`; for each piece, strip a\nsingle trailing `\\r` if present, and collect the results as owned strings. This is\nthe CRLF-aware line split: `a\\r\\nb\\nc` → `[\"a\", \"b\", \"c\"]`; the empty string →\n`[\"\"]` (one empty line); `x\\r\\n` → `[\"x\", \"\"]` (a trailing newline yields a final\nempty line).\n"
+    },
+    "events": [
+      {
+        "type": "task",
+        "task": "napl gen rust → gen_classify"
+      },
+      {
+        "type": "diff",
+        "path": "gen_classify/Cargo.toml",
+        "patch": "@@ -0,0 +1,6 @@\n+[package]\n+name = \"gen_classify\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]"
+      },
+      {
+        "type": "file-edit",
+        "path": "gen_classify/Cargo.toml",
+        "content": "[package]\nname = \"gen_classify\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n"
+      },
+      {
+        "type": "diff",
+        "path": "gen_classify/src/lib.rs",
+        "patch": "@@ -0,0 +1,148 @@\n+//! Pure classification and derivation helpers for the generator.\n+\n+/// Recognized source-file extensions, in priority order.\n+pub const SOURCE_FILE_EXTENSIONS: [&str; 7] =\n+    [\".ts\", \".tsx\", \".js\", \".jsx\", \".css\", \".html\", \".rs\"];\n+\n+const CONFIG_SUFFIXES: [&str; 4] = [\".config.ts\", \".config.tsx\", \".config.js\", \".config.jsx\"];\n+\n+/// Decide whether a path (relative to the generation target directory) names\n+/// a source file that should be numbered for attribution.\n+pub fn is_source_file(rel_to_target: &str) -> bool {\n+    let base = match rel_to_target.rsplit_once('/') {\n+        Some((_, tail)) => tail,\n+        None => rel_to_target,\n+    };\n+\n+    if CONFIG_SUFFIXES.iter().any(|suffix| base.ends_with(suffix)) {\n+        return false;\n+    }\n+\n+    let Some(dot_idx) = base.rfind('.') else {\n+        return false;\n+    };\n+\n+    let ext = &base[dot_idx..];\n+    SOURCE_FILE_EXTENSIONS.contains(&ext)\n+}\n+\n+/// Derive a one-line description from a prompt body.\n+pub fn first_meaningful_line(body: &str) -> String {\n+    for line in body.split('\\n') {\n+        let stripped = line.strip_suffix('\\r').unwrap_or(line);\n+        let stripped = stripped.trim_start_matches('#');\n+        let trimmed = stripped.trim();\n+        if !trimmed.is_empty() {\n+            let capped: String = trimmed.chars().take(120).collect();\n+            return capped;\n+        }\n+    }\n+    \"(no description)\".to_string()\n+}\n+\n+/// Split content into CRLF-aware lines for numbering.\n+pub fn split_body_lines(content: &str) -> Vec<String> {\n+    content\n+        .split('\\n')\n+        .map(|piece| piece.strip_suffix('\\r').unwrap_or(piece).to_string())\n+        .collect()\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn source_file_extensions_order() {\n+        assert_eq!(\n+            SOURCE_FILE_EXTENSIONS,\n+            [\".ts\", \".tsx\", \".js\", \".jsx\", \".css\", \".html\", \".rs\"]\n+        );\n+    }\n+\n+    #[test]\n+    fn is_source_file_recognizes_extensions() {\n+        assert!(is_source_file(\"src/lib.rs\"));\n+        assert!(is_source_file(\"app.tsx\"));\n+        assert!(is_source_file(\"page.html\"));\n+        assert!(is_source_file(\"style.css\"));\n+        assert!(is_source_file(\"index.js\"));\n+        assert!(is_source_file(\"index.jsx\"));\n+        assert!(is_source_file(\"index.ts\"));\n+    }\n+\n+    #[test]\n+    fn is_source_file_rejects_config_suffixes() {\n+        assert!(!is_source_file(\"vite.config.ts\"));\n+        assert!(!is_source_file(\"vite.config.tsx\"));\n+        assert!(!is_source_file(\"vite.config.js\"));\n+        assert!(!is_source_file(\"vite.config.jsx\"));\n+        assert!(!is_source_file(\"path/to/vite.config.ts\"));\n+    }\n+\n+    #[test]\n+    fn is_source_file_rejects_unrecognized_extension() {\n+        assert!(!is_source_file(\"README.md\"));\n+    }\n+\n+    #[test]\n+    fn is_source_file_rejects_no_extension() {\n+        assert!(!is_source_file(\"noext\"));\n+    }\n+\n+    #[test]\n+    fn is_source_file_uses_base_name_after_last_slash() {\n+        assert!(is_source_file(\"a/b/c/main.rs\"));\n+        assert!(!is_source_file(\"a/b/c/noext\"));\n+    }\n+\n+    #[test]\n+    fn first_meaningful_line_strips_heading_markers() {\n+        assert_eq!(first_meaningful_line(\"# Title\\n\\nBody line\"), \"Title\");\n+        assert_eq!(first_meaningful_line(\"### Deep\\nmore\"), \"Deep\");\n+    }\n+\n+    #[test]\n+    fn first_meaningful_line_whitespace_only_body() {\n+        assert_eq!(first_meaningful_line(\"   \\n\\t\\n  \"), \"(no description)\");\n+    }\n+\n+    #[test]\n+    fn first_meaningful_line_caps_at_120_chars() {\n+        let body = \"x\".repeat(200);\n+        let result = first_meaningful_line(&body);\n+        assert_eq!(result.chars().count(), 120);\n+        assert!(result.chars().all(|c| c == 'x'));\n+    }\n+\n+    #[test]\n+    fn first_meaningful_line_empty_body() {\n+        assert_eq!(first_meaningful_line(\"\"), \"(no description)\");\n+    }\n+\n+    #[test]\n+    fn first_meaningful_line_strips_trailing_cr() {\n+        assert_eq!(first_meaningful_line(\"# Title\\r\\nmore\"), \"Title\");\n+    }\n+\n+    #[test]\n+    fn split_body_lines_handles_crlf_and_lf() {\n+        assert_eq!(\n+            split_body_lines(\"a\\r\\nb\\nc\"),\n+            vec![\"a\".to_string(), \"b\".to_string(), \"c\".to_string()]\n+        );\n+    }\n+\n+    #[test]\n+    fn split_body_lines_empty_string() {\n+        assert_eq!(split_body_lines(\"\"), vec![\"\".to_string()]);\n+    }\n+\n+    #[test]\n+    fn split_body_lines_trailing_newline_yields_final_empty_line() {\n+        assert_eq!(\n+            split_body_lines(\"x\\r\\n\"),\n+            vec![\"x\".to_string(), \"\".to_string()]\n+        );\n+    }\n+}"
+      },
+      {
+        "type": "file-edit",
+        "path": "gen_classify/src/lib.rs",
+        "content": "//! Pure classification and derivation helpers for the generator.\n\n/// Recognized source-file extensions, in priority order.\npub const SOURCE_FILE_EXTENSIONS: [&str; 7] =\n    [\".ts\", \".tsx\", \".js\", \".jsx\", \".css\", \".html\", \".rs\"];\n\nconst CONFIG_SUFFIXES: [&str; 4] = [\".config.ts\", \".config.tsx\", \".config.js\", \".config.jsx\"];\n\n/// Decide whether a path (relative to the generation target directory) names\n/// a source file that should be numbered for attribution.\npub fn is_source_file(rel_to_target: &str) -> bool {\n    let base = match rel_to_target.rsplit_once('/') {\n        Some((_, tail)) => tail,\n        None => rel_to_target,\n    };\n\n    if CONFIG_SUFFIXES.iter().any(|suffix| base.ends_with(suffix)) {\n        return false;\n    }\n\n    let Some(dot_idx) = base.rfind('.') else {\n        return false;\n    };\n\n    let ext = &base[dot_idx..];\n    SOURCE_FILE_EXTENSIONS.contains(&ext)\n}\n\n/// Derive a one-line description from a prompt body.\npub fn first_meaningful_line(body: &str) -> String {\n    for line in body.split('\\n') {\n        let stripped = line.strip_suffix('\\r').unwrap_or(line);\n        let stripped = stripped.trim_start_matches('#');\n        let trimmed = stripped.trim();\n        if !trimmed.is_empty() {\n            let capped: String = trimmed.chars().take(120).collect();\n            return capped;\n        }\n    }\n    \"(no description)\".to_string()\n}\n\n/// Split content into CRLF-aware lines for numbering.\npub fn split_body_lines(content: &str) -> Vec<String> {\n    content\n        .split('\\n')\n        .map(|piece| piece.strip_suffix('\\r').unwrap_or(piece).to_string())\n        .collect()\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn source_file_extensions_order() {\n        assert_eq!(\n            SOURCE_FILE_EXTENSIONS,\n            [\".ts\", \".tsx\", \".js\", \".jsx\", \".css\", \".html\", \".rs\"]\n        );\n    }\n\n    #[test]\n    fn is_source_file_recognizes_extensions() {\n        assert!(is_source_file(\"src/lib.rs\"));\n        assert!(is_source_file(\"app.tsx\"));\n        assert!(is_source_file(\"page.html\"));\n        assert!(is_source_file(\"style.css\"));\n        assert!(is_source_file(\"index.js\"));\n        assert!(is_source_file(\"index.jsx\"));\n        assert!(is_source_file(\"index.ts\"));\n    }\n\n    #[test]\n    fn is_source_file_rejects_config_suffixes() {\n        assert!(!is_source_file(\"vite.config.ts\"));\n        assert!(!is_source_file(\"vite.config.tsx\"));\n        assert!(!is_source_file(\"vite.config.js\"));\n        assert!(!is_source_file(\"vite.config.jsx\"));\n        assert!(!is_source_file(\"path/to/vite.config.ts\"));\n    }\n\n    #[test]\n    fn is_source_file_rejects_unrecognized_extension() {\n        assert!(!is_source_file(\"README.md\"));\n    }\n\n    #[test]\n    fn is_source_file_rejects_no_extension() {\n        assert!(!is_source_file(\"noext\"));\n    }\n\n    #[test]\n    fn is_source_file_uses_base_name_after_last_slash() {\n        assert!(is_source_file(\"a/b/c/main.rs\"));\n        assert!(!is_source_file(\"a/b/c/noext\"));\n    }\n\n    #[test]\n    fn first_meaningful_line_strips_heading_markers() {\n        assert_eq!(first_meaningful_line(\"# Title\\n\\nBody line\"), \"Title\");\n        assert_eq!(first_meaningful_line(\"### Deep\\nmore\"), \"Deep\");\n    }\n\n    #[test]\n    fn first_meaningful_line_whitespace_only_body() {\n        assert_eq!(first_meaningful_line(\"   \\n\\t\\n  \"), \"(no description)\");\n    }\n\n    #[test]\n    fn first_meaningful_line_caps_at_120_chars() {\n        let body = \"x\".repeat(200);\n        let result = first_meaningful_line(&body);\n        assert_eq!(result.chars().count(), 120);\n        assert!(result.chars().all(|c| c == 'x'));\n    }\n\n    #[test]\n    fn first_meaningful_line_empty_body() {\n        assert_eq!(first_meaningful_line(\"\"), \"(no description)\");\n    }\n\n    #[test]\n    fn first_meaningful_line_strips_trailing_cr() {\n        assert_eq!(first_meaningful_line(\"# Title\\r\\nmore\"), \"Title\");\n    }\n\n    #[test]\n    fn split_body_lines_handles_crlf_and_lf() {\n        assert_eq!(\n            split_body_lines(\"a\\r\\nb\\nc\"),\n            vec![\"a\".to_string(), \"b\".to_string(), \"c\".to_string()]\n        );\n    }\n\n    #[test]\n    fn split_body_lines_empty_string() {\n        assert_eq!(split_body_lines(\"\"), vec![\"\".to_string()]);\n    }\n\n    #[test]\n    fn split_body_lines_trailing_newline_yields_final_empty_line() {\n        assert_eq!(\n            split_body_lines(\"x\\r\\n\"),\n            vec![\"x\".to_string(), \"\".to_string()]\n        );\n    }\n}\n"
+      },
+      {
+        "type": "attribution",
+        "module": "gen_classify",
+        "target": "rust",
+        "entries": [
+          {
+            "promptLines": [
+              20,
+              22
+            ],
+            "file": "gen_classify/src/lib.rs",
+            "lines": [
+              4,
+              5
+            ],
+            "note": "recognized source-file extensions const array"
+          },
+          {
+            "promptLines": [
+              24,
+              28
+            ],
+            "file": "gen_classify/src/lib.rs",
+            "lines": [
+              11,
+              15
+            ],
+            "note": "is_source_file signature, base name extraction"
+          },
+          {
+            "promptLines": [
+              31,
+              33
+            ],
+            "file": "gen_classify/src/lib.rs",
+            "lines": [
+              7,
+              19
+            ],
+            "note": "config suffix check returns false"
+          },
+          {
+            "promptLines": [
+              34,
+              35
+            ],
+            "file": "gen_classify/src/lib.rs",
+            "lines": [
+              21,
+              23
+            ],
+            "note": "find last dot, no dot -> false"
+          },
+          {
+            "promptLines": [
+              36,
+              38
+            ],
+            "file": "gen_classify/src/lib.rs",
+            "lines": [
+              25,
+              26
+            ],
+            "note": "extension slice, membership check"
+          },
+          {
+            "promptLines": [
+              40,
+              42
+            ],
+            "file": "gen_classify/src/lib.rs",
+            "lines": [
+              65,
+              91
+            ],
+            "note": "worked-decision tests for is_source_file"
+          },
+          {
+            "promptLines": [
+              44,
+              50
+            ],
+            "file": "gen_classify/src/lib.rs",
+            "lines": [
+              30,
+              41
+            ],
+            "note": "first_meaningful_line impl - split, strip CR/#, trim, cap 120, default"
+          },
+          {
+            "promptLines": [
+              52,
+              55
+            ],
+            "file": "gen_classify/src/lib.rs",
+            "lines": [
+              100,
+              116
+            ],
+            "note": "worked-decision tests for first_meaningful_line"
+          },
+          {
+            "promptLines": [
+              57,
+              63
+            ],
+            "file": "gen_classify/src/lib.rs",
+            "lines": [
+              44,
+              49
+            ],
+            "note": "split_body_lines CRLF-aware split impl"
+          },
+          {
+            "promptLines": [
+              61,
+              63
+            ],
+            "file": "gen_classify/src/lib.rs",
+            "lines": [
+              129,
+              147
+            ],
+            "note": "worked-decision tests for split_body_lines"
+          }
+        ]
+      },
+      {
+        "type": "mapl-entry",
+        "path": "gen_classify.mapl",
+        "entry": {
+          "promptLines": [
+            11,
+            16
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "Crate scaffolded correctly under gen_classify/, workspace untouched.",
+          "reasoning": "Prompt say root manifest owned by toolchain, leave alone, new crate at gen_classify/Cargo.toml + src/lib.rs. Agent output shows only lib.rs touched (Cargo.toml presumably added too); no workspace edits reported. Matches spec."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "gen_classify.mapl",
+        "entry": {
+          "promptLines": [
+            24,
+            42
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "is_source_file logic matches spec exactly, incl. worked examples as tests.",
+          "reasoning": "Base-name extraction, config-suffix check, last-dot extension check all implemented per steps; test suite covers each worked decision line-for-line."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "gen_classify.mapl",
+        "entry": {
+          "promptLines": [
+            44,
+            55
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "first_meaningful_line matches spec, 120-char cap uses char count not byte len.",
+          "reasoning": "chars().take(120) correctly handles Unicode char cap as required; worked examples covered by tests."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "gen_classify.mapl",
+        "entry": {
+          "promptLines": [
+            57,
+            63
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "split_body_lines matches CRLF-aware spec exactly, worked examples covered.",
+          "reasoning": "split('\\n') + strip_suffix('\\r') matches; empty string and trailing-newline cases tested per spec."
+        }
+      },
+      {
+        "type": "lock",
+        "module": "gen_classify",
+        "target": "rust",
+        "files": [
+          {
+            "path": "gen_classify/Cargo.toml",
+            "hash": "196eeb541367f2fd7fa40afd882193f21bc9443ec75fa5406f4798edc5e4cc95"
+          },
+          {
+            "path": "gen_classify/src/lib.rs",
+            "hash": "f079dea119b5264c99f0fbefdfc3b7b22ca4e9335941a8176d784091f2c9ff99"
+          }
+        ]
+      }
+    ]
+  }
+}

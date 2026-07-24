@@ -1,0 +1,310 @@
+{
+  "module": "gen_prompt_diff",
+  "collection": "selfhost",
+  "target": "rust",
+  "targets": [
+    "rust"
+  ],
+  "prompt": {
+    "file": "gen_prompt_diff.napl",
+    "path": "cli/gen_prompt_diff.napl",
+    "content": "---\nmodule: gen_prompt_diff\ndeps: [incremental]\ntargets: [rust]\ntests:\n  - name: no prior body yields an empty diff\n    given: { prior: null, body: \"body\" }\n    expect: { diff: \"\" }\n  - name: an unchanged body yields an empty diff\n    given: { prior: \"body\", body: \"body\" }\n    expect: { diff: \"\" }\n  - name: a changed body yields the incremental body-line diff\n    given: { prior: \"old line\", body: \"new line\" }\n    expect: { diff: \"diff_body_lines(\\\"old line\\\", \\\"new line\\\").unified\" }\n---\n# Deriving the prompt diff for a journal entry\n\nThis module is the **pure** prompt-diff derivation the code-generation command\nrecords in each journal entry. It is pure — no filesystem access, no process\nspawning. The I/O shell reads the prior prompt body off disk (when one exists) and\npasses it, together with the current body, to this function.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `gen_prompt_diff/`: `gen_prompt_diff/Cargo.toml`\n(package name `gen_prompt_diff`) and `gen_prompt_diff/src/lib.rs`. Touch nothing\noutside `gen_prompt_diff/`. Ensure `cargo test` passes from the workspace root\nbefore finishing.\n\n## Builds on the `incremental` module of this workspace\n\nThis module composes on a **generated sibling member crate** in the same\nworkspace — not a crates.io dependency and not a hand-written crate. Add a path\ndependency on it in your `Cargo.toml`:\n\n- `incremental` lives at `../incremental`. Use its public\n  `diff_body_lines(old_body: &str, new_body: &str) -> BodyLineDiff` function. The\n  returned `BodyLineDiff` has a public `unified: String` field holding the unified\n  diff text. Do not reimplement it.\n\nDepending on a sibling by path only reads it; leave the `incremental` crate\nuntouched.\n\n## `compute_prompt_diff(prior_body: Option<&str>, body: &str) -> String`\n\nReturn the unified diff describing how the prompt body changed since the last\nsuccessful generation:\n\n- When `prior_body` is `Some(prior)` **and** `prior` differs from `body`, return\n  `diff_body_lines(prior, body).unified` — the `unified` field of the body-line\n  diff between the prior and current bodies.\n- Otherwise — when `prior_body` is `None`, or when the prior body equals the\n  current body — return an empty string.\n\nSo `(None, \"body\")` → `\"\"`; `(Some(\"body\"), \"body\")` → `\"\"` (unchanged);\n`(Some(\"old line\"), \"new line\")` → `diff_body_lines(\"old line\", \"new line\").unified`.\n"
+  },
+  "promptAtGen": "# Deriving the prompt diff for a journal entry\n\nThis module is the **pure** prompt-diff derivation the code-generation command\nrecords in each journal entry. It is pure — no filesystem access, no process\nspawning. The I/O shell reads the prior prompt body off disk (when one exists) and\npasses it, together with the current body, to this function.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `gen_prompt_diff/`: `gen_prompt_diff/Cargo.toml`\n(package name `gen_prompt_diff`) and `gen_prompt_diff/src/lib.rs`. Touch nothing\noutside `gen_prompt_diff/`. Ensure `cargo test` passes from the workspace root\nbefore finishing.\n\n## Builds on the `incremental` module of this workspace\n\nThis module composes on a **generated sibling member crate** in the same\nworkspace — not a crates.io dependency and not a hand-written crate. Add a path\ndependency on it in your `Cargo.toml`:\n\n- `incremental` lives at `../incremental`. Use its public\n  `diff_body_lines(old_body: &str, new_body: &str) -> BodyLineDiff` function. The\n  returned `BodyLineDiff` has a public `unified: String` field holding the unified\n  diff text. Do not reimplement it.\n\nDepending on a sibling by path only reads it; leave the `incremental` crate\nuntouched.\n\n## `compute_prompt_diff(prior_body: Option<&str>, body: &str) -> String`\n\nReturn the unified diff describing how the prompt body changed since the last\nsuccessful generation:\n\n- When `prior_body` is `Some(prior)` **and** `prior` differs from `body`, return\n  `diff_body_lines(prior, body).unified` — the `unified` field of the body-line\n  diff between the prior and current bodies.\n- Otherwise — when `prior_body` is `None`, or when the prior body equals the\n  current body — return an empty string.\n\nSo `(None, \"body\")` → `\"\"`; `(Some(\"body\"), \"body\")` → `\"\"` (unchanged);\n`(Some(\"old line\"), \"new line\")` → `diff_body_lines(\"old line\", \"new line\").unified`.\n",
+  "summary": "Deriving the prompt diff for a journal entry",
+  "files": [
+    {
+      "path": "gen_prompt_diff/Cargo.toml",
+      "journalPath": ".napl/src/rust/gen_prompt_diff/Cargo.toml",
+      "content": "[package]\nname = \"gen_prompt_diff\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\nincremental = { path = \"../incremental\" }\n",
+      "language": "toml"
+    },
+    {
+      "path": "gen_prompt_diff/src/lib.rs",
+      "journalPath": ".napl/src/rust/gen_prompt_diff/src/lib.rs",
+      "content": "use incremental::diff_body_lines;\n\npub fn compute_prompt_diff(prior_body: Option<&str>, body: &str) -> String {\n    match prior_body {\n        Some(prior) if prior != body => diff_body_lines(prior, body).unified,\n        _ => String::new(),\n    }\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn no_prior_body_returns_empty() {\n        assert_eq!(compute_prompt_diff(None, \"body\"), \"\");\n    }\n\n    #[test]\n    fn unchanged_body_returns_empty() {\n        assert_eq!(compute_prompt_diff(Some(\"body\"), \"body\"), \"\");\n    }\n\n    #[test]\n    fn changed_body_returns_unified_diff() {\n        let result = compute_prompt_diff(Some(\"old line\"), \"new line\");\n        let expected = diff_body_lines(\"old line\", \"new line\").unified;\n        assert_eq!(result, expected);\n        assert!(!result.is_empty());\n    }\n}\n",
+      "language": "rust"
+    }
+  ],
+  "attribution": [
+    {
+      "promptLines": [
+        23,
+        26
+      ],
+      "file": "gen_prompt_diff/src/lib.rs",
+      "lines": [
+        1,
+        1
+      ],
+      "note": "import diff_body_lines from incremental sibling crate"
+    },
+    {
+      "promptLines": [
+        31,
+        31
+      ],
+      "file": "gen_prompt_diff/src/lib.rs",
+      "lines": [
+        3,
+        3
+      ],
+      "note": "function signature for compute_prompt_diff"
+    },
+    {
+      "promptLines": [
+        36,
+        38
+      ],
+      "file": "gen_prompt_diff/src/lib.rs",
+      "lines": [
+        5,
+        5
+      ],
+      "note": "prior differs from body -> return unified diff"
+    },
+    {
+      "promptLines": [
+        39,
+        40
+      ],
+      "file": "gen_prompt_diff/src/lib.rs",
+      "lines": [
+        6,
+        6
+      ],
+      "note": "no prior or unchanged body -> empty string"
+    },
+    {
+      "promptLines": [
+        42,
+        42
+      ],
+      "file": "gen_prompt_diff/src/lib.rs",
+      "lines": [
+        15,
+        17
+      ],
+      "note": "test: (None, body) -> empty"
+    },
+    {
+      "promptLines": [
+        42,
+        42
+      ],
+      "file": "gen_prompt_diff/src/lib.rs",
+      "lines": [
+        19,
+        22
+      ],
+      "note": "test: (Some(body), body) -> empty (unchanged)"
+    },
+    {
+      "promptLines": [
+        43,
+        43
+      ],
+      "file": "gen_prompt_diff/src/lib.rs",
+      "lines": [
+        24,
+        30
+      ],
+      "note": "test: changed body returns diff_body_lines unified diff"
+    }
+  ],
+  "attributionYaml": "module: gen_prompt_diff\ntarget: rust\nentries:\n  - promptLines:\n      - 23\n      - 26\n    file: gen_prompt_diff/src/lib.rs\n    lines:\n      - 1\n      - 1\n    note: import diff_body_lines from incremental sibling crate\n  - promptLines:\n      - 31\n      - 31\n    file: gen_prompt_diff/src/lib.rs\n    lines:\n      - 3\n      - 3\n    note: function signature for compute_prompt_diff\n  - promptLines:\n      - 36\n      - 38\n    file: gen_prompt_diff/src/lib.rs\n    lines:\n      - 5\n      - 5\n    note: prior differs from body -> return unified diff\n  - promptLines:\n      - 39\n      - 40\n    file: gen_prompt_diff/src/lib.rs\n    lines:\n      - 6\n      - 6\n    note: no prior or unchanged body -> empty string\n  - promptLines:\n      - 42\n      - 42\n    file: gen_prompt_diff/src/lib.rs\n    lines:\n      - 15\n      - 17\n    note: \"test: (None, body) -> empty\"\n  - promptLines:\n      - 42\n      - 42\n    file: gen_prompt_diff/src/lib.rs\n    lines:\n      - 19\n      - 22\n    note: \"test: (Some(body), body) -> empty (unchanged)\"\n  - promptLines:\n      - 43\n      - 43\n    file: gen_prompt_diff/src/lib.rs\n    lines:\n      - 24\n      - 30\n    note: \"test: changed body returns diff_body_lines unified diff\"\n",
+  "mapl": [
+    {
+      "promptLines": [
+        36,
+        40
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "Match logic straightforward, mirrors spec exactly.",
+      "reasoning": "Code use match with guard `Some(prior) if prior != body => ... , _ => empty`. Covers all 3 cases stated (None; Some equal; Some differ) correctly, no gaps found."
+    }
+  ],
+  "journal": [
+    {
+      "gen": 36,
+      "timestamp": "2026-07-24T10:03:16.521Z",
+      "mode": "full",
+      "promptHash": "f1eadaec8f24352623f38a565a0b746f2ffad044b2f2ce04c37d9308c6d87811",
+      "files": [
+        {
+          "path": "gen_prompt_diff/Cargo.toml",
+          "journalPath": ".napl/src/rust/gen_prompt_diff/Cargo.toml",
+          "patch": "@@ -0,0 +1,7 @@\n+[package]\n+name = \"gen_prompt_diff\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]\n+incremental = { path = \"../incremental\" }"
+        },
+        {
+          "path": "gen_prompt_diff/src/lib.rs",
+          "journalPath": ".napl/src/rust/gen_prompt_diff/src/lib.rs",
+          "patch": "@@ -0,0 +1,31 @@\n+use incremental::diff_body_lines;\n+\n+pub fn compute_prompt_diff(prior_body: Option<&str>, body: &str) -> String {\n+    match prior_body {\n+        Some(prior) if prior != body => diff_body_lines(prior, body).unified,\n+        _ => String::new(),\n+    }\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn no_prior_body_returns_empty() {\n+        assert_eq!(compute_prompt_diff(None, \"body\"), \"\");\n+    }\n+\n+    #[test]\n+    fn unchanged_body_returns_empty() {\n+        assert_eq!(compute_prompt_diff(Some(\"body\"), \"body\"), \"\");\n+    }\n+\n+    #[test]\n+    fn changed_body_returns_unified_diff() {\n+        let result = compute_prompt_diff(Some(\"old line\"), \"new line\");\n+        let expected = diff_body_lines(\"old line\", \"new line\").unified;\n+        assert_eq!(result, expected);\n+        assert!(!result.is_empty());\n+    }\n+}"
+        }
+      ]
+    }
+  ],
+  "lock": [
+    {
+      "path": "gen_prompt_diff/Cargo.toml",
+      "hash": "ab77d30fac121fbcd6ab2f209808dd41b524990927bfbe1238710998523d231e"
+    },
+    {
+      "path": "gen_prompt_diff/src/lib.rs",
+      "hash": "bad7da76b74023c37839a2234b2ed3deb13652e6d831fc428eefe5511b4bb3f7"
+    }
+  ],
+  "session": {
+    "task": "napl gen rust → gen_prompt_diff",
+    "files": {
+      "gen_prompt_diff.napl": "---\nmodule: gen_prompt_diff\ndeps: [incremental]\ntargets: [rust]\ntests:\n  - name: no prior body yields an empty diff\n    given: { prior: null, body: \"body\" }\n    expect: { diff: \"\" }\n  - name: an unchanged body yields an empty diff\n    given: { prior: \"body\", body: \"body\" }\n    expect: { diff: \"\" }\n  - name: a changed body yields the incremental body-line diff\n    given: { prior: \"old line\", body: \"new line\" }\n    expect: { diff: \"diff_body_lines(\\\"old line\\\", \\\"new line\\\").unified\" }\n---\n# Deriving the prompt diff for a journal entry\n\nThis module is the **pure** prompt-diff derivation the code-generation command\nrecords in each journal entry. It is pure — no filesystem access, no process\nspawning. The I/O shell reads the prior prompt body off disk (when one exists) and\npasses it, together with the current body, to this function.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `gen_prompt_diff/`: `gen_prompt_diff/Cargo.toml`\n(package name `gen_prompt_diff`) and `gen_prompt_diff/src/lib.rs`. Touch nothing\noutside `gen_prompt_diff/`. Ensure `cargo test` passes from the workspace root\nbefore finishing.\n\n## Builds on the `incremental` module of this workspace\n\nThis module composes on a **generated sibling member crate** in the same\nworkspace — not a crates.io dependency and not a hand-written crate. Add a path\ndependency on it in your `Cargo.toml`:\n\n- `incremental` lives at `../incremental`. Use its public\n  `diff_body_lines(old_body: &str, new_body: &str) -> BodyLineDiff` function. The\n  returned `BodyLineDiff` has a public `unified: String` field holding the unified\n  diff text. Do not reimplement it.\n\nDepending on a sibling by path only reads it; leave the `incremental` crate\nuntouched.\n\n## `compute_prompt_diff(prior_body: Option<&str>, body: &str) -> String`\n\nReturn the unified diff describing how the prompt body changed since the last\nsuccessful generation:\n\n- When `prior_body` is `Some(prior)` **and** `prior` differs from `body`, return\n  `diff_body_lines(prior, body).unified` — the `unified` field of the body-line\n  diff between the prior and current bodies.\n- Otherwise — when `prior_body` is `None`, or when the prior body equals the\n  current body — return an empty string.\n\nSo `(None, \"body\")` → `\"\"`; `(Some(\"body\"), \"body\")` → `\"\"` (unchanged);\n`(Some(\"old line\"), \"new line\")` → `diff_body_lines(\"old line\", \"new line\").unified`.\n"
+    },
+    "events": [
+      {
+        "type": "task",
+        "task": "napl gen rust → gen_prompt_diff"
+      },
+      {
+        "type": "diff",
+        "path": "gen_prompt_diff/Cargo.toml",
+        "patch": "@@ -0,0 +1,7 @@\n+[package]\n+name = \"gen_prompt_diff\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]\n+incremental = { path = \"../incremental\" }"
+      },
+      {
+        "type": "file-edit",
+        "path": "gen_prompt_diff/Cargo.toml",
+        "content": "[package]\nname = \"gen_prompt_diff\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\nincremental = { path = \"../incremental\" }\n"
+      },
+      {
+        "type": "diff",
+        "path": "gen_prompt_diff/src/lib.rs",
+        "patch": "@@ -0,0 +1,31 @@\n+use incremental::diff_body_lines;\n+\n+pub fn compute_prompt_diff(prior_body: Option<&str>, body: &str) -> String {\n+    match prior_body {\n+        Some(prior) if prior != body => diff_body_lines(prior, body).unified,\n+        _ => String::new(),\n+    }\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn no_prior_body_returns_empty() {\n+        assert_eq!(compute_prompt_diff(None, \"body\"), \"\");\n+    }\n+\n+    #[test]\n+    fn unchanged_body_returns_empty() {\n+        assert_eq!(compute_prompt_diff(Some(\"body\"), \"body\"), \"\");\n+    }\n+\n+    #[test]\n+    fn changed_body_returns_unified_diff() {\n+        let result = compute_prompt_diff(Some(\"old line\"), \"new line\");\n+        let expected = diff_body_lines(\"old line\", \"new line\").unified;\n+        assert_eq!(result, expected);\n+        assert!(!result.is_empty());\n+    }\n+}"
+      },
+      {
+        "type": "file-edit",
+        "path": "gen_prompt_diff/src/lib.rs",
+        "content": "use incremental::diff_body_lines;\n\npub fn compute_prompt_diff(prior_body: Option<&str>, body: &str) -> String {\n    match prior_body {\n        Some(prior) if prior != body => diff_body_lines(prior, body).unified,\n        _ => String::new(),\n    }\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn no_prior_body_returns_empty() {\n        assert_eq!(compute_prompt_diff(None, \"body\"), \"\");\n    }\n\n    #[test]\n    fn unchanged_body_returns_empty() {\n        assert_eq!(compute_prompt_diff(Some(\"body\"), \"body\"), \"\");\n    }\n\n    #[test]\n    fn changed_body_returns_unified_diff() {\n        let result = compute_prompt_diff(Some(\"old line\"), \"new line\");\n        let expected = diff_body_lines(\"old line\", \"new line\").unified;\n        assert_eq!(result, expected);\n        assert!(!result.is_empty());\n    }\n}\n"
+      },
+      {
+        "type": "attribution",
+        "module": "gen_prompt_diff",
+        "target": "rust",
+        "entries": [
+          {
+            "promptLines": [
+              23,
+              26
+            ],
+            "file": "gen_prompt_diff/src/lib.rs",
+            "lines": [
+              1,
+              1
+            ],
+            "note": "import diff_body_lines from incremental sibling crate"
+          },
+          {
+            "promptLines": [
+              31,
+              31
+            ],
+            "file": "gen_prompt_diff/src/lib.rs",
+            "lines": [
+              3,
+              3
+            ],
+            "note": "function signature for compute_prompt_diff"
+          },
+          {
+            "promptLines": [
+              36,
+              38
+            ],
+            "file": "gen_prompt_diff/src/lib.rs",
+            "lines": [
+              5,
+              5
+            ],
+            "note": "prior differs from body -> return unified diff"
+          },
+          {
+            "promptLines": [
+              39,
+              40
+            ],
+            "file": "gen_prompt_diff/src/lib.rs",
+            "lines": [
+              6,
+              6
+            ],
+            "note": "no prior or unchanged body -> empty string"
+          },
+          {
+            "promptLines": [
+              42,
+              42
+            ],
+            "file": "gen_prompt_diff/src/lib.rs",
+            "lines": [
+              15,
+              17
+            ],
+            "note": "test: (None, body) -> empty"
+          },
+          {
+            "promptLines": [
+              42,
+              42
+            ],
+            "file": "gen_prompt_diff/src/lib.rs",
+            "lines": [
+              19,
+              22
+            ],
+            "note": "test: (Some(body), body) -> empty (unchanged)"
+          },
+          {
+            "promptLines": [
+              43,
+              43
+            ],
+            "file": "gen_prompt_diff/src/lib.rs",
+            "lines": [
+              24,
+              30
+            ],
+            "note": "test: changed body returns diff_body_lines unified diff"
+          }
+        ]
+      },
+      {
+        "type": "mapl-entry",
+        "path": "gen_prompt_diff.mapl",
+        "entry": {
+          "promptLines": [
+            36,
+            40
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "Match logic straightforward, mirrors spec exactly.",
+          "reasoning": "Code use match with guard `Some(prior) if prior != body => ... , _ => empty`. Covers all 3 cases stated (None; Some equal; Some differ) correctly, no gaps found."
+        }
+      },
+      {
+        "type": "lock",
+        "module": "gen_prompt_diff",
+        "target": "rust",
+        "files": [
+          {
+            "path": "gen_prompt_diff/Cargo.toml",
+            "hash": "ab77d30fac121fbcd6ab2f209808dd41b524990927bfbe1238710998523d231e"
+          },
+          {
+            "path": "gen_prompt_diff/src/lib.rs",
+            "hash": "bad7da76b74023c37839a2234b2ed3deb13652e6d831fc428eefe5511b4bb3f7"
+          }
+        ]
+      }
+    ]
+  }
+}

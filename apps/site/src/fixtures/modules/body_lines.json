@@ -1,0 +1,518 @@
+{
+  "module": "body_lines",
+  "collection": "selfhost",
+  "target": "rust",
+  "targets": [
+    "rust"
+  ],
+  "prompt": {
+    "file": "body_lines.napl",
+    "path": "core/body_lines.napl",
+    "content": "---\nmodule: body_lines\ndeps: []\ntargets: [rust]\ntests:\n  - name: locates the body start after frontmatter\n    given: { raw: \"---\\nmodule: greeting\\n---\\nFirst body line.\\nSecond body line.\" }\n    expect: { bodyStartLine: 3, firstBodyLine: \"First body line.\", bodyLineCount: 2 }\n  - name: maps document lines onto body lines\n    given: { raw: \"---\\nmodule: greeting\\n---\\nFirst body line.\\nSecond body line.\", cases: [{ docLine: 3, bodyLine: 1 }, { docLine: 4, bodyLine: 2 }] }\n    expect: { mapped: [1, 2] }\n  - name: rejects document lines outside the body\n    given: { raw: \"---\\nmodule: greeting\\n---\\nFirst body line.\\nSecond body line.\", docLines: [2, 99] }\n    expect: { mapped: [null, null] }\n  - name: numbers lines 1-based\n    given: { lines: [\"a\", \"b\"] }\n    expect: { rendered: \"1: a\\n2: b\" }\n  - name: treats a document with no frontmatter as all body\n    given: { raw: \"just a body\\nsecond line\", docLines: [0, 1] }\n    expect: { bodyStartLine: 0, bodyLineCount: 2, mapped: [1, 2] }\n  - name: keeps a single empty body line after empty frontmatter\n    given: { raw: \"---\\nmodule: m\\n---\\n\" }\n    expect: { bodyStartLine: 3, bodyLines: [\"\"] }\n---\n# Body lines\n\nThis module maps between the absolute line numbers of a `.napl` prompt document\nand the 1-based line numbers of its prose **body** — the text that follows the\nYAML frontmatter. It is pure: no I/O, no dependencies.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is owned by the\ntoolchain — leave it alone. Create this module as its own member crate in a\nsubdirectory named `body_lines/`: `body_lines/Cargo.toml` (package name\n`body_lines`) and `body_lines/src/lib.rs`. Touch nothing outside `body_lines/`.\n\n## Splitting a document into lines\n\nEverywhere in this module a document is split into lines on the newline\ncharacter. A trailing carriage return on a line is stripped, so a file written\nwith Windows (`\\r\\n`) line endings produces exactly the same lines as one\nwritten with Unix (`\\n`) endings. Splitting never drops a line: a document with\nno trailing newline still yields its last line, and a document that ends in a\nnewline yields a final empty line.\n\n## `prompt_body_lines(raw)`\n\nGiven the raw text of a prompt file, return a `PromptBody` value with two public\nfields:\n\n- `body_start_line`: the absolute, 0-based document line index at which the body\n  begins.\n- `lines`: the body's lines, in order, as owned strings.\n\nFrontmatter is recognised when the very first line of the document — compared\nafter ignoring trailing whitespace — is exactly `---`, and some later line, also\ncompared ignoring trailing whitespace, is exactly `---`. When both delimiters\nare present, the body is everything after the closing `---`: `body_start_line`\nis the index of the first line following that closing delimiter, and `lines`\nholds the remaining lines. When the first line is not `---`, or no closing `---`\nis found, the document has no frontmatter: `body_start_line` is 0 and `lines` is\nthe entire document.\n\nA document whose frontmatter is immediately followed by nothing still has a body\nof exactly one line: the empty string.\n\n## `body_line_for_doc_line(body, doc_line)`\n\nConvert an absolute, 0-based document line number into a 1-based line number\nwithin the body. The parameter `doc_line` is a signed 64-bit integer and may be\nnegative or out of range. The body line is `doc_line - body_start_line + 1`.\nReturn that number only when it is a valid body position — at least 1 and no\ngreater than the number of body lines. When the document line sits above the\nbody (before it starts) or past its final line, return nothing.\n\n## `number_lines(lines)`\n\nRender a slice of lines as a single string for display. Each line is prefixed by\nits 1-based position followed by `\": \"`, and the results are joined by newlines.\nFor example, the two lines `a` and `b` render as `1: a` then a newline then\n`2: b`.\n"
+  },
+  "promptAtGen": "# Body lines\n\nThis module maps between the absolute line numbers of a `.napl` prompt document\nand the 1-based line numbers of its prose **body** — the text that follows the\nYAML frontmatter. It is pure: no I/O, no dependencies.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is owned by the\ntoolchain — leave it alone. Create this module as its own member crate in a\nsubdirectory named `body_lines/`: `body_lines/Cargo.toml` (package name\n`body_lines`) and `body_lines/src/lib.rs`. Touch nothing outside `body_lines/`.\n\n## Splitting a document into lines\n\nEverywhere in this module a document is split into lines on the newline\ncharacter. A trailing carriage return on a line is stripped, so a file written\nwith Windows (`\\r\\n`) line endings produces exactly the same lines as one\nwritten with Unix (`\\n`) endings. Splitting never drops a line: a document with\nno trailing newline still yields its last line, and a document that ends in a\nnewline yields a final empty line.\n\n## `prompt_body_lines(raw)`\n\nGiven the raw text of a prompt file, return a `PromptBody` value with two public\nfields:\n\n- `body_start_line`: the absolute, 0-based document line index at which the body\n  begins.\n- `lines`: the body's lines, in order, as owned strings.\n\nFrontmatter is recognised when the very first line of the document — compared\nafter ignoring trailing whitespace — is exactly `---`, and some later line, also\ncompared ignoring trailing whitespace, is exactly `---`. When both delimiters\nare present, the body is everything after the closing `---`: `body_start_line`\nis the index of the first line following that closing delimiter, and `lines`\nholds the remaining lines. When the first line is not `---`, or no closing `---`\nis found, the document has no frontmatter: `body_start_line` is 0 and `lines` is\nthe entire document.\n\nA document whose frontmatter is immediately followed by nothing still has a body\nof exactly one line: the empty string.\n\n## `body_line_for_doc_line(body, doc_line)`\n\nConvert an absolute, 0-based document line number into a 1-based line number\nwithin the body. The parameter `doc_line` is a signed 64-bit integer and may be\nnegative or out of range. The body line is `doc_line - body_start_line + 1`.\nReturn that number only when it is a valid body position — at least 1 and no\ngreater than the number of body lines. When the document line sits above the\nbody (before it starts) or past its final line, return nothing.\n\n## `number_lines(lines)`\n\nRender a slice of lines as a single string for display. Each line is prefixed by\nits 1-based position followed by `\": \"`, and the results are joined by newlines.\nFor example, the two lines `a` and `b` render as `1: a` then a newline then\n`2: b`.\n",
+  "summary": "Body lines",
+  "files": [
+    {
+      "path": "body_lines/Cargo.toml",
+      "journalPath": ".napl/src/rust/body_lines/Cargo.toml",
+      "content": "[package]\nname = \"body_lines\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n",
+      "language": "toml"
+    },
+    {
+      "path": "body_lines/src/lib.rs",
+      "journalPath": ".napl/src/rust/body_lines/src/lib.rs",
+      "content": "// GENERATED BY NAPL from body_lines.napl — edit the prompt, not this file\n\n/// The prose body of a `.napl` prompt document, split into lines, along with\n/// the absolute document line at which it begins.\npub struct PromptBody {\n    pub body_start_line: usize,\n    pub lines: Vec<String>,\n}\n\nfn split_lines(raw: &str) -> Vec<String> {\n    raw.split('\\n')\n        .map(|line| line.strip_suffix('\\r').unwrap_or(line).to_string())\n        .collect()\n}\n\n/// Split a prompt document into its frontmatter-delimited body.\npub fn prompt_body_lines(raw: &str) -> PromptBody {\n    let lines = split_lines(raw);\n\n    let has_opening = lines\n        .first()\n        .is_some_and(|line| line.trim_end() == \"---\");\n\n    if has_opening {\n        if let Some(close_idx) = lines\n            .iter()\n            .enumerate()\n            .skip(1)\n            .find(|(_, line)| line.trim_end() == \"---\")\n            .map(|(idx, _)| idx)\n        {\n            let body_start_line = close_idx + 1;\n            let body = if body_start_line >= lines.len() {\n                vec![String::new()]\n            } else {\n                lines[body_start_line..].to_vec()\n            };\n            return PromptBody {\n                body_start_line,\n                lines: body,\n            };\n        }\n    }\n\n    PromptBody {\n        body_start_line: 0,\n        lines,\n    }\n}\n\n/// Convert an absolute, 0-based document line number into a 1-based line\n/// number within the body, or `None` if it falls outside the body.\npub fn body_line_for_doc_line(body: &PromptBody, doc_line: i64) -> Option<usize> {\n    let body_line = doc_line\n        .checked_sub(body.body_start_line as i64)\n        .and_then(|n| n.checked_add(1))?;\n    if body_line >= 1 && body_line as usize <= body.lines.len() {\n        Some(body_line as usize)\n    } else {\n        None\n    }\n}\n\n/// Render lines for display, each prefixed with its 1-based position.\npub fn number_lines(lines: &[String]) -> String {\n    lines\n        .iter()\n        .enumerate()\n        .map(|(idx, line)| format!(\"{}: {}\", idx + 1, line))\n        .collect::<Vec<_>>()\n        .join(\"\\n\")\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn splits_on_unix_and_windows_newlines() {\n        let unix = prompt_body_lines(\"a\\nb\\nc\");\n        let windows = prompt_body_lines(\"a\\r\\nb\\r\\nc\");\n        assert_eq!(unix.lines, windows.lines);\n        assert_eq!(unix.lines, vec![\"a\", \"b\", \"c\"]);\n    }\n\n    #[test]\n    fn no_trailing_newline_keeps_last_line() {\n        let body = prompt_body_lines(\"a\\nb\");\n        assert_eq!(body.lines, vec![\"a\", \"b\"]);\n    }\n\n    #[test]\n    fn trailing_newline_yields_final_empty_line() {\n        let body = prompt_body_lines(\"a\\nb\\n\");\n        assert_eq!(body.lines, vec![\"a\", \"b\", \"\"]);\n    }\n\n    #[test]\n    fn no_frontmatter_body_is_whole_document() {\n        let body = prompt_body_lines(\"hello\\nworld\");\n        assert_eq!(body.body_start_line, 0);\n        assert_eq!(body.lines, vec![\"hello\", \"world\"]);\n    }\n\n    #[test]\n    fn first_line_not_delimiter_means_no_frontmatter() {\n        let body = prompt_body_lines(\"title\\n---\\nbody\");\n        assert_eq!(body.body_start_line, 0);\n        assert_eq!(body.lines, vec![\"title\", \"---\", \"body\"]);\n    }\n\n    #[test]\n    fn missing_closing_delimiter_means_no_frontmatter() {\n        let body = prompt_body_lines(\"---\\nkey: value\\nno closing here\");\n        assert_eq!(body.body_start_line, 0);\n        assert_eq!(body.lines, vec![\"---\", \"key: value\", \"no closing here\"]);\n    }\n\n    #[test]\n    fn frontmatter_is_stripped() {\n        let body = prompt_body_lines(\"---\\nkey: value\\n---\\nline one\\nline two\");\n        assert_eq!(body.body_start_line, 3);\n        assert_eq!(body.lines, vec![\"line one\", \"line two\"]);\n    }\n\n    #[test]\n    fn delimiters_compared_ignoring_trailing_whitespace() {\n        let body = prompt_body_lines(\"---  \\nkey: value\\n---\\t\\nbody line\");\n        assert_eq!(body.body_start_line, 3);\n        assert_eq!(body.lines, vec![\"body line\"]);\n    }\n\n    #[test]\n    fn frontmatter_followed_by_nothing_has_one_empty_body_line() {\n        let body = prompt_body_lines(\"---\\nkey: value\\n---\");\n        assert_eq!(body.body_start_line, 3);\n        assert_eq!(body.lines, vec![\"\"]);\n    }\n\n    #[test]\n    fn body_line_for_doc_line_maps_within_range() {\n        let body = prompt_body_lines(\"---\\nkey: value\\n---\\nfirst\\nsecond\");\n        assert_eq!(body_line_for_doc_line(&body, 3), Some(1));\n        assert_eq!(body_line_for_doc_line(&body, 4), Some(2));\n    }\n\n    #[test]\n    fn body_line_for_doc_line_before_body_is_none() {\n        let body = prompt_body_lines(\"---\\nkey: value\\n---\\nfirst\\nsecond\");\n        assert_eq!(body_line_for_doc_line(&body, 0), None);\n        assert_eq!(body_line_for_doc_line(&body, 2), None);\n    }\n\n    #[test]\n    fn body_line_for_doc_line_past_end_is_none() {\n        let body = prompt_body_lines(\"---\\nkey: value\\n---\\nfirst\\nsecond\");\n        assert_eq!(body_line_for_doc_line(&body, 5), None);\n    }\n\n    #[test]\n    fn body_line_for_doc_line_handles_negative_and_large_values() {\n        let body = prompt_body_lines(\"first\\nsecond\");\n        assert_eq!(body_line_for_doc_line(&body, -5), None);\n        assert_eq!(body_line_for_doc_line(&body, i64::MAX), None);\n        assert_eq!(body_line_for_doc_line(&body, i64::MIN), None);\n    }\n\n    #[test]\n    fn number_lines_renders_with_positions() {\n        let lines = vec![\"a\".to_string(), \"b\".to_string()];\n        assert_eq!(number_lines(&lines), \"1: a\\n2: b\");\n    }\n\n    #[test]\n    fn number_lines_empty_slice_is_empty_string() {\n        let lines: Vec<String> = vec![];\n        assert_eq!(number_lines(&lines), \"\");\n    }\n}\n",
+      "language": "rust"
+    }
+  ],
+  "attribution": [
+    {
+      "promptLines": [
+        9,
+        12
+      ],
+      "file": "body_lines/src/lib.rs",
+      "lines": [
+        1,
+        1
+      ],
+      "note": "generated file marker, crate location note"
+    },
+    {
+      "promptLines": [
+        16,
+        21
+      ],
+      "file": "body_lines/src/lib.rs",
+      "lines": [
+        10,
+        14
+      ],
+      "note": "split_lines strips trailing CR, preserves empty trailing line"
+    },
+    {
+      "promptLines": [
+        25,
+        30
+      ],
+      "file": "body_lines/src/lib.rs",
+      "lines": [
+        3,
+        8
+      ],
+      "note": "PromptBody struct with body_start_line and lines fields"
+    },
+    {
+      "promptLines": [
+        25,
+        30
+      ],
+      "file": "body_lines/src/lib.rs",
+      "lines": [
+        17,
+        18
+      ],
+      "note": "prompt_body_lines entry, splits raw into lines"
+    },
+    {
+      "promptLines": [
+        32,
+        34
+      ],
+      "file": "body_lines/src/lib.rs",
+      "lines": [
+        20,
+        22
+      ],
+      "note": "detect opening --- ignoring trailing whitespace"
+    },
+    {
+      "promptLines": [
+        32,
+        34
+      ],
+      "file": "body_lines/src/lib.rs",
+      "lines": [
+        25,
+        31
+      ],
+      "note": "find closing --- delimiter ignoring trailing whitespace"
+    },
+    {
+      "promptLines": [
+        35,
+        36
+      ],
+      "file": "body_lines/src/lib.rs",
+      "lines": [
+        32,
+        32
+      ],
+      "note": "body_start_line is line after closing delimiter"
+    },
+    {
+      "promptLines": [
+        36,
+        36
+      ],
+      "file": "body_lines/src/lib.rs",
+      "lines": [
+        35,
+        37
+      ],
+      "note": "lines holds remaining lines after closing delimiter"
+    },
+    {
+      "promptLines": [
+        37,
+        39
+      ],
+      "file": "body_lines/src/lib.rs",
+      "lines": [
+        45,
+        48
+      ],
+      "note": "no frontmatter fallback, body_start_line 0 whole doc"
+    },
+    {
+      "promptLines": [
+        41,
+        42
+      ],
+      "file": "body_lines/src/lib.rs",
+      "lines": [
+        33,
+        34
+      ],
+      "note": "frontmatter immediately followed by nothing yields one empty line"
+    },
+    {
+      "promptLines": [
+        46,
+        48
+      ],
+      "file": "body_lines/src/lib.rs",
+      "lines": [
+        53,
+        56
+      ],
+      "note": "compute body line as doc_line - body_start_line + 1 with checked arithmetic"
+    },
+    {
+      "promptLines": [
+        49,
+        51
+      ],
+      "file": "body_lines/src/lib.rs",
+      "lines": [
+        57,
+        61
+      ],
+      "note": "validate body line within range, else None"
+    },
+    {
+      "promptLines": [
+        55,
+        58
+      ],
+      "file": "body_lines/src/lib.rs",
+      "lines": [
+        65,
+        72
+      ],
+      "note": "number_lines prefixes each line with 1-based position joined by newline"
+    }
+  ],
+  "attributionYaml": "module: body_lines\ntarget: rust\nentries:\n  - promptLines:\n      - 9\n      - 12\n    file: body_lines/src/lib.rs\n    lines:\n      - 1\n      - 1\n    note: generated file marker, crate location note\n  - promptLines:\n      - 16\n      - 21\n    file: body_lines/src/lib.rs\n    lines:\n      - 10\n      - 14\n    note: split_lines strips trailing CR, preserves empty trailing line\n  - promptLines:\n      - 25\n      - 30\n    file: body_lines/src/lib.rs\n    lines:\n      - 3\n      - 8\n    note: PromptBody struct with body_start_line and lines fields\n  - promptLines:\n      - 25\n      - 30\n    file: body_lines/src/lib.rs\n    lines:\n      - 17\n      - 18\n    note: prompt_body_lines entry, splits raw into lines\n  - promptLines:\n      - 32\n      - 34\n    file: body_lines/src/lib.rs\n    lines:\n      - 20\n      - 22\n    note: detect opening --- ignoring trailing whitespace\n  - promptLines:\n      - 32\n      - 34\n    file: body_lines/src/lib.rs\n    lines:\n      - 25\n      - 31\n    note: find closing --- delimiter ignoring trailing whitespace\n  - promptLines:\n      - 35\n      - 36\n    file: body_lines/src/lib.rs\n    lines:\n      - 32\n      - 32\n    note: body_start_line is line after closing delimiter\n  - promptLines:\n      - 36\n      - 36\n    file: body_lines/src/lib.rs\n    lines:\n      - 35\n      - 37\n    note: lines holds remaining lines after closing delimiter\n  - promptLines:\n      - 37\n      - 39\n    file: body_lines/src/lib.rs\n    lines:\n      - 45\n      - 48\n    note: no frontmatter fallback, body_start_line 0 whole doc\n  - promptLines:\n      - 41\n      - 42\n    file: body_lines/src/lib.rs\n    lines:\n      - 33\n      - 34\n    note: frontmatter immediately followed by nothing yields one empty line\n  - promptLines:\n      - 46\n      - 48\n    file: body_lines/src/lib.rs\n    lines:\n      - 53\n      - 56\n    note: compute body line as doc_line - body_start_line + 1 with checked arithmetic\n  - promptLines:\n      - 49\n      - 51\n    file: body_lines/src/lib.rs\n    lines:\n      - 57\n      - 61\n    note: validate body line within range, else None\n  - promptLines:\n      - 55\n      - 58\n    file: body_lines/src/lib.rs\n    lines:\n      - 65\n      - 72\n    note: number_lines prefixes each line with 1-based position joined by newline\n",
+  "mapl": [
+    {
+      "promptLines": [
+        9,
+        12
+      ],
+      "kind": "assumption",
+      "severity": "warning",
+      "message": "Assumed the workspace root Cargo.toml already auto-discovers members (e.g. via a glob), so no edit to the root manifest was needed to register the new crate.",
+      "reasoning": "The prompt says the root manifest is \"owned by the toolchain — leave it alone\" and to \"touch nothing outside body_lines/\", but a new member crate typically must be listed in the workspace's `[workspace.members]` array to be built as part of the workspace. The agent's reported change set doesn't show any root Cargo.toml edit, implying it assumed the root manifest already picks up new crates automatically (e.g. `members = [\"*\"]`). If that assumption is wrong, the crate may not actually be wired into the workspace build.\n",
+      "suggestion": "Clarify whether the root Cargo.toml already globs in new member crates, or whether this task is expected to also add an entry there (and if so, note that as an exception to \"leave it alone\"). "
+    },
+    {
+      "promptLines": [
+        9,
+        12
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "Reported change set lists only src/lib.rs, not body_lines/Cargo.toml, even though the final message claims both were created.",
+      "reasoning": "The final message states \"body_lines crate done: `body_lines/Cargo.toml` + `body_lines/src/lib.rs`\", but the numbered change list provided only shows the contents of lib.rs. This is likely just an omission in what was surfaced for review rather than a real gap, but it means the Cargo.toml contents (package name, edition, dependencies) were not independently verifiable from the given change listing."
+    }
+  ],
+  "journal": [
+    {
+      "gen": 1,
+      "timestamp": "2026-07-24T02:15:08.297Z",
+      "mode": "full",
+      "promptHash": "eb0d5bdd945034c80de4f1c19cb798c2de8153010d64a8e5ef33036a99059934",
+      "files": [
+        {
+          "path": "Cargo.toml",
+          "journalPath": ".napl/src/rust/Cargo.toml",
+          "patch": "@@ -0,0 +1,7 @@\n+# GENERATED BY NAPL from body_lines.napl — edit the prompt, not this file\n+[package]\n+name = \"body_lines\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]"
+        },
+        {
+          "path": "src/lib.rs",
+          "journalPath": ".napl/src/rust/src/lib.rs",
+          "patch": "@@ -0,0 +1,195 @@\n+// GENERATED BY NAPL from body_lines.napl — edit the prompt, not this file\n+//! Map between absolute line numbers of a `.napl` prompt document and the\n+//! 1-based line numbers of its prose body (the text following the YAML\n+//! frontmatter). Pure: no I/O, no dependencies.\n+\n+/// The body of a prompt document: the prose that follows any YAML frontmatter.\n+pub struct PromptBody {\n+    /// Absolute, 0-based document line index at which the body begins.\n+    pub body_start_line: usize,\n+    /// The body's lines, in order, as owned strings.\n+    pub lines: Vec<String>,\n+}\n+\n+/// Split a document into lines on the newline character, stripping a single\n+/// trailing carriage return from each line so that `\\r\\n` and `\\n` line endings\n+/// yield identical results. Never drops a line: a document without a trailing\n+/// newline still yields its last line, and one ending in a newline yields a\n+/// final empty line.\n+fn split_lines(raw: &str) -> Vec<String> {\n+    raw.split('\\n')\n+        .map(|line| line.strip_suffix('\\r').unwrap_or(line).to_string())\n+        .collect()\n+}\n+\n+/// Whether a line, compared after ignoring trailing whitespace, is exactly the\n+/// frontmatter delimiter `---`.\n+fn is_delimiter(line: &str) -> bool {\n+    line.trim_end() == \"---\"\n+}\n+\n+/// Split the raw text of a prompt file into its frontmatter and body, returning\n+/// the body's absolute start line and its lines.\n+///\n+/// Frontmatter is recognised when the very first line is exactly `---` (ignoring\n+/// trailing whitespace) and some later line is also exactly `---`. When both\n+/// delimiters are present the body is everything after the closing `---`;\n+/// otherwise the whole document is the body and `body_start_line` is 0.\n+pub fn prompt_body_lines(raw: &str) -> PromptBody {\n+    let lines = split_lines(raw);\n+\n+    if lines.first().is_some_and(|first| is_delimiter(first)) {\n+        if let Some(offset) = lines[1..].iter().position(|line| is_delimiter(line)) {\n+            let close = offset + 1;\n+            let body_start_line = close + 1;\n+            return PromptBody {\n+                body_start_line,\n+                lines: lines[body_start_line..].to_vec(),\n+            };\n+        }\n+    }\n+\n+    PromptBody {\n+        body_start_line: 0,\n+        lines,\n+    }\n+}\n+\n+/// Convert an absolute, 0-based document line number into a 1-based line number\n+/// within the body.\n+///\n+/// The body line is `doc_line - body_start_line + 1`; it is returned only when\n+/// it is a valid body position (at least 1 and no greater than the number of\n+/// body lines). Document lines above the body or past its final line yield\n+/// `None`. `doc_line` may be negative or out of range; arithmetic is checked so\n+/// that extreme values never panic.\n+pub fn body_line_for_doc_line(body: &PromptBody, doc_line: i64) -> Option<u64> {\n+    let body_line = doc_line\n+        .checked_sub(body.body_start_line as i64)\n+        .and_then(|value| value.checked_add(1))?;\n+\n+    if body_line >= 1 && body_line <= body.lines.len() as i64 {\n+        Some(body_line as u64)\n+    } else {\n+        None\n+    }\n+}\n+\n+/// Render a slice of lines as a single string for display. Each line is prefixed\n+/// by its 1-based position followed by `\": \"`, and the results are joined by\n+/// newlines.\n+pub fn number_lines(lines: &[String]) -> String {\n+    lines\n+        .iter()\n+        .enumerate()\n+        .map(|(index, line)| format!(\"{}: {}\", index + 1, line))\n+        .collect::<Vec<String>>()\n+        .join(\"\\n\")\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn crlf_and_lf_produce_identical_lines() {\n+        let unix = prompt_body_lines(\"first\\nsecond\\nthird\");\n+        let windows = prompt_body_lines(\"first\\r\\nsecond\\r\\nthird\");\n+        assert_eq!(unix.lines, vec![\"first\", \"second\", \"third\"]);\n+        assert_eq!(windows.lines, unix.lines);\n+    }\n+\n+    #[test]\n+    fn no_trailing_newline_keeps_last_line() {\n+        let body = prompt_body_lines(\"a\\nb\");\n+        assert_eq!(body.lines, vec![\"a\", \"b\"]);\n+    }\n+\n+    #[test]\n+    fn trailing_newline_yields_final_empty_line() {\n+        let body = prompt_body_lines(\"a\\nb\\n\");\n+        assert_eq!(body.lines, vec![\"a\", \"b\", \"\"]);\n+    }\n+\n+    #[test]\n+    fn empty_document_is_one_empty_line() {\n+        let body = prompt_body_lines(\"\");\n+        assert_eq!(body.body_start_line, 0);\n+        assert_eq!(body.lines, vec![\"\"]);\n+    }\n+\n+    #[test]\n+    fn frontmatter_body_starts_after_closing_delimiter() {\n+        let body = prompt_body_lines(\"---\\ntitle: x\\ntags: y\\n---\\nhello\\nworld\");\n+        assert_eq!(body.body_start_line, 4);\n+        assert_eq!(body.lines, vec![\"hello\", \"world\"]);\n+    }\n+\n+    #[test]\n+    fn delimiters_ignore_trailing_whitespace() {\n+        let body = prompt_body_lines(\"---  \\ntitle: x\\n---\\t\\nprose\");\n+        assert_eq!(body.body_start_line, 3);\n+        assert_eq!(body.lines, vec![\"prose\"]);\n+    }\n+\n+    #[test]\n+    fn no_frontmatter_when_first_line_is_not_delimiter() {\n+        let body = prompt_body_lines(\"not front\\n---\\nmore\");\n+        assert_eq!(body.body_start_line, 0);\n+        assert_eq!(body.lines, vec![\"not front\", \"---\", \"more\"]);\n+    }\n+\n+    #[test]\n+    fn no_frontmatter_when_closing_delimiter_missing() {\n+        let body = prompt_body_lines(\"---\\ntitle: x\\nno close here\");\n+        assert_eq!(body.body_start_line, 0);\n+        assert_eq!(body.lines, vec![\"---\", \"title: x\", \"no close here\"]);\n+    }\n+\n+    #[test]\n+    fn frontmatter_followed_by_nothing_has_one_empty_body_line() {\n+        let body = prompt_body_lines(\"---\\ntitle: x\\n---\\n\");\n+        assert_eq!(body.body_start_line, 3);\n+        assert_eq!(body.lines, vec![\"\"]);\n+    }\n+\n+    #[test]\n+    fn body_line_within_range_is_one_based() {\n+        // Body starts at document line 4; body lines are \"hello\", \"world\".\n+        let body = prompt_body_lines(\"---\\ntitle: x\\ntags: y\\n---\\nhello\\nworld\");\n+        assert_eq!(body_line_for_doc_line(&body, 4), Some(1));\n+        assert_eq!(body_line_for_doc_line(&body, 5), Some(2));\n+    }\n+\n+    #[test]\n+    fn body_line_above_body_is_none() {\n+        let body = prompt_body_lines(\"---\\ntitle: x\\ntags: y\\n---\\nhello\\nworld\");\n+        assert_eq!(body_line_for_doc_line(&body, 3), None);\n+        assert_eq!(body_line_for_doc_line(&body, 0), None);\n+    }\n+\n+    #[test]\n+    fn body_line_past_body_is_none() {\n+        let body = prompt_body_lines(\"---\\ntitle: x\\ntags: y\\n---\\nhello\\nworld\");\n+        assert_eq!(body_line_for_doc_line(&body, 6), None);\n+    }\n+\n+    #[test]\n+    fn body_line_negative_or_extreme_does_not_panic() {\n+        let body = prompt_body_lines(\"hello\\nworld\");\n+        assert_eq!(body_line_for_doc_line(&body, -1), None);\n+        assert_eq!(body_line_for_doc_line(&body, i64::MIN), None);\n+        assert_eq!(body_line_for_doc_line(&body, i64::MAX), None);\n+    }\n+\n+    #[test]\n+    fn number_lines_matches_spec_example() {\n+        let lines = vec![\"a\".to_string(), \"b\".to_string()];\n+        assert_eq!(number_lines(&lines), \"1: a\\n2: b\");\n+    }\n+\n+    #[test]\n+    fn number_lines_of_empty_slice_is_empty_string() {\n+        assert_eq!(number_lines(&[]), \"\");\n+    }\n+}"
+        }
+      ]
+    },
+    {
+      "gen": 6,
+      "timestamp": "2026-07-24T06:26:46.880Z",
+      "mode": "full",
+      "promptHash": "f5bfbff4e852f6a907e7e28ebfba093137b0e7624f33e7a605d3caae5eeb65c4",
+      "files": [
+        {
+          "path": "body_lines/Cargo.toml",
+          "journalPath": ".napl/src/rust/body_lines/Cargo.toml",
+          "patch": "@@ -0,0 +1,6 @@\n+[package]\n+name = \"body_lines\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]"
+        },
+        {
+          "path": "body_lines/src/lib.rs",
+          "journalPath": ".napl/src/rust/body_lines/src/lib.rs",
+          "patch": "@@ -0,0 +1,179 @@\n+// GENERATED BY NAPL from body_lines.napl — edit the prompt, not this file\n+\n+/// The prose body of a `.napl` prompt document, split into lines, along with\n+/// the absolute document line at which it begins.\n+pub struct PromptBody {\n+    pub body_start_line: usize,\n+    pub lines: Vec<String>,\n+}\n+\n+fn split_lines(raw: &str) -> Vec<String> {\n+    raw.split('\\n')\n+        .map(|line| line.strip_suffix('\\r').unwrap_or(line).to_string())\n+        .collect()\n+}\n+\n+/// Split a prompt document into its frontmatter-delimited body.\n+pub fn prompt_body_lines(raw: &str) -> PromptBody {\n+    let lines = split_lines(raw);\n+\n+    let has_opening = lines\n+        .first()\n+        .is_some_and(|line| line.trim_end() == \"---\");\n+\n+    if has_opening {\n+        if let Some(close_idx) = lines\n+            .iter()\n+            .enumerate()\n+            .skip(1)\n+            .find(|(_, line)| line.trim_end() == \"---\")\n+            .map(|(idx, _)| idx)\n+        {\n+            let body_start_line = close_idx + 1;\n+            let body = if body_start_line >= lines.len() {\n+                vec![String::new()]\n+            } else {\n+                lines[body_start_line..].to_vec()\n+            };\n+            return PromptBody {\n+                body_start_line,\n+                lines: body,\n+            };\n+        }\n+    }\n+\n+    PromptBody {\n+        body_start_line: 0,\n+        lines,\n+    }\n+}\n+\n+/// Convert an absolute, 0-based document line number into a 1-based line\n+/// number within the body, or `None` if it falls outside the body.\n+pub fn body_line_for_doc_line(body: &PromptBody, doc_line: i64) -> Option<usize> {\n+    let body_line = doc_line\n+        .checked_sub(body.body_start_line as i64)\n+        .and_then(|n| n.checked_add(1))?;\n+    if body_line >= 1 && body_line as usize <= body.lines.len() {\n+        Some(body_line as usize)\n+    } else {\n+        None\n+    }\n+}\n+\n+/// Render lines for display, each prefixed with its 1-based position.\n+pub fn number_lines(lines: &[String]) -> String {\n+    lines\n+        .iter()\n+        .enumerate()\n+        .map(|(idx, line)| format!(\"{}: {}\", idx + 1, line))\n+        .collect::<Vec<_>>()\n+        .join(\"\\n\")\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn splits_on_unix_and_windows_newlines() {\n+        let unix = prompt_body_lines(\"a\\nb\\nc\");\n+        let windows = prompt_body_lines(\"a\\r\\nb\\r\\nc\");\n+        assert_eq!(unix.lines, windows.lines);\n+        assert_eq!(unix.lines, vec![\"a\", \"b\", \"c\"]);\n+    }\n+\n+    #[test]\n+    fn no_trailing_newline_keeps_last_line() {\n+        let body = prompt_body_lines(\"a\\nb\");\n+        assert_eq!(body.lines, vec![\"a\", \"b\"]);\n+    }\n+\n+    #[test]\n+    fn trailing_newline_yields_final_empty_line() {\n+        let body = prompt_body_lines(\"a\\nb\\n\");\n+        assert_eq!(body.lines, vec![\"a\", \"b\", \"\"]);\n+    }\n+\n+    #[test]\n+    fn no_frontmatter_body_is_whole_document() {\n+        let body = prompt_body_lines(\"hello\\nworld\");\n+        assert_eq!(body.body_start_line, 0);\n+        assert_eq!(body.lines, vec![\"hello\", \"world\"]);\n+    }\n+\n+    #[test]\n+    fn first_line_not_delimiter_means_no_frontmatter() {\n+        let body = prompt_body_lines(\"title\\n---\\nbody\");\n+        assert_eq!(body.body_start_line, 0);\n+        assert_eq!(body.lines, vec![\"title\", \"---\", \"body\"]);\n+    }\n+\n+    #[test]\n+    fn missing_closing_delimiter_means_no_frontmatter() {\n+        let body = prompt_body_lines(\"---\\nkey: value\\nno closing here\");\n+        assert_eq!(body.body_start_line, 0);\n+        assert_eq!(body.lines, vec![\"---\", \"key: value\", \"no closing here\"]);\n+    }\n+\n+    #[test]\n+    fn frontmatter_is_stripped() {\n+        let body = prompt_body_lines(\"---\\nkey: value\\n---\\nline one\\nline two\");\n+        assert_eq!(body.body_start_line, 3);\n+        assert_eq!(body.lines, vec![\"line one\", \"line two\"]);\n+    }\n+\n+    #[test]\n+    fn delimiters_compared_ignoring_trailing_whitespace() {\n+        let body = prompt_body_lines(\"---  \\nkey: value\\n---\\t\\nbody line\");\n+        assert_eq!(body.body_start_line, 3);\n+        assert_eq!(body.lines, vec![\"body line\"]);\n+    }\n+\n+    #[test]\n+    fn frontmatter_followed_by_nothing_has_one_empty_body_line() {\n+        let body = prompt_body_lines(\"---\\nkey: value\\n---\");\n+        assert_eq!(body.body_start_line, 3);\n+        assert_eq!(body.lines, vec![\"\"]);\n+    }\n+\n+    #[test]\n+    fn body_line_for_doc_line_maps_within_range() {\n+        let body = prompt_body_lines(\"---\\nkey: value\\n---\\nfirst\\nsecond\");\n+        assert_eq!(body_line_for_doc_line(&body, 3), Some(1));\n+        assert_eq!(body_line_for_doc_line(&body, 4), Some(2));\n+    }\n+\n+    #[test]\n+    fn body_line_for_doc_line_before_body_is_none() {\n+        let body = prompt_body_lines(\"---\\nkey: value\\n---\\nfirst\\nsecond\");\n+        assert_eq!(body_line_for_doc_line(&body, 0), None);\n+        assert_eq!(body_line_for_doc_line(&body, 2), None);\n+    }\n+\n+    #[test]\n+    fn body_line_for_doc_line_past_end_is_none() {\n+        let body = prompt_body_lines(\"---\\nkey: value\\n---\\nfirst\\nsecond\");\n+        assert_eq!(body_line_for_doc_line(&body, 5), None);\n+    }\n+\n+    #[test]\n+    fn body_line_for_doc_line_handles_negative_and_large_values() {\n+        let body = prompt_body_lines(\"first\\nsecond\");\n+        assert_eq!(body_line_for_doc_line(&body, -5), None);\n+        assert_eq!(body_line_for_doc_line(&body, i64::MAX), None);\n+        assert_eq!(body_line_for_doc_line(&body, i64::MIN), None);\n+    }\n+\n+    #[test]\n+    fn number_lines_renders_with_positions() {\n+        let lines = vec![\"a\".to_string(), \"b\".to_string()];\n+        assert_eq!(number_lines(&lines), \"1: a\\n2: b\");\n+    }\n+\n+    #[test]\n+    fn number_lines_empty_slice_is_empty_string() {\n+        let lines: Vec<String> = vec![];\n+        assert_eq!(number_lines(&lines), \"\");\n+    }\n+}"
+        }
+      ]
+    }
+  ],
+  "lock": [
+    {
+      "path": "body_lines/Cargo.toml",
+      "hash": "87760cbe55d962b4b0b139e09e641322f83515f10d3afcf62374f9da3716cb4a"
+    },
+    {
+      "path": "body_lines/src/lib.rs",
+      "hash": "c86e862fb84101f03bdf766d93af963e0c8660c1aceae7019cff861c2db427b2"
+    }
+  ],
+  "session": {
+    "task": "napl gen rust → body_lines",
+    "files": {
+      "body_lines.napl": "---\nmodule: body_lines\ndeps: []\ntargets: [rust]\ntests:\n  - name: locates the body start after frontmatter\n    given: { raw: \"---\\nmodule: greeting\\n---\\nFirst body line.\\nSecond body line.\" }\n    expect: { bodyStartLine: 3, firstBodyLine: \"First body line.\", bodyLineCount: 2 }\n  - name: maps document lines onto body lines\n    given: { raw: \"---\\nmodule: greeting\\n---\\nFirst body line.\\nSecond body line.\", cases: [{ docLine: 3, bodyLine: 1 }, { docLine: 4, bodyLine: 2 }] }\n    expect: { mapped: [1, 2] }\n  - name: rejects document lines outside the body\n    given: { raw: \"---\\nmodule: greeting\\n---\\nFirst body line.\\nSecond body line.\", docLines: [2, 99] }\n    expect: { mapped: [null, null] }\n  - name: numbers lines 1-based\n    given: { lines: [\"a\", \"b\"] }\n    expect: { rendered: \"1: a\\n2: b\" }\n  - name: treats a document with no frontmatter as all body\n    given: { raw: \"just a body\\nsecond line\", docLines: [0, 1] }\n    expect: { bodyStartLine: 0, bodyLineCount: 2, mapped: [1, 2] }\n  - name: keeps a single empty body line after empty frontmatter\n    given: { raw: \"---\\nmodule: m\\n---\\n\" }\n    expect: { bodyStartLine: 3, bodyLines: [\"\"] }\n---\n# Body lines\n\nThis module maps between the absolute line numbers of a `.napl` prompt document\nand the 1-based line numbers of its prose **body** — the text that follows the\nYAML frontmatter. It is pure: no I/O, no dependencies.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is owned by the\ntoolchain — leave it alone. Create this module as its own member crate in a\nsubdirectory named `body_lines/`: `body_lines/Cargo.toml` (package name\n`body_lines`) and `body_lines/src/lib.rs`. Touch nothing outside `body_lines/`.\n\n## Splitting a document into lines\n\nEverywhere in this module a document is split into lines on the newline\ncharacter. A trailing carriage return on a line is stripped, so a file written\nwith Windows (`\\r\\n`) line endings produces exactly the same lines as one\nwritten with Unix (`\\n`) endings. Splitting never drops a line: a document with\nno trailing newline still yields its last line, and a document that ends in a\nnewline yields a final empty line.\n\n## `prompt_body_lines(raw)`\n\nGiven the raw text of a prompt file, return a `PromptBody` value with two public\nfields:\n\n- `body_start_line`: the absolute, 0-based document line index at which the body\n  begins.\n- `lines`: the body's lines, in order, as owned strings.\n\nFrontmatter is recognised when the very first line of the document — compared\nafter ignoring trailing whitespace — is exactly `---`, and some later line, also\ncompared ignoring trailing whitespace, is exactly `---`. When both delimiters\nare present, the body is everything after the closing `---`: `body_start_line`\nis the index of the first line following that closing delimiter, and `lines`\nholds the remaining lines. When the first line is not `---`, or no closing `---`\nis found, the document has no frontmatter: `body_start_line` is 0 and `lines` is\nthe entire document.\n\nA document whose frontmatter is immediately followed by nothing still has a body\nof exactly one line: the empty string.\n\n## `body_line_for_doc_line(body, doc_line)`\n\nConvert an absolute, 0-based document line number into a 1-based line number\nwithin the body. The parameter `doc_line` is a signed 64-bit integer and may be\nnegative or out of range. The body line is `doc_line - body_start_line + 1`.\nReturn that number only when it is a valid body position — at least 1 and no\ngreater than the number of body lines. When the document line sits above the\nbody (before it starts) or past its final line, return nothing.\n\n## `number_lines(lines)`\n\nRender a slice of lines as a single string for display. Each line is prefixed by\nits 1-based position followed by `\": \"`, and the results are joined by newlines.\nFor example, the two lines `a` and `b` render as `1: a` then a newline then\n`2: b`.\n"
+    },
+    "events": [
+      {
+        "type": "task",
+        "task": "napl gen rust → body_lines"
+      },
+      {
+        "type": "diff",
+        "path": "Cargo.toml",
+        "patch": "@@ -0,0 +1,7 @@\n+# GENERATED BY NAPL from body_lines.napl — edit the prompt, not this file\n+[package]\n+name = \"body_lines\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]"
+      },
+      {
+        "type": "file-edit",
+        "path": "Cargo.toml",
+        "content": "# GENERATED BY NAPL from body_lines.napl — edit the prompt, not this file\n[package]\nname = \"body_lines\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]"
+      },
+      {
+        "type": "diff",
+        "path": "src/lib.rs",
+        "patch": "@@ -0,0 +1,195 @@\n+// GENERATED BY NAPL from body_lines.napl — edit the prompt, not this file\n+//! Map between absolute line numbers of a `.napl` prompt document and the\n+//! 1-based line numbers of its prose body (the text following the YAML\n+//! frontmatter). Pure: no I/O, no dependencies.\n+\n+/// The body of a prompt document: the prose that follows any YAML frontmatter.\n+pub struct PromptBody {\n+    /// Absolute, 0-based document line index at which the body begins.\n+    pub body_start_line: usize,\n+    /// The body's lines, in order, as owned strings.\n+    pub lines: Vec<String>,\n+}\n+\n+/// Split a document into lines on the newline character, stripping a single\n+/// trailing carriage return from each line so that `\\r\\n` and `\\n` line endings\n+/// yield identical results. Never drops a line: a document without a trailing\n+/// newline still yields its last line, and one ending in a newline yields a\n+/// final empty line.\n+fn split_lines(raw: &str) -> Vec<String> {\n+    raw.split('\\n')\n+        .map(|line| line.strip_suffix('\\r').unwrap_or(line).to_string())\n+        .collect()\n+}\n+\n+/// Whether a line, compared after ignoring trailing whitespace, is exactly the\n+/// frontmatter delimiter `---`.\n+fn is_delimiter(line: &str) -> bool {\n+    line.trim_end() == \"---\"\n+}\n+\n+/// Split the raw text of a prompt file into its frontmatter and body, returning\n+/// the body's absolute start line and its lines.\n+///\n+/// Frontmatter is recognised when the very first line is exactly `---` (ignoring\n+/// trailing whitespace) and some later line is also exactly `---`. When both\n+/// delimiters are present the body is everything after the closing `---`;\n+/// otherwise the whole document is the body and `body_start_line` is 0.\n+pub fn prompt_body_lines(raw: &str) -> PromptBody {\n+    let lines = split_lines(raw);\n+\n+    if lines.first().is_some_and(|first| is_delimiter(first)) {\n+        if let Some(offset) = lines[1..].iter().position(|line| is_delimiter(line)) {\n+            let close = offset + 1;\n+            let body_start_line = close + 1;\n+            return PromptBody {\n+                body_start_line,\n+                lines: lines[body_start_line..].to_vec(),\n+            };\n+        }\n+    }\n+\n+    PromptBody {\n+        body_start_line: 0,\n+        lines,\n+    }\n+}\n+\n+/// Convert an absolute, 0-based document line number into a 1-based line number\n+/// within the body.\n+///\n+/// The body line is `doc_line - body_start_line + 1`; it is returned only when\n+/// it is a valid body position (at least 1 and no greater than the number of\n+/// body lines). Document lines above the body or past its final line yield\n+/// `None`. `doc_line` may be negative or out of range; arithmetic is checked so\n+/// that extreme values never panic.\n+pub fn body_line_for_doc_line(body: &PromptBody, doc_line: i64) -> Option<u64> {\n+    let body_line = doc_line\n+        .checked_sub(body.body_start_line as i64)\n+        .and_then(|value| value.checked_add(1))?;\n+\n+    if body_line >= 1 && body_line <= body.lines.len() as i64 {\n+        Some(body_line as u64)\n+    } else {\n+        None\n+    }\n+}\n+\n+/// Render a slice of lines as a single string for display. Each line is prefixed\n+/// by its 1-based position followed by `\": \"`, and the results are joined by\n+/// newlines.\n+pub fn number_lines(lines: &[String]) -> String {\n+    lines\n+        .iter()\n+        .enumerate()\n+        .map(|(index, line)| format!(\"{}: {}\", index + 1, line))\n+        .collect::<Vec<String>>()\n+        .join(\"\\n\")\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn crlf_and_lf_produce_identical_lines() {\n+        let unix = prompt_body_lines(\"first\\nsecond\\nthird\");\n+        let windows = prompt_body_lines(\"first\\r\\nsecond\\r\\nthird\");\n+        assert_eq!(unix.lines, vec![\"first\", \"second\", \"third\"]);\n+        assert_eq!(windows.lines, unix.lines);\n+    }\n+\n+    #[test]\n+    fn no_trailing_newline_keeps_last_line() {\n+        let body = prompt_body_lines(\"a\\nb\");\n+        assert_eq!(body.lines, vec![\"a\", \"b\"]);\n+    }\n+\n+    #[test]\n+    fn trailing_newline_yields_final_empty_line() {\n+        let body = prompt_body_lines(\"a\\nb\\n\");\n+        assert_eq!(body.lines, vec![\"a\", \"b\", \"\"]);\n+    }\n+\n+    #[test]\n+    fn empty_document_is_one_empty_line() {\n+        let body = prompt_body_lines(\"\");\n+        assert_eq!(body.body_start_line, 0);\n+        assert_eq!(body.lines, vec![\"\"]);\n+    }\n+\n+    #[test]\n+    fn frontmatter_body_starts_after_closing_delimiter() {\n+        let body = prompt_body_lines(\"---\\ntitle: x\\ntags: y\\n---\\nhello\\nworld\");\n+        assert_eq!(body.body_start_line, 4);\n+        assert_eq!(body.lines, vec![\"hello\", \"world\"]);\n+    }\n+\n+    #[test]\n+    fn delimiters_ignore_trailing_whitespace() {\n+        let body = prompt_body_lines(\"---  \\ntitle: x\\n---\\t\\nprose\");\n+        assert_eq!(body.body_start_line, 3);\n+        assert_eq!(body.lines, vec![\"prose\"]);\n+    }\n+\n+    #[test]\n+    fn no_frontmatter_when_first_line_is_not_delimiter() {\n+        let body = prompt_body_lines(\"not front\\n---\\nmore\");\n+        assert_eq!(body.body_start_line, 0);\n+        assert_eq!(body.lines, vec![\"not front\", \"---\", \"more\"]);\n+    }\n+\n+    #[test]\n+    fn no_frontmatter_when_closing_delimiter_missing() {\n+        let body = prompt_body_lines(\"---\\ntitle: x\\nno close here\");\n+        assert_eq!(body.body_start_line, 0);\n+        assert_eq!(body.lines, vec![\"---\", \"title: x\", \"no close here\"]);\n+    }\n+\n+    #[test]\n+    fn frontmatter_followed_by_nothing_has_one_empty_body_line() {\n+        let body = prompt_body_lines(\"---\\ntitle: x\\n---\\n\");\n+        assert_eq!(body.body_start_line, 3);\n+        assert_eq!(body.lines, vec![\"\"]);\n+    }\n+\n+    #[test]\n+    fn body_line_within_range_is_one_based() {\n+        // Body starts at document line 4; body lines are \"hello\", \"world\".\n+        let body = prompt_body_lines(\"---\\ntitle: x\\ntags: y\\n---\\nhello\\nworld\");\n+        assert_eq!(body_line_for_doc_line(&body, 4), Some(1));\n+        assert_eq!(body_line_for_doc_line(&body, 5), Some(2));\n+    }\n+\n+    #[test]\n+    fn body_line_above_body_is_none() {\n+        let body = prompt_body_lines(\"---\\ntitle: x\\ntags: y\\n---\\nhello\\nworld\");\n+        assert_eq!(body_line_for_doc_line(&body, 3), None);\n+        assert_eq!(body_line_for_doc_line(&body, 0), None);\n+    }\n+\n+    #[test]\n+    fn body_line_past_body_is_none() {\n+        let body = prompt_body_lines(\"---\\ntitle: x\\ntags: y\\n---\\nhello\\nworld\");\n+        assert_eq!(body_line_for_doc_line(&body, 6), None);\n+    }\n+\n+    #[test]\n+    fn body_line_negative_or_extreme_does_not_panic() {\n+        let body = prompt_body_lines(\"hello\\nworld\");\n+        assert_eq!(body_line_for_doc_line(&body, -1), None);\n+        assert_eq!(body_line_for_doc_line(&body, i64::MIN), None);\n+        assert_eq!(body_line_for_doc_line(&body, i64::MAX), None);\n+    }\n+\n+    #[test]\n+    fn number_lines_matches_spec_example() {\n+        let lines = vec![\"a\".to_string(), \"b\".to_string()];\n+        assert_eq!(number_lines(&lines), \"1: a\\n2: b\");\n+    }\n+\n+    #[test]\n+    fn number_lines_of_empty_slice_is_empty_string() {\n+        assert_eq!(number_lines(&[]), \"\");\n+    }\n+}"
+      },
+      {
+        "type": "file-edit",
+        "path": "src/lib.rs",
+        "content": "// GENERATED BY NAPL from body_lines.napl — edit the prompt, not this file\n//! Map between absolute line numbers of a `.napl` prompt document and the\n//! 1-based line numbers of its prose body (the text following the YAML\n//! frontmatter). Pure: no I/O, no dependencies.\n\n/// The body of a prompt document: the prose that follows any YAML frontmatter.\npub struct PromptBody {\n    /// Absolute, 0-based document line index at which the body begins.\n    pub body_start_line: usize,\n    /// The body's lines, in order, as owned strings.\n    pub lines: Vec<String>,\n}\n\n/// Split a document into lines on the newline character, stripping a single\n/// trailing carriage return from each line so that `\\r\\n` and `\\n` line endings\n/// yield identical results. Never drops a line: a document without a trailing\n/// newline still yields its last line, and one ending in a newline yields a\n/// final empty line.\nfn split_lines(raw: &str) -> Vec<String> {\n    raw.split('\\n')\n        .map(|line| line.strip_suffix('\\r').unwrap_or(line).to_string())\n        .collect()\n}\n\n/// Whether a line, compared after ignoring trailing whitespace, is exactly the\n/// frontmatter delimiter `---`.\nfn is_delimiter(line: &str) -> bool {\n    line.trim_end() == \"---\"\n}\n\n/// Split the raw text of a prompt file into its frontmatter and body, returning\n/// the body's absolute start line and its lines.\n///\n/// Frontmatter is recognised when the very first line is exactly `---` (ignoring\n/// trailing whitespace) and some later line is also exactly `---`. When both\n/// delimiters are present the body is everything after the closing `---`;\n/// otherwise the whole document is the body and `body_start_line` is 0.\npub fn prompt_body_lines(raw: &str) -> PromptBody {\n    let lines = split_lines(raw);\n\n    if lines.first().is_some_and(|first| is_delimiter(first)) {\n        if let Some(offset) = lines[1..].iter().position(|line| is_delimiter(line)) {\n            let close = offset + 1;\n            let body_start_line = close + 1;\n            return PromptBody {\n                body_start_line,\n                lines: lines[body_start_line..].to_vec(),\n            };\n        }\n    }\n\n    PromptBody {\n        body_start_line: 0,\n        lines,\n    }\n}\n\n/// Convert an absolute, 0-based document line number into a 1-based line number\n/// within the body.\n///\n/// The body line is `doc_line - body_start_line + 1`; it is returned only when\n/// it is a valid body position (at least 1 and no greater than the number of\n/// body lines). Document lines above the body or past its final line yield\n/// `None`. `doc_line` may be negative or out of range; arithmetic is checked so\n/// that extreme values never panic.\npub fn body_line_for_doc_line(body: &PromptBody, doc_line: i64) -> Option<u64> {\n    let body_line = doc_line\n        .checked_sub(body.body_start_line as i64)\n        .and_then(|value| value.checked_add(1))?;\n\n    if body_line >= 1 && body_line <= body.lines.len() as i64 {\n        Some(body_line as u64)\n    } else {\n        None\n    }\n}\n\n/// Render a slice of lines as a single string for display. Each line is prefixed\n/// by its 1-based position followed by `\": \"`, and the results are joined by\n/// newlines.\npub fn number_lines(lines: &[String]) -> String {\n    lines\n        .iter()\n        .enumerate()\n        .map(|(index, line)| format!(\"{}: {}\", index + 1, line))\n        .collect::<Vec<String>>()\n        .join(\"\\n\")\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn crlf_and_lf_produce_identical_lines() {\n        let unix = prompt_body_lines(\"first\\nsecond\\nthird\");\n        let windows = prompt_body_lines(\"first\\r\\nsecond\\r\\nthird\");\n        assert_eq!(unix.lines, vec![\"first\", \"second\", \"third\"]);\n        assert_eq!(windows.lines, unix.lines);\n    }\n\n    #[test]\n    fn no_trailing_newline_keeps_last_line() {\n        let body = prompt_body_lines(\"a\\nb\");\n        assert_eq!(body.lines, vec![\"a\", \"b\"]);\n    }\n\n    #[test]\n    fn trailing_newline_yields_final_empty_line() {\n        let body = prompt_body_lines(\"a\\nb\\n\");\n        assert_eq!(body.lines, vec![\"a\", \"b\", \"\"]);\n    }\n\n    #[test]\n    fn empty_document_is_one_empty_line() {\n        let body = prompt_body_lines(\"\");\n        assert_eq!(body.body_start_line, 0);\n        assert_eq!(body.lines, vec![\"\"]);\n    }\n\n    #[test]\n    fn frontmatter_body_starts_after_closing_delimiter() {\n        let body = prompt_body_lines(\"---\\ntitle: x\\ntags: y\\n---\\nhello\\nworld\");\n        assert_eq!(body.body_start_line, 4);\n        assert_eq!(body.lines, vec![\"hello\", \"world\"]);\n    }\n\n    #[test]\n    fn delimiters_ignore_trailing_whitespace() {\n        let body = prompt_body_lines(\"---  \\ntitle: x\\n---\\t\\nprose\");\n        assert_eq!(body.body_start_line, 3);\n        assert_eq!(body.lines, vec![\"prose\"]);\n    }\n\n    #[test]\n    fn no_frontmatter_when_first_line_is_not_delimiter() {\n        let body = prompt_body_lines(\"not front\\n---\\nmore\");\n        assert_eq!(body.body_start_line, 0);\n        assert_eq!(body.lines, vec![\"not front\", \"---\", \"more\"]);\n    }\n\n    #[test]\n    fn no_frontmatter_when_closing_delimiter_missing() {\n        let body = prompt_body_lines(\"---\\ntitle: x\\nno close here\");\n        assert_eq!(body.body_start_line, 0);\n        assert_eq!(body.lines, vec![\"---\", \"title: x\", \"no close here\"]);\n    }\n\n    #[test]\n    fn frontmatter_followed_by_nothing_has_one_empty_body_line() {\n        let body = prompt_body_lines(\"---\\ntitle: x\\n---\\n\");\n        assert_eq!(body.body_start_line, 3);\n        assert_eq!(body.lines, vec![\"\"]);\n    }\n\n    #[test]\n    fn body_line_within_range_is_one_based() {\n        // Body starts at document line 4; body lines are \"hello\", \"world\".\n        let body = prompt_body_lines(\"---\\ntitle: x\\ntags: y\\n---\\nhello\\nworld\");\n        assert_eq!(body_line_for_doc_line(&body, 4), Some(1));\n        assert_eq!(body_line_for_doc_line(&body, 5), Some(2));\n    }\n\n    #[test]\n    fn body_line_above_body_is_none() {\n        let body = prompt_body_lines(\"---\\ntitle: x\\ntags: y\\n---\\nhello\\nworld\");\n        assert_eq!(body_line_for_doc_line(&body, 3), None);\n        assert_eq!(body_line_for_doc_line(&body, 0), None);\n    }\n\n    #[test]\n    fn body_line_past_body_is_none() {\n        let body = prompt_body_lines(\"---\\ntitle: x\\ntags: y\\n---\\nhello\\nworld\");\n        assert_eq!(body_line_for_doc_line(&body, 6), None);\n    }\n\n    #[test]\n    fn body_line_negative_or_extreme_does_not_panic() {\n        let body = prompt_body_lines(\"hello\\nworld\");\n        assert_eq!(body_line_for_doc_line(&body, -1), None);\n        assert_eq!(body_line_for_doc_line(&body, i64::MIN), None);\n        assert_eq!(body_line_for_doc_line(&body, i64::MAX), None);\n    }\n\n    #[test]\n    fn number_lines_matches_spec_example() {\n        let lines = vec![\"a\".to_string(), \"b\".to_string()];\n        assert_eq!(number_lines(&lines), \"1: a\\n2: b\");\n    }\n\n    #[test]\n    fn number_lines_of_empty_slice_is_empty_string() {\n        assert_eq!(number_lines(&[]), \"\");\n    }\n}"
+      },
+      {
+        "type": "diff",
+        "path": "body_lines/Cargo.toml",
+        "patch": "@@ -0,0 +1,6 @@\n+[package]\n+name = \"body_lines\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]"
+      },
+      {
+        "type": "file-edit",
+        "path": "body_lines/Cargo.toml",
+        "content": "[package]\nname = \"body_lines\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n"
+      },
+      {
+        "type": "diff",
+        "path": "body_lines/src/lib.rs",
+        "patch": "@@ -0,0 +1,179 @@\n+// GENERATED BY NAPL from body_lines.napl — edit the prompt, not this file\n+\n+/// The prose body of a `.napl` prompt document, split into lines, along with\n+/// the absolute document line at which it begins.\n+pub struct PromptBody {\n+    pub body_start_line: usize,\n+    pub lines: Vec<String>,\n+}\n+\n+fn split_lines(raw: &str) -> Vec<String> {\n+    raw.split('\\n')\n+        .map(|line| line.strip_suffix('\\r').unwrap_or(line).to_string())\n+        .collect()\n+}\n+\n+/// Split a prompt document into its frontmatter-delimited body.\n+pub fn prompt_body_lines(raw: &str) -> PromptBody {\n+    let lines = split_lines(raw);\n+\n+    let has_opening = lines\n+        .first()\n+        .is_some_and(|line| line.trim_end() == \"---\");\n+\n+    if has_opening {\n+        if let Some(close_idx) = lines\n+            .iter()\n+            .enumerate()\n+            .skip(1)\n+            .find(|(_, line)| line.trim_end() == \"---\")\n+            .map(|(idx, _)| idx)\n+        {\n+            let body_start_line = close_idx + 1;\n+            let body = if body_start_line >= lines.len() {\n+                vec![String::new()]\n+            } else {\n+                lines[body_start_line..].to_vec()\n+            };\n+            return PromptBody {\n+                body_start_line,\n+                lines: body,\n+            };\n+        }\n+    }\n+\n+    PromptBody {\n+        body_start_line: 0,\n+        lines,\n+    }\n+}\n+\n+/// Convert an absolute, 0-based document line number into a 1-based line\n+/// number within the body, or `None` if it falls outside the body.\n+pub fn body_line_for_doc_line(body: &PromptBody, doc_line: i64) -> Option<usize> {\n+    let body_line = doc_line\n+        .checked_sub(body.body_start_line as i64)\n+        .and_then(|n| n.checked_add(1))?;\n+    if body_line >= 1 && body_line as usize <= body.lines.len() {\n+        Some(body_line as usize)\n+    } else {\n+        None\n+    }\n+}\n+\n+/// Render lines for display, each prefixed with its 1-based position.\n+pub fn number_lines(lines: &[String]) -> String {\n+    lines\n+        .iter()\n+        .enumerate()\n+        .map(|(idx, line)| format!(\"{}: {}\", idx + 1, line))\n+        .collect::<Vec<_>>()\n+        .join(\"\\n\")\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn splits_on_unix_and_windows_newlines() {\n+        let unix = prompt_body_lines(\"a\\nb\\nc\");\n+        let windows = prompt_body_lines(\"a\\r\\nb\\r\\nc\");\n+        assert_eq!(unix.lines, windows.lines);\n+        assert_eq!(unix.lines, vec![\"a\", \"b\", \"c\"]);\n+    }\n+\n+    #[test]\n+    fn no_trailing_newline_keeps_last_line() {\n+        let body = prompt_body_lines(\"a\\nb\");\n+        assert_eq!(body.lines, vec![\"a\", \"b\"]);\n+    }\n+\n+    #[test]\n+    fn trailing_newline_yields_final_empty_line() {\n+        let body = prompt_body_lines(\"a\\nb\\n\");\n+        assert_eq!(body.lines, vec![\"a\", \"b\", \"\"]);\n+    }\n+\n+    #[test]\n+    fn no_frontmatter_body_is_whole_document() {\n+        let body = prompt_body_lines(\"hello\\nworld\");\n+        assert_eq!(body.body_start_line, 0);\n+        assert_eq!(body.lines, vec![\"hello\", \"world\"]);\n+    }\n+\n+    #[test]\n+    fn first_line_not_delimiter_means_no_frontmatter() {\n+        let body = prompt_body_lines(\"title\\n---\\nbody\");\n+        assert_eq!(body.body_start_line, 0);\n+        assert_eq!(body.lines, vec![\"title\", \"---\", \"body\"]);\n+    }\n+\n+    #[test]\n+    fn missing_closing_delimiter_means_no_frontmatter() {\n+        let body = prompt_body_lines(\"---\\nkey: value\\nno closing here\");\n+        assert_eq!(body.body_start_line, 0);\n+        assert_eq!(body.lines, vec![\"---\", \"key: value\", \"no closing here\"]);\n+    }\n+\n+    #[test]\n+    fn frontmatter_is_stripped() {\n+        let body = prompt_body_lines(\"---\\nkey: value\\n---\\nline one\\nline two\");\n+        assert_eq!(body.body_start_line, 3);\n+        assert_eq!(body.lines, vec![\"line one\", \"line two\"]);\n+    }\n+\n+    #[test]\n+    fn delimiters_compared_ignoring_trailing_whitespace() {\n+        let body = prompt_body_lines(\"---  \\nkey: value\\n---\\t\\nbody line\");\n+        assert_eq!(body.body_start_line, 3);\n+        assert_eq!(body.lines, vec![\"body line\"]);\n+    }\n+\n+    #[test]\n+    fn frontmatter_followed_by_nothing_has_one_empty_body_line() {\n+        let body = prompt_body_lines(\"---\\nkey: value\\n---\");\n+        assert_eq!(body.body_start_line, 3);\n+        assert_eq!(body.lines, vec![\"\"]);\n+    }\n+\n+    #[test]\n+    fn body_line_for_doc_line_maps_within_range() {\n+        let body = prompt_body_lines(\"---\\nkey: value\\n---\\nfirst\\nsecond\");\n+        assert_eq!(body_line_for_doc_line(&body, 3), Some(1));\n+        assert_eq!(body_line_for_doc_line(&body, 4), Some(2));\n+    }\n+\n+    #[test]\n+    fn body_line_for_doc_line_before_body_is_none() {\n+        let body = prompt_body_lines(\"---\\nkey: value\\n---\\nfirst\\nsecond\");\n+        assert_eq!(body_line_for_doc_line(&body, 0), None);\n+        assert_eq!(body_line_for_doc_line(&body, 2), None);\n+    }\n+\n+    #[test]\n+    fn body_line_for_doc_line_past_end_is_none() {\n+        let body = prompt_body_lines(\"---\\nkey: value\\n---\\nfirst\\nsecond\");\n+        assert_eq!(body_line_for_doc_line(&body, 5), None);\n+    }\n+\n+    #[test]\n+    fn body_line_for_doc_line_handles_negative_and_large_values() {\n+        let body = prompt_body_lines(\"first\\nsecond\");\n+        assert_eq!(body_line_for_doc_line(&body, -5), None);\n+        assert_eq!(body_line_for_doc_line(&body, i64::MAX), None);\n+        assert_eq!(body_line_for_doc_line(&body, i64::MIN), None);\n+    }\n+\n+    #[test]\n+    fn number_lines_renders_with_positions() {\n+        let lines = vec![\"a\".to_string(), \"b\".to_string()];\n+        assert_eq!(number_lines(&lines), \"1: a\\n2: b\");\n+    }\n+\n+    #[test]\n+    fn number_lines_empty_slice_is_empty_string() {\n+        let lines: Vec<String> = vec![];\n+        assert_eq!(number_lines(&lines), \"\");\n+    }\n+}"
+      },
+      {
+        "type": "file-edit",
+        "path": "body_lines/src/lib.rs",
+        "content": "// GENERATED BY NAPL from body_lines.napl — edit the prompt, not this file\n\n/// The prose body of a `.napl` prompt document, split into lines, along with\n/// the absolute document line at which it begins.\npub struct PromptBody {\n    pub body_start_line: usize,\n    pub lines: Vec<String>,\n}\n\nfn split_lines(raw: &str) -> Vec<String> {\n    raw.split('\\n')\n        .map(|line| line.strip_suffix('\\r').unwrap_or(line).to_string())\n        .collect()\n}\n\n/// Split a prompt document into its frontmatter-delimited body.\npub fn prompt_body_lines(raw: &str) -> PromptBody {\n    let lines = split_lines(raw);\n\n    let has_opening = lines\n        .first()\n        .is_some_and(|line| line.trim_end() == \"---\");\n\n    if has_opening {\n        if let Some(close_idx) = lines\n            .iter()\n            .enumerate()\n            .skip(1)\n            .find(|(_, line)| line.trim_end() == \"---\")\n            .map(|(idx, _)| idx)\n        {\n            let body_start_line = close_idx + 1;\n            let body = if body_start_line >= lines.len() {\n                vec![String::new()]\n            } else {\n                lines[body_start_line..].to_vec()\n            };\n            return PromptBody {\n                body_start_line,\n                lines: body,\n            };\n        }\n    }\n\n    PromptBody {\n        body_start_line: 0,\n        lines,\n    }\n}\n\n/// Convert an absolute, 0-based document line number into a 1-based line\n/// number within the body, or `None` if it falls outside the body.\npub fn body_line_for_doc_line(body: &PromptBody, doc_line: i64) -> Option<usize> {\n    let body_line = doc_line\n        .checked_sub(body.body_start_line as i64)\n        .and_then(|n| n.checked_add(1))?;\n    if body_line >= 1 && body_line as usize <= body.lines.len() {\n        Some(body_line as usize)\n    } else {\n        None\n    }\n}\n\n/// Render lines for display, each prefixed with its 1-based position.\npub fn number_lines(lines: &[String]) -> String {\n    lines\n        .iter()\n        .enumerate()\n        .map(|(idx, line)| format!(\"{}: {}\", idx + 1, line))\n        .collect::<Vec<_>>()\n        .join(\"\\n\")\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn splits_on_unix_and_windows_newlines() {\n        let unix = prompt_body_lines(\"a\\nb\\nc\");\n        let windows = prompt_body_lines(\"a\\r\\nb\\r\\nc\");\n        assert_eq!(unix.lines, windows.lines);\n        assert_eq!(unix.lines, vec![\"a\", \"b\", \"c\"]);\n    }\n\n    #[test]\n    fn no_trailing_newline_keeps_last_line() {\n        let body = prompt_body_lines(\"a\\nb\");\n        assert_eq!(body.lines, vec![\"a\", \"b\"]);\n    }\n\n    #[test]\n    fn trailing_newline_yields_final_empty_line() {\n        let body = prompt_body_lines(\"a\\nb\\n\");\n        assert_eq!(body.lines, vec![\"a\", \"b\", \"\"]);\n    }\n\n    #[test]\n    fn no_frontmatter_body_is_whole_document() {\n        let body = prompt_body_lines(\"hello\\nworld\");\n        assert_eq!(body.body_start_line, 0);\n        assert_eq!(body.lines, vec![\"hello\", \"world\"]);\n    }\n\n    #[test]\n    fn first_line_not_delimiter_means_no_frontmatter() {\n        let body = prompt_body_lines(\"title\\n---\\nbody\");\n        assert_eq!(body.body_start_line, 0);\n        assert_eq!(body.lines, vec![\"title\", \"---\", \"body\"]);\n    }\n\n    #[test]\n    fn missing_closing_delimiter_means_no_frontmatter() {\n        let body = prompt_body_lines(\"---\\nkey: value\\nno closing here\");\n        assert_eq!(body.body_start_line, 0);\n        assert_eq!(body.lines, vec![\"---\", \"key: value\", \"no closing here\"]);\n    }\n\n    #[test]\n    fn frontmatter_is_stripped() {\n        let body = prompt_body_lines(\"---\\nkey: value\\n---\\nline one\\nline two\");\n        assert_eq!(body.body_start_line, 3);\n        assert_eq!(body.lines, vec![\"line one\", \"line two\"]);\n    }\n\n    #[test]\n    fn delimiters_compared_ignoring_trailing_whitespace() {\n        let body = prompt_body_lines(\"---  \\nkey: value\\n---\\t\\nbody line\");\n        assert_eq!(body.body_start_line, 3);\n        assert_eq!(body.lines, vec![\"body line\"]);\n    }\n\n    #[test]\n    fn frontmatter_followed_by_nothing_has_one_empty_body_line() {\n        let body = prompt_body_lines(\"---\\nkey: value\\n---\");\n        assert_eq!(body.body_start_line, 3);\n        assert_eq!(body.lines, vec![\"\"]);\n    }\n\n    #[test]\n    fn body_line_for_doc_line_maps_within_range() {\n        let body = prompt_body_lines(\"---\\nkey: value\\n---\\nfirst\\nsecond\");\n        assert_eq!(body_line_for_doc_line(&body, 3), Some(1));\n        assert_eq!(body_line_for_doc_line(&body, 4), Some(2));\n    }\n\n    #[test]\n    fn body_line_for_doc_line_before_body_is_none() {\n        let body = prompt_body_lines(\"---\\nkey: value\\n---\\nfirst\\nsecond\");\n        assert_eq!(body_line_for_doc_line(&body, 0), None);\n        assert_eq!(body_line_for_doc_line(&body, 2), None);\n    }\n\n    #[test]\n    fn body_line_for_doc_line_past_end_is_none() {\n        let body = prompt_body_lines(\"---\\nkey: value\\n---\\nfirst\\nsecond\");\n        assert_eq!(body_line_for_doc_line(&body, 5), None);\n    }\n\n    #[test]\n    fn body_line_for_doc_line_handles_negative_and_large_values() {\n        let body = prompt_body_lines(\"first\\nsecond\");\n        assert_eq!(body_line_for_doc_line(&body, -5), None);\n        assert_eq!(body_line_for_doc_line(&body, i64::MAX), None);\n        assert_eq!(body_line_for_doc_line(&body, i64::MIN), None);\n    }\n\n    #[test]\n    fn number_lines_renders_with_positions() {\n        let lines = vec![\"a\".to_string(), \"b\".to_string()];\n        assert_eq!(number_lines(&lines), \"1: a\\n2: b\");\n    }\n\n    #[test]\n    fn number_lines_empty_slice_is_empty_string() {\n        let lines: Vec<String> = vec![];\n        assert_eq!(number_lines(&lines), \"\");\n    }\n}\n"
+      },
+      {
+        "type": "attribution",
+        "module": "body_lines",
+        "target": "rust",
+        "entries": [
+          {
+            "promptLines": [
+              9,
+              12
+            ],
+            "file": "body_lines/src/lib.rs",
+            "lines": [
+              1,
+              1
+            ],
+            "note": "generated file marker, crate location note"
+          },
+          {
+            "promptLines": [
+              16,
+              21
+            ],
+            "file": "body_lines/src/lib.rs",
+            "lines": [
+              10,
+              14
+            ],
+            "note": "split_lines strips trailing CR, preserves empty trailing line"
+          },
+          {
+            "promptLines": [
+              25,
+              30
+            ],
+            "file": "body_lines/src/lib.rs",
+            "lines": [
+              3,
+              8
+            ],
+            "note": "PromptBody struct with body_start_line and lines fields"
+          },
+          {
+            "promptLines": [
+              25,
+              30
+            ],
+            "file": "body_lines/src/lib.rs",
+            "lines": [
+              17,
+              18
+            ],
+            "note": "prompt_body_lines entry, splits raw into lines"
+          },
+          {
+            "promptLines": [
+              32,
+              34
+            ],
+            "file": "body_lines/src/lib.rs",
+            "lines": [
+              20,
+              22
+            ],
+            "note": "detect opening --- ignoring trailing whitespace"
+          },
+          {
+            "promptLines": [
+              32,
+              34
+            ],
+            "file": "body_lines/src/lib.rs",
+            "lines": [
+              25,
+              31
+            ],
+            "note": "find closing --- delimiter ignoring trailing whitespace"
+          },
+          {
+            "promptLines": [
+              35,
+              36
+            ],
+            "file": "body_lines/src/lib.rs",
+            "lines": [
+              32,
+              32
+            ],
+            "note": "body_start_line is line after closing delimiter"
+          },
+          {
+            "promptLines": [
+              36,
+              36
+            ],
+            "file": "body_lines/src/lib.rs",
+            "lines": [
+              35,
+              37
+            ],
+            "note": "lines holds remaining lines after closing delimiter"
+          },
+          {
+            "promptLines": [
+              37,
+              39
+            ],
+            "file": "body_lines/src/lib.rs",
+            "lines": [
+              45,
+              48
+            ],
+            "note": "no frontmatter fallback, body_start_line 0 whole doc"
+          },
+          {
+            "promptLines": [
+              41,
+              42
+            ],
+            "file": "body_lines/src/lib.rs",
+            "lines": [
+              33,
+              34
+            ],
+            "note": "frontmatter immediately followed by nothing yields one empty line"
+          },
+          {
+            "promptLines": [
+              46,
+              48
+            ],
+            "file": "body_lines/src/lib.rs",
+            "lines": [
+              53,
+              56
+            ],
+            "note": "compute body line as doc_line - body_start_line + 1 with checked arithmetic"
+          },
+          {
+            "promptLines": [
+              49,
+              51
+            ],
+            "file": "body_lines/src/lib.rs",
+            "lines": [
+              57,
+              61
+            ],
+            "note": "validate body line within range, else None"
+          },
+          {
+            "promptLines": [
+              55,
+              58
+            ],
+            "file": "body_lines/src/lib.rs",
+            "lines": [
+              65,
+              72
+            ],
+            "note": "number_lines prefixes each line with 1-based position joined by newline"
+          }
+        ]
+      },
+      {
+        "type": "mapl-entry",
+        "path": "body_lines.mapl",
+        "entry": {
+          "promptLines": [
+            9,
+            12
+          ],
+          "kind": "assumption",
+          "severity": "warning",
+          "message": "Assumed the workspace root Cargo.toml already auto-discovers members (e.g. via a glob), so no edit to the root manifest was needed to register the new crate.",
+          "reasoning": "The prompt says the root manifest is \"owned by the toolchain — leave it alone\" and to \"touch nothing outside body_lines/\", but a new member crate typically must be listed in the workspace's `[workspace.members]` array to be built as part of the workspace. The agent's reported change set doesn't show any root Cargo.toml edit, implying it assumed the root manifest already picks up new crates automatically (e.g. `members = [\"*\"]`). If that assumption is wrong, the crate may not actually be wired into the workspace build.\n",
+          "suggestion": "Clarify whether the root Cargo.toml already globs in new member crates, or whether this task is expected to also add an entry there (and if so, note that as an exception to \"leave it alone\"). "
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "body_lines.mapl",
+        "entry": {
+          "promptLines": [
+            9,
+            12
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "Reported change set lists only src/lib.rs, not body_lines/Cargo.toml, even though the final message claims both were created.",
+          "reasoning": "The final message states \"body_lines crate done: `body_lines/Cargo.toml` + `body_lines/src/lib.rs`\", but the numbered change list provided only shows the contents of lib.rs. This is likely just an omission in what was surfaced for review rather than a real gap, but it means the Cargo.toml contents (package name, edition, dependencies) were not independently verifiable from the given change listing."
+        }
+      },
+      {
+        "type": "lock",
+        "module": "body_lines",
+        "target": "rust",
+        "files": [
+          {
+            "path": "body_lines/Cargo.toml",
+            "hash": "87760cbe55d962b4b0b139e09e641322f83515f10d3afcf62374f9da3716cb4a"
+          },
+          {
+            "path": "body_lines/src/lib.rs",
+            "hash": "c86e862fb84101f03bdf766d93af963e0c8660c1aceae7019cff861c2db427b2"
+          }
+        ]
+      }
+    ]
+  }
+}

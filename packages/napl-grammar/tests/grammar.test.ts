@@ -1,4 +1,6 @@
 import { readFile } from 'node:fs/promises';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHighlighter, type HighlighterGeneric } from 'shiki';
 import { describe, expect, it } from 'vitest';
@@ -11,9 +13,39 @@ import {
 const repoFile = (path: string): string =>
   fileURLToPath(new URL(`../../../${path}`, import.meta.url));
 
+const findPrompt = (dir: string, moduleName: string): string | null => {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name === 'node_modules' || entry.name === 'target' || entry.name === '.napl') {
+      continue;
+    }
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      const nested = findPrompt(full, moduleName);
+      if (nested) {
+        return nested;
+      }
+      continue;
+    }
+    if (entry.name.endsWith('.napl') || entry.name.endsWith('.🧑')) {
+      if (new RegExp(`^module:\\s*${moduleName}\\s*$`, 'm').test(readFileSync(full, 'utf8'))) {
+        return full;
+      }
+    }
+  }
+  return null;
+};
+
+const promptFile = (moduleName: string): string => {
+  const found = findPrompt(repoFile('selfhost'), moduleName);
+  if (!found) {
+    throw new Error(`could not locate the ${moduleName} prompt under selfhost/`);
+  }
+  return found;
+};
+
 describe('NAPL TextMate grammars', () => {
   it('tokenizes real NAPL frontmatter and Markdown with semantic scopes', async () => {
-    const source = await readFile(repoFile('selfhost/body_lines.napl'), 'utf8');
+    const source = await readFile(promptFile('body_lines'), 'utf8');
     const highlighter = (await createHighlighter({
       themes: ['github-dark'],
       langs: ['yaml', 'markdown'],

@@ -1,0 +1,405 @@
+{
+  "module": "snapshot_filter",
+  "collection": "selfhost",
+  "target": "rust",
+  "targets": [
+    "rust"
+  ],
+  "prompt": {
+    "file": "snapshot_filter.napl",
+    "path": "cli/snapshot_filter.napl",
+    "content": "---\nmodule: snapshot_filter\ndeps: []\ntargets: [rust]\ntests:\n  - name: excluded directories are decided by exact name\n    given:\n      exclude_dirs: [\"node_modules\", \".git\"]\n      probe_dirs: [\"node_modules\", \".git\", \"src\"]\n    expect: { excluded_dirs: [\"node_modules\", \".git\"] }\n  - name: a plain excluded file is skipped at any depth\n    given:\n      exclude_files: [\"AGENTS.md\"]\n      probe: { name: \"AGENTS.md\", at_root: false }\n    expect: { excluded: true }\n  - name: a suffix match is skipped\n    given:\n      exclude_suffixes: [\".d.ts\"]\n      probe: { name: \"types.d.ts\", at_root: false }\n    expect: { excluded: true }\n  - name: a root-only exclusion applies at the root but not in a subdirectory\n    given:\n      exclude_root_files: [\"Cargo.toml\"]\n      probe_root: { name: \"Cargo.toml\", at_root: true }\n      probe_nested: { name: \"Cargo.toml\", at_root: false }\n    expect: { excluded_at_root: true, excluded_nested: false }\n  - name: an unlisted file is kept\n    given:\n      probe: { name: \"keep.ts\", at_root: false }\n    expect: { excluded: false }\n---\n# The snapshot exclusion filter\n\nThis module is the **pure** exclusion-predicate core of the CLI's snapshot module:\nit decides which directories and files the snapshot walk skips. It is pure — no\nfilesystem access, no dependencies on other project modules. The I/O shell walks\nthe tree and consults this filter at each entry; the filter itself only answers\nyes/no about a name.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `snapshot_filter/`: `snapshot_filter/Cargo.toml`\n(package name `snapshot_filter`) and `snapshot_filter/src/lib.rs`. Touch nothing\noutside `snapshot_filter/`. Ensure `cargo test` passes from the workspace root\nbefore finishing.\n\n## The filter type\n\nExpose a public struct `SnapshotFilter` that holds four sets of exclusion rules:\n\n- excluded **directory names** — a directory whose file name matches one of these\n  is skipped entirely (its subtree is not walked).\n- excluded **file names** — a file whose name matches one of these is skipped\n  anywhere in the tree.\n- excluded **root-only file names** — a file whose name matches one of these is\n  skipped **only** when it sits at the walked tree's root, not when a same-named\n  file appears in a subdirectory. This exists so a toolchain-owned root manifest\n  can be excluded while its per-module namesakes stay included.\n- excluded **suffixes** — a file whose name ends with one of these strings is\n  skipped anywhere in the tree.\n\nThe internal representation is your choice (e.g. hash sets for the exact-name\nlists, a vector for the suffixes); only the observable decisions below are pinned.\n\n## `make_filter(exclude_dirs, exclude_files, exclude_root_files, exclude_suffixes)`\n\n`make_filter(exclude_dirs: &[String], exclude_files: &[String], exclude_root_files: &[String], exclude_suffixes: &[String]) -> SnapshotFilter`:\nbuild a `SnapshotFilter` from the four rule lists, in that exact parameter order.\nIt copies the given entries into the filter; it does no I/O.\n\n## `SnapshotFilter::is_excluded_dir(&self, name: &str) -> bool`\n\nReturn `true` when `name` exactly matches one of the excluded directory names,\n`false` otherwise. Only exact whole-name matches count — there is no suffix or\nprefix logic for directories.\n\n## `SnapshotFilter::is_excluded_file(&self, name: &str, at_root: bool) -> bool`\n\nReturn `true` when **any** of these hold, `false` only when none do:\n\n- `name` exactly matches one of the excluded file names, or\n- `at_root` is `true` **and** `name` exactly matches one of the excluded\n  root-only file names, or\n- `name` ends with one of the excluded suffixes.\n\nWhen `at_root` is `false`, the root-only list is ignored entirely. The plain\nfile-name and suffix rules apply regardless of `at_root`.\n\n### Worked decisions\n\nWith `exclude_dirs = [\"node_modules\", \".git\"]`, `exclude_files = [\"AGENTS.md\"]`,\n`exclude_root_files = [\"Cargo.toml\"]`, `exclude_suffixes = [\".d.ts\"]`:\n\n- `is_excluded_dir(\"node_modules\")` → `true`; `is_excluded_dir(\".git\")` → `true`;\n  `is_excluded_dir(\"src\")` → `false`.\n- `is_excluded_file(\"AGENTS.md\", false)` → `true` (plain file rule, depth\n  irrelevant).\n- `is_excluded_file(\"types.d.ts\", false)` → `true` (suffix `.d.ts`).\n- `is_excluded_file(\"Cargo.toml\", true)` → `true` (root-only rule at the root).\n- `is_excluded_file(\"Cargo.toml\", false)` → `false` (root-only rule does not\n  apply below the root, and no plain/suffix rule matches).\n- `is_excluded_file(\"keep.ts\", false)` → `false` (no rule matches).\n"
+  },
+  "promptAtGen": "# The snapshot exclusion filter\n\nThis module is the **pure** exclusion-predicate core of the CLI's snapshot module:\nit decides which directories and files the snapshot walk skips. It is pure — no\nfilesystem access, no dependencies on other project modules. The I/O shell walks\nthe tree and consults this filter at each entry; the filter itself only answers\nyes/no about a name.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `snapshot_filter/`: `snapshot_filter/Cargo.toml`\n(package name `snapshot_filter`) and `snapshot_filter/src/lib.rs`. Touch nothing\noutside `snapshot_filter/`. Ensure `cargo test` passes from the workspace root\nbefore finishing.\n\n## The filter type\n\nExpose a public struct `SnapshotFilter` that holds four sets of exclusion rules:\n\n- excluded **directory names** — a directory whose file name matches one of these\n  is skipped entirely (its subtree is not walked).\n- excluded **file names** — a file whose name matches one of these is skipped\n  anywhere in the tree.\n- excluded **root-only file names** — a file whose name matches one of these is\n  skipped **only** when it sits at the walked tree's root, not when a same-named\n  file appears in a subdirectory. This exists so a toolchain-owned root manifest\n  can be excluded while its per-module namesakes stay included.\n- excluded **suffixes** — a file whose name ends with one of these strings is\n  skipped anywhere in the tree.\n\nThe internal representation is your choice (e.g. hash sets for the exact-name\nlists, a vector for the suffixes); only the observable decisions below are pinned.\n\n## `make_filter(exclude_dirs, exclude_files, exclude_root_files, exclude_suffixes)`\n\n`make_filter(exclude_dirs: &[String], exclude_files: &[String], exclude_root_files: &[String], exclude_suffixes: &[String]) -> SnapshotFilter`:\nbuild a `SnapshotFilter` from the four rule lists, in that exact parameter order.\nIt copies the given entries into the filter; it does no I/O.\n\n## `SnapshotFilter::is_excluded_dir(&self, name: &str) -> bool`\n\nReturn `true` when `name` exactly matches one of the excluded directory names,\n`false` otherwise. Only exact whole-name matches count — there is no suffix or\nprefix logic for directories.\n\n## `SnapshotFilter::is_excluded_file(&self, name: &str, at_root: bool) -> bool`\n\nReturn `true` when **any** of these hold, `false` only when none do:\n\n- `name` exactly matches one of the excluded file names, or\n- `at_root` is `true` **and** `name` exactly matches one of the excluded\n  root-only file names, or\n- `name` ends with one of the excluded suffixes.\n\nWhen `at_root` is `false`, the root-only list is ignored entirely. The plain\nfile-name and suffix rules apply regardless of `at_root`.\n\n### Worked decisions\n\nWith `exclude_dirs = [\"node_modules\", \".git\"]`, `exclude_files = [\"AGENTS.md\"]`,\n`exclude_root_files = [\"Cargo.toml\"]`, `exclude_suffixes = [\".d.ts\"]`:\n\n- `is_excluded_dir(\"node_modules\")` → `true`; `is_excluded_dir(\".git\")` → `true`;\n  `is_excluded_dir(\"src\")` → `false`.\n- `is_excluded_file(\"AGENTS.md\", false)` → `true` (plain file rule, depth\n  irrelevant).\n- `is_excluded_file(\"types.d.ts\", false)` → `true` (suffix `.d.ts`).\n- `is_excluded_file(\"Cargo.toml\", true)` → `true` (root-only rule at the root).\n- `is_excluded_file(\"Cargo.toml\", false)` → `false` (root-only rule does not\n  apply below the root, and no plain/suffix rule matches).\n- `is_excluded_file(\"keep.ts\", false)` → `false` (no rule matches).\n",
+  "summary": "The snapshot exclusion filter",
+  "files": [
+    {
+      "path": "snapshot_filter/Cargo.toml",
+      "journalPath": ".napl/src/rust/snapshot_filter/Cargo.toml",
+      "content": "# GENERATED BY NAPL from snapshot_filter.napl — edit the prompt, not this file\n[package]\nname = \"snapshot_filter\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n",
+      "language": "toml"
+    },
+    {
+      "path": "snapshot_filter/src/lib.rs",
+      "journalPath": ".napl/src/rust/snapshot_filter/src/lib.rs",
+      "content": "// GENERATED BY NAPL from snapshot_filter.napl — edit the prompt, not this file\n\nuse std::collections::HashSet;\n\n/// Pure exclusion-predicate core for the snapshot walk: decides which\n/// directories and files to skip, without touching the filesystem.\npub struct SnapshotFilter {\n    excluded_dirs: HashSet<String>,\n    excluded_files: HashSet<String>,\n    excluded_root_files: HashSet<String>,\n    excluded_suffixes: Vec<String>,\n}\n\n/// Build a `SnapshotFilter` from the four rule lists.\npub fn make_filter(\n    exclude_dirs: &[String],\n    exclude_files: &[String],\n    exclude_root_files: &[String],\n    exclude_suffixes: &[String],\n) -> SnapshotFilter {\n    SnapshotFilter {\n        excluded_dirs: exclude_dirs.iter().cloned().collect(),\n        excluded_files: exclude_files.iter().cloned().collect(),\n        excluded_root_files: exclude_root_files.iter().cloned().collect(),\n        excluded_suffixes: exclude_suffixes.to_vec(),\n    }\n}\n\nimpl SnapshotFilter {\n    /// `true` when `name` exactly matches an excluded directory name.\n    pub fn is_excluded_dir(&self, name: &str) -> bool {\n        self.excluded_dirs.contains(name)\n    }\n\n    /// `true` when `name` matches a plain file rule, a root-only rule\n    /// (only if `at_root`), or a suffix rule.\n    pub fn is_excluded_file(&self, name: &str, at_root: bool) -> bool {\n        self.excluded_files.contains(name)\n            || (at_root && self.excluded_root_files.contains(name))\n            || self.excluded_suffixes.iter().any(|suffix| name.ends_with(suffix.as_str()))\n    }\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    fn strs(items: &[&str]) -> Vec<String> {\n        items.iter().map(|s| s.to_string()).collect()\n    }\n\n    fn worked_filter() -> SnapshotFilter {\n        make_filter(\n            &strs(&[\"node_modules\", \".git\"]),\n            &strs(&[\"AGENTS.md\"]),\n            &strs(&[\"Cargo.toml\"]),\n            &strs(&[\".d.ts\"]),\n        )\n    }\n\n    #[test]\n    fn dir_exact_match_excluded() {\n        let f = worked_filter();\n        assert!(f.is_excluded_dir(\"node_modules\"));\n        assert!(f.is_excluded_dir(\".git\"));\n    }\n\n    #[test]\n    fn dir_non_match_not_excluded() {\n        let f = worked_filter();\n        assert!(!f.is_excluded_dir(\"src\"));\n    }\n\n    #[test]\n    fn dir_no_suffix_or_prefix_logic() {\n        let f = worked_filter();\n        assert!(!f.is_excluded_dir(\"node_modules_extra\"));\n        assert!(!f.is_excluded_dir(\"my_node_modules\"));\n    }\n\n    #[test]\n    fn plain_file_rule_excluded_regardless_of_depth() {\n        let f = worked_filter();\n        assert!(f.is_excluded_file(\"AGENTS.md\", false));\n        assert!(f.is_excluded_file(\"AGENTS.md\", true));\n    }\n\n    #[test]\n    fn suffix_rule_excluded_anywhere() {\n        let f = worked_filter();\n        assert!(f.is_excluded_file(\"types.d.ts\", false));\n        assert!(f.is_excluded_file(\"types.d.ts\", true));\n    }\n\n    #[test]\n    fn root_only_rule_applies_at_root() {\n        let f = worked_filter();\n        assert!(f.is_excluded_file(\"Cargo.toml\", true));\n    }\n\n    #[test]\n    fn root_only_rule_ignored_below_root() {\n        let f = worked_filter();\n        assert!(!f.is_excluded_file(\"Cargo.toml\", false));\n    }\n\n    #[test]\n    fn no_matching_rule_not_excluded() {\n        let f = worked_filter();\n        assert!(!f.is_excluded_file(\"keep.ts\", false));\n        assert!(!f.is_excluded_file(\"keep.ts\", true));\n    }\n\n    #[test]\n    fn empty_rules_exclude_nothing() {\n        let f = make_filter(&[], &[], &[], &[]);\n        assert!(!f.is_excluded_dir(\"anything\"));\n        assert!(!f.is_excluded_file(\"anything\", true));\n        assert!(!f.is_excluded_file(\"anything\", false));\n    }\n}\n",
+      "language": "rust"
+    }
+  ],
+  "attribution": [
+    {
+      "promptLines": [
+        20,
+        34
+      ],
+      "file": "snapshot_filter/src/lib.rs",
+      "lines": [
+        5,
+        12
+      ],
+      "note": "SnapshotFilter struct with four rule sets"
+    },
+    {
+      "promptLines": [
+        36,
+        40
+      ],
+      "file": "snapshot_filter/src/lib.rs",
+      "lines": [
+        14,
+        27
+      ],
+      "note": "make_filter builds struct from four lists"
+    },
+    {
+      "promptLines": [
+        42,
+        46
+      ],
+      "file": "snapshot_filter/src/lib.rs",
+      "lines": [
+        30,
+        33
+      ],
+      "note": "is_excluded_dir exact-match check"
+    },
+    {
+      "promptLines": [
+        48,
+        58
+      ],
+      "file": "snapshot_filter/src/lib.rs",
+      "lines": [
+        35,
+        41
+      ],
+      "note": "is_excluded_file plain/root/suffix rule logic"
+    },
+    {
+      "promptLines": [
+        65,
+        66
+      ],
+      "file": "snapshot_filter/src/lib.rs",
+      "lines": [
+        61,
+        79
+      ],
+      "note": "dir exact match tests, incl. non-match/no suffix-prefix"
+    },
+    {
+      "promptLines": [
+        67,
+        68
+      ],
+      "file": "snapshot_filter/src/lib.rs",
+      "lines": [
+        81,
+        86
+      ],
+      "note": "plain file rule test regardless of depth"
+    },
+    {
+      "promptLines": [
+        69,
+        69
+      ],
+      "file": "snapshot_filter/src/lib.rs",
+      "lines": [
+        88,
+        93
+      ],
+      "note": "suffix rule test"
+    },
+    {
+      "promptLines": [
+        70,
+        70
+      ],
+      "file": "snapshot_filter/src/lib.rs",
+      "lines": [
+        95,
+        99
+      ],
+      "note": "root-only rule applies at root test"
+    },
+    {
+      "promptLines": [
+        71,
+        72
+      ],
+      "file": "snapshot_filter/src/lib.rs",
+      "lines": [
+        101,
+        105
+      ],
+      "note": "root-only rule ignored below root test"
+    },
+    {
+      "promptLines": [
+        73,
+        73
+      ],
+      "file": "snapshot_filter/src/lib.rs",
+      "lines": [
+        107,
+        112
+      ],
+      "note": "no matching rule test"
+    },
+    {
+      "promptLines": [
+        62,
+        63
+      ],
+      "file": "snapshot_filter/src/lib.rs",
+      "lines": [
+        48,
+        59
+      ],
+      "note": "worked_filter test fixture matching worked-decisions example"
+    },
+    {
+      "promptLines": [
+        33,
+        33
+      ],
+      "file": "snapshot_filter/src/lib.rs",
+      "lines": [
+        3,
+        11
+      ],
+      "note": "internal repr uses HashSet for names, Vec for suffixes"
+    }
+  ],
+  "attributionYaml": "module: snapshot_filter\ntarget: rust\nentries:\n  - promptLines:\n      - 20\n      - 34\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 5\n      - 12\n    note: SnapshotFilter struct with four rule sets\n  - promptLines:\n      - 36\n      - 40\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 14\n      - 27\n    note: make_filter builds struct from four lists\n  - promptLines:\n      - 42\n      - 46\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 30\n      - 33\n    note: is_excluded_dir exact-match check\n  - promptLines:\n      - 48\n      - 58\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 35\n      - 41\n    note: is_excluded_file plain/root/suffix rule logic\n  - promptLines:\n      - 65\n      - 66\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 61\n      - 79\n    note: dir exact match tests, incl. non-match/no suffix-prefix\n  - promptLines:\n      - 67\n      - 68\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 81\n      - 86\n    note: plain file rule test regardless of depth\n  - promptLines:\n      - 69\n      - 69\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 88\n      - 93\n    note: suffix rule test\n  - promptLines:\n      - 70\n      - 70\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 95\n      - 99\n    note: root-only rule applies at root test\n  - promptLines:\n      - 71\n      - 72\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 101\n      - 105\n    note: root-only rule ignored below root test\n  - promptLines:\n      - 73\n      - 73\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 107\n      - 112\n    note: no matching rule test\n  - promptLines:\n      - 62\n      - 63\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 48\n      - 59\n    note: worked_filter test fixture matching worked-decisions example\n  - promptLines:\n      - 33\n      - 33\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 3\n      - 11\n    note: internal repr uses HashSet for names, Vec for suffixes\n",
+  "mapl": [],
+  "journal": [
+    {
+      "gen": 31,
+      "timestamp": "2026-07-24T09:25:34.822Z",
+      "mode": "full",
+      "promptHash": "7f505aa884a76cab7a726d8fff73fa09a2d8d7c9a21a7461dd627191827c8db8",
+      "files": [
+        {
+          "path": "snapshot_filter/Cargo.toml",
+          "journalPath": ".napl/src/rust/snapshot_filter/Cargo.toml",
+          "patch": "@@ -0,0 +1,7 @@\n+# GENERATED BY NAPL from snapshot_filter.napl — edit the prompt, not this file\n+[package]\n+name = \"snapshot_filter\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]"
+        },
+        {
+          "path": "snapshot_filter/src/lib.rs",
+          "journalPath": ".napl/src/rust/snapshot_filter/src/lib.rs",
+          "patch": "@@ -0,0 +1,121 @@\n+// GENERATED BY NAPL from snapshot_filter.napl — edit the prompt, not this file\n+\n+use std::collections::HashSet;\n+\n+/// Pure exclusion-predicate core for the snapshot walk: decides which\n+/// directories and files to skip, without touching the filesystem.\n+pub struct SnapshotFilter {\n+    excluded_dirs: HashSet<String>,\n+    excluded_files: HashSet<String>,\n+    excluded_root_files: HashSet<String>,\n+    excluded_suffixes: Vec<String>,\n+}\n+\n+/// Build a `SnapshotFilter` from the four rule lists.\n+pub fn make_filter(\n+    exclude_dirs: &[String],\n+    exclude_files: &[String],\n+    exclude_root_files: &[String],\n+    exclude_suffixes: &[String],\n+) -> SnapshotFilter {\n+    SnapshotFilter {\n+        excluded_dirs: exclude_dirs.iter().cloned().collect(),\n+        excluded_files: exclude_files.iter().cloned().collect(),\n+        excluded_root_files: exclude_root_files.iter().cloned().collect(),\n+        excluded_suffixes: exclude_suffixes.to_vec(),\n+    }\n+}\n+\n+impl SnapshotFilter {\n+    /// `true` when `name` exactly matches an excluded directory name.\n+    pub fn is_excluded_dir(&self, name: &str) -> bool {\n+        self.excluded_dirs.contains(name)\n+    }\n+\n+    /// `true` when `name` matches a plain file rule, a root-only rule\n+    /// (only if `at_root`), or a suffix rule.\n+    pub fn is_excluded_file(&self, name: &str, at_root: bool) -> bool {\n+        self.excluded_files.contains(name)\n+            || (at_root && self.excluded_root_files.contains(name))\n+            || self.excluded_suffixes.iter().any(|suffix| name.ends_with(suffix.as_str()))\n+    }\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    fn strs(items: &[&str]) -> Vec<String> {\n+        items.iter().map(|s| s.to_string()).collect()\n+    }\n+\n+    fn worked_filter() -> SnapshotFilter {\n+        make_filter(\n+            &strs(&[\"node_modules\", \".git\"]),\n+            &strs(&[\"AGENTS.md\"]),\n+            &strs(&[\"Cargo.toml\"]),\n+            &strs(&[\".d.ts\"]),\n+        )\n+    }\n+\n+    #[test]\n+    fn dir_exact_match_excluded() {\n+        let f = worked_filter();\n+        assert!(f.is_excluded_dir(\"node_modules\"));\n+        assert!(f.is_excluded_dir(\".git\"));\n+    }\n+\n+    #[test]\n+    fn dir_non_match_not_excluded() {\n+        let f = worked_filter();\n+        assert!(!f.is_excluded_dir(\"src\"));\n+    }\n+\n+    #[test]\n+    fn dir_no_suffix_or_prefix_logic() {\n+        let f = worked_filter();\n+        assert!(!f.is_excluded_dir(\"node_modules_extra\"));\n+        assert!(!f.is_excluded_dir(\"my_node_modules\"));\n+    }\n+\n+    #[test]\n+    fn plain_file_rule_excluded_regardless_of_depth() {\n+        let f = worked_filter();\n+        assert!(f.is_excluded_file(\"AGENTS.md\", false));\n+        assert!(f.is_excluded_file(\"AGENTS.md\", true));\n+    }\n+\n+    #[test]\n+    fn suffix_rule_excluded_anywhere() {\n+        let f = worked_filter();\n+        assert!(f.is_excluded_file(\"types.d.ts\", false));\n+        assert!(f.is_excluded_file(\"types.d.ts\", true));\n+    }\n+\n+    #[test]\n+    fn root_only_rule_applies_at_root() {\n+        let f = worked_filter();\n+        assert!(f.is_excluded_file(\"Cargo.toml\", true));\n+    }\n+\n+    #[test]\n+    fn root_only_rule_ignored_below_root() {\n+        let f = worked_filter();\n+        assert!(!f.is_excluded_file(\"Cargo.toml\", false));\n+    }\n+\n+    #[test]\n+    fn no_matching_rule_not_excluded() {\n+        let f = worked_filter();\n+        assert!(!f.is_excluded_file(\"keep.ts\", false));\n+        assert!(!f.is_excluded_file(\"keep.ts\", true));\n+    }\n+\n+    #[test]\n+    fn empty_rules_exclude_nothing() {\n+        let f = make_filter(&[], &[], &[], &[]);\n+        assert!(!f.is_excluded_dir(\"anything\"));\n+        assert!(!f.is_excluded_file(\"anything\", true));\n+        assert!(!f.is_excluded_file(\"anything\", false));\n+    }\n+}"
+        }
+      ]
+    }
+  ],
+  "lock": [
+    {
+      "path": "snapshot_filter/Cargo.toml",
+      "hash": "b6b7f0b62af61a4c34647059ec2ac76acb77219c3868bfd3f51ca6f328aff07b"
+    },
+    {
+      "path": "snapshot_filter/src/lib.rs",
+      "hash": "bfcbaaed1aad17d3d96ad1b956919e47748f1bf9cc0b88ae1518cecafb231fb1"
+    }
+  ],
+  "session": {
+    "task": "napl gen rust → snapshot_filter",
+    "files": {
+      "snapshot_filter.napl": "---\nmodule: snapshot_filter\ndeps: []\ntargets: [rust]\ntests:\n  - name: excluded directories are decided by exact name\n    given:\n      exclude_dirs: [\"node_modules\", \".git\"]\n      probe_dirs: [\"node_modules\", \".git\", \"src\"]\n    expect: { excluded_dirs: [\"node_modules\", \".git\"] }\n  - name: a plain excluded file is skipped at any depth\n    given:\n      exclude_files: [\"AGENTS.md\"]\n      probe: { name: \"AGENTS.md\", at_root: false }\n    expect: { excluded: true }\n  - name: a suffix match is skipped\n    given:\n      exclude_suffixes: [\".d.ts\"]\n      probe: { name: \"types.d.ts\", at_root: false }\n    expect: { excluded: true }\n  - name: a root-only exclusion applies at the root but not in a subdirectory\n    given:\n      exclude_root_files: [\"Cargo.toml\"]\n      probe_root: { name: \"Cargo.toml\", at_root: true }\n      probe_nested: { name: \"Cargo.toml\", at_root: false }\n    expect: { excluded_at_root: true, excluded_nested: false }\n  - name: an unlisted file is kept\n    given:\n      probe: { name: \"keep.ts\", at_root: false }\n    expect: { excluded: false }\n---\n# The snapshot exclusion filter\n\nThis module is the **pure** exclusion-predicate core of the CLI's snapshot module:\nit decides which directories and files the snapshot walk skips. It is pure — no\nfilesystem access, no dependencies on other project modules. The I/O shell walks\nthe tree and consults this filter at each entry; the filter itself only answers\nyes/no about a name.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `snapshot_filter/`: `snapshot_filter/Cargo.toml`\n(package name `snapshot_filter`) and `snapshot_filter/src/lib.rs`. Touch nothing\noutside `snapshot_filter/`. Ensure `cargo test` passes from the workspace root\nbefore finishing.\n\n## The filter type\n\nExpose a public struct `SnapshotFilter` that holds four sets of exclusion rules:\n\n- excluded **directory names** — a directory whose file name matches one of these\n  is skipped entirely (its subtree is not walked).\n- excluded **file names** — a file whose name matches one of these is skipped\n  anywhere in the tree.\n- excluded **root-only file names** — a file whose name matches one of these is\n  skipped **only** when it sits at the walked tree's root, not when a same-named\n  file appears in a subdirectory. This exists so a toolchain-owned root manifest\n  can be excluded while its per-module namesakes stay included.\n- excluded **suffixes** — a file whose name ends with one of these strings is\n  skipped anywhere in the tree.\n\nThe internal representation is your choice (e.g. hash sets for the exact-name\nlists, a vector for the suffixes); only the observable decisions below are pinned.\n\n## `make_filter(exclude_dirs, exclude_files, exclude_root_files, exclude_suffixes)`\n\n`make_filter(exclude_dirs: &[String], exclude_files: &[String], exclude_root_files: &[String], exclude_suffixes: &[String]) -> SnapshotFilter`:\nbuild a `SnapshotFilter` from the four rule lists, in that exact parameter order.\nIt copies the given entries into the filter; it does no I/O.\n\n## `SnapshotFilter::is_excluded_dir(&self, name: &str) -> bool`\n\nReturn `true` when `name` exactly matches one of the excluded directory names,\n`false` otherwise. Only exact whole-name matches count — there is no suffix or\nprefix logic for directories.\n\n## `SnapshotFilter::is_excluded_file(&self, name: &str, at_root: bool) -> bool`\n\nReturn `true` when **any** of these hold, `false` only when none do:\n\n- `name` exactly matches one of the excluded file names, or\n- `at_root` is `true` **and** `name` exactly matches one of the excluded\n  root-only file names, or\n- `name` ends with one of the excluded suffixes.\n\nWhen `at_root` is `false`, the root-only list is ignored entirely. The plain\nfile-name and suffix rules apply regardless of `at_root`.\n\n### Worked decisions\n\nWith `exclude_dirs = [\"node_modules\", \".git\"]`, `exclude_files = [\"AGENTS.md\"]`,\n`exclude_root_files = [\"Cargo.toml\"]`, `exclude_suffixes = [\".d.ts\"]`:\n\n- `is_excluded_dir(\"node_modules\")` → `true`; `is_excluded_dir(\".git\")` → `true`;\n  `is_excluded_dir(\"src\")` → `false`.\n- `is_excluded_file(\"AGENTS.md\", false)` → `true` (plain file rule, depth\n  irrelevant).\n- `is_excluded_file(\"types.d.ts\", false)` → `true` (suffix `.d.ts`).\n- `is_excluded_file(\"Cargo.toml\", true)` → `true` (root-only rule at the root).\n- `is_excluded_file(\"Cargo.toml\", false)` → `false` (root-only rule does not\n  apply below the root, and no plain/suffix rule matches).\n- `is_excluded_file(\"keep.ts\", false)` → `false` (no rule matches).\n"
+    },
+    "events": [
+      {
+        "type": "task",
+        "task": "napl gen rust → snapshot_filter"
+      },
+      {
+        "type": "diff",
+        "path": "snapshot_filter/Cargo.toml",
+        "patch": "@@ -0,0 +1,7 @@\n+# GENERATED BY NAPL from snapshot_filter.napl — edit the prompt, not this file\n+[package]\n+name = \"snapshot_filter\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]"
+      },
+      {
+        "type": "file-edit",
+        "path": "snapshot_filter/Cargo.toml",
+        "content": "# GENERATED BY NAPL from snapshot_filter.napl — edit the prompt, not this file\n[package]\nname = \"snapshot_filter\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n"
+      },
+      {
+        "type": "diff",
+        "path": "snapshot_filter/src/lib.rs",
+        "patch": "@@ -0,0 +1,121 @@\n+// GENERATED BY NAPL from snapshot_filter.napl — edit the prompt, not this file\n+\n+use std::collections::HashSet;\n+\n+/// Pure exclusion-predicate core for the snapshot walk: decides which\n+/// directories and files to skip, without touching the filesystem.\n+pub struct SnapshotFilter {\n+    excluded_dirs: HashSet<String>,\n+    excluded_files: HashSet<String>,\n+    excluded_root_files: HashSet<String>,\n+    excluded_suffixes: Vec<String>,\n+}\n+\n+/// Build a `SnapshotFilter` from the four rule lists.\n+pub fn make_filter(\n+    exclude_dirs: &[String],\n+    exclude_files: &[String],\n+    exclude_root_files: &[String],\n+    exclude_suffixes: &[String],\n+) -> SnapshotFilter {\n+    SnapshotFilter {\n+        excluded_dirs: exclude_dirs.iter().cloned().collect(),\n+        excluded_files: exclude_files.iter().cloned().collect(),\n+        excluded_root_files: exclude_root_files.iter().cloned().collect(),\n+        excluded_suffixes: exclude_suffixes.to_vec(),\n+    }\n+}\n+\n+impl SnapshotFilter {\n+    /// `true` when `name` exactly matches an excluded directory name.\n+    pub fn is_excluded_dir(&self, name: &str) -> bool {\n+        self.excluded_dirs.contains(name)\n+    }\n+\n+    /// `true` when `name` matches a plain file rule, a root-only rule\n+    /// (only if `at_root`), or a suffix rule.\n+    pub fn is_excluded_file(&self, name: &str, at_root: bool) -> bool {\n+        self.excluded_files.contains(name)\n+            || (at_root && self.excluded_root_files.contains(name))\n+            || self.excluded_suffixes.iter().any(|suffix| name.ends_with(suffix.as_str()))\n+    }\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    fn strs(items: &[&str]) -> Vec<String> {\n+        items.iter().map(|s| s.to_string()).collect()\n+    }\n+\n+    fn worked_filter() -> SnapshotFilter {\n+        make_filter(\n+            &strs(&[\"node_modules\", \".git\"]),\n+            &strs(&[\"AGENTS.md\"]),\n+            &strs(&[\"Cargo.toml\"]),\n+            &strs(&[\".d.ts\"]),\n+        )\n+    }\n+\n+    #[test]\n+    fn dir_exact_match_excluded() {\n+        let f = worked_filter();\n+        assert!(f.is_excluded_dir(\"node_modules\"));\n+        assert!(f.is_excluded_dir(\".git\"));\n+    }\n+\n+    #[test]\n+    fn dir_non_match_not_excluded() {\n+        let f = worked_filter();\n+        assert!(!f.is_excluded_dir(\"src\"));\n+    }\n+\n+    #[test]\n+    fn dir_no_suffix_or_prefix_logic() {\n+        let f = worked_filter();\n+        assert!(!f.is_excluded_dir(\"node_modules_extra\"));\n+        assert!(!f.is_excluded_dir(\"my_node_modules\"));\n+    }\n+\n+    #[test]\n+    fn plain_file_rule_excluded_regardless_of_depth() {\n+        let f = worked_filter();\n+        assert!(f.is_excluded_file(\"AGENTS.md\", false));\n+        assert!(f.is_excluded_file(\"AGENTS.md\", true));\n+    }\n+\n+    #[test]\n+    fn suffix_rule_excluded_anywhere() {\n+        let f = worked_filter();\n+        assert!(f.is_excluded_file(\"types.d.ts\", false));\n+        assert!(f.is_excluded_file(\"types.d.ts\", true));\n+    }\n+\n+    #[test]\n+    fn root_only_rule_applies_at_root() {\n+        let f = worked_filter();\n+        assert!(f.is_excluded_file(\"Cargo.toml\", true));\n+    }\n+\n+    #[test]\n+    fn root_only_rule_ignored_below_root() {\n+        let f = worked_filter();\n+        assert!(!f.is_excluded_file(\"Cargo.toml\", false));\n+    }\n+\n+    #[test]\n+    fn no_matching_rule_not_excluded() {\n+        let f = worked_filter();\n+        assert!(!f.is_excluded_file(\"keep.ts\", false));\n+        assert!(!f.is_excluded_file(\"keep.ts\", true));\n+    }\n+\n+    #[test]\n+    fn empty_rules_exclude_nothing() {\n+        let f = make_filter(&[], &[], &[], &[]);\n+        assert!(!f.is_excluded_dir(\"anything\"));\n+        assert!(!f.is_excluded_file(\"anything\", true));\n+        assert!(!f.is_excluded_file(\"anything\", false));\n+    }\n+}"
+      },
+      {
+        "type": "file-edit",
+        "path": "snapshot_filter/src/lib.rs",
+        "content": "// GENERATED BY NAPL from snapshot_filter.napl — edit the prompt, not this file\n\nuse std::collections::HashSet;\n\n/// Pure exclusion-predicate core for the snapshot walk: decides which\n/// directories and files to skip, without touching the filesystem.\npub struct SnapshotFilter {\n    excluded_dirs: HashSet<String>,\n    excluded_files: HashSet<String>,\n    excluded_root_files: HashSet<String>,\n    excluded_suffixes: Vec<String>,\n}\n\n/// Build a `SnapshotFilter` from the four rule lists.\npub fn make_filter(\n    exclude_dirs: &[String],\n    exclude_files: &[String],\n    exclude_root_files: &[String],\n    exclude_suffixes: &[String],\n) -> SnapshotFilter {\n    SnapshotFilter {\n        excluded_dirs: exclude_dirs.iter().cloned().collect(),\n        excluded_files: exclude_files.iter().cloned().collect(),\n        excluded_root_files: exclude_root_files.iter().cloned().collect(),\n        excluded_suffixes: exclude_suffixes.to_vec(),\n    }\n}\n\nimpl SnapshotFilter {\n    /// `true` when `name` exactly matches an excluded directory name.\n    pub fn is_excluded_dir(&self, name: &str) -> bool {\n        self.excluded_dirs.contains(name)\n    }\n\n    /// `true` when `name` matches a plain file rule, a root-only rule\n    /// (only if `at_root`), or a suffix rule.\n    pub fn is_excluded_file(&self, name: &str, at_root: bool) -> bool {\n        self.excluded_files.contains(name)\n            || (at_root && self.excluded_root_files.contains(name))\n            || self.excluded_suffixes.iter().any(|suffix| name.ends_with(suffix.as_str()))\n    }\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    fn strs(items: &[&str]) -> Vec<String> {\n        items.iter().map(|s| s.to_string()).collect()\n    }\n\n    fn worked_filter() -> SnapshotFilter {\n        make_filter(\n            &strs(&[\"node_modules\", \".git\"]),\n            &strs(&[\"AGENTS.md\"]),\n            &strs(&[\"Cargo.toml\"]),\n            &strs(&[\".d.ts\"]),\n        )\n    }\n\n    #[test]\n    fn dir_exact_match_excluded() {\n        let f = worked_filter();\n        assert!(f.is_excluded_dir(\"node_modules\"));\n        assert!(f.is_excluded_dir(\".git\"));\n    }\n\n    #[test]\n    fn dir_non_match_not_excluded() {\n        let f = worked_filter();\n        assert!(!f.is_excluded_dir(\"src\"));\n    }\n\n    #[test]\n    fn dir_no_suffix_or_prefix_logic() {\n        let f = worked_filter();\n        assert!(!f.is_excluded_dir(\"node_modules_extra\"));\n        assert!(!f.is_excluded_dir(\"my_node_modules\"));\n    }\n\n    #[test]\n    fn plain_file_rule_excluded_regardless_of_depth() {\n        let f = worked_filter();\n        assert!(f.is_excluded_file(\"AGENTS.md\", false));\n        assert!(f.is_excluded_file(\"AGENTS.md\", true));\n    }\n\n    #[test]\n    fn suffix_rule_excluded_anywhere() {\n        let f = worked_filter();\n        assert!(f.is_excluded_file(\"types.d.ts\", false));\n        assert!(f.is_excluded_file(\"types.d.ts\", true));\n    }\n\n    #[test]\n    fn root_only_rule_applies_at_root() {\n        let f = worked_filter();\n        assert!(f.is_excluded_file(\"Cargo.toml\", true));\n    }\n\n    #[test]\n    fn root_only_rule_ignored_below_root() {\n        let f = worked_filter();\n        assert!(!f.is_excluded_file(\"Cargo.toml\", false));\n    }\n\n    #[test]\n    fn no_matching_rule_not_excluded() {\n        let f = worked_filter();\n        assert!(!f.is_excluded_file(\"keep.ts\", false));\n        assert!(!f.is_excluded_file(\"keep.ts\", true));\n    }\n\n    #[test]\n    fn empty_rules_exclude_nothing() {\n        let f = make_filter(&[], &[], &[], &[]);\n        assert!(!f.is_excluded_dir(\"anything\"));\n        assert!(!f.is_excluded_file(\"anything\", true));\n        assert!(!f.is_excluded_file(\"anything\", false));\n    }\n}\n"
+      },
+      {
+        "type": "attribution",
+        "module": "snapshot_filter",
+        "target": "rust",
+        "entries": [
+          {
+            "promptLines": [
+              20,
+              34
+            ],
+            "file": "snapshot_filter/src/lib.rs",
+            "lines": [
+              5,
+              12
+            ],
+            "note": "SnapshotFilter struct with four rule sets"
+          },
+          {
+            "promptLines": [
+              36,
+              40
+            ],
+            "file": "snapshot_filter/src/lib.rs",
+            "lines": [
+              14,
+              27
+            ],
+            "note": "make_filter builds struct from four lists"
+          },
+          {
+            "promptLines": [
+              42,
+              46
+            ],
+            "file": "snapshot_filter/src/lib.rs",
+            "lines": [
+              30,
+              33
+            ],
+            "note": "is_excluded_dir exact-match check"
+          },
+          {
+            "promptLines": [
+              48,
+              58
+            ],
+            "file": "snapshot_filter/src/lib.rs",
+            "lines": [
+              35,
+              41
+            ],
+            "note": "is_excluded_file plain/root/suffix rule logic"
+          },
+          {
+            "promptLines": [
+              65,
+              66
+            ],
+            "file": "snapshot_filter/src/lib.rs",
+            "lines": [
+              61,
+              79
+            ],
+            "note": "dir exact match tests, incl. non-match/no suffix-prefix"
+          },
+          {
+            "promptLines": [
+              67,
+              68
+            ],
+            "file": "snapshot_filter/src/lib.rs",
+            "lines": [
+              81,
+              86
+            ],
+            "note": "plain file rule test regardless of depth"
+          },
+          {
+            "promptLines": [
+              69,
+              69
+            ],
+            "file": "snapshot_filter/src/lib.rs",
+            "lines": [
+              88,
+              93
+            ],
+            "note": "suffix rule test"
+          },
+          {
+            "promptLines": [
+              70,
+              70
+            ],
+            "file": "snapshot_filter/src/lib.rs",
+            "lines": [
+              95,
+              99
+            ],
+            "note": "root-only rule applies at root test"
+          },
+          {
+            "promptLines": [
+              71,
+              72
+            ],
+            "file": "snapshot_filter/src/lib.rs",
+            "lines": [
+              101,
+              105
+            ],
+            "note": "root-only rule ignored below root test"
+          },
+          {
+            "promptLines": [
+              73,
+              73
+            ],
+            "file": "snapshot_filter/src/lib.rs",
+            "lines": [
+              107,
+              112
+            ],
+            "note": "no matching rule test"
+          },
+          {
+            "promptLines": [
+              62,
+              63
+            ],
+            "file": "snapshot_filter/src/lib.rs",
+            "lines": [
+              48,
+              59
+            ],
+            "note": "worked_filter test fixture matching worked-decisions example"
+          },
+          {
+            "promptLines": [
+              33,
+              33
+            ],
+            "file": "snapshot_filter/src/lib.rs",
+            "lines": [
+              3,
+              11
+            ],
+            "note": "internal repr uses HashSet for names, Vec for suffixes"
+          }
+        ]
+      },
+      {
+        "type": "lock",
+        "module": "snapshot_filter",
+        "target": "rust",
+        "files": [
+          {
+            "path": "snapshot_filter/Cargo.toml",
+            "hash": "b6b7f0b62af61a4c34647059ec2ac76acb77219c3868bfd3f51ca6f328aff07b"
+          },
+          {
+            "path": "snapshot_filter/src/lib.rs",
+            "hash": "bfcbaaed1aad17d3d96ad1b956919e47748f1bf9cc0b88ae1518cecafb231fb1"
+          }
+        ]
+      }
+    ]
+  }
+}

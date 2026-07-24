@@ -1,0 +1,552 @@
+{
+  "module": "text_diff",
+  "collection": "selfhost",
+  "target": "rust",
+  "targets": [
+    "rust"
+  ],
+  "prompt": {
+    "file": "text_diff.napl",
+    "path": "core/text_diff.napl",
+    "content": "---\nmodule: text_diff\ndeps: []\ntargets: [rust]\ntests:\n  - name: to_lines drops a single trailing newline and splits on newlines\n    given: { cases: [\"a\\nb\\n\", \"a\\nb\"] }\n    expect: { lines: [[\"a\", \"b\"], [\"a\", \"b\"]] }\n  - name: to_lines of empty text is empty\n    given: { text: \"\" }\n    expect: { lines: [] }\n  - name: to_lines treats CRLF the same as LF\n    given: { text: \"a\\r\\nb\\r\\n\" }\n    expect: { lines: [\"a\", \"b\"] }\n  - name: to_lines keeps a lone carriage return in the content\n    given: { text: \"a\\rb\\n\" }\n    expect: { lines: [\"a\\rb\"] }\n  - name: diffing empty into content is all insertions\n    given: { before: \"\", after: \"a\\nb\\n\" }\n    expect: { diff: \"@@ -0,0 +1,2 @@\\n+a\\n+b\" }\n  - name: diffing content into empty is all deletions\n    given: { before: \"a\\nb\\n\", after: \"\" }\n    expect: { diff: \"@@ -1,2 +0,0 @@\\n-a\\n-b\" }\n  - name: a single-line modification produces a scoped header and the changed lines\n    given: { before: \"a\\nb\\nc\\n\", after: \"a\\nB\\nc\\n\" }\n    expect: { headerStartsWith: \"@@ -\", headerEndsWith: \" @@\", contains: [\"-b\", \"+B\"] }\n  - name: identical inputs produce an empty diff\n    given: { before: \"a\\nb\\nc\\n\", after: \"a\\nb\\nc\\n\" }\n    expect: { diff: \"\" }\n  - name: parse_hunks reads the header numbers and the per-line kinds\n    given: { diff: \"@@ -1,3 +1,3 @@\\n a\\n-b\\n+B\\n c\\n\" }\n    expect:\n      hunkCount: 1\n      oldStart: 1\n      oldCount: 3\n      newStart: 1\n      newCount: 3\n      kinds: [\"context\", \"del\", \"ins\", \"context\"]\n  - name: parse_hunks of an empty diff yields no hunks\n    given: { diff: \"\" }\n    expect: { hunkCount: 0 }\n  - name: a diff parsed and re-applied to the original reproduces the target\n    given:\n      cases:\n        - { before: \"\", after: \"a\\nb\\nc\\n\" }\n        - { before: \"a\\nb\\nc\\n\", after: \"\" }\n        - { before: \"a\\nb\\nc\\nd\\ne\\n\", after: \"a\\nB\\nc\\nd\\nE\\nf\\n\" }\n        - { before: \"one\\ntwo\\nthree\\n\", after: \"one\\ntwo\\nthree\\nfour\\n\" }\n        - { before: \"x\\ny\\nz\\n\", after: \"z\\ny\\nx\\n\" }\n        - { before: \"same\\nsame\\n\", after: \"same\\nsame\\n\" }\n        - { before: \"a\\nb\\nc\\nd\\ne\\nf\\ng\\n\", after: \"a\\nc\\ne\\ng\\n\" }\n    expect: { reappliedEqualsTargetLines: true }\n---\n# Line-oriented text diffing\n\nThis module produces and parses a **unified diff** between two texts, line by\nline, using a longest-common-subsequence alignment. It is pure: no I/O, no\ndependencies on other project modules.\n\n## Where this code lives\n\nThe working directory already contains a generated `body_lines` crate at its\nroot — leave it completely untouched. Create this module as a **new, separate\nRust library crate in a subdirectory named `text_diff/`**: `text_diff/Cargo.toml`\n(package name `text_diff`) and `text_diff/src/lib.rs`. Do not add a workspace\nmanifest and do not modify anything outside `text_diff/`. Ensure `cargo test`\npasses from inside `text_diff/`.\n\n## Splitting text into lines — `to_lines(text)`\n\nReturn the lines of `text` as owned strings. Empty text has **no** lines (an\nempty vector). Otherwise, a single trailing line terminator (`\\n`, or `\\r\\n`) is\nremoved first, then the text is split on each `\\n`; a `\\r` immediately before a\nsplit `\\n` is consumed with it, but a lone `\\r` not followed by `\\n` stays inside\nthe line's content. So `a\\nb\\n` and `a\\nb` both give `[\"a\", \"b\"]`, `a\\r\\nb\\r\\n`\nalso gives `[\"a\", \"b\"]`, and `a\\rb\\n` gives the single line `a\\rb`.\n\n## Producing a unified diff\n\n`unified_diff(before, after)` returns a unified diff string with **3** lines of\nsurrounding context. `unified_diff_with_context(before, after, context)` is the\nsame with a caller-chosen context width; `unified_diff` is the `context = 3` case.\n\nSplit both inputs with `to_lines`, then align them with a longest-common-\nsubsequence: matching lines become **context** entries, lines only in `before`\nbecome **deletions**, lines only in `after` become **insertions**. Each aligned\nentry knows its 1-based line number within `before` (for context and deletions)\nand within `after` (for context and insertions).\n\nEmit only the neighborhoods of change: an entry is included when it lies within\n`context` positions of some deletion or insertion. Consecutive included entries\nform one **hunk**. For each hunk emit a header line\n\n    @@ -<oldStart>,<oldCount> +<newStart>,<newCount> @@\n\nwhere `oldStart` is the `before` line number of the hunk's first non-insertion\nentry (or `0` if the hunk has none) and `oldCount` is how many of its entries came\nfrom `before` (context + deletions); `newStart` and `newCount` are the mirror over\n`after` (context + insertions). After the header, emit each entry on its own line\nprefixed by a single marker character: a space for context, `-` for a deletion,\n`+` for an insertion, followed by the line text. Join every emitted line with\n`\\n`. When there is no change at all, the diff is the empty string.\n\nConsequences to preserve exactly: diffing `\"\"` into `a\\nb\\n` yields\n`@@ -0,0 +1,2 @@` then `+a` then `+b`; diffing `a\\nb\\n` into `\"\"` yields\n`@@ -1,2 +0,0 @@` then `-a` then `-b`; identical inputs yield `\"\"`.\n\n## Parsing a unified diff — `parse_hunks(diff)`\n\nReturn the hunks contained in a unified-diff string. A diff that is empty or only\nwhitespace yields no hunks. Split the diff into lines the same CRLF-aware way used\nelsewhere. A line matching the header shape `@@ -A,B +C,D @@` (A, B, C, D being\nnon-negative integers) starts a new hunk carrying those four numbers and, so far,\nno lines. Any other line, when a hunk is open, is one of the hunk's lines: its\nfirst character selects the kind — a space means **context**, `-` means a\n**deletion**, `+` means an **insertion**, and any other first character is ignored\n— and the remainder of the line after that first character is the line's text.\n\nModel the result as: a `Hunk` with public fields `old_start`, `old_count`,\n`new_start`, `new_count` (unsigned integers) and `lines` (a vector of\n`HunkLine`); a `HunkLine` with public fields `kind` and `text`; and a `HunkKind`\nwith the three variants `Context`, `Del`, and `Ins`. So parsing\n`@@ -1,3 +1,3 @@` followed by ` a`, `-b`, `+B`, ` c` gives one hunk with\n`old_start = 1`, `old_count = 3`, `new_start = 1`, `new_count = 3`, and line\nkinds context, deletion, insertion, context, carrying texts `a`, `b`, `B`, `c`.\n\n## Re-applying hunks — `apply_hunks(before, hunks)`\n\nReconstruct the diff's target from the original text and parsed hunks. Take the\n`before` lines (via `to_lines`); walk the hunks in order, first copying any\noriginal lines before each hunk's start, then for each hunk line: a context line\ncopies the corresponding original line (falling back to the hunk line's own text\nif the original is exhausted) and advances the original position; a deletion\nadvances the original position without emitting; an insertion emits its text\nwithout advancing. After the last hunk, copy any remaining original lines. Join\nthe result with `\\n`.\n\nThis must round-trip: for any `before`/`after`, parsing `unified_diff(before,\nafter)` and applying the hunks back onto `before` reproduces `after`'s lines\njoined by `\\n` (i.e. `to_lines(after)` joined with `\\n`).\n</content>\n"
+  },
+  "promptAtGen": "# Line-oriented text diffing\n\nThis module produces and parses a **unified diff** between two texts, line by\nline, using a longest-common-subsequence alignment. It is pure: no I/O, no\ndependencies on other project modules.\n\n## Where this code lives\n\nThe working directory already contains a generated `body_lines` crate at its\nroot — leave it completely untouched. Create this module as a **new, separate\nRust library crate in a subdirectory named `text_diff/`**: `text_diff/Cargo.toml`\n(package name `text_diff`) and `text_diff/src/lib.rs`. Do not add a workspace\nmanifest and do not modify anything outside `text_diff/`. Ensure `cargo test`\npasses from inside `text_diff/`.\n\n## Splitting text into lines — `to_lines(text)`\n\nReturn the lines of `text` as owned strings. Empty text has **no** lines (an\nempty vector). Otherwise, a single trailing line terminator (`\\n`, or `\\r\\n`) is\nremoved first, then the text is split on each `\\n`; a `\\r` immediately before a\nsplit `\\n` is consumed with it, but a lone `\\r` not followed by `\\n` stays inside\nthe line's content. So `a\\nb\\n` and `a\\nb` both give `[\"a\", \"b\"]`, `a\\r\\nb\\r\\n`\nalso gives `[\"a\", \"b\"]`, and `a\\rb\\n` gives the single line `a\\rb`.\n\n## Producing a unified diff\n\n`unified_diff(before, after)` returns a unified diff string with **3** lines of\nsurrounding context. `unified_diff_with_context(before, after, context)` is the\nsame with a caller-chosen context width; `unified_diff` is the `context = 3` case.\n\nSplit both inputs with `to_lines`, then align them with a longest-common-\nsubsequence: matching lines become **context** entries, lines only in `before`\nbecome **deletions**, lines only in `after` become **insertions**. Each aligned\nentry knows its 1-based line number within `before` (for context and deletions)\nand within `after` (for context and insertions).\n\nEmit only the neighborhoods of change: an entry is included when it lies within\n`context` positions of some deletion or insertion. Consecutive included entries\nform one **hunk**. For each hunk emit a header line\n\n    @@ -<oldStart>,<oldCount> +<newStart>,<newCount> @@\n\nwhere `oldStart` is the `before` line number of the hunk's first non-insertion\nentry (or `0` if the hunk has none) and `oldCount` is how many of its entries came\nfrom `before` (context + deletions); `newStart` and `newCount` are the mirror over\n`after` (context + insertions). After the header, emit each entry on its own line\nprefixed by a single marker character: a space for context, `-` for a deletion,\n`+` for an insertion, followed by the line text. Join every emitted line with\n`\\n`. When there is no change at all, the diff is the empty string.\n\nConsequences to preserve exactly: diffing `\"\"` into `a\\nb\\n` yields\n`@@ -0,0 +1,2 @@` then `+a` then `+b`; diffing `a\\nb\\n` into `\"\"` yields\n`@@ -1,2 +0,0 @@` then `-a` then `-b`; identical inputs yield `\"\"`.\n\n## Parsing a unified diff — `parse_hunks(diff)`\n\nReturn the hunks contained in a unified-diff string. A diff that is empty or only\nwhitespace yields no hunks. Split the diff into lines the same CRLF-aware way used\nelsewhere. A line matching the header shape `@@ -A,B +C,D @@` (A, B, C, D being\nnon-negative integers) starts a new hunk carrying those four numbers and, so far,\nno lines. Any other line, when a hunk is open, is one of the hunk's lines: its\nfirst character selects the kind — a space means **context**, `-` means a\n**deletion**, `+` means an **insertion**, and any other first character is ignored\n— and the remainder of the line after that first character is the line's text.\n\nModel the result as: a `Hunk` with public fields `old_start`, `old_count`,\n`new_start`, `new_count` (unsigned integers) and `lines` (a vector of\n`HunkLine`); a `HunkLine` with public fields `kind` and `text`; and a `HunkKind`\nwith the three variants `Context`, `Del`, and `Ins`. So parsing\n`@@ -1,3 +1,3 @@` followed by ` a`, `-b`, `+B`, ` c` gives one hunk with\n`old_start = 1`, `old_count = 3`, `new_start = 1`, `new_count = 3`, and line\nkinds context, deletion, insertion, context, carrying texts `a`, `b`, `B`, `c`.\n\n## Re-applying hunks — `apply_hunks(before, hunks)`\n\nReconstruct the diff's target from the original text and parsed hunks. Take the\n`before` lines (via `to_lines`); walk the hunks in order, first copying any\noriginal lines before each hunk's start, then for each hunk line: a context line\ncopies the corresponding original line (falling back to the hunk line's own text\nif the original is exhausted) and advances the original position; a deletion\nadvances the original position without emitting; an insertion emits its text\nwithout advancing. After the last hunk, copy any remaining original lines. Join\nthe result with `\\n`.\n\nThis must round-trip: for any `before`/`after`, parsing `unified_diff(before,\nafter)` and applying the hunks back onto `before` reproduces `after`'s lines\njoined by `\\n` (i.e. `to_lines(after)` joined with `\\n`).\n</content>\n",
+  "summary": "Line-oriented text diffing",
+  "files": [
+    {
+      "path": "text_diff/Cargo.toml",
+      "journalPath": ".napl/src/rust/text_diff/Cargo.toml",
+      "content": "[package]\nname = \"text_diff\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n",
+      "language": "toml"
+    },
+    {
+      "path": "text_diff/src/lib.rs",
+      "journalPath": ".napl/src/rust/text_diff/src/lib.rs",
+      "content": "// GENERATED BY NAPL from text_diff.md — edit the prompt, not this file\n//! Line-oriented text diffing.\n//!\n//! Produces and parses a unified diff between two texts, line by line, using a\n//! longest-common-subsequence alignment. Pure: no I/O, no dependencies on other\n//! project modules.\n\n/// The kind of a hunk line.\n#[derive(Debug, Clone, Copy, PartialEq, Eq)]\npub enum HunkKind {\n    Context,\n    Del,\n    Ins,\n}\n\n/// A single line within a hunk.\n#[derive(Debug, Clone, PartialEq, Eq)]\npub struct HunkLine {\n    pub kind: HunkKind,\n    pub text: String,\n}\n\n/// A parsed unified-diff hunk.\n#[derive(Debug, Clone, PartialEq, Eq)]\npub struct Hunk {\n    pub old_start: usize,\n    pub old_count: usize,\n    pub new_start: usize,\n    pub new_count: usize,\n    pub lines: Vec<HunkLine>,\n}\n\n/// Split `text` into its lines as owned strings.\n///\n/// Empty text has no lines. Otherwise a single trailing terminator (`\\n` or\n/// `\\r\\n`) is removed, then the text is split on each `\\n`; a `\\r` immediately\n/// before a split `\\n` is consumed with it, but a lone `\\r` stays in the line.\npub fn to_lines(text: &str) -> Vec<String> {\n    if text.is_empty() {\n        return Vec::new();\n    }\n\n    // Strip a single trailing terminator.\n    let body = if let Some(stripped) = text.strip_suffix(\"\\r\\n\") {\n        stripped\n    } else if let Some(stripped) = text.strip_suffix('\\n') {\n        stripped\n    } else {\n        text\n    };\n\n    body.split('\\n')\n        .map(|line| line.strip_suffix('\\r').unwrap_or(line).to_string())\n        .collect()\n}\n\n/// An aligned entry between `before` and `after`.\nenum Entry {\n    Context { old: usize, new: usize, text: String },\n    Del { old: usize, text: String },\n    Ins { new: usize, text: String },\n}\n\n/// Align `before` and `after` lines via longest-common-subsequence.\nfn align(before: &[String], after: &[String]) -> Vec<Entry> {\n    let n = before.len();\n    let m = after.len();\n\n    // LCS length table.\n    let mut lcs = vec![vec![0usize; m + 1]; n + 1];\n    for i in (0..n).rev() {\n        for j in (0..m).rev() {\n            lcs[i][j] = if before[i] == after[j] {\n                lcs[i + 1][j + 1] + 1\n            } else {\n                lcs[i + 1][j].max(lcs[i][j + 1])\n            };\n        }\n    }\n\n    let mut entries = Vec::new();\n    let mut i = 0;\n    let mut j = 0;\n    while i < n && j < m {\n        if before[i] == after[j] {\n            entries.push(Entry::Context {\n                old: i + 1,\n                new: j + 1,\n                text: before[i].clone(),\n            });\n            i += 1;\n            j += 1;\n        } else if lcs[i + 1][j] >= lcs[i][j + 1] {\n            entries.push(Entry::Del {\n                old: i + 1,\n                text: before[i].clone(),\n            });\n            i += 1;\n        } else {\n            entries.push(Entry::Ins {\n                new: j + 1,\n                text: after[j].clone(),\n            });\n            j += 1;\n        }\n    }\n    while i < n {\n        entries.push(Entry::Del {\n            old: i + 1,\n            text: before[i].clone(),\n        });\n        i += 1;\n    }\n    while j < m {\n        entries.push(Entry::Ins {\n            new: j + 1,\n            text: after[j].clone(),\n        });\n        j += 1;\n    }\n    entries\n}\n\n/// Produce a unified diff with 3 lines of surrounding context.\npub fn unified_diff(before: &str, after: &str) -> String {\n    unified_diff_with_context(before, after, 3)\n}\n\n/// Produce a unified diff with a caller-chosen context width.\npub fn unified_diff_with_context(before: &str, after: &str, context: usize) -> String {\n    let before_lines = to_lines(before);\n    let after_lines = to_lines(after);\n    let entries = align(&before_lines, &after_lines);\n\n    let is_change = |e: &Entry| matches!(e, Entry::Del { .. } | Entry::Ins { .. });\n\n    // Mark which entries lie within `context` positions of a change.\n    let mut included = vec![false; entries.len()];\n    for (idx, e) in entries.iter().enumerate() {\n        if is_change(e) {\n            let lo = idx.saturating_sub(context);\n            let hi = (idx + context).min(entries.len().saturating_sub(1));\n            for slot in included.iter_mut().take(hi + 1).skip(lo) {\n                *slot = true;\n            }\n        }\n    }\n\n    // Group consecutive included entries into hunks and emit.\n    let mut out: Vec<String> = Vec::new();\n    let mut idx = 0;\n    while idx < entries.len() {\n        if !included[idx] {\n            idx += 1;\n            continue;\n        }\n        let start = idx;\n        while idx < entries.len() && included[idx] {\n            idx += 1;\n        }\n        let hunk = &entries[start..idx];\n\n        let mut old_start = 0;\n        let mut new_start = 0;\n        let mut old_count = 0;\n        let mut new_count = 0;\n        for e in hunk {\n            match e {\n                Entry::Context { old, new, .. } => {\n                    if old_start == 0 {\n                        old_start = *old;\n                    }\n                    if new_start == 0 {\n                        new_start = *new;\n                    }\n                    old_count += 1;\n                    new_count += 1;\n                }\n                Entry::Del { old, .. } => {\n                    if old_start == 0 {\n                        old_start = *old;\n                    }\n                    old_count += 1;\n                }\n                Entry::Ins { new, .. } => {\n                    if new_start == 0 {\n                        new_start = *new;\n                    }\n                    new_count += 1;\n                }\n            }\n        }\n\n        out.push(format!(\n            \"@@ -{},{} +{},{} @@\",\n            old_start, old_count, new_start, new_count\n        ));\n        for e in hunk {\n            match e {\n                Entry::Context { text, .. } => out.push(format!(\" {}\", text)),\n                Entry::Del { text, .. } => out.push(format!(\"-{}\", text)),\n                Entry::Ins { text, .. } => out.push(format!(\"+{}\", text)),\n            }\n        }\n    }\n\n    out.join(\"\\n\")\n}\n\n/// Parse the header shape `@@ -A,B +C,D @@` into its four numbers.\nfn parse_header(line: &str) -> Option<(usize, usize, usize, usize)> {\n    let rest = line.strip_prefix(\"@@ -\")?;\n    let rest = rest.strip_suffix(\" @@\")?;\n    let (old_part, new_part) = rest.split_once(\" +\")?;\n    let (a, b) = old_part.split_once(',')?;\n    let (c, d) = new_part.split_once(',')?;\n    Some((\n        a.parse().ok()?,\n        b.parse().ok()?,\n        c.parse().ok()?,\n        d.parse().ok()?,\n    ))\n}\n\n/// Parse the hunks contained in a unified-diff string.\npub fn parse_hunks(diff: &str) -> Vec<Hunk> {\n    if diff.trim().is_empty() {\n        return Vec::new();\n    }\n\n    let mut hunks: Vec<Hunk> = Vec::new();\n    for line in to_lines(diff) {\n        if let Some((old_start, old_count, new_start, new_count)) = parse_header(&line) {\n            hunks.push(Hunk {\n                old_start,\n                old_count,\n                new_start,\n                new_count,\n                lines: Vec::new(),\n            });\n            continue;\n        }\n\n        let Some(hunk) = hunks.last_mut() else {\n            continue;\n        };\n        let mut chars = line.chars();\n        let marker = chars.next();\n        let text = chars.as_str().to_string();\n        let kind = match marker {\n            Some(' ') => HunkKind::Context,\n            Some('-') => HunkKind::Del,\n            Some('+') => HunkKind::Ins,\n            _ => continue,\n        };\n        hunk.lines.push(HunkLine { kind, text });\n    }\n    hunks\n}\n\n/// Reconstruct the diff's target from the original text and parsed hunks.\npub fn apply_hunks(before: &str, hunks: &[Hunk]) -> String {\n    let before_lines = to_lines(before);\n    let mut out: Vec<String> = Vec::new();\n    let mut pos = 0; // 0-based position within before_lines\n\n    for hunk in hunks {\n        // Copy original lines before this hunk's start.\n        // old_start is 1-based; a hunk with no old lines uses 0.\n        let target = if hunk.old_start == 0 {\n            pos\n        } else {\n            hunk.old_start - 1\n        };\n        while pos < target && pos < before_lines.len() {\n            out.push(before_lines[pos].clone());\n            pos += 1;\n        }\n\n        for line in &hunk.lines {\n            match line.kind {\n                HunkKind::Context => {\n                    if pos < before_lines.len() {\n                        out.push(before_lines[pos].clone());\n                    } else {\n                        out.push(line.text.clone());\n                    }\n                    pos += 1;\n                }\n                HunkKind::Del => {\n                    pos += 1;\n                }\n                HunkKind::Ins => {\n                    out.push(line.text.clone());\n                }\n            }\n        }\n    }\n\n    while pos < before_lines.len() {\n        out.push(before_lines[pos].clone());\n        pos += 1;\n    }\n\n    out.join(\"\\n\")\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn to_lines_empty() {\n        assert_eq!(to_lines(\"\"), Vec::<String>::new());\n    }\n\n    #[test]\n    fn to_lines_trailing_newline() {\n        assert_eq!(to_lines(\"a\\nb\\n\"), vec![\"a\", \"b\"]);\n        assert_eq!(to_lines(\"a\\nb\"), vec![\"a\", \"b\"]);\n    }\n\n    #[test]\n    fn to_lines_crlf() {\n        assert_eq!(to_lines(\"a\\r\\nb\\r\\n\"), vec![\"a\", \"b\"]);\n        assert_eq!(to_lines(\"a\\r\\nb\"), vec![\"a\", \"b\"]);\n    }\n\n    #[test]\n    fn to_lines_lone_cr() {\n        assert_eq!(to_lines(\"a\\rb\\n\"), vec![\"a\\rb\"]);\n    }\n\n    #[test]\n    fn to_lines_no_trailing_newline() {\n        assert_eq!(to_lines(\"hello\"), vec![\"hello\"]);\n    }\n\n    #[test]\n    fn to_lines_blank_lines() {\n        assert_eq!(to_lines(\"a\\n\\nb\\n\"), vec![\"a\", \"\", \"b\"]);\n    }\n\n    #[test]\n    fn unified_diff_empty_to_content() {\n        assert_eq!(unified_diff(\"\", \"a\\nb\\n\"), \"@@ -0,0 +1,2 @@\\n+a\\n+b\");\n    }\n\n    #[test]\n    fn unified_diff_content_to_empty() {\n        assert_eq!(unified_diff(\"a\\nb\\n\", \"\"), \"@@ -1,2 +0,0 @@\\n-a\\n-b\");\n    }\n\n    #[test]\n    fn unified_diff_identical() {\n        assert_eq!(unified_diff(\"a\\nb\\n\", \"a\\nb\\n\"), \"\");\n        assert_eq!(unified_diff(\"\", \"\"), \"\");\n    }\n\n    #[test]\n    fn unified_diff_mixed() {\n        let before = \"a\\nb\\nc\\nd\\ne\\n\";\n        let after = \"a\\nb\\nC\\nd\\ne\\n\";\n        let diff = unified_diff(before, after);\n        assert_eq!(\n            diff,\n            \"@@ -1,5 +1,5 @@\\n a\\n b\\n-c\\n+C\\n d\\n e\"\n        );\n    }\n\n    #[test]\n    fn unified_diff_insert_and_delete() {\n        let before = \"one\\ntwo\\nthree\\n\";\n        let after = \"one\\ntwo-and-a-half\\ntwo\\nthree\\n\";\n        let diff = unified_diff(before, after);\n        let hunks = parse_hunks(&diff);\n        assert_eq!(apply_hunks(before, &hunks), to_lines(after).join(\"\\n\"));\n    }\n\n    #[test]\n    fn unified_diff_with_context_narrow() {\n        // Two separate changes far apart; with context 1 they stay separate hunks,\n        // with context 3 (default) they would merge.\n        let before = \"a\\nb\\nc\\nd\\ne\\nf\\ng\\nh\\ni\\n\";\n        let after = \"a\\nB\\nc\\nd\\ne\\nf\\ng\\nH\\ni\\n\";\n        let diff = unified_diff_with_context(before, after, 1);\n        assert_eq!(\n            diff,\n            \"@@ -1,3 +1,3 @@\\n a\\n-b\\n+B\\n c\\n@@ -7,3 +7,3 @@\\n g\\n-h\\n+H\\n i\"\n        );\n    }\n\n    #[test]\n    fn parse_hunks_example() {\n        let diff = \"@@ -1,3 +1,3 @@\\n a\\n-b\\n+B\\n c\";\n        let hunks = parse_hunks(diff);\n        assert_eq!(hunks.len(), 1);\n        let h = &hunks[0];\n        assert_eq!(h.old_start, 1);\n        assert_eq!(h.old_count, 3);\n        assert_eq!(h.new_start, 1);\n        assert_eq!(h.new_count, 3);\n        assert_eq!(\n            h.lines,\n            vec![\n                HunkLine { kind: HunkKind::Context, text: \"a\".to_string() },\n                HunkLine { kind: HunkKind::Del, text: \"b\".to_string() },\n                HunkLine { kind: HunkKind::Ins, text: \"B\".to_string() },\n                HunkLine { kind: HunkKind::Context, text: \"c\".to_string() },\n            ]\n        );\n    }\n\n    #[test]\n    fn parse_hunks_empty_and_whitespace() {\n        assert_eq!(parse_hunks(\"\"), Vec::new());\n        assert_eq!(parse_hunks(\"   \\n  \\n\"), Vec::new());\n    }\n\n    #[test]\n    fn parse_hunks_ignores_unknown_lines() {\n        let diff = \"@@ -1,1 +1,1 @@\\n a\\n?noise\\n\";\n        let hunks = parse_hunks(diff);\n        assert_eq!(hunks.len(), 1);\n        assert_eq!(hunks[0].lines.len(), 1);\n        assert_eq!(hunks[0].lines[0].kind, HunkKind::Context);\n    }\n\n    #[test]\n    fn apply_hunks_example() {\n        let before = \"a\\nb\\nc\\n\";\n        let diff = \"@@ -1,3 +1,3 @@\\n a\\n-b\\n+B\\n c\";\n        let hunks = parse_hunks(diff);\n        assert_eq!(apply_hunks(before, &hunks), \"a\\nB\\nc\");\n    }\n\n    #[test]\n    fn apply_hunks_no_hunks_copies_all() {\n        let before = \"a\\nb\\nc\\n\";\n        assert_eq!(apply_hunks(before, &[]), \"a\\nb\\nc\");\n    }\n\n    fn roundtrip(before: &str, after: &str) {\n        let diff = unified_diff(before, after);\n        let hunks = parse_hunks(&diff);\n        assert_eq!(\n            apply_hunks(before, &hunks),\n            to_lines(after).join(\"\\n\"),\n            \"roundtrip failed for {:?} -> {:?}\",\n            before,\n            after\n        );\n    }\n\n    #[test]\n    fn roundtrip_property() {\n        roundtrip(\"\", \"a\\nb\\n\");\n        roundtrip(\"a\\nb\\n\", \"\");\n        roundtrip(\"a\\nb\\n\", \"a\\nb\\n\");\n        roundtrip(\"a\\nb\\nc\\nd\\ne\\n\", \"a\\nb\\nC\\nd\\ne\\n\");\n        roundtrip(\"one\\ntwo\\nthree\\n\", \"one\\ntwo-and-a-half\\ntwo\\nthree\\n\");\n        roundtrip(\"a\\nb\\nc\\nd\\ne\\nf\\ng\\nh\\ni\\n\", \"a\\nB\\nc\\nd\\ne\\nf\\ng\\nH\\ni\\n\");\n        roundtrip(\"x\\ny\\nz\\n\", \"z\\ny\\nx\\n\");\n        roundtrip(\"hello world\\n\", \"goodbye world\\nand more\\n\");\n        roundtrip(\"same\\nlines\\nhere\\n\", \"same\\nlines\\nhere\\n\");\n        roundtrip(\"trailing\", \"trailing\\nextra\");\n    }\n}\n",
+      "language": "rust"
+    }
+  ],
+  "attribution": [
+    {
+      "promptLines": [
+        9,
+        14
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        1,
+        6
+      ],
+      "note": "crate location/header comment marker"
+    },
+    {
+      "promptLines": [
+        18,
+        23
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        38,
+        55
+      ],
+      "note": "to_lines implementation with CRLF handling"
+    },
+    {
+      "promptLines": [
+        27,
+        29
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        125,
+        130
+      ],
+      "note": "unified_diff and unified_diff_with_context entrypoints"
+    },
+    {
+      "promptLines": [
+        31,
+        35
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        64,
+        122
+      ],
+      "note": "LCS alignment producing context/del/ins entries with line numbers"
+    },
+    {
+      "promptLines": [
+        37,
+        39
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        135,
+        161
+      ],
+      "note": "mark entries within context of a change, group into hunks"
+    },
+    {
+      "promptLines": [
+        39,
+        46
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        163,
+        205
+      ],
+      "note": "compute hunk header counts/starts and emit prefixed lines"
+    },
+    {
+      "promptLines": [
+        47,
+        49
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        198,
+        207
+      ],
+      "note": "marker prefixes and newline-joined output, empty diff case"
+    },
+    {
+      "promptLines": [
+        51,
+        53
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        345,
+        358
+      ],
+      "note": "tests preserving empty/full insertion/deletion/identical behavior"
+    },
+    {
+      "promptLines": [
+        57,
+        61
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        227,
+        229
+      ],
+      "note": "empty/whitespace diff yields no hunks"
+    },
+    {
+      "promptLines": [
+        58,
+        60
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        211,
+        223
+      ],
+      "note": "header regex-shape parsing into four numbers"
+    },
+    {
+      "promptLines": [
+        59,
+        61
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        232,
+        242
+      ],
+      "note": "split diff into lines, start new hunk on header match"
+    },
+    {
+      "promptLines": [
+        61,
+        64
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        244,
+        256
+      ],
+      "note": "classify first char as context/del/ins/ignored, push hunk line"
+    },
+    {
+      "promptLines": [
+        66,
+        72
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        8,
+        31
+      ],
+      "note": "Hunk, HunkLine, HunkKind data model"
+    },
+    {
+      "promptLines": [
+        76,
+        83
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        262,
+        306
+      ],
+      "note": "apply_hunks reconstruction walking original lines and hunk lines"
+    },
+    {
+      "promptLines": [
+        85,
+        87
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        443,
+        467
+      ],
+      "note": "roundtrip property tests"
+    },
+    {
+      "promptLines": [
+        11,
+        13
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        1,
+        1
+      ],
+      "note": "generated-from marker referencing separate crate manifest requirement"
+    }
+  ],
+  "attributionYaml": "module: text_diff\ntarget: rust\nentries:\n  - promptLines:\n      - 9\n      - 14\n    file: text_diff/src/lib.rs\n    lines:\n      - 1\n      - 6\n    note: crate location/header comment marker\n  - promptLines:\n      - 18\n      - 23\n    file: text_diff/src/lib.rs\n    lines:\n      - 38\n      - 55\n    note: to_lines implementation with CRLF handling\n  - promptLines:\n      - 27\n      - 29\n    file: text_diff/src/lib.rs\n    lines:\n      - 125\n      - 130\n    note: unified_diff and unified_diff_with_context entrypoints\n  - promptLines:\n      - 31\n      - 35\n    file: text_diff/src/lib.rs\n    lines:\n      - 64\n      - 122\n    note: LCS alignment producing context/del/ins entries with line numbers\n  - promptLines:\n      - 37\n      - 39\n    file: text_diff/src/lib.rs\n    lines:\n      - 135\n      - 161\n    note: mark entries within context of a change, group into hunks\n  - promptLines:\n      - 39\n      - 46\n    file: text_diff/src/lib.rs\n    lines:\n      - 163\n      - 205\n    note: compute hunk header counts/starts and emit prefixed lines\n  - promptLines:\n      - 47\n      - 49\n    file: text_diff/src/lib.rs\n    lines:\n      - 198\n      - 207\n    note: marker prefixes and newline-joined output, empty diff case\n  - promptLines:\n      - 51\n      - 53\n    file: text_diff/src/lib.rs\n    lines:\n      - 345\n      - 358\n    note: tests preserving empty/full insertion/deletion/identical behavior\n  - promptLines:\n      - 57\n      - 61\n    file: text_diff/src/lib.rs\n    lines:\n      - 227\n      - 229\n    note: empty/whitespace diff yields no hunks\n  - promptLines:\n      - 58\n      - 60\n    file: text_diff/src/lib.rs\n    lines:\n      - 211\n      - 223\n    note: header regex-shape parsing into four numbers\n  - promptLines:\n      - 59\n      - 61\n    file: text_diff/src/lib.rs\n    lines:\n      - 232\n      - 242\n    note: split diff into lines, start new hunk on header match\n  - promptLines:\n      - 61\n      - 64\n    file: text_diff/src/lib.rs\n    lines:\n      - 244\n      - 256\n    note: classify first char as context/del/ins/ignored, push hunk line\n  - promptLines:\n      - 66\n      - 72\n    file: text_diff/src/lib.rs\n    lines:\n      - 8\n      - 31\n    note: Hunk, HunkLine, HunkKind data model\n  - promptLines:\n      - 76\n      - 83\n    file: text_diff/src/lib.rs\n    lines:\n      - 262\n      - 306\n    note: apply_hunks reconstruction walking original lines and hunk lines\n  - promptLines:\n      - 85\n      - 87\n    file: text_diff/src/lib.rs\n    lines:\n      - 443\n      - 467\n    note: roundtrip property tests\n  - promptLines:\n      - 11\n      - 13\n    file: text_diff/src/lib.rs\n    lines:\n      - 1\n      - 1\n    note: generated-from marker referencing separate crate manifest requirement\n",
+  "mapl": [
+    {
+      "promptLines": [
+        9,
+        14
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "body_lines crate mention looks like leftover boilerplate, unrelated to this pure module",
+      "reasoning": "The prompt tells the agent about a generated `body_lines` crate at the repo root and says to leave it untouched, but text_diff is explicitly specified as pure with no dependencies on other project modules and never references body_lines. This reads like templated instruction text carried over from a different module's prompt rather than something specific to text_diff. The agent correctly ignored it (didn't touch anything outside text_diff/), so no functional issue, but the phrasing is worth flagging as likely misplaced.\n"
+    },
+    {
+      "promptLines": [
+        37,
+        38
+      ],
+      "kind": "assumption",
+      "severity": "warning",
+      "message": "\"within context positions\" interpreted as index distance over the full aligned entry list",
+      "reasoning": "The spec says an entry is included when it lies within `context` positions of some deletion or insertion but doesn't define the unit of \\\"position\\\" precisely — e.g. whether it's measured over all aligned entries (context+del+ins) or only over changed/before-side entries. The agent assumed it's the index distance within the full `entries` vector produced by LCS alignment (`idx.saturating_sub(context)` .. `idx+context`), which matches the given consequences (lines 51-53) and is the natural reading, but the prompt never spells this out explicitly with a worked context-window example.\n",
+      "suggestion": "Clarify: \"an entry is included when its index in the aligned entry list (context, deletions, and insertions all counted) is within `context` of some deletion or insertion's index.\""
+    }
+  ],
+  "journal": [
+    {
+      "gen": 5,
+      "timestamp": "2026-07-24T06:05:10.183Z",
+      "mode": "full",
+      "promptHash": "c12f6b2d040adc808d408f71fc27f225312be710a4088acef49a678e58ed21e2",
+      "files": [
+        {
+          "path": "text_diff/Cargo.toml",
+          "journalPath": ".napl/src/rust/text_diff/Cargo.toml",
+          "patch": "@@ -0,0 +1,6 @@\n+[package]\n+name = \"text_diff\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]"
+        },
+        {
+          "path": "text_diff/src/lib.rs",
+          "journalPath": ".napl/src/rust/text_diff/src/lib.rs",
+          "patch": "@@ -0,0 +1,468 @@\n+// GENERATED BY NAPL from text_diff.md — edit the prompt, not this file\n+//! Line-oriented text diffing.\n+//!\n+//! Produces and parses a unified diff between two texts, line by line, using a\n+//! longest-common-subsequence alignment. Pure: no I/O, no dependencies on other\n+//! project modules.\n+\n+/// The kind of a hunk line.\n+#[derive(Debug, Clone, Copy, PartialEq, Eq)]\n+pub enum HunkKind {\n+    Context,\n+    Del,\n+    Ins,\n+}\n+\n+/// A single line within a hunk.\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct HunkLine {\n+    pub kind: HunkKind,\n+    pub text: String,\n+}\n+\n+/// A parsed unified-diff hunk.\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct Hunk {\n+    pub old_start: usize,\n+    pub old_count: usize,\n+    pub new_start: usize,\n+    pub new_count: usize,\n+    pub lines: Vec<HunkLine>,\n+}\n+\n+/// Split `text` into its lines as owned strings.\n+///\n+/// Empty text has no lines. Otherwise a single trailing terminator (`\\n` or\n+/// `\\r\\n`) is removed, then the text is split on each `\\n`; a `\\r` immediately\n+/// before a split `\\n` is consumed with it, but a lone `\\r` stays in the line.\n+pub fn to_lines(text: &str) -> Vec<String> {\n+    if text.is_empty() {\n+        return Vec::new();\n+    }\n+\n+    // Strip a single trailing terminator.\n+    let body = if let Some(stripped) = text.strip_suffix(\"\\r\\n\") {\n+        stripped\n+    } else if let Some(stripped) = text.strip_suffix('\\n') {\n+        stripped\n+    } else {\n+        text\n+    };\n+\n+    body.split('\\n')\n+        .map(|line| line.strip_suffix('\\r').unwrap_or(line).to_string())\n+        .collect()\n+}\n+\n+/// An aligned entry between `before` and `after`.\n+enum Entry {\n+    Context { old: usize, new: usize, text: String },\n+    Del { old: usize, text: String },\n+    Ins { new: usize, text: String },\n+}\n+\n+/// Align `before` and `after` lines via longest-common-subsequence.\n+fn align(before: &[String], after: &[String]) -> Vec<Entry> {\n+    let n = before.len();\n+    let m = after.len();\n+\n+    // LCS length table.\n+    let mut lcs = vec![vec![0usize; m + 1]; n + 1];\n+    for i in (0..n).rev() {\n+        for j in (0..m).rev() {\n+            lcs[i][j] = if before[i] == after[j] {\n+                lcs[i + 1][j + 1] + 1\n+            } else {\n+                lcs[i + 1][j].max(lcs[i][j + 1])\n+            };\n+        }\n+    }\n+\n+    let mut entries = Vec::new();\n+    let mut i = 0;\n+    let mut j = 0;\n+    while i < n && j < m {\n+        if before[i] == after[j] {\n+            entries.push(Entry::Context {\n+                old: i + 1,\n+                new: j + 1,\n+                text: before[i].clone(),\n+            });\n+            i += 1;\n+            j += 1;\n+        } else if lcs[i + 1][j] >= lcs[i][j + 1] {\n+            entries.push(Entry::Del {\n+                old: i + 1,\n+                text: before[i].clone(),\n+            });\n+            i += 1;\n+        } else {\n+            entries.push(Entry::Ins {\n+                new: j + 1,\n+                text: after[j].clone(),\n+            });\n+            j += 1;\n+        }\n+    }\n+    while i < n {\n+        entries.push(Entry::Del {\n+            old: i + 1,\n+            text: before[i].clone(),\n+        });\n+        i += 1;\n+    }\n+    while j < m {\n+        entries.push(Entry::Ins {\n+            new: j + 1,\n+            text: after[j].clone(),\n+        });\n+        j += 1;\n+    }\n+    entries\n+}\n+\n+/// Produce a unified diff with 3 lines of surrounding context.\n+pub fn unified_diff(before: &str, after: &str) -> String {\n+    unified_diff_with_context(before, after, 3)\n+}\n+\n+/// Produce a unified diff with a caller-chosen context width.\n+pub fn unified_diff_with_context(before: &str, after: &str, context: usize) -> String {\n+    let before_lines = to_lines(before);\n+    let after_lines = to_lines(after);\n+    let entries = align(&before_lines, &after_lines);\n+\n+    let is_change = |e: &Entry| matches!(e, Entry::Del { .. } | Entry::Ins { .. });\n+\n+    // Mark which entries lie within `context` positions of a change.\n+    let mut included = vec![false; entries.len()];\n+    for (idx, e) in entries.iter().enumerate() {\n+        if is_change(e) {\n+            let lo = idx.saturating_sub(context);\n+            let hi = (idx + context).min(entries.len().saturating_sub(1));\n+            for slot in included.iter_mut().take(hi + 1).skip(lo) {\n+                *slot = true;\n+            }\n+        }\n+    }\n+\n+    // Group consecutive included entries into hunks and emit.\n+    let mut out: Vec<String> = Vec::new();\n+    let mut idx = 0;\n+    while idx < entries.len() {\n+        if !included[idx] {\n+            idx += 1;\n+            continue;\n+        }\n+        let start = idx;\n+        while idx < entries.len() && included[idx] {\n+            idx += 1;\n+        }\n+        let hunk = &entries[start..idx];\n+\n+        let mut old_start = 0;\n+        let mut new_start = 0;\n+        let mut old_count = 0;\n+        let mut new_count = 0;\n+        for e in hunk {\n+            match e {\n+                Entry::Context { old, new, .. } => {\n+                    if old_start == 0 {\n+                        old_start = *old;\n+                    }\n+                    if new_start == 0 {\n+                        new_start = *new;\n+                    }\n+                    old_count += 1;\n+                    new_count += 1;\n+                }\n+                Entry::Del { old, .. } => {\n+                    if old_start == 0 {\n+                        old_start = *old;\n+                    }\n+                    old_count += 1;\n+                }\n+                Entry::Ins { new, .. } => {\n+                    if new_start == 0 {\n+                        new_start = *new;\n+                    }\n+                    new_count += 1;\n+                }\n+            }\n+        }\n+\n+        out.push(format!(\n+            \"@@ -{},{} +{},{} @@\",\n+            old_start, old_count, new_start, new_count\n+        ));\n+        for e in hunk {\n+            match e {\n+                Entry::Context { text, .. } => out.push(format!(\" {}\", text)),\n+                Entry::Del { text, .. } => out.push(format!(\"-{}\", text)),\n+                Entry::Ins { text, .. } => out.push(format!(\"+{}\", text)),\n+            }\n+        }\n+    }\n+\n+    out.join(\"\\n\")\n+}\n+\n+/// Parse the header shape `@@ -A,B +C,D @@` into its four numbers.\n+fn parse_header(line: &str) -> Option<(usize, usize, usize, usize)> {\n+    let rest = line.strip_prefix(\"@@ -\")?;\n+    let rest = rest.strip_suffix(\" @@\")?;\n+    let (old_part, new_part) = rest.split_once(\" +\")?;\n+    let (a, b) = old_part.split_once(',')?;\n+    let (c, d) = new_part.split_once(',')?;\n+    Some((\n+        a.parse().ok()?,\n+        b.parse().ok()?,\n+        c.parse().ok()?,\n+        d.parse().ok()?,\n+    ))\n+}\n+\n+/// Parse the hunks contained in a unified-diff string.\n+pub fn parse_hunks(diff: &str) -> Vec<Hunk> {\n+    if diff.trim().is_empty() {\n+        return Vec::new();\n+    }\n+\n+    let mut hunks: Vec<Hunk> = Vec::new();\n+    for line in to_lines(diff) {\n+        if let Some((old_start, old_count, new_start, new_count)) = parse_header(&line) {\n+            hunks.push(Hunk {\n+                old_start,\n+                old_count,\n+                new_start,\n+                new_count,\n+                lines: Vec::new(),\n+            });\n+            continue;\n+        }\n+\n+        let Some(hunk) = hunks.last_mut() else {\n+            continue;\n+        };\n+        let mut chars = line.chars();\n+        let marker = chars.next();\n+        let text = chars.as_str().to_string();\n+        let kind = match marker {\n+            Some(' ') => HunkKind::Context,\n+            Some('-') => HunkKind::Del,\n+            Some('+') => HunkKind::Ins,\n+            _ => continue,\n+        };\n+        hunk.lines.push(HunkLine { kind, text });\n+    }\n+    hunks\n+}\n+\n+/// Reconstruct the diff's target from the original text and parsed hunks.\n+pub fn apply_hunks(before: &str, hunks: &[Hunk]) -> String {\n+    let before_lines = to_lines(before);\n+    let mut out: Vec<String> = Vec::new();\n+    let mut pos = 0; // 0-based position within before_lines\n+\n+    for hunk in hunks {\n+        // Copy original lines before this hunk's start.\n+        // old_start is 1-based; a hunk with no old lines uses 0.\n+        let target = if hunk.old_start == 0 {\n+            pos\n+        } else {\n+            hunk.old_start - 1\n+        };\n+        while pos < target && pos < before_lines.len() {\n+            out.push(before_lines[pos].clone());\n+            pos += 1;\n+        }\n+\n+        for line in &hunk.lines {\n+            match line.kind {\n+                HunkKind::Context => {\n+                    if pos < before_lines.len() {\n+                        out.push(before_lines[pos].clone());\n+                    } else {\n+                        out.push(line.text.clone());\n+                    }\n+                    pos += 1;\n+                }\n+                HunkKind::Del => {\n+                    pos += 1;\n+                }\n+                HunkKind::Ins => {\n+                    out.push(line.text.clone());\n+                }\n+            }\n+        }\n+    }\n+\n+    while pos < before_lines.len() {\n+        out.push(before_lines[pos].clone());\n+        pos += 1;\n+    }\n+\n+    out.join(\"\\n\")\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn to_lines_empty() {\n+        assert_eq!(to_lines(\"\"), Vec::<String>::new());\n+    }\n+\n+    #[test]\n+    fn to_lines_trailing_newline() {\n+        assert_eq!(to_lines(\"a\\nb\\n\"), vec![\"a\", \"b\"]);\n+        assert_eq!(to_lines(\"a\\nb\"), vec![\"a\", \"b\"]);\n+    }\n+\n+    #[test]\n+    fn to_lines_crlf() {\n+        assert_eq!(to_lines(\"a\\r\\nb\\r\\n\"), vec![\"a\", \"b\"]);\n+        assert_eq!(to_lines(\"a\\r\\nb\"), vec![\"a\", \"b\"]);\n+    }\n+\n+    #[test]\n+    fn to_lines_lone_cr() {\n+        assert_eq!(to_lines(\"a\\rb\\n\"), vec![\"a\\rb\"]);\n+    }\n+\n+    #[test]\n+    fn to_lines_no_trailing_newline() {\n+        assert_eq!(to_lines(\"hello\"), vec![\"hello\"]);\n+    }\n+\n+    #[test]\n+    fn to_lines_blank_lines() {\n+        assert_eq!(to_lines(\"a\\n\\nb\\n\"), vec![\"a\", \"\", \"b\"]);\n+    }\n+\n+    #[test]\n+    fn unified_diff_empty_to_content() {\n+        assert_eq!(unified_diff(\"\", \"a\\nb\\n\"), \"@@ -0,0 +1,2 @@\\n+a\\n+b\");\n+    }\n+\n+    #[test]\n+    fn unified_diff_content_to_empty() {\n+        assert_eq!(unified_diff(\"a\\nb\\n\", \"\"), \"@@ -1,2 +0,0 @@\\n-a\\n-b\");\n+    }\n+\n+    #[test]\n+    fn unified_diff_identical() {\n+        assert_eq!(unified_diff(\"a\\nb\\n\", \"a\\nb\\n\"), \"\");\n+        assert_eq!(unified_diff(\"\", \"\"), \"\");\n+    }\n+\n+    #[test]\n+    fn unified_diff_mixed() {\n+        let before = \"a\\nb\\nc\\nd\\ne\\n\";\n+        let after = \"a\\nb\\nC\\nd\\ne\\n\";\n+        let diff = unified_diff(before, after);\n+        assert_eq!(\n+            diff,\n+            \"@@ -1,5 +1,5 @@\\n a\\n b\\n-c\\n+C\\n d\\n e\"\n+        );\n+    }\n+\n+    #[test]\n+    fn unified_diff_insert_and_delete() {\n+        let before = \"one\\ntwo\\nthree\\n\";\n+        let after = \"one\\ntwo-and-a-half\\ntwo\\nthree\\n\";\n+        let diff = unified_diff(before, after);\n+        let hunks = parse_hunks(&diff);\n+        assert_eq!(apply_hunks(before, &hunks), to_lines(after).join(\"\\n\"));\n+    }\n+\n+    #[test]\n+    fn unified_diff_with_context_narrow() {\n+        // Two separate changes far apart; with context 1 they stay separate hunks,\n+        // with context 3 (default) they would merge.\n+        let before = \"a\\nb\\nc\\nd\\ne\\nf\\ng\\nh\\ni\\n\";\n+        let after = \"a\\nB\\nc\\nd\\ne\\nf\\ng\\nH\\ni\\n\";\n+        let diff = unified_diff_with_context(before, after, 1);\n+        assert_eq!(\n+            diff,\n+            \"@@ -1,3 +1,3 @@\\n a\\n-b\\n+B\\n c\\n@@ -7,3 +7,3 @@\\n g\\n-h\\n+H\\n i\"\n+        );\n+    }\n+\n+    #[test]\n+    fn parse_hunks_example() {\n+        let diff = \"@@ -1,3 +1,3 @@\\n a\\n-b\\n+B\\n c\";\n+        let hunks = parse_hunks(diff);\n+        assert_eq!(hunks.len(), 1);\n+        let h = &hunks[0];\n+        assert_eq!(h.old_start, 1);\n+        assert_eq!(h.old_count, 3);\n+        assert_eq!(h.new_start, 1);\n+        assert_eq!(h.new_count, 3);\n+        assert_eq!(\n+            h.lines,\n+            vec![\n+                HunkLine { kind: HunkKind::Context, text: \"a\".to_string() },\n+                HunkLine { kind: HunkKind::Del, text: \"b\".to_string() },\n+                HunkLine { kind: HunkKind::Ins, text: \"B\".to_string() },\n+                HunkLine { kind: HunkKind::Context, text: \"c\".to_string() },\n+            ]\n+        );\n+    }\n+\n+    #[test]\n+    fn parse_hunks_empty_and_whitespace() {\n+        assert_eq!(parse_hunks(\"\"), Vec::new());\n+        assert_eq!(parse_hunks(\"   \\n  \\n\"), Vec::new());\n+    }\n+\n+    #[test]\n+    fn parse_hunks_ignores_unknown_lines() {\n+        let diff = \"@@ -1,1 +1,1 @@\\n a\\n?noise\\n\";\n+        let hunks = parse_hunks(diff);\n+        assert_eq!(hunks.len(), 1);\n+        assert_eq!(hunks[0].lines.len(), 1);\n+        assert_eq!(hunks[0].lines[0].kind, HunkKind::Context);\n+    }\n+\n+    #[test]\n+    fn apply_hunks_example() {\n+        let before = \"a\\nb\\nc\\n\";\n+        let diff = \"@@ -1,3 +1,3 @@\\n a\\n-b\\n+B\\n c\";\n+        let hunks = parse_hunks(diff);\n+        assert_eq!(apply_hunks(before, &hunks), \"a\\nB\\nc\");\n+    }\n+\n+    #[test]\n+    fn apply_hunks_no_hunks_copies_all() {\n+        let before = \"a\\nb\\nc\\n\";\n+        assert_eq!(apply_hunks(before, &[]), \"a\\nb\\nc\");\n+    }\n+\n+    fn roundtrip(before: &str, after: &str) {\n+        let diff = unified_diff(before, after);\n+        let hunks = parse_hunks(&diff);\n+        assert_eq!(\n+            apply_hunks(before, &hunks),\n+            to_lines(after).join(\"\\n\"),\n+            \"roundtrip failed for {:?} -> {:?}\",\n+            before,\n+            after\n+        );\n+    }\n+\n+    #[test]\n+    fn roundtrip_property() {\n+        roundtrip(\"\", \"a\\nb\\n\");\n+        roundtrip(\"a\\nb\\n\", \"\");\n+        roundtrip(\"a\\nb\\n\", \"a\\nb\\n\");\n+        roundtrip(\"a\\nb\\nc\\nd\\ne\\n\", \"a\\nb\\nC\\nd\\ne\\n\");\n+        roundtrip(\"one\\ntwo\\nthree\\n\", \"one\\ntwo-and-a-half\\ntwo\\nthree\\n\");\n+        roundtrip(\"a\\nb\\nc\\nd\\ne\\nf\\ng\\nh\\ni\\n\", \"a\\nB\\nc\\nd\\ne\\nf\\ng\\nH\\ni\\n\");\n+        roundtrip(\"x\\ny\\nz\\n\", \"z\\ny\\nx\\n\");\n+        roundtrip(\"hello world\\n\", \"goodbye world\\nand more\\n\");\n+        roundtrip(\"same\\nlines\\nhere\\n\", \"same\\nlines\\nhere\\n\");\n+        roundtrip(\"trailing\", \"trailing\\nextra\");\n+    }\n+}"
+        }
+      ]
+    }
+  ],
+  "lock": [
+    {
+      "path": "text_diff/Cargo.toml",
+      "hash": "c15fd6accdee0af844f9fcb0155309887f50ec5bc07f2312171a8f689e38554d"
+    },
+    {
+      "path": "text_diff/src/lib.rs",
+      "hash": "707c356b93434f1a3ccfb24c84e736d45f9d62b7e65c6bc89ad361999dbfdee3"
+    }
+  ],
+  "session": {
+    "task": "napl gen rust → text_diff",
+    "files": {
+      "text_diff.napl": "---\nmodule: text_diff\ndeps: []\ntargets: [rust]\ntests:\n  - name: to_lines drops a single trailing newline and splits on newlines\n    given: { cases: [\"a\\nb\\n\", \"a\\nb\"] }\n    expect: { lines: [[\"a\", \"b\"], [\"a\", \"b\"]] }\n  - name: to_lines of empty text is empty\n    given: { text: \"\" }\n    expect: { lines: [] }\n  - name: to_lines treats CRLF the same as LF\n    given: { text: \"a\\r\\nb\\r\\n\" }\n    expect: { lines: [\"a\", \"b\"] }\n  - name: to_lines keeps a lone carriage return in the content\n    given: { text: \"a\\rb\\n\" }\n    expect: { lines: [\"a\\rb\"] }\n  - name: diffing empty into content is all insertions\n    given: { before: \"\", after: \"a\\nb\\n\" }\n    expect: { diff: \"@@ -0,0 +1,2 @@\\n+a\\n+b\" }\n  - name: diffing content into empty is all deletions\n    given: { before: \"a\\nb\\n\", after: \"\" }\n    expect: { diff: \"@@ -1,2 +0,0 @@\\n-a\\n-b\" }\n  - name: a single-line modification produces a scoped header and the changed lines\n    given: { before: \"a\\nb\\nc\\n\", after: \"a\\nB\\nc\\n\" }\n    expect: { headerStartsWith: \"@@ -\", headerEndsWith: \" @@\", contains: [\"-b\", \"+B\"] }\n  - name: identical inputs produce an empty diff\n    given: { before: \"a\\nb\\nc\\n\", after: \"a\\nb\\nc\\n\" }\n    expect: { diff: \"\" }\n  - name: parse_hunks reads the header numbers and the per-line kinds\n    given: { diff: \"@@ -1,3 +1,3 @@\\n a\\n-b\\n+B\\n c\\n\" }\n    expect:\n      hunkCount: 1\n      oldStart: 1\n      oldCount: 3\n      newStart: 1\n      newCount: 3\n      kinds: [\"context\", \"del\", \"ins\", \"context\"]\n  - name: parse_hunks of an empty diff yields no hunks\n    given: { diff: \"\" }\n    expect: { hunkCount: 0 }\n  - name: a diff parsed and re-applied to the original reproduces the target\n    given:\n      cases:\n        - { before: \"\", after: \"a\\nb\\nc\\n\" }\n        - { before: \"a\\nb\\nc\\n\", after: \"\" }\n        - { before: \"a\\nb\\nc\\nd\\ne\\n\", after: \"a\\nB\\nc\\nd\\nE\\nf\\n\" }\n        - { before: \"one\\ntwo\\nthree\\n\", after: \"one\\ntwo\\nthree\\nfour\\n\" }\n        - { before: \"x\\ny\\nz\\n\", after: \"z\\ny\\nx\\n\" }\n        - { before: \"same\\nsame\\n\", after: \"same\\nsame\\n\" }\n        - { before: \"a\\nb\\nc\\nd\\ne\\nf\\ng\\n\", after: \"a\\nc\\ne\\ng\\n\" }\n    expect: { reappliedEqualsTargetLines: true }\n---\n# Line-oriented text diffing\n\nThis module produces and parses a **unified diff** between two texts, line by\nline, using a longest-common-subsequence alignment. It is pure: no I/O, no\ndependencies on other project modules.\n\n## Where this code lives\n\nThe working directory already contains a generated `body_lines` crate at its\nroot — leave it completely untouched. Create this module as a **new, separate\nRust library crate in a subdirectory named `text_diff/`**: `text_diff/Cargo.toml`\n(package name `text_diff`) and `text_diff/src/lib.rs`. Do not add a workspace\nmanifest and do not modify anything outside `text_diff/`. Ensure `cargo test`\npasses from inside `text_diff/`.\n\n## Splitting text into lines — `to_lines(text)`\n\nReturn the lines of `text` as owned strings. Empty text has **no** lines (an\nempty vector). Otherwise, a single trailing line terminator (`\\n`, or `\\r\\n`) is\nremoved first, then the text is split on each `\\n`; a `\\r` immediately before a\nsplit `\\n` is consumed with it, but a lone `\\r` not followed by `\\n` stays inside\nthe line's content. So `a\\nb\\n` and `a\\nb` both give `[\"a\", \"b\"]`, `a\\r\\nb\\r\\n`\nalso gives `[\"a\", \"b\"]`, and `a\\rb\\n` gives the single line `a\\rb`.\n\n## Producing a unified diff\n\n`unified_diff(before, after)` returns a unified diff string with **3** lines of\nsurrounding context. `unified_diff_with_context(before, after, context)` is the\nsame with a caller-chosen context width; `unified_diff` is the `context = 3` case.\n\nSplit both inputs with `to_lines`, then align them with a longest-common-\nsubsequence: matching lines become **context** entries, lines only in `before`\nbecome **deletions**, lines only in `after` become **insertions**. Each aligned\nentry knows its 1-based line number within `before` (for context and deletions)\nand within `after` (for context and insertions).\n\nEmit only the neighborhoods of change: an entry is included when it lies within\n`context` positions of some deletion or insertion. Consecutive included entries\nform one **hunk**. For each hunk emit a header line\n\n    @@ -<oldStart>,<oldCount> +<newStart>,<newCount> @@\n\nwhere `oldStart` is the `before` line number of the hunk's first non-insertion\nentry (or `0` if the hunk has none) and `oldCount` is how many of its entries came\nfrom `before` (context + deletions); `newStart` and `newCount` are the mirror over\n`after` (context + insertions). After the header, emit each entry on its own line\nprefixed by a single marker character: a space for context, `-` for a deletion,\n`+` for an insertion, followed by the line text. Join every emitted line with\n`\\n`. When there is no change at all, the diff is the empty string.\n\nConsequences to preserve exactly: diffing `\"\"` into `a\\nb\\n` yields\n`@@ -0,0 +1,2 @@` then `+a` then `+b`; diffing `a\\nb\\n` into `\"\"` yields\n`@@ -1,2 +0,0 @@` then `-a` then `-b`; identical inputs yield `\"\"`.\n\n## Parsing a unified diff — `parse_hunks(diff)`\n\nReturn the hunks contained in a unified-diff string. A diff that is empty or only\nwhitespace yields no hunks. Split the diff into lines the same CRLF-aware way used\nelsewhere. A line matching the header shape `@@ -A,B +C,D @@` (A, B, C, D being\nnon-negative integers) starts a new hunk carrying those four numbers and, so far,\nno lines. Any other line, when a hunk is open, is one of the hunk's lines: its\nfirst character selects the kind — a space means **context**, `-` means a\n**deletion**, `+` means an **insertion**, and any other first character is ignored\n— and the remainder of the line after that first character is the line's text.\n\nModel the result as: a `Hunk` with public fields `old_start`, `old_count`,\n`new_start`, `new_count` (unsigned integers) and `lines` (a vector of\n`HunkLine`); a `HunkLine` with public fields `kind` and `text`; and a `HunkKind`\nwith the three variants `Context`, `Del`, and `Ins`. So parsing\n`@@ -1,3 +1,3 @@` followed by ` a`, `-b`, `+B`, ` c` gives one hunk with\n`old_start = 1`, `old_count = 3`, `new_start = 1`, `new_count = 3`, and line\nkinds context, deletion, insertion, context, carrying texts `a`, `b`, `B`, `c`.\n\n## Re-applying hunks — `apply_hunks(before, hunks)`\n\nReconstruct the diff's target from the original text and parsed hunks. Take the\n`before` lines (via `to_lines`); walk the hunks in order, first copying any\noriginal lines before each hunk's start, then for each hunk line: a context line\ncopies the corresponding original line (falling back to the hunk line's own text\nif the original is exhausted) and advances the original position; a deletion\nadvances the original position without emitting; an insertion emits its text\nwithout advancing. After the last hunk, copy any remaining original lines. Join\nthe result with `\\n`.\n\nThis must round-trip: for any `before`/`after`, parsing `unified_diff(before,\nafter)` and applying the hunks back onto `before` reproduces `after`'s lines\njoined by `\\n` (i.e. `to_lines(after)` joined with `\\n`).\n</content>\n"
+    },
+    "events": [
+      {
+        "type": "task",
+        "task": "napl gen rust → text_diff"
+      },
+      {
+        "type": "diff",
+        "path": "text_diff/Cargo.toml",
+        "patch": "@@ -0,0 +1,6 @@\n+[package]\n+name = \"text_diff\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]"
+      },
+      {
+        "type": "file-edit",
+        "path": "text_diff/Cargo.toml",
+        "content": "[package]\nname = \"text_diff\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n"
+      },
+      {
+        "type": "diff",
+        "path": "text_diff/src/lib.rs",
+        "patch": "@@ -0,0 +1,468 @@\n+// GENERATED BY NAPL from text_diff.md — edit the prompt, not this file\n+//! Line-oriented text diffing.\n+//!\n+//! Produces and parses a unified diff between two texts, line by line, using a\n+//! longest-common-subsequence alignment. Pure: no I/O, no dependencies on other\n+//! project modules.\n+\n+/// The kind of a hunk line.\n+#[derive(Debug, Clone, Copy, PartialEq, Eq)]\n+pub enum HunkKind {\n+    Context,\n+    Del,\n+    Ins,\n+}\n+\n+/// A single line within a hunk.\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct HunkLine {\n+    pub kind: HunkKind,\n+    pub text: String,\n+}\n+\n+/// A parsed unified-diff hunk.\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct Hunk {\n+    pub old_start: usize,\n+    pub old_count: usize,\n+    pub new_start: usize,\n+    pub new_count: usize,\n+    pub lines: Vec<HunkLine>,\n+}\n+\n+/// Split `text` into its lines as owned strings.\n+///\n+/// Empty text has no lines. Otherwise a single trailing terminator (`\\n` or\n+/// `\\r\\n`) is removed, then the text is split on each `\\n`; a `\\r` immediately\n+/// before a split `\\n` is consumed with it, but a lone `\\r` stays in the line.\n+pub fn to_lines(text: &str) -> Vec<String> {\n+    if text.is_empty() {\n+        return Vec::new();\n+    }\n+\n+    // Strip a single trailing terminator.\n+    let body = if let Some(stripped) = text.strip_suffix(\"\\r\\n\") {\n+        stripped\n+    } else if let Some(stripped) = text.strip_suffix('\\n') {\n+        stripped\n+    } else {\n+        text\n+    };\n+\n+    body.split('\\n')\n+        .map(|line| line.strip_suffix('\\r').unwrap_or(line).to_string())\n+        .collect()\n+}\n+\n+/// An aligned entry between `before` and `after`.\n+enum Entry {\n+    Context { old: usize, new: usize, text: String },\n+    Del { old: usize, text: String },\n+    Ins { new: usize, text: String },\n+}\n+\n+/// Align `before` and `after` lines via longest-common-subsequence.\n+fn align(before: &[String], after: &[String]) -> Vec<Entry> {\n+    let n = before.len();\n+    let m = after.len();\n+\n+    // LCS length table.\n+    let mut lcs = vec![vec![0usize; m + 1]; n + 1];\n+    for i in (0..n).rev() {\n+        for j in (0..m).rev() {\n+            lcs[i][j] = if before[i] == after[j] {\n+                lcs[i + 1][j + 1] + 1\n+            } else {\n+                lcs[i + 1][j].max(lcs[i][j + 1])\n+            };\n+        }\n+    }\n+\n+    let mut entries = Vec::new();\n+    let mut i = 0;\n+    let mut j = 0;\n+    while i < n && j < m {\n+        if before[i] == after[j] {\n+            entries.push(Entry::Context {\n+                old: i + 1,\n+                new: j + 1,\n+                text: before[i].clone(),\n+            });\n+            i += 1;\n+            j += 1;\n+        } else if lcs[i + 1][j] >= lcs[i][j + 1] {\n+            entries.push(Entry::Del {\n+                old: i + 1,\n+                text: before[i].clone(),\n+            });\n+            i += 1;\n+        } else {\n+            entries.push(Entry::Ins {\n+                new: j + 1,\n+                text: after[j].clone(),\n+            });\n+            j += 1;\n+        }\n+    }\n+    while i < n {\n+        entries.push(Entry::Del {\n+            old: i + 1,\n+            text: before[i].clone(),\n+        });\n+        i += 1;\n+    }\n+    while j < m {\n+        entries.push(Entry::Ins {\n+            new: j + 1,\n+            text: after[j].clone(),\n+        });\n+        j += 1;\n+    }\n+    entries\n+}\n+\n+/// Produce a unified diff with 3 lines of surrounding context.\n+pub fn unified_diff(before: &str, after: &str) -> String {\n+    unified_diff_with_context(before, after, 3)\n+}\n+\n+/// Produce a unified diff with a caller-chosen context width.\n+pub fn unified_diff_with_context(before: &str, after: &str, context: usize) -> String {\n+    let before_lines = to_lines(before);\n+    let after_lines = to_lines(after);\n+    let entries = align(&before_lines, &after_lines);\n+\n+    let is_change = |e: &Entry| matches!(e, Entry::Del { .. } | Entry::Ins { .. });\n+\n+    // Mark which entries lie within `context` positions of a change.\n+    let mut included = vec![false; entries.len()];\n+    for (idx, e) in entries.iter().enumerate() {\n+        if is_change(e) {\n+            let lo = idx.saturating_sub(context);\n+            let hi = (idx + context).min(entries.len().saturating_sub(1));\n+            for slot in included.iter_mut().take(hi + 1).skip(lo) {\n+                *slot = true;\n+            }\n+        }\n+    }\n+\n+    // Group consecutive included entries into hunks and emit.\n+    let mut out: Vec<String> = Vec::new();\n+    let mut idx = 0;\n+    while idx < entries.len() {\n+        if !included[idx] {\n+            idx += 1;\n+            continue;\n+        }\n+        let start = idx;\n+        while idx < entries.len() && included[idx] {\n+            idx += 1;\n+        }\n+        let hunk = &entries[start..idx];\n+\n+        let mut old_start = 0;\n+        let mut new_start = 0;\n+        let mut old_count = 0;\n+        let mut new_count = 0;\n+        for e in hunk {\n+            match e {\n+                Entry::Context { old, new, .. } => {\n+                    if old_start == 0 {\n+                        old_start = *old;\n+                    }\n+                    if new_start == 0 {\n+                        new_start = *new;\n+                    }\n+                    old_count += 1;\n+                    new_count += 1;\n+                }\n+                Entry::Del { old, .. } => {\n+                    if old_start == 0 {\n+                        old_start = *old;\n+                    }\n+                    old_count += 1;\n+                }\n+                Entry::Ins { new, .. } => {\n+                    if new_start == 0 {\n+                        new_start = *new;\n+                    }\n+                    new_count += 1;\n+                }\n+            }\n+        }\n+\n+        out.push(format!(\n+            \"@@ -{},{} +{},{} @@\",\n+            old_start, old_count, new_start, new_count\n+        ));\n+        for e in hunk {\n+            match e {\n+                Entry::Context { text, .. } => out.push(format!(\" {}\", text)),\n+                Entry::Del { text, .. } => out.push(format!(\"-{}\", text)),\n+                Entry::Ins { text, .. } => out.push(format!(\"+{}\", text)),\n+            }\n+        }\n+    }\n+\n+    out.join(\"\\n\")\n+}\n+\n+/// Parse the header shape `@@ -A,B +C,D @@` into its four numbers.\n+fn parse_header(line: &str) -> Option<(usize, usize, usize, usize)> {\n+    let rest = line.strip_prefix(\"@@ -\")?;\n+    let rest = rest.strip_suffix(\" @@\")?;\n+    let (old_part, new_part) = rest.split_once(\" +\")?;\n+    let (a, b) = old_part.split_once(',')?;\n+    let (c, d) = new_part.split_once(',')?;\n+    Some((\n+        a.parse().ok()?,\n+        b.parse().ok()?,\n+        c.parse().ok()?,\n+        d.parse().ok()?,\n+    ))\n+}\n+\n+/// Parse the hunks contained in a unified-diff string.\n+pub fn parse_hunks(diff: &str) -> Vec<Hunk> {\n+    if diff.trim().is_empty() {\n+        return Vec::new();\n+    }\n+\n+    let mut hunks: Vec<Hunk> = Vec::new();\n+    for line in to_lines(diff) {\n+        if let Some((old_start, old_count, new_start, new_count)) = parse_header(&line) {\n+            hunks.push(Hunk {\n+                old_start,\n+                old_count,\n+                new_start,\n+                new_count,\n+                lines: Vec::new(),\n+            });\n+            continue;\n+        }\n+\n+        let Some(hunk) = hunks.last_mut() else {\n+            continue;\n+        };\n+        let mut chars = line.chars();\n+        let marker = chars.next();\n+        let text = chars.as_str().to_string();\n+        let kind = match marker {\n+            Some(' ') => HunkKind::Context,\n+            Some('-') => HunkKind::Del,\n+            Some('+') => HunkKind::Ins,\n+            _ => continue,\n+        };\n+        hunk.lines.push(HunkLine { kind, text });\n+    }\n+    hunks\n+}\n+\n+/// Reconstruct the diff's target from the original text and parsed hunks.\n+pub fn apply_hunks(before: &str, hunks: &[Hunk]) -> String {\n+    let before_lines = to_lines(before);\n+    let mut out: Vec<String> = Vec::new();\n+    let mut pos = 0; // 0-based position within before_lines\n+\n+    for hunk in hunks {\n+        // Copy original lines before this hunk's start.\n+        // old_start is 1-based; a hunk with no old lines uses 0.\n+        let target = if hunk.old_start == 0 {\n+            pos\n+        } else {\n+            hunk.old_start - 1\n+        };\n+        while pos < target && pos < before_lines.len() {\n+            out.push(before_lines[pos].clone());\n+            pos += 1;\n+        }\n+\n+        for line in &hunk.lines {\n+            match line.kind {\n+                HunkKind::Context => {\n+                    if pos < before_lines.len() {\n+                        out.push(before_lines[pos].clone());\n+                    } else {\n+                        out.push(line.text.clone());\n+                    }\n+                    pos += 1;\n+                }\n+                HunkKind::Del => {\n+                    pos += 1;\n+                }\n+                HunkKind::Ins => {\n+                    out.push(line.text.clone());\n+                }\n+            }\n+        }\n+    }\n+\n+    while pos < before_lines.len() {\n+        out.push(before_lines[pos].clone());\n+        pos += 1;\n+    }\n+\n+    out.join(\"\\n\")\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn to_lines_empty() {\n+        assert_eq!(to_lines(\"\"), Vec::<String>::new());\n+    }\n+\n+    #[test]\n+    fn to_lines_trailing_newline() {\n+        assert_eq!(to_lines(\"a\\nb\\n\"), vec![\"a\", \"b\"]);\n+        assert_eq!(to_lines(\"a\\nb\"), vec![\"a\", \"b\"]);\n+    }\n+\n+    #[test]\n+    fn to_lines_crlf() {\n+        assert_eq!(to_lines(\"a\\r\\nb\\r\\n\"), vec![\"a\", \"b\"]);\n+        assert_eq!(to_lines(\"a\\r\\nb\"), vec![\"a\", \"b\"]);\n+    }\n+\n+    #[test]\n+    fn to_lines_lone_cr() {\n+        assert_eq!(to_lines(\"a\\rb\\n\"), vec![\"a\\rb\"]);\n+    }\n+\n+    #[test]\n+    fn to_lines_no_trailing_newline() {\n+        assert_eq!(to_lines(\"hello\"), vec![\"hello\"]);\n+    }\n+\n+    #[test]\n+    fn to_lines_blank_lines() {\n+        assert_eq!(to_lines(\"a\\n\\nb\\n\"), vec![\"a\", \"\", \"b\"]);\n+    }\n+\n+    #[test]\n+    fn unified_diff_empty_to_content() {\n+        assert_eq!(unified_diff(\"\", \"a\\nb\\n\"), \"@@ -0,0 +1,2 @@\\n+a\\n+b\");\n+    }\n+\n+    #[test]\n+    fn unified_diff_content_to_empty() {\n+        assert_eq!(unified_diff(\"a\\nb\\n\", \"\"), \"@@ -1,2 +0,0 @@\\n-a\\n-b\");\n+    }\n+\n+    #[test]\n+    fn unified_diff_identical() {\n+        assert_eq!(unified_diff(\"a\\nb\\n\", \"a\\nb\\n\"), \"\");\n+        assert_eq!(unified_diff(\"\", \"\"), \"\");\n+    }\n+\n+    #[test]\n+    fn unified_diff_mixed() {\n+        let before = \"a\\nb\\nc\\nd\\ne\\n\";\n+        let after = \"a\\nb\\nC\\nd\\ne\\n\";\n+        let diff = unified_diff(before, after);\n+        assert_eq!(\n+            diff,\n+            \"@@ -1,5 +1,5 @@\\n a\\n b\\n-c\\n+C\\n d\\n e\"\n+        );\n+    }\n+\n+    #[test]\n+    fn unified_diff_insert_and_delete() {\n+        let before = \"one\\ntwo\\nthree\\n\";\n+        let after = \"one\\ntwo-and-a-half\\ntwo\\nthree\\n\";\n+        let diff = unified_diff(before, after);\n+        let hunks = parse_hunks(&diff);\n+        assert_eq!(apply_hunks(before, &hunks), to_lines(after).join(\"\\n\"));\n+    }\n+\n+    #[test]\n+    fn unified_diff_with_context_narrow() {\n+        // Two separate changes far apart; with context 1 they stay separate hunks,\n+        // with context 3 (default) they would merge.\n+        let before = \"a\\nb\\nc\\nd\\ne\\nf\\ng\\nh\\ni\\n\";\n+        let after = \"a\\nB\\nc\\nd\\ne\\nf\\ng\\nH\\ni\\n\";\n+        let diff = unified_diff_with_context(before, after, 1);\n+        assert_eq!(\n+            diff,\n+            \"@@ -1,3 +1,3 @@\\n a\\n-b\\n+B\\n c\\n@@ -7,3 +7,3 @@\\n g\\n-h\\n+H\\n i\"\n+        );\n+    }\n+\n+    #[test]\n+    fn parse_hunks_example() {\n+        let diff = \"@@ -1,3 +1,3 @@\\n a\\n-b\\n+B\\n c\";\n+        let hunks = parse_hunks(diff);\n+        assert_eq!(hunks.len(), 1);\n+        let h = &hunks[0];\n+        assert_eq!(h.old_start, 1);\n+        assert_eq!(h.old_count, 3);\n+        assert_eq!(h.new_start, 1);\n+        assert_eq!(h.new_count, 3);\n+        assert_eq!(\n+            h.lines,\n+            vec![\n+                HunkLine { kind: HunkKind::Context, text: \"a\".to_string() },\n+                HunkLine { kind: HunkKind::Del, text: \"b\".to_string() },\n+                HunkLine { kind: HunkKind::Ins, text: \"B\".to_string() },\n+                HunkLine { kind: HunkKind::Context, text: \"c\".to_string() },\n+            ]\n+        );\n+    }\n+\n+    #[test]\n+    fn parse_hunks_empty_and_whitespace() {\n+        assert_eq!(parse_hunks(\"\"), Vec::new());\n+        assert_eq!(parse_hunks(\"   \\n  \\n\"), Vec::new());\n+    }\n+\n+    #[test]\n+    fn parse_hunks_ignores_unknown_lines() {\n+        let diff = \"@@ -1,1 +1,1 @@\\n a\\n?noise\\n\";\n+        let hunks = parse_hunks(diff);\n+        assert_eq!(hunks.len(), 1);\n+        assert_eq!(hunks[0].lines.len(), 1);\n+        assert_eq!(hunks[0].lines[0].kind, HunkKind::Context);\n+    }\n+\n+    #[test]\n+    fn apply_hunks_example() {\n+        let before = \"a\\nb\\nc\\n\";\n+        let diff = \"@@ -1,3 +1,3 @@\\n a\\n-b\\n+B\\n c\";\n+        let hunks = parse_hunks(diff);\n+        assert_eq!(apply_hunks(before, &hunks), \"a\\nB\\nc\");\n+    }\n+\n+    #[test]\n+    fn apply_hunks_no_hunks_copies_all() {\n+        let before = \"a\\nb\\nc\\n\";\n+        assert_eq!(apply_hunks(before, &[]), \"a\\nb\\nc\");\n+    }\n+\n+    fn roundtrip(before: &str, after: &str) {\n+        let diff = unified_diff(before, after);\n+        let hunks = parse_hunks(&diff);\n+        assert_eq!(\n+            apply_hunks(before, &hunks),\n+            to_lines(after).join(\"\\n\"),\n+            \"roundtrip failed for {:?} -> {:?}\",\n+            before,\n+            after\n+        );\n+    }\n+\n+    #[test]\n+    fn roundtrip_property() {\n+        roundtrip(\"\", \"a\\nb\\n\");\n+        roundtrip(\"a\\nb\\n\", \"\");\n+        roundtrip(\"a\\nb\\n\", \"a\\nb\\n\");\n+        roundtrip(\"a\\nb\\nc\\nd\\ne\\n\", \"a\\nb\\nC\\nd\\ne\\n\");\n+        roundtrip(\"one\\ntwo\\nthree\\n\", \"one\\ntwo-and-a-half\\ntwo\\nthree\\n\");\n+        roundtrip(\"a\\nb\\nc\\nd\\ne\\nf\\ng\\nh\\ni\\n\", \"a\\nB\\nc\\nd\\ne\\nf\\ng\\nH\\ni\\n\");\n+        roundtrip(\"x\\ny\\nz\\n\", \"z\\ny\\nx\\n\");\n+        roundtrip(\"hello world\\n\", \"goodbye world\\nand more\\n\");\n+        roundtrip(\"same\\nlines\\nhere\\n\", \"same\\nlines\\nhere\\n\");\n+        roundtrip(\"trailing\", \"trailing\\nextra\");\n+    }\n+}"
+      },
+      {
+        "type": "file-edit",
+        "path": "text_diff/src/lib.rs",
+        "content": "// GENERATED BY NAPL from text_diff.md — edit the prompt, not this file\n//! Line-oriented text diffing.\n//!\n//! Produces and parses a unified diff between two texts, line by line, using a\n//! longest-common-subsequence alignment. Pure: no I/O, no dependencies on other\n//! project modules.\n\n/// The kind of a hunk line.\n#[derive(Debug, Clone, Copy, PartialEq, Eq)]\npub enum HunkKind {\n    Context,\n    Del,\n    Ins,\n}\n\n/// A single line within a hunk.\n#[derive(Debug, Clone, PartialEq, Eq)]\npub struct HunkLine {\n    pub kind: HunkKind,\n    pub text: String,\n}\n\n/// A parsed unified-diff hunk.\n#[derive(Debug, Clone, PartialEq, Eq)]\npub struct Hunk {\n    pub old_start: usize,\n    pub old_count: usize,\n    pub new_start: usize,\n    pub new_count: usize,\n    pub lines: Vec<HunkLine>,\n}\n\n/// Split `text` into its lines as owned strings.\n///\n/// Empty text has no lines. Otherwise a single trailing terminator (`\\n` or\n/// `\\r\\n`) is removed, then the text is split on each `\\n`; a `\\r` immediately\n/// before a split `\\n` is consumed with it, but a lone `\\r` stays in the line.\npub fn to_lines(text: &str) -> Vec<String> {\n    if text.is_empty() {\n        return Vec::new();\n    }\n\n    // Strip a single trailing terminator.\n    let body = if let Some(stripped) = text.strip_suffix(\"\\r\\n\") {\n        stripped\n    } else if let Some(stripped) = text.strip_suffix('\\n') {\n        stripped\n    } else {\n        text\n    };\n\n    body.split('\\n')\n        .map(|line| line.strip_suffix('\\r').unwrap_or(line).to_string())\n        .collect()\n}\n\n/// An aligned entry between `before` and `after`.\nenum Entry {\n    Context { old: usize, new: usize, text: String },\n    Del { old: usize, text: String },\n    Ins { new: usize, text: String },\n}\n\n/// Align `before` and `after` lines via longest-common-subsequence.\nfn align(before: &[String], after: &[String]) -> Vec<Entry> {\n    let n = before.len();\n    let m = after.len();\n\n    // LCS length table.\n    let mut lcs = vec![vec![0usize; m + 1]; n + 1];\n    for i in (0..n).rev() {\n        for j in (0..m).rev() {\n            lcs[i][j] = if before[i] == after[j] {\n                lcs[i + 1][j + 1] + 1\n            } else {\n                lcs[i + 1][j].max(lcs[i][j + 1])\n            };\n        }\n    }\n\n    let mut entries = Vec::new();\n    let mut i = 0;\n    let mut j = 0;\n    while i < n && j < m {\n        if before[i] == after[j] {\n            entries.push(Entry::Context {\n                old: i + 1,\n                new: j + 1,\n                text: before[i].clone(),\n            });\n            i += 1;\n            j += 1;\n        } else if lcs[i + 1][j] >= lcs[i][j + 1] {\n            entries.push(Entry::Del {\n                old: i + 1,\n                text: before[i].clone(),\n            });\n            i += 1;\n        } else {\n            entries.push(Entry::Ins {\n                new: j + 1,\n                text: after[j].clone(),\n            });\n            j += 1;\n        }\n    }\n    while i < n {\n        entries.push(Entry::Del {\n            old: i + 1,\n            text: before[i].clone(),\n        });\n        i += 1;\n    }\n    while j < m {\n        entries.push(Entry::Ins {\n            new: j + 1,\n            text: after[j].clone(),\n        });\n        j += 1;\n    }\n    entries\n}\n\n/// Produce a unified diff with 3 lines of surrounding context.\npub fn unified_diff(before: &str, after: &str) -> String {\n    unified_diff_with_context(before, after, 3)\n}\n\n/// Produce a unified diff with a caller-chosen context width.\npub fn unified_diff_with_context(before: &str, after: &str, context: usize) -> String {\n    let before_lines = to_lines(before);\n    let after_lines = to_lines(after);\n    let entries = align(&before_lines, &after_lines);\n\n    let is_change = |e: &Entry| matches!(e, Entry::Del { .. } | Entry::Ins { .. });\n\n    // Mark which entries lie within `context` positions of a change.\n    let mut included = vec![false; entries.len()];\n    for (idx, e) in entries.iter().enumerate() {\n        if is_change(e) {\n            let lo = idx.saturating_sub(context);\n            let hi = (idx + context).min(entries.len().saturating_sub(1));\n            for slot in included.iter_mut().take(hi + 1).skip(lo) {\n                *slot = true;\n            }\n        }\n    }\n\n    // Group consecutive included entries into hunks and emit.\n    let mut out: Vec<String> = Vec::new();\n    let mut idx = 0;\n    while idx < entries.len() {\n        if !included[idx] {\n            idx += 1;\n            continue;\n        }\n        let start = idx;\n        while idx < entries.len() && included[idx] {\n            idx += 1;\n        }\n        let hunk = &entries[start..idx];\n\n        let mut old_start = 0;\n        let mut new_start = 0;\n        let mut old_count = 0;\n        let mut new_count = 0;\n        for e in hunk {\n            match e {\n                Entry::Context { old, new, .. } => {\n                    if old_start == 0 {\n                        old_start = *old;\n                    }\n                    if new_start == 0 {\n                        new_start = *new;\n                    }\n                    old_count += 1;\n                    new_count += 1;\n                }\n                Entry::Del { old, .. } => {\n                    if old_start == 0 {\n                        old_start = *old;\n                    }\n                    old_count += 1;\n                }\n                Entry::Ins { new, .. } => {\n                    if new_start == 0 {\n                        new_start = *new;\n                    }\n                    new_count += 1;\n                }\n            }\n        }\n\n        out.push(format!(\n            \"@@ -{},{} +{},{} @@\",\n            old_start, old_count, new_start, new_count\n        ));\n        for e in hunk {\n            match e {\n                Entry::Context { text, .. } => out.push(format!(\" {}\", text)),\n                Entry::Del { text, .. } => out.push(format!(\"-{}\", text)),\n                Entry::Ins { text, .. } => out.push(format!(\"+{}\", text)),\n            }\n        }\n    }\n\n    out.join(\"\\n\")\n}\n\n/// Parse the header shape `@@ -A,B +C,D @@` into its four numbers.\nfn parse_header(line: &str) -> Option<(usize, usize, usize, usize)> {\n    let rest = line.strip_prefix(\"@@ -\")?;\n    let rest = rest.strip_suffix(\" @@\")?;\n    let (old_part, new_part) = rest.split_once(\" +\")?;\n    let (a, b) = old_part.split_once(',')?;\n    let (c, d) = new_part.split_once(',')?;\n    Some((\n        a.parse().ok()?,\n        b.parse().ok()?,\n        c.parse().ok()?,\n        d.parse().ok()?,\n    ))\n}\n\n/// Parse the hunks contained in a unified-diff string.\npub fn parse_hunks(diff: &str) -> Vec<Hunk> {\n    if diff.trim().is_empty() {\n        return Vec::new();\n    }\n\n    let mut hunks: Vec<Hunk> = Vec::new();\n    for line in to_lines(diff) {\n        if let Some((old_start, old_count, new_start, new_count)) = parse_header(&line) {\n            hunks.push(Hunk {\n                old_start,\n                old_count,\n                new_start,\n                new_count,\n                lines: Vec::new(),\n            });\n            continue;\n        }\n\n        let Some(hunk) = hunks.last_mut() else {\n            continue;\n        };\n        let mut chars = line.chars();\n        let marker = chars.next();\n        let text = chars.as_str().to_string();\n        let kind = match marker {\n            Some(' ') => HunkKind::Context,\n            Some('-') => HunkKind::Del,\n            Some('+') => HunkKind::Ins,\n            _ => continue,\n        };\n        hunk.lines.push(HunkLine { kind, text });\n    }\n    hunks\n}\n\n/// Reconstruct the diff's target from the original text and parsed hunks.\npub fn apply_hunks(before: &str, hunks: &[Hunk]) -> String {\n    let before_lines = to_lines(before);\n    let mut out: Vec<String> = Vec::new();\n    let mut pos = 0; // 0-based position within before_lines\n\n    for hunk in hunks {\n        // Copy original lines before this hunk's start.\n        // old_start is 1-based; a hunk with no old lines uses 0.\n        let target = if hunk.old_start == 0 {\n            pos\n        } else {\n            hunk.old_start - 1\n        };\n        while pos < target && pos < before_lines.len() {\n            out.push(before_lines[pos].clone());\n            pos += 1;\n        }\n\n        for line in &hunk.lines {\n            match line.kind {\n                HunkKind::Context => {\n                    if pos < before_lines.len() {\n                        out.push(before_lines[pos].clone());\n                    } else {\n                        out.push(line.text.clone());\n                    }\n                    pos += 1;\n                }\n                HunkKind::Del => {\n                    pos += 1;\n                }\n                HunkKind::Ins => {\n                    out.push(line.text.clone());\n                }\n            }\n        }\n    }\n\n    while pos < before_lines.len() {\n        out.push(before_lines[pos].clone());\n        pos += 1;\n    }\n\n    out.join(\"\\n\")\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn to_lines_empty() {\n        assert_eq!(to_lines(\"\"), Vec::<String>::new());\n    }\n\n    #[test]\n    fn to_lines_trailing_newline() {\n        assert_eq!(to_lines(\"a\\nb\\n\"), vec![\"a\", \"b\"]);\n        assert_eq!(to_lines(\"a\\nb\"), vec![\"a\", \"b\"]);\n    }\n\n    #[test]\n    fn to_lines_crlf() {\n        assert_eq!(to_lines(\"a\\r\\nb\\r\\n\"), vec![\"a\", \"b\"]);\n        assert_eq!(to_lines(\"a\\r\\nb\"), vec![\"a\", \"b\"]);\n    }\n\n    #[test]\n    fn to_lines_lone_cr() {\n        assert_eq!(to_lines(\"a\\rb\\n\"), vec![\"a\\rb\"]);\n    }\n\n    #[test]\n    fn to_lines_no_trailing_newline() {\n        assert_eq!(to_lines(\"hello\"), vec![\"hello\"]);\n    }\n\n    #[test]\n    fn to_lines_blank_lines() {\n        assert_eq!(to_lines(\"a\\n\\nb\\n\"), vec![\"a\", \"\", \"b\"]);\n    }\n\n    #[test]\n    fn unified_diff_empty_to_content() {\n        assert_eq!(unified_diff(\"\", \"a\\nb\\n\"), \"@@ -0,0 +1,2 @@\\n+a\\n+b\");\n    }\n\n    #[test]\n    fn unified_diff_content_to_empty() {\n        assert_eq!(unified_diff(\"a\\nb\\n\", \"\"), \"@@ -1,2 +0,0 @@\\n-a\\n-b\");\n    }\n\n    #[test]\n    fn unified_diff_identical() {\n        assert_eq!(unified_diff(\"a\\nb\\n\", \"a\\nb\\n\"), \"\");\n        assert_eq!(unified_diff(\"\", \"\"), \"\");\n    }\n\n    #[test]\n    fn unified_diff_mixed() {\n        let before = \"a\\nb\\nc\\nd\\ne\\n\";\n        let after = \"a\\nb\\nC\\nd\\ne\\n\";\n        let diff = unified_diff(before, after);\n        assert_eq!(\n            diff,\n            \"@@ -1,5 +1,5 @@\\n a\\n b\\n-c\\n+C\\n d\\n e\"\n        );\n    }\n\n    #[test]\n    fn unified_diff_insert_and_delete() {\n        let before = \"one\\ntwo\\nthree\\n\";\n        let after = \"one\\ntwo-and-a-half\\ntwo\\nthree\\n\";\n        let diff = unified_diff(before, after);\n        let hunks = parse_hunks(&diff);\n        assert_eq!(apply_hunks(before, &hunks), to_lines(after).join(\"\\n\"));\n    }\n\n    #[test]\n    fn unified_diff_with_context_narrow() {\n        // Two separate changes far apart; with context 1 they stay separate hunks,\n        // with context 3 (default) they would merge.\n        let before = \"a\\nb\\nc\\nd\\ne\\nf\\ng\\nh\\ni\\n\";\n        let after = \"a\\nB\\nc\\nd\\ne\\nf\\ng\\nH\\ni\\n\";\n        let diff = unified_diff_with_context(before, after, 1);\n        assert_eq!(\n            diff,\n            \"@@ -1,3 +1,3 @@\\n a\\n-b\\n+B\\n c\\n@@ -7,3 +7,3 @@\\n g\\n-h\\n+H\\n i\"\n        );\n    }\n\n    #[test]\n    fn parse_hunks_example() {\n        let diff = \"@@ -1,3 +1,3 @@\\n a\\n-b\\n+B\\n c\";\n        let hunks = parse_hunks(diff);\n        assert_eq!(hunks.len(), 1);\n        let h = &hunks[0];\n        assert_eq!(h.old_start, 1);\n        assert_eq!(h.old_count, 3);\n        assert_eq!(h.new_start, 1);\n        assert_eq!(h.new_count, 3);\n        assert_eq!(\n            h.lines,\n            vec![\n                HunkLine { kind: HunkKind::Context, text: \"a\".to_string() },\n                HunkLine { kind: HunkKind::Del, text: \"b\".to_string() },\n                HunkLine { kind: HunkKind::Ins, text: \"B\".to_string() },\n                HunkLine { kind: HunkKind::Context, text: \"c\".to_string() },\n            ]\n        );\n    }\n\n    #[test]\n    fn parse_hunks_empty_and_whitespace() {\n        assert_eq!(parse_hunks(\"\"), Vec::new());\n        assert_eq!(parse_hunks(\"   \\n  \\n\"), Vec::new());\n    }\n\n    #[test]\n    fn parse_hunks_ignores_unknown_lines() {\n        let diff = \"@@ -1,1 +1,1 @@\\n a\\n?noise\\n\";\n        let hunks = parse_hunks(diff);\n        assert_eq!(hunks.len(), 1);\n        assert_eq!(hunks[0].lines.len(), 1);\n        assert_eq!(hunks[0].lines[0].kind, HunkKind::Context);\n    }\n\n    #[test]\n    fn apply_hunks_example() {\n        let before = \"a\\nb\\nc\\n\";\n        let diff = \"@@ -1,3 +1,3 @@\\n a\\n-b\\n+B\\n c\";\n        let hunks = parse_hunks(diff);\n        assert_eq!(apply_hunks(before, &hunks), \"a\\nB\\nc\");\n    }\n\n    #[test]\n    fn apply_hunks_no_hunks_copies_all() {\n        let before = \"a\\nb\\nc\\n\";\n        assert_eq!(apply_hunks(before, &[]), \"a\\nb\\nc\");\n    }\n\n    fn roundtrip(before: &str, after: &str) {\n        let diff = unified_diff(before, after);\n        let hunks = parse_hunks(&diff);\n        assert_eq!(\n            apply_hunks(before, &hunks),\n            to_lines(after).join(\"\\n\"),\n            \"roundtrip failed for {:?} -> {:?}\",\n            before,\n            after\n        );\n    }\n\n    #[test]\n    fn roundtrip_property() {\n        roundtrip(\"\", \"a\\nb\\n\");\n        roundtrip(\"a\\nb\\n\", \"\");\n        roundtrip(\"a\\nb\\n\", \"a\\nb\\n\");\n        roundtrip(\"a\\nb\\nc\\nd\\ne\\n\", \"a\\nb\\nC\\nd\\ne\\n\");\n        roundtrip(\"one\\ntwo\\nthree\\n\", \"one\\ntwo-and-a-half\\ntwo\\nthree\\n\");\n        roundtrip(\"a\\nb\\nc\\nd\\ne\\nf\\ng\\nh\\ni\\n\", \"a\\nB\\nc\\nd\\ne\\nf\\ng\\nH\\ni\\n\");\n        roundtrip(\"x\\ny\\nz\\n\", \"z\\ny\\nx\\n\");\n        roundtrip(\"hello world\\n\", \"goodbye world\\nand more\\n\");\n        roundtrip(\"same\\nlines\\nhere\\n\", \"same\\nlines\\nhere\\n\");\n        roundtrip(\"trailing\", \"trailing\\nextra\");\n    }\n}\n"
+      },
+      {
+        "type": "attribution",
+        "module": "text_diff",
+        "target": "rust",
+        "entries": [
+          {
+            "promptLines": [
+              9,
+              14
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              1,
+              6
+            ],
+            "note": "crate location/header comment marker"
+          },
+          {
+            "promptLines": [
+              18,
+              23
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              38,
+              55
+            ],
+            "note": "to_lines implementation with CRLF handling"
+          },
+          {
+            "promptLines": [
+              27,
+              29
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              125,
+              130
+            ],
+            "note": "unified_diff and unified_diff_with_context entrypoints"
+          },
+          {
+            "promptLines": [
+              31,
+              35
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              64,
+              122
+            ],
+            "note": "LCS alignment producing context/del/ins entries with line numbers"
+          },
+          {
+            "promptLines": [
+              37,
+              39
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              135,
+              161
+            ],
+            "note": "mark entries within context of a change, group into hunks"
+          },
+          {
+            "promptLines": [
+              39,
+              46
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              163,
+              205
+            ],
+            "note": "compute hunk header counts/starts and emit prefixed lines"
+          },
+          {
+            "promptLines": [
+              47,
+              49
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              198,
+              207
+            ],
+            "note": "marker prefixes and newline-joined output, empty diff case"
+          },
+          {
+            "promptLines": [
+              51,
+              53
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              345,
+              358
+            ],
+            "note": "tests preserving empty/full insertion/deletion/identical behavior"
+          },
+          {
+            "promptLines": [
+              57,
+              61
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              227,
+              229
+            ],
+            "note": "empty/whitespace diff yields no hunks"
+          },
+          {
+            "promptLines": [
+              58,
+              60
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              211,
+              223
+            ],
+            "note": "header regex-shape parsing into four numbers"
+          },
+          {
+            "promptLines": [
+              59,
+              61
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              232,
+              242
+            ],
+            "note": "split diff into lines, start new hunk on header match"
+          },
+          {
+            "promptLines": [
+              61,
+              64
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              244,
+              256
+            ],
+            "note": "classify first char as context/del/ins/ignored, push hunk line"
+          },
+          {
+            "promptLines": [
+              66,
+              72
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              8,
+              31
+            ],
+            "note": "Hunk, HunkLine, HunkKind data model"
+          },
+          {
+            "promptLines": [
+              76,
+              83
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              262,
+              306
+            ],
+            "note": "apply_hunks reconstruction walking original lines and hunk lines"
+          },
+          {
+            "promptLines": [
+              85,
+              87
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              443,
+              467
+            ],
+            "note": "roundtrip property tests"
+          },
+          {
+            "promptLines": [
+              11,
+              13
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              1,
+              1
+            ],
+            "note": "generated-from marker referencing separate crate manifest requirement"
+          }
+        ]
+      },
+      {
+        "type": "mapl-entry",
+        "path": "text_diff.mapl",
+        "entry": {
+          "promptLines": [
+            9,
+            14
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "body_lines crate mention looks like leftover boilerplate, unrelated to this pure module",
+          "reasoning": "The prompt tells the agent about a generated `body_lines` crate at the repo root and says to leave it untouched, but text_diff is explicitly specified as pure with no dependencies on other project modules and never references body_lines. This reads like templated instruction text carried over from a different module's prompt rather than something specific to text_diff. The agent correctly ignored it (didn't touch anything outside text_diff/), so no functional issue, but the phrasing is worth flagging as likely misplaced.\n"
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "text_diff.mapl",
+        "entry": {
+          "promptLines": [
+            37,
+            38
+          ],
+          "kind": "assumption",
+          "severity": "warning",
+          "message": "\"within context positions\" interpreted as index distance over the full aligned entry list",
+          "reasoning": "The spec says an entry is included when it lies within `context` positions of some deletion or insertion but doesn't define the unit of \\\"position\\\" precisely — e.g. whether it's measured over all aligned entries (context+del+ins) or only over changed/before-side entries. The agent assumed it's the index distance within the full `entries` vector produced by LCS alignment (`idx.saturating_sub(context)` .. `idx+context`), which matches the given consequences (lines 51-53) and is the natural reading, but the prompt never spells this out explicitly with a worked context-window example.\n",
+          "suggestion": "Clarify: \"an entry is included when its index in the aligned entry list (context, deletions, and insertions all counted) is within `context` of some deletion or insertion's index.\""
+        }
+      },
+      {
+        "type": "lock",
+        "module": "text_diff",
+        "target": "rust",
+        "files": [
+          {
+            "path": "text_diff/Cargo.toml",
+            "hash": "c15fd6accdee0af844f9fcb0155309887f50ec5bc07f2312171a8f689e38554d"
+          },
+          {
+            "path": "text_diff/src/lib.rs",
+            "hash": "707c356b93434f1a3ccfb24c84e736d45f9d62b7e65c6bc89ad361999dbfdee3"
+          }
+        ]
+      }
+    ]
+  }
+}

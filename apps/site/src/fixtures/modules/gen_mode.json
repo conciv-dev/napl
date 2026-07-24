@@ -1,0 +1,550 @@
+{
+  "module": "gen_mode",
+  "collection": "selfhost",
+  "target": "rust",
+  "targets": [
+    "rust"
+  ],
+  "prompt": {
+    "file": "gen_mode.napl",
+    "path": "cli/gen_mode.napl",
+    "content": "---\nmodule: gen_mode\ndeps: []\ntargets: [rust]\ntests:\n  - name: incremental is allowed with a record, a prior hash, not forced, not unattributed\n    given: { full: false, has_target_record: true, unattributed_is_true: false, has_prompt_hash_at_gen: true }\n    expect: { can_incremental: true }\n  - name: forcing full disables incremental\n    given: { full: true, has_target_record: true, unattributed_is_true: false, has_prompt_hash_at_gen: true }\n    expect: { can_incremental: false }\n  - name: no target record disables incremental\n    given: { full: false, has_target_record: false, unattributed_is_true: false, has_prompt_hash_at_gen: true }\n    expect: { can_incremental: false }\n  - name: an unattributed target disables incremental\n    given: { full: false, has_target_record: true, unattributed_is_true: true, has_prompt_hash_at_gen: true }\n    expect: { can_incremental: false }\n  - name: no prior prompt hash disables incremental\n    given: { full: false, has_target_record: true, unattributed_is_true: false, has_prompt_hash_at_gen: false }\n    expect: { can_incremental: false }\n  - name: the incremental mode line names the changed-line and region counts\n    given: { changed_lines: 3, affected_regions: 2 }\n    expect: { message: \"  mode: INCREMENTAL — 3 changed prompt line(s), 2 owned region(s) affected\" }\n  - name: the full-no-prior-on-disk mode line\n    given: { reason: \"no_prior_on_disk\" }\n    expect: { message: \"  mode: full (no prior prompt body or attribution on disk to diff against)\" }\n  - name: the forced-full mode line\n    given: { reason: \"forced_full\" }\n    expect: { message: \"  mode: full (forced --full)\" }\n  - name: the no-prior-gen mode line\n    given: { reason: \"no_prior_gen\" }\n    expect: { message: \"  mode: full (no prior successful gen for this target)\" }\n---\n# Full-vs-incremental mode selection\n\nThis module is the **pure** decision core the code-generation command uses to\nchoose between a from-scratch (full) regeneration and an incremental update, and\nto render the one-line `mode:` status it prints for each module. It is pure — no\nfilesystem access, no process spawning, no dependencies on other project modules.\nThe I/O shell reads the map record off disk, computes the primitive facts below,\nconsults this predicate, and prints the rendered message line verbatim.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `gen_mode/`: `gen_mode/Cargo.toml` (package name\n`gen_mode`) and `gen_mode/src/lib.rs`. Touch nothing outside `gen_mode/`. Ensure\n`cargo test` passes from the workspace root before finishing.\n\n## `can_incremental(full: bool, has_target_record: bool, unattributed_is_true: bool, has_prompt_hash_at_gen: bool) -> bool`\n\nDecide whether an incremental update is possible. It is possible exactly when\n**all** of these hold: the generation is not forced to full (`full` is `false`),\nthere is a prior target record in the map (`has_target_record` is `true`), the\ntarget is not flagged unattributed (`unattributed_is_true` is `false`), and a prior\nprompt hash was recorded at the last gen (`has_prompt_hash_at_gen` is `true`).\nEquivalently: return `!full && has_target_record && !unattributed_is_true &&\nhas_prompt_hash_at_gen`. If any one condition fails, return `false`.\n\n## The full-mode reasons\n\nExpose a public enum with exactly three variants naming why a full (non-incremental)\ngeneration was chosen: one for \"there was no prior prompt body or attribution on\ndisk to diff against\", one for \"the caller forced a full generation with `--full`\",\nand one for \"there was no prior successful gen for this target\". Name the variants\nclearly (for example `NoPriorOnDisk`, `ForcedFull`, `NoPriorGen`).\n\n## `full_mode_message(reason) -> String`\n\nGiven a full-mode reason, return exactly the corresponding status line (each begins\nwith two leading spaces):\n\n- the no-prior-on-disk reason →\n  `  mode: full (no prior prompt body or attribution on disk to diff against)`\n- the forced-full reason → `  mode: full (forced --full)`\n- the no-prior-gen reason → `  mode: full (no prior successful gen for this target)`\n\n## `incremental_mode_message(changed_lines: usize, affected_regions: usize) -> String`\n\nRender the incremental status line with the two counts substituted. It begins with\ntwo leading spaces and uses an em dash (`—`, U+2014):\n\n`  mode: INCREMENTAL — <changed_lines> changed prompt line(s), <affected_regions> owned region(s) affected`\n\nSo `incremental_mode_message(3, 2)` is exactly\n`  mode: INCREMENTAL — 3 changed prompt line(s), 2 owned region(s) affected`.\n"
+  },
+  "promptAtGen": "# Full-vs-incremental mode selection\n\nThis module is the **pure** decision core the code-generation command uses to\nchoose between a from-scratch (full) regeneration and an incremental update, and\nto render the one-line `mode:` status it prints for each module. It is pure — no\nfilesystem access, no process spawning, no dependencies on other project modules.\nThe I/O shell reads the map record off disk, computes the primitive facts below,\nconsults this predicate, and prints the rendered message line verbatim.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `gen_mode/`: `gen_mode/Cargo.toml` (package name\n`gen_mode`) and `gen_mode/src/lib.rs`. Touch nothing outside `gen_mode/`. Ensure\n`cargo test` passes from the workspace root before finishing.\n\n## `can_incremental(full: bool, has_target_record: bool, unattributed_is_true: bool, has_prompt_hash_at_gen: bool) -> bool`\n\nDecide whether an incremental update is possible. It is possible exactly when\n**all** of these hold: the generation is not forced to full (`full` is `false`),\nthere is a prior target record in the map (`has_target_record` is `true`), the\ntarget is not flagged unattributed (`unattributed_is_true` is `false`), and a prior\nprompt hash was recorded at the last gen (`has_prompt_hash_at_gen` is `true`).\nEquivalently: return `!full && has_target_record && !unattributed_is_true &&\nhas_prompt_hash_at_gen`. If any one condition fails, return `false`.\n\n## The full-mode reasons\n\nExpose a public enum with exactly three variants naming why a full (non-incremental)\ngeneration was chosen: one for \"there was no prior prompt body or attribution on\ndisk to diff against\", one for \"the caller forced a full generation with `--full`\",\nand one for \"there was no prior successful gen for this target\". Name the variants\nclearly (for example `NoPriorOnDisk`, `ForcedFull`, `NoPriorGen`).\n\n## `full_mode_message(reason) -> String`\n\nGiven a full-mode reason, return exactly the corresponding status line (each begins\nwith two leading spaces):\n\n- the no-prior-on-disk reason →\n  `  mode: full (no prior prompt body or attribution on disk to diff against)`\n- the forced-full reason → `  mode: full (forced --full)`\n- the no-prior-gen reason → `  mode: full (no prior successful gen for this target)`\n\n## `incremental_mode_message(changed_lines: usize, affected_regions: usize) -> String`\n\nRender the incremental status line with the two counts substituted. It begins with\ntwo leading spaces and uses an em dash (`—`, U+2014):\n\n`  mode: INCREMENTAL — <changed_lines> changed prompt line(s), <affected_regions> owned region(s) affected`\n\nSo `incremental_mode_message(3, 2)` is exactly\n`  mode: INCREMENTAL — 3 changed prompt line(s), 2 owned region(s) affected`.\n",
+  "summary": "Full-vs-incremental mode selection",
+  "files": [
+    {
+      "path": "gen_mode/Cargo.toml",
+      "journalPath": ".napl/src/rust/gen_mode/Cargo.toml",
+      "content": "[package]\nname = \"gen_mode\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n",
+      "language": "toml"
+    },
+    {
+      "path": "gen_mode/src/lib.rs",
+      "journalPath": ".napl/src/rust/gen_mode/src/lib.rs",
+      "content": "//! Full-vs-incremental mode selection: the pure decision core the\n//! code-generation command uses to choose between a from-scratch (full)\n//! regeneration and an incremental update, and to render the one-line\n//! `mode:` status it prints for each module.\n\n/// Reasons a full (non-incremental) generation was chosen.\n#[derive(Debug, Clone, Copy, PartialEq, Eq)]\npub enum FullModeReason {\n    /// There was no prior prompt body or attribution on disk to diff against.\n    NoPriorOnDisk,\n    /// The caller forced a full generation with `--full`.\n    ForcedFull,\n    /// There was no prior successful gen for this target.\n    NoPriorGen,\n}\n\n/// Decide whether an incremental update is possible.\npub fn can_incremental(\n    full: bool,\n    has_target_record: bool,\n    unattributed_is_true: bool,\n    has_prompt_hash_at_gen: bool,\n) -> bool {\n    !full && has_target_record && !unattributed_is_true && has_prompt_hash_at_gen\n}\n\n/// Render the status line for a full-mode generation.\npub fn full_mode_message(reason: FullModeReason) -> String {\n    match reason {\n        FullModeReason::NoPriorOnDisk => {\n            \"  mode: full (no prior prompt body or attribution on disk to diff against)\"\n                .to_string()\n        }\n        FullModeReason::ForcedFull => \"  mode: full (forced --full)\".to_string(),\n        FullModeReason::NoPriorGen => {\n            \"  mode: full (no prior successful gen for this target)\".to_string()\n        }\n    }\n}\n\n/// Render the status line for an incremental generation.\npub fn incremental_mode_message(changed_lines: usize, affected_regions: usize) -> String {\n    format!(\n        \"  mode: INCREMENTAL — {changed_lines} changed prompt line(s), {affected_regions} owned region(s) affected\"\n    )\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn can_incremental_true_when_all_conditions_hold() {\n        assert!(can_incremental(false, true, false, true));\n    }\n\n    #[test]\n    fn can_incremental_false_when_forced_full() {\n        assert!(!can_incremental(true, true, false, true));\n    }\n\n    #[test]\n    fn can_incremental_false_when_no_target_record() {\n        assert!(!can_incremental(false, false, false, true));\n    }\n\n    #[test]\n    fn can_incremental_false_when_unattributed() {\n        assert!(!can_incremental(false, true, true, true));\n    }\n\n    #[test]\n    fn can_incremental_false_when_no_prompt_hash_at_gen() {\n        assert!(!can_incremental(false, true, false, false));\n    }\n\n    #[test]\n    fn can_incremental_false_when_all_conditions_fail() {\n        assert!(!can_incremental(true, false, true, false));\n    }\n\n    #[test]\n    fn full_mode_message_no_prior_on_disk() {\n        assert_eq!(\n            full_mode_message(FullModeReason::NoPriorOnDisk),\n            \"  mode: full (no prior prompt body or attribution on disk to diff against)\"\n        );\n    }\n\n    #[test]\n    fn full_mode_message_forced_full() {\n        assert_eq!(\n            full_mode_message(FullModeReason::ForcedFull),\n            \"  mode: full (forced --full)\"\n        );\n    }\n\n    #[test]\n    fn full_mode_message_no_prior_gen() {\n        assert_eq!(\n            full_mode_message(FullModeReason::NoPriorGen),\n            \"  mode: full (no prior successful gen for this target)\"\n        );\n    }\n\n    #[test]\n    fn incremental_mode_message_renders_counts() {\n        assert_eq!(\n            incremental_mode_message(3, 2),\n            \"  mode: INCREMENTAL — 3 changed prompt line(s), 2 owned region(s) affected\"\n        );\n    }\n\n    #[test]\n    fn incremental_mode_message_zero_counts() {\n        assert_eq!(\n            incremental_mode_message(0, 0),\n            \"  mode: INCREMENTAL — 0 changed prompt line(s), 0 owned region(s) affected\"\n        );\n    }\n}\n",
+      "language": "rust"
+    }
+  ],
+  "attribution": [
+    {
+      "promptLines": [
+        18,
+        26
+      ],
+      "file": "gen_mode/src/lib.rs",
+      "lines": [
+        17,
+        25
+      ],
+      "note": "can_incremental predicate logic"
+    },
+    {
+      "promptLines": [
+        21,
+        21
+      ],
+      "file": "gen_mode/src/lib.rs",
+      "lines": [
+        19,
+        19
+      ],
+      "note": "full param"
+    },
+    {
+      "promptLines": [
+        22,
+        22
+      ],
+      "file": "gen_mode/src/lib.rs",
+      "lines": [
+        20,
+        20
+      ],
+      "note": "has_target_record param"
+    },
+    {
+      "promptLines": [
+        23,
+        23
+      ],
+      "file": "gen_mode/src/lib.rs",
+      "lines": [
+        21,
+        21
+      ],
+      "note": "unattributed_is_true param"
+    },
+    {
+      "promptLines": [
+        24,
+        24
+      ],
+      "file": "gen_mode/src/lib.rs",
+      "lines": [
+        22,
+        22
+      ],
+      "note": "has_prompt_hash_at_gen param"
+    },
+    {
+      "promptLines": [
+        30,
+        34
+      ],
+      "file": "gen_mode/src/lib.rs",
+      "lines": [
+        6,
+        15
+      ],
+      "note": "FullModeReason enum with three variants"
+    },
+    {
+      "promptLines": [
+        36,
+        45
+      ],
+      "file": "gen_mode/src/lib.rs",
+      "lines": [
+        27,
+        39
+      ],
+      "note": "full_mode_message rendering per reason"
+    },
+    {
+      "promptLines": [
+        41,
+        42
+      ],
+      "file": "gen_mode/src/lib.rs",
+      "lines": [
+        30,
+        33
+      ],
+      "note": "no-prior-on-disk message text"
+    },
+    {
+      "promptLines": [
+        43,
+        43
+      ],
+      "file": "gen_mode/src/lib.rs",
+      "lines": [
+        34,
+        34
+      ],
+      "note": "forced-full message text"
+    },
+    {
+      "promptLines": [
+        44,
+        44
+      ],
+      "file": "gen_mode/src/lib.rs",
+      "lines": [
+        35,
+        37
+      ],
+      "note": "no-prior-gen message text"
+    },
+    {
+      "promptLines": [
+        46,
+        54
+      ],
+      "file": "gen_mode/src/lib.rs",
+      "lines": [
+        42,
+        46
+      ],
+      "note": "incremental_mode_message formatting with em dash"
+    },
+    {
+      "promptLines": [
+        1,
+        8
+      ],
+      "file": "gen_mode/src/lib.rs",
+      "lines": [
+        1,
+        4
+      ],
+      "note": "module purpose doc comment"
+    },
+    {
+      "promptLines": [
+        20,
+        26
+      ],
+      "file": "gen_mode/src/lib.rs",
+      "lines": [
+        52,
+        80
+      ],
+      "note": "tests covering can_incremental branches"
+    },
+    {
+      "promptLines": [
+        41,
+        44
+      ],
+      "file": "gen_mode/src/lib.rs",
+      "lines": [
+        82,
+        104
+      ],
+      "note": "tests covering full_mode_message variants"
+    },
+    {
+      "promptLines": [
+        46,
+        54
+      ],
+      "file": "gen_mode/src/lib.rs",
+      "lines": [
+        106,
+        120
+      ],
+      "note": "tests covering incremental_mode_message"
+    }
+  ],
+  "attributionYaml": "module: gen_mode\ntarget: rust\nentries:\n  - promptLines:\n      - 18\n      - 26\n    file: gen_mode/src/lib.rs\n    lines:\n      - 17\n      - 25\n    note: can_incremental predicate logic\n  - promptLines:\n      - 21\n      - 21\n    file: gen_mode/src/lib.rs\n    lines:\n      - 19\n      - 19\n    note: full param\n  - promptLines:\n      - 22\n      - 22\n    file: gen_mode/src/lib.rs\n    lines:\n      - 20\n      - 20\n    note: has_target_record param\n  - promptLines:\n      - 23\n      - 23\n    file: gen_mode/src/lib.rs\n    lines:\n      - 21\n      - 21\n    note: unattributed_is_true param\n  - promptLines:\n      - 24\n      - 24\n    file: gen_mode/src/lib.rs\n    lines:\n      - 22\n      - 22\n    note: has_prompt_hash_at_gen param\n  - promptLines:\n      - 30\n      - 34\n    file: gen_mode/src/lib.rs\n    lines:\n      - 6\n      - 15\n    note: FullModeReason enum with three variants\n  - promptLines:\n      - 36\n      - 45\n    file: gen_mode/src/lib.rs\n    lines:\n      - 27\n      - 39\n    note: full_mode_message rendering per reason\n  - promptLines:\n      - 41\n      - 42\n    file: gen_mode/src/lib.rs\n    lines:\n      - 30\n      - 33\n    note: no-prior-on-disk message text\n  - promptLines:\n      - 43\n      - 43\n    file: gen_mode/src/lib.rs\n    lines:\n      - 34\n      - 34\n    note: forced-full message text\n  - promptLines:\n      - 44\n      - 44\n    file: gen_mode/src/lib.rs\n    lines:\n      - 35\n      - 37\n    note: no-prior-gen message text\n  - promptLines:\n      - 46\n      - 54\n    file: gen_mode/src/lib.rs\n    lines:\n      - 42\n      - 46\n    note: incremental_mode_message formatting with em dash\n  - promptLines:\n      - 1\n      - 8\n    file: gen_mode/src/lib.rs\n    lines:\n      - 1\n      - 4\n    note: module purpose doc comment\n  - promptLines:\n      - 20\n      - 26\n    file: gen_mode/src/lib.rs\n    lines:\n      - 52\n      - 80\n    note: tests covering can_incremental branches\n  - promptLines:\n      - 41\n      - 44\n    file: gen_mode/src/lib.rs\n    lines:\n      - 82\n      - 104\n    note: tests covering full_mode_message variants\n  - promptLines:\n      - 46\n      - 54\n    file: gen_mode/src/lib.rs\n    lines:\n      - 106\n      - 120\n    note: tests covering incremental_mode_message\n",
+  "mapl": [
+    {
+      "promptLines": [
+        12,
+        16
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "Crate created at gen_mode/ per spec, cargo test passes, no files outside touched.",
+      "reasoning": "Prompt clearly scopes work to gen_mode/ subdirectory with own Cargo.toml and lib.rs, leaving workspace root manifest alone. Agent followed this exactly, only creating gen_mode/Cargo.toml and gen_mode/src/lib.rs. Verified via final message claiming 11 tests pass."
+    },
+    {
+      "promptLines": [
+        30,
+        34
+      ],
+      "kind": "assumption",
+      "severity": "warning",
+      "message": "Enum doc comments phrase reasons verbatim from prompt wording.",
+      "reasoning": "Prompt gives suggested variant names (\"for example\") but not exact doc text. Agent wrote doc comments mirroring the prompt's own phrasing for each variant (\"There was no prior prompt body...\", etc.) — reasonable choice given no exact wording was mandated, but a different phrasing would've been equally valid."
+    },
+    {
+      "promptLines": [
+        18,
+        26
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "can_incremental implemented as exact boolean expression given in prompt.",
+      "reasoning": "Prompt gave the literal boolean formula to return; agent copied it verbatim (line 24), so no ambiguity here."
+    }
+  ],
+  "journal": [
+    {
+      "gen": 38,
+      "timestamp": "2026-07-24T10:07:42.783Z",
+      "mode": "full",
+      "promptHash": "fde5685a475e2a0776d6a95b88eaaa5a07ccc6dd78a0670ae39c2ee2f90adced",
+      "files": [
+        {
+          "path": "gen_mode/Cargo.toml",
+          "journalPath": ".napl/src/rust/gen_mode/Cargo.toml",
+          "patch": "@@ -0,0 +1,6 @@\n+[package]\n+name = \"gen_mode\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]"
+        },
+        {
+          "path": "gen_mode/src/lib.rs",
+          "journalPath": ".napl/src/rust/gen_mode/src/lib.rs",
+          "patch": "@@ -0,0 +1,121 @@\n+//! Full-vs-incremental mode selection: the pure decision core the\n+//! code-generation command uses to choose between a from-scratch (full)\n+//! regeneration and an incremental update, and to render the one-line\n+//! `mode:` status it prints for each module.\n+\n+/// Reasons a full (non-incremental) generation was chosen.\n+#[derive(Debug, Clone, Copy, PartialEq, Eq)]\n+pub enum FullModeReason {\n+    /// There was no prior prompt body or attribution on disk to diff against.\n+    NoPriorOnDisk,\n+    /// The caller forced a full generation with `--full`.\n+    ForcedFull,\n+    /// There was no prior successful gen for this target.\n+    NoPriorGen,\n+}\n+\n+/// Decide whether an incremental update is possible.\n+pub fn can_incremental(\n+    full: bool,\n+    has_target_record: bool,\n+    unattributed_is_true: bool,\n+    has_prompt_hash_at_gen: bool,\n+) -> bool {\n+    !full && has_target_record && !unattributed_is_true && has_prompt_hash_at_gen\n+}\n+\n+/// Render the status line for a full-mode generation.\n+pub fn full_mode_message(reason: FullModeReason) -> String {\n+    match reason {\n+        FullModeReason::NoPriorOnDisk => {\n+            \"  mode: full (no prior prompt body or attribution on disk to diff against)\"\n+                .to_string()\n+        }\n+        FullModeReason::ForcedFull => \"  mode: full (forced --full)\".to_string(),\n+        FullModeReason::NoPriorGen => {\n+            \"  mode: full (no prior successful gen for this target)\".to_string()\n+        }\n+    }\n+}\n+\n+/// Render the status line for an incremental generation.\n+pub fn incremental_mode_message(changed_lines: usize, affected_regions: usize) -> String {\n+    format!(\n+        \"  mode: INCREMENTAL — {changed_lines} changed prompt line(s), {affected_regions} owned region(s) affected\"\n+    )\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn can_incremental_true_when_all_conditions_hold() {\n+        assert!(can_incremental(false, true, false, true));\n+    }\n+\n+    #[test]\n+    fn can_incremental_false_when_forced_full() {\n+        assert!(!can_incremental(true, true, false, true));\n+    }\n+\n+    #[test]\n+    fn can_incremental_false_when_no_target_record() {\n+        assert!(!can_incremental(false, false, false, true));\n+    }\n+\n+    #[test]\n+    fn can_incremental_false_when_unattributed() {\n+        assert!(!can_incremental(false, true, true, true));\n+    }\n+\n+    #[test]\n+    fn can_incremental_false_when_no_prompt_hash_at_gen() {\n+        assert!(!can_incremental(false, true, false, false));\n+    }\n+\n+    #[test]\n+    fn can_incremental_false_when_all_conditions_fail() {\n+        assert!(!can_incremental(true, false, true, false));\n+    }\n+\n+    #[test]\n+    fn full_mode_message_no_prior_on_disk() {\n+        assert_eq!(\n+            full_mode_message(FullModeReason::NoPriorOnDisk),\n+            \"  mode: full (no prior prompt body or attribution on disk to diff against)\"\n+        );\n+    }\n+\n+    #[test]\n+    fn full_mode_message_forced_full() {\n+        assert_eq!(\n+            full_mode_message(FullModeReason::ForcedFull),\n+            \"  mode: full (forced --full)\"\n+        );\n+    }\n+\n+    #[test]\n+    fn full_mode_message_no_prior_gen() {\n+        assert_eq!(\n+            full_mode_message(FullModeReason::NoPriorGen),\n+            \"  mode: full (no prior successful gen for this target)\"\n+        );\n+    }\n+\n+    #[test]\n+    fn incremental_mode_message_renders_counts() {\n+        assert_eq!(\n+            incremental_mode_message(3, 2),\n+            \"  mode: INCREMENTAL — 3 changed prompt line(s), 2 owned region(s) affected\"\n+        );\n+    }\n+\n+    #[test]\n+    fn incremental_mode_message_zero_counts() {\n+        assert_eq!(\n+            incremental_mode_message(0, 0),\n+            \"  mode: INCREMENTAL — 0 changed prompt line(s), 0 owned region(s) affected\"\n+        );\n+    }\n+}"
+        }
+      ]
+    }
+  ],
+  "lock": [
+    {
+      "path": "gen_mode/Cargo.toml",
+      "hash": "8cb9695efb6b25a4c6310798d4deb624fdc53c825c24297ae69fa8282120410a"
+    },
+    {
+      "path": "gen_mode/src/lib.rs",
+      "hash": "68b79fe4c18777e42a9b37c524d27640b97c9ff546ee01d6f4108a967dd731d5"
+    }
+  ],
+  "session": {
+    "task": "napl gen rust → gen_mode",
+    "files": {
+      "gen_mode.napl": "---\nmodule: gen_mode\ndeps: []\ntargets: [rust]\ntests:\n  - name: incremental is allowed with a record, a prior hash, not forced, not unattributed\n    given: { full: false, has_target_record: true, unattributed_is_true: false, has_prompt_hash_at_gen: true }\n    expect: { can_incremental: true }\n  - name: forcing full disables incremental\n    given: { full: true, has_target_record: true, unattributed_is_true: false, has_prompt_hash_at_gen: true }\n    expect: { can_incremental: false }\n  - name: no target record disables incremental\n    given: { full: false, has_target_record: false, unattributed_is_true: false, has_prompt_hash_at_gen: true }\n    expect: { can_incremental: false }\n  - name: an unattributed target disables incremental\n    given: { full: false, has_target_record: true, unattributed_is_true: true, has_prompt_hash_at_gen: true }\n    expect: { can_incremental: false }\n  - name: no prior prompt hash disables incremental\n    given: { full: false, has_target_record: true, unattributed_is_true: false, has_prompt_hash_at_gen: false }\n    expect: { can_incremental: false }\n  - name: the incremental mode line names the changed-line and region counts\n    given: { changed_lines: 3, affected_regions: 2 }\n    expect: { message: \"  mode: INCREMENTAL — 3 changed prompt line(s), 2 owned region(s) affected\" }\n  - name: the full-no-prior-on-disk mode line\n    given: { reason: \"no_prior_on_disk\" }\n    expect: { message: \"  mode: full (no prior prompt body or attribution on disk to diff against)\" }\n  - name: the forced-full mode line\n    given: { reason: \"forced_full\" }\n    expect: { message: \"  mode: full (forced --full)\" }\n  - name: the no-prior-gen mode line\n    given: { reason: \"no_prior_gen\" }\n    expect: { message: \"  mode: full (no prior successful gen for this target)\" }\n---\n# Full-vs-incremental mode selection\n\nThis module is the **pure** decision core the code-generation command uses to\nchoose between a from-scratch (full) regeneration and an incremental update, and\nto render the one-line `mode:` status it prints for each module. It is pure — no\nfilesystem access, no process spawning, no dependencies on other project modules.\nThe I/O shell reads the map record off disk, computes the primitive facts below,\nconsults this predicate, and prints the rendered message line verbatim.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `gen_mode/`: `gen_mode/Cargo.toml` (package name\n`gen_mode`) and `gen_mode/src/lib.rs`. Touch nothing outside `gen_mode/`. Ensure\n`cargo test` passes from the workspace root before finishing.\n\n## `can_incremental(full: bool, has_target_record: bool, unattributed_is_true: bool, has_prompt_hash_at_gen: bool) -> bool`\n\nDecide whether an incremental update is possible. It is possible exactly when\n**all** of these hold: the generation is not forced to full (`full` is `false`),\nthere is a prior target record in the map (`has_target_record` is `true`), the\ntarget is not flagged unattributed (`unattributed_is_true` is `false`), and a prior\nprompt hash was recorded at the last gen (`has_prompt_hash_at_gen` is `true`).\nEquivalently: return `!full && has_target_record && !unattributed_is_true &&\nhas_prompt_hash_at_gen`. If any one condition fails, return `false`.\n\n## The full-mode reasons\n\nExpose a public enum with exactly three variants naming why a full (non-incremental)\ngeneration was chosen: one for \"there was no prior prompt body or attribution on\ndisk to diff against\", one for \"the caller forced a full generation with `--full`\",\nand one for \"there was no prior successful gen for this target\". Name the variants\nclearly (for example `NoPriorOnDisk`, `ForcedFull`, `NoPriorGen`).\n\n## `full_mode_message(reason) -> String`\n\nGiven a full-mode reason, return exactly the corresponding status line (each begins\nwith two leading spaces):\n\n- the no-prior-on-disk reason →\n  `  mode: full (no prior prompt body or attribution on disk to diff against)`\n- the forced-full reason → `  mode: full (forced --full)`\n- the no-prior-gen reason → `  mode: full (no prior successful gen for this target)`\n\n## `incremental_mode_message(changed_lines: usize, affected_regions: usize) -> String`\n\nRender the incremental status line with the two counts substituted. It begins with\ntwo leading spaces and uses an em dash (`—`, U+2014):\n\n`  mode: INCREMENTAL — <changed_lines> changed prompt line(s), <affected_regions> owned region(s) affected`\n\nSo `incremental_mode_message(3, 2)` is exactly\n`  mode: INCREMENTAL — 3 changed prompt line(s), 2 owned region(s) affected`.\n"
+    },
+    "events": [
+      {
+        "type": "task",
+        "task": "napl gen rust → gen_mode"
+      },
+      {
+        "type": "diff",
+        "path": "gen_mode/Cargo.toml",
+        "patch": "@@ -0,0 +1,6 @@\n+[package]\n+name = \"gen_mode\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]"
+      },
+      {
+        "type": "file-edit",
+        "path": "gen_mode/Cargo.toml",
+        "content": "[package]\nname = \"gen_mode\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n"
+      },
+      {
+        "type": "diff",
+        "path": "gen_mode/src/lib.rs",
+        "patch": "@@ -0,0 +1,121 @@\n+//! Full-vs-incremental mode selection: the pure decision core the\n+//! code-generation command uses to choose between a from-scratch (full)\n+//! regeneration and an incremental update, and to render the one-line\n+//! `mode:` status it prints for each module.\n+\n+/// Reasons a full (non-incremental) generation was chosen.\n+#[derive(Debug, Clone, Copy, PartialEq, Eq)]\n+pub enum FullModeReason {\n+    /// There was no prior prompt body or attribution on disk to diff against.\n+    NoPriorOnDisk,\n+    /// The caller forced a full generation with `--full`.\n+    ForcedFull,\n+    /// There was no prior successful gen for this target.\n+    NoPriorGen,\n+}\n+\n+/// Decide whether an incremental update is possible.\n+pub fn can_incremental(\n+    full: bool,\n+    has_target_record: bool,\n+    unattributed_is_true: bool,\n+    has_prompt_hash_at_gen: bool,\n+) -> bool {\n+    !full && has_target_record && !unattributed_is_true && has_prompt_hash_at_gen\n+}\n+\n+/// Render the status line for a full-mode generation.\n+pub fn full_mode_message(reason: FullModeReason) -> String {\n+    match reason {\n+        FullModeReason::NoPriorOnDisk => {\n+            \"  mode: full (no prior prompt body or attribution on disk to diff against)\"\n+                .to_string()\n+        }\n+        FullModeReason::ForcedFull => \"  mode: full (forced --full)\".to_string(),\n+        FullModeReason::NoPriorGen => {\n+            \"  mode: full (no prior successful gen for this target)\".to_string()\n+        }\n+    }\n+}\n+\n+/// Render the status line for an incremental generation.\n+pub fn incremental_mode_message(changed_lines: usize, affected_regions: usize) -> String {\n+    format!(\n+        \"  mode: INCREMENTAL — {changed_lines} changed prompt line(s), {affected_regions} owned region(s) affected\"\n+    )\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn can_incremental_true_when_all_conditions_hold() {\n+        assert!(can_incremental(false, true, false, true));\n+    }\n+\n+    #[test]\n+    fn can_incremental_false_when_forced_full() {\n+        assert!(!can_incremental(true, true, false, true));\n+    }\n+\n+    #[test]\n+    fn can_incremental_false_when_no_target_record() {\n+        assert!(!can_incremental(false, false, false, true));\n+    }\n+\n+    #[test]\n+    fn can_incremental_false_when_unattributed() {\n+        assert!(!can_incremental(false, true, true, true));\n+    }\n+\n+    #[test]\n+    fn can_incremental_false_when_no_prompt_hash_at_gen() {\n+        assert!(!can_incremental(false, true, false, false));\n+    }\n+\n+    #[test]\n+    fn can_incremental_false_when_all_conditions_fail() {\n+        assert!(!can_incremental(true, false, true, false));\n+    }\n+\n+    #[test]\n+    fn full_mode_message_no_prior_on_disk() {\n+        assert_eq!(\n+            full_mode_message(FullModeReason::NoPriorOnDisk),\n+            \"  mode: full (no prior prompt body or attribution on disk to diff against)\"\n+        );\n+    }\n+\n+    #[test]\n+    fn full_mode_message_forced_full() {\n+        assert_eq!(\n+            full_mode_message(FullModeReason::ForcedFull),\n+            \"  mode: full (forced --full)\"\n+        );\n+    }\n+\n+    #[test]\n+    fn full_mode_message_no_prior_gen() {\n+        assert_eq!(\n+            full_mode_message(FullModeReason::NoPriorGen),\n+            \"  mode: full (no prior successful gen for this target)\"\n+        );\n+    }\n+\n+    #[test]\n+    fn incremental_mode_message_renders_counts() {\n+        assert_eq!(\n+            incremental_mode_message(3, 2),\n+            \"  mode: INCREMENTAL — 3 changed prompt line(s), 2 owned region(s) affected\"\n+        );\n+    }\n+\n+    #[test]\n+    fn incremental_mode_message_zero_counts() {\n+        assert_eq!(\n+            incremental_mode_message(0, 0),\n+            \"  mode: INCREMENTAL — 0 changed prompt line(s), 0 owned region(s) affected\"\n+        );\n+    }\n+}"
+      },
+      {
+        "type": "file-edit",
+        "path": "gen_mode/src/lib.rs",
+        "content": "//! Full-vs-incremental mode selection: the pure decision core the\n//! code-generation command uses to choose between a from-scratch (full)\n//! regeneration and an incremental update, and to render the one-line\n//! `mode:` status it prints for each module.\n\n/// Reasons a full (non-incremental) generation was chosen.\n#[derive(Debug, Clone, Copy, PartialEq, Eq)]\npub enum FullModeReason {\n    /// There was no prior prompt body or attribution on disk to diff against.\n    NoPriorOnDisk,\n    /// The caller forced a full generation with `--full`.\n    ForcedFull,\n    /// There was no prior successful gen for this target.\n    NoPriorGen,\n}\n\n/// Decide whether an incremental update is possible.\npub fn can_incremental(\n    full: bool,\n    has_target_record: bool,\n    unattributed_is_true: bool,\n    has_prompt_hash_at_gen: bool,\n) -> bool {\n    !full && has_target_record && !unattributed_is_true && has_prompt_hash_at_gen\n}\n\n/// Render the status line for a full-mode generation.\npub fn full_mode_message(reason: FullModeReason) -> String {\n    match reason {\n        FullModeReason::NoPriorOnDisk => {\n            \"  mode: full (no prior prompt body or attribution on disk to diff against)\"\n                .to_string()\n        }\n        FullModeReason::ForcedFull => \"  mode: full (forced --full)\".to_string(),\n        FullModeReason::NoPriorGen => {\n            \"  mode: full (no prior successful gen for this target)\".to_string()\n        }\n    }\n}\n\n/// Render the status line for an incremental generation.\npub fn incremental_mode_message(changed_lines: usize, affected_regions: usize) -> String {\n    format!(\n        \"  mode: INCREMENTAL — {changed_lines} changed prompt line(s), {affected_regions} owned region(s) affected\"\n    )\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn can_incremental_true_when_all_conditions_hold() {\n        assert!(can_incremental(false, true, false, true));\n    }\n\n    #[test]\n    fn can_incremental_false_when_forced_full() {\n        assert!(!can_incremental(true, true, false, true));\n    }\n\n    #[test]\n    fn can_incremental_false_when_no_target_record() {\n        assert!(!can_incremental(false, false, false, true));\n    }\n\n    #[test]\n    fn can_incremental_false_when_unattributed() {\n        assert!(!can_incremental(false, true, true, true));\n    }\n\n    #[test]\n    fn can_incremental_false_when_no_prompt_hash_at_gen() {\n        assert!(!can_incremental(false, true, false, false));\n    }\n\n    #[test]\n    fn can_incremental_false_when_all_conditions_fail() {\n        assert!(!can_incremental(true, false, true, false));\n    }\n\n    #[test]\n    fn full_mode_message_no_prior_on_disk() {\n        assert_eq!(\n            full_mode_message(FullModeReason::NoPriorOnDisk),\n            \"  mode: full (no prior prompt body or attribution on disk to diff against)\"\n        );\n    }\n\n    #[test]\n    fn full_mode_message_forced_full() {\n        assert_eq!(\n            full_mode_message(FullModeReason::ForcedFull),\n            \"  mode: full (forced --full)\"\n        );\n    }\n\n    #[test]\n    fn full_mode_message_no_prior_gen() {\n        assert_eq!(\n            full_mode_message(FullModeReason::NoPriorGen),\n            \"  mode: full (no prior successful gen for this target)\"\n        );\n    }\n\n    #[test]\n    fn incremental_mode_message_renders_counts() {\n        assert_eq!(\n            incremental_mode_message(3, 2),\n            \"  mode: INCREMENTAL — 3 changed prompt line(s), 2 owned region(s) affected\"\n        );\n    }\n\n    #[test]\n    fn incremental_mode_message_zero_counts() {\n        assert_eq!(\n            incremental_mode_message(0, 0),\n            \"  mode: INCREMENTAL — 0 changed prompt line(s), 0 owned region(s) affected\"\n        );\n    }\n}\n"
+      },
+      {
+        "type": "attribution",
+        "module": "gen_mode",
+        "target": "rust",
+        "entries": [
+          {
+            "promptLines": [
+              18,
+              26
+            ],
+            "file": "gen_mode/src/lib.rs",
+            "lines": [
+              17,
+              25
+            ],
+            "note": "can_incremental predicate logic"
+          },
+          {
+            "promptLines": [
+              21,
+              21
+            ],
+            "file": "gen_mode/src/lib.rs",
+            "lines": [
+              19,
+              19
+            ],
+            "note": "full param"
+          },
+          {
+            "promptLines": [
+              22,
+              22
+            ],
+            "file": "gen_mode/src/lib.rs",
+            "lines": [
+              20,
+              20
+            ],
+            "note": "has_target_record param"
+          },
+          {
+            "promptLines": [
+              23,
+              23
+            ],
+            "file": "gen_mode/src/lib.rs",
+            "lines": [
+              21,
+              21
+            ],
+            "note": "unattributed_is_true param"
+          },
+          {
+            "promptLines": [
+              24,
+              24
+            ],
+            "file": "gen_mode/src/lib.rs",
+            "lines": [
+              22,
+              22
+            ],
+            "note": "has_prompt_hash_at_gen param"
+          },
+          {
+            "promptLines": [
+              30,
+              34
+            ],
+            "file": "gen_mode/src/lib.rs",
+            "lines": [
+              6,
+              15
+            ],
+            "note": "FullModeReason enum with three variants"
+          },
+          {
+            "promptLines": [
+              36,
+              45
+            ],
+            "file": "gen_mode/src/lib.rs",
+            "lines": [
+              27,
+              39
+            ],
+            "note": "full_mode_message rendering per reason"
+          },
+          {
+            "promptLines": [
+              41,
+              42
+            ],
+            "file": "gen_mode/src/lib.rs",
+            "lines": [
+              30,
+              33
+            ],
+            "note": "no-prior-on-disk message text"
+          },
+          {
+            "promptLines": [
+              43,
+              43
+            ],
+            "file": "gen_mode/src/lib.rs",
+            "lines": [
+              34,
+              34
+            ],
+            "note": "forced-full message text"
+          },
+          {
+            "promptLines": [
+              44,
+              44
+            ],
+            "file": "gen_mode/src/lib.rs",
+            "lines": [
+              35,
+              37
+            ],
+            "note": "no-prior-gen message text"
+          },
+          {
+            "promptLines": [
+              46,
+              54
+            ],
+            "file": "gen_mode/src/lib.rs",
+            "lines": [
+              42,
+              46
+            ],
+            "note": "incremental_mode_message formatting with em dash"
+          },
+          {
+            "promptLines": [
+              1,
+              8
+            ],
+            "file": "gen_mode/src/lib.rs",
+            "lines": [
+              1,
+              4
+            ],
+            "note": "module purpose doc comment"
+          },
+          {
+            "promptLines": [
+              20,
+              26
+            ],
+            "file": "gen_mode/src/lib.rs",
+            "lines": [
+              52,
+              80
+            ],
+            "note": "tests covering can_incremental branches"
+          },
+          {
+            "promptLines": [
+              41,
+              44
+            ],
+            "file": "gen_mode/src/lib.rs",
+            "lines": [
+              82,
+              104
+            ],
+            "note": "tests covering full_mode_message variants"
+          },
+          {
+            "promptLines": [
+              46,
+              54
+            ],
+            "file": "gen_mode/src/lib.rs",
+            "lines": [
+              106,
+              120
+            ],
+            "note": "tests covering incremental_mode_message"
+          }
+        ]
+      },
+      {
+        "type": "mapl-entry",
+        "path": "gen_mode.mapl",
+        "entry": {
+          "promptLines": [
+            12,
+            16
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "Crate created at gen_mode/ per spec, cargo test passes, no files outside touched.",
+          "reasoning": "Prompt clearly scopes work to gen_mode/ subdirectory with own Cargo.toml and lib.rs, leaving workspace root manifest alone. Agent followed this exactly, only creating gen_mode/Cargo.toml and gen_mode/src/lib.rs. Verified via final message claiming 11 tests pass."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "gen_mode.mapl",
+        "entry": {
+          "promptLines": [
+            30,
+            34
+          ],
+          "kind": "assumption",
+          "severity": "warning",
+          "message": "Enum doc comments phrase reasons verbatim from prompt wording.",
+          "reasoning": "Prompt gives suggested variant names (\"for example\") but not exact doc text. Agent wrote doc comments mirroring the prompt's own phrasing for each variant (\"There was no prior prompt body...\", etc.) — reasonable choice given no exact wording was mandated, but a different phrasing would've been equally valid."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "gen_mode.mapl",
+        "entry": {
+          "promptLines": [
+            18,
+            26
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "can_incremental implemented as exact boolean expression given in prompt.",
+          "reasoning": "Prompt gave the literal boolean formula to return; agent copied it verbatim (line 24), so no ambiguity here."
+        }
+      },
+      {
+        "type": "lock",
+        "module": "gen_mode",
+        "target": "rust",
+        "files": [
+          {
+            "path": "gen_mode/Cargo.toml",
+            "hash": "8cb9695efb6b25a4c6310798d4deb624fdc53c825c24297ae69fa8282120410a"
+          },
+          {
+            "path": "gen_mode/src/lib.rs",
+            "hash": "68b79fe4c18777e42a9b37c524d27640b97c9ff546ee01d6f4108a967dd731d5"
+          }
+        ]
+      }
+    ]
+  }
+}

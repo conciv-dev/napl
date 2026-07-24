@@ -1,0 +1,840 @@
+{
+  "module": "schemas_lock",
+  "collection": "selfhost",
+  "target": "rust",
+  "targets": [
+    "rust"
+  ],
+  "prompt": {
+    "file": "schemas_lock.napl",
+    "path": "schemas/schemas_lock.napl",
+    "content": "---\nmodule: schemas_lock\ndeps: [extensions]\ntargets: [rust]\ntests:\n  - name: backend defaults to claude-cli when absent\n    given: { json: \"{\\\"model\\\":\\\"claude-sonnet-5\\\"}\" }\n    expect: { backend: claude-cli }\n  - name: an explicit anthropic-api backend is kept\n    given: { json: \"{\\\"model\\\":\\\"claude-sonnet-5\\\",\\\"backend\\\":\\\"anthropic-api\\\"}\" }\n    expect: { backend: anthropic-api }\n  - name: an explicit claude-cli backend is kept\n    given: { json: \"{\\\"model\\\":\\\"claude-opus-5\\\",\\\"backend\\\":\\\"claude-cli\\\"}\" }\n    expect: { backend: claude-cli, model: claude-opus-5 }\n  - name: an unknown backend is rejected\n    given: { json: \"{\\\"model\\\":\\\"x\\\",\\\"backend\\\":\\\"openai\\\"}\" }\n    expect: { accepts: false }\n  - name: corrupt json is rejected\n    given: { json: \"{not json\" }\n    expect: { accepts: false }\n  - name: an empty model is rejected\n    given: { json: \"{\\\"model\\\":\\\"\\\"}\" }\n    expect: { accepts: false }\n  - name: prompt aliases default to the curated list when absent\n    given: { json: \"{\\\"model\\\":\\\"m\\\"}\" }\n    expect: { promptAliases: curated-default }\n  - name: a valid prompt-alias override is kept verbatim\n    given: { json: \"{\\\"model\\\":\\\"m\\\",\\\"promptAliases\\\":[\\\".🧑\\\",\\\".🤠\\\"]}\" }\n    expect: { promptAliases: [\".🧑\", \".🤠\"] }\n  - name: an alias without a leading dot is rejected\n    given: { json: \"{\\\"model\\\":\\\"m\\\",\\\"promptAliases\\\":[\\\"🧑\\\"]}\" }\n    expect: { accepts: false }\n  - name: an alias with more than two code points after the dot is rejected\n    given: { json: \"{\\\"model\\\":\\\"m\\\",\\\"promptAliases\\\":[\\\".abc\\\"]}\" }\n    expect: { accepts: false }\n  - name: an alias containing a ZWJ sequence is rejected\n    given: { json: \"{\\\"model\\\":\\\"m\\\",\\\"promptAliases\\\":[\\\".👨‍💻\\\"]}\" }\n    expect: { accepts: false }\n  - name: the agent config defaults to the claude preset when absent\n    given: { json: \"{\\\"model\\\":\\\"m\\\"}\" }\n    expect: { agentPreset: claude }\n  - name: the codex preset is accepted\n    given: { json: \"{\\\"model\\\":\\\"m\\\",\\\"agent\\\":{\\\"preset\\\":\\\"codex\\\"}}\" }\n    expect: { agentPreset: codex }\n  - name: the custom preset with a command is accepted\n    given: { json: \"{\\\"model\\\":\\\"m\\\",\\\"agent\\\":{\\\"preset\\\":\\\"custom\\\",\\\"command\\\":[\\\"mycli\\\",\\\"--task-file\\\",\\\"{task}\\\"]}}\" }\n    expect: { agentPreset: custom, command: [\"mycli\", \"--task-file\", \"{task}\"] }\n  - name: an unknown preset is rejected\n    given: { json: \"{\\\"model\\\":\\\"m\\\",\\\"agent\\\":{\\\"preset\\\":\\\"gpt\\\"}}\" }\n    expect: { accepts: false }\n  - name: the custom preset without a command is rejected\n    given: { json: \"{\\\"model\\\":\\\"m\\\",\\\"agent\\\":{\\\"preset\\\":\\\"custom\\\"}}\" }\n    expect: { accepts: false }\n  - name: the custom preset with an empty command is rejected\n    given: { json: \"{\\\"model\\\":\\\"m\\\",\\\"agent\\\":{\\\"preset\\\":\\\"custom\\\",\\\"command\\\":[]}}\" }\n    expect: { accepts: false }\n  - name: the claude preset with a command is rejected\n    given: { json: \"{\\\"model\\\":\\\"m\\\",\\\"agent\\\":{\\\"preset\\\":\\\"claude\\\",\\\"command\\\":[\\\"x\\\"]}}\" }\n    expect: { accepts: false }\n  - name: an unknown field inside the agent config is rejected\n    given: { json: \"{\\\"model\\\":\\\"m\\\",\\\"agent\\\":{\\\"preset\\\":\\\"claude\\\",\\\"extra\\\":1}}\" }\n    expect: { accepts: false }\n---\n# The lock document: model / backend / agent / prompt-alias configuration\n\nThis module defines the serde types and validators for the NAPL lock document —\nthe small JSON configuration that pins which model, code-generation backend,\ncoding-agent engine, and prompt aliases the toolchain compiles through. It is\npure: no I/O. Bring in `serde` and `serde_json`.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `schemas_lock/`: `schemas_lock/Cargo.toml`\n(package name `schemas_lock`) and `schemas_lock/src/lib.rs`. Touch nothing\noutside `schemas_lock/`. Ensure `cargo test` passes from the workspace root\nbefore finishing.\n\n## Builds on the `extensions` module of this workspace\n\nThis module builds on the **`extensions`** module of this same workspace. The\n`extensions` module is generated as a sibling member crate in the `extensions/`\ndirectory (so `../extensions` relative to this crate). It exposes a public\nfunction `default_prompt_aliases() -> Vec<String>` returning the curated default\nlist of prompt-alias strings.\n\nAdd a path dependency on that sibling member crate in your `Cargo.toml`\n(depend on the `extensions` crate by path — it lives one directory up and over,\nat `../extensions`) and call its `default_prompt_aliases()` for the curated\ndefault below. Do **not** reimplement the curated alias list here, and do not\ndepend on any hand-written crate — depend only on the generated sibling\n`extensions` member crate. This sibling path dependency is part of the same\nworkspace, not an external crates.io dependency, so add it even though the\ngeneral guidance is to avoid outside dependencies.\n\n## The value types\n\nExpose these public types, deriving the serde traits noted:\n\n- `Backend`: an enum with two variants, `ClaudeCli` and `AnthropicApi`,\n  serialized/deserialized in **kebab-case** (so the JSON spellings are\n  `\"claude-cli\"` and `\"anthropic-api\"`). It derives serialize and deserialize,\n  and is comparable and copyable.\n- `AgentPreset`: an enum with three variants, `Claude`, `Codex`, and `Custom`,\n  serialized/deserialized in **lowercase** (`\"claude\"`, `\"codex\"`, `\"custom\"`).\n- `AgentConfig`: a struct with a public `preset: AgentPreset` and an optional\n  public `command: Option<Vec<String>>` (a command template; omitted from\n  serialized output and defaulting to `None` when absent). It **denies unknown\n  fields** — any JSON key other than `preset` and `command` is a deserialization\n  error.\n- `HlLock`: the lock document itself, with a public `model: String`; a\n  `backend: Backend` that defaults to claude-cli when the key is absent; an\n  optional `prompt_aliases: Option<Vec<String>>` whose JSON key is\n  **`promptAliases`** (camelCase), omitted when absent; and an optional\n  `agent: Option<AgentConfig>` omitted when absent.\n\nExpose these public constants and defaults:\n\n- `DEFAULT_MODEL: &str` equal to `\"claude-sonnet-5\"`.\n- `DEFAULT_BACKEND: Backend` equal to the claude-cli variant.\n- `DEFAULT_AGENT_PRESET: AgentPreset` equal to the claude variant.\n- `default_agent_config() -> AgentConfig`: the claude preset with no command.\n\n## Parsing and validating a lock\n\nExpose `parse_lock(raw: &str) -> Result<HlLock, _>` that deserializes a JSON\nstring into an `HlLock` and then validates it. Deserialization failures (corrupt\nJSON, unknown backend spelling, unknown preset, unknown agent field, wrong\ntypes) are errors, not panics. After a structural parse, enforce:\n\n- `model` must not be empty — an empty model string is a validation error.\n- If `promptAliases` is present, every alias must be valid (see below).\n- If `agent` is present, it must be valid (see below).\n\n### Prompt-alias validation\n\nA prompt alias is a short string. Validate each one:\n\n- It must start with a `.` (dot). An alias not beginning with `.` is rejected.\n- After the leading dot it must have **1 or 2 Unicode code points** — no more,\n  no fewer. So `\".abc\"` (three code points after the dot) is rejected.\n- It must not contain a ZWJ (zero-width joiner, U+200D) anywhere. A ZWJ-joined\n  emoji sequence such as `\".👨‍💻\"` (man + ZWJ + laptop) is rejected even though it\n  is visually one glyph.\n\nThe exact error wording does not matter — only which aliases are accepted versus\nrejected. A valid override list is kept verbatim.\n\n### Agent-config validation\n\nValidate the agent configuration by preset:\n\n- The `custom` preset **requires** a non-empty `command` array. A custom preset\n  with no `command`, or with an empty `command`, is a validation error.\n- The `claude` and `codex` presets **must not** carry a `command`. Either of\n  those presets with a `command` present is a validation error.\n\n## Resolving effective configuration\n\nExpose two resolvers:\n\n- `resolve_prompt_aliases(lock: &HlLock) -> Vec<String>`: the lock's\n  `promptAliases` override if present, otherwise the curated default obtained by\n  calling the `extensions` module's `default_prompt_aliases()`.\n- `resolve_agent_config(lock: &HlLock) -> AgentConfig`: the lock's `agent`\n  override if present, otherwise `default_agent_config()` (the claude preset).\n"
+  },
+  "promptAtGen": "# The lock document: model / backend / agent / prompt-alias configuration\n\nThis module defines the serde types and validators for the NAPL lock document —\nthe small JSON configuration that pins which model, code-generation backend,\ncoding-agent engine, and prompt aliases the toolchain compiles through. It is\npure: no I/O. Bring in `serde` and `serde_json`.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `schemas_lock/`: `schemas_lock/Cargo.toml`\n(package name `schemas_lock`) and `schemas_lock/src/lib.rs`. Touch nothing\noutside `schemas_lock/`. Ensure `cargo test` passes from the workspace root\nbefore finishing.\n\n## Builds on the `extensions` module of this workspace\n\nThis module builds on the **`extensions`** module of this same workspace. The\n`extensions` module is generated as a sibling member crate in the `extensions/`\ndirectory (so `../extensions` relative to this crate). It exposes a public\nfunction `default_prompt_aliases() -> Vec<String>` returning the curated default\nlist of prompt-alias strings.\n\nAdd a path dependency on that sibling member crate in your `Cargo.toml`\n(depend on the `extensions` crate by path — it lives one directory up and over,\nat `../extensions`) and call its `default_prompt_aliases()` for the curated\ndefault below. Do **not** reimplement the curated alias list here, and do not\ndepend on any hand-written crate — depend only on the generated sibling\n`extensions` member crate. This sibling path dependency is part of the same\nworkspace, not an external crates.io dependency, so add it even though the\ngeneral guidance is to avoid outside dependencies.\n\n## The value types\n\nExpose these public types, deriving the serde traits noted:\n\n- `Backend`: an enum with two variants, `ClaudeCli` and `AnthropicApi`,\n  serialized/deserialized in **kebab-case** (so the JSON spellings are\n  `\"claude-cli\"` and `\"anthropic-api\"`). It derives serialize and deserialize,\n  and is comparable and copyable.\n- `AgentPreset`: an enum with three variants, `Claude`, `Codex`, and `Custom`,\n  serialized/deserialized in **lowercase** (`\"claude\"`, `\"codex\"`, `\"custom\"`).\n- `AgentConfig`: a struct with a public `preset: AgentPreset` and an optional\n  public `command: Option<Vec<String>>` (a command template; omitted from\n  serialized output and defaulting to `None` when absent). It **denies unknown\n  fields** — any JSON key other than `preset` and `command` is a deserialization\n  error.\n- `HlLock`: the lock document itself, with a public `model: String`; a\n  `backend: Backend` that defaults to claude-cli when the key is absent; an\n  optional `prompt_aliases: Option<Vec<String>>` whose JSON key is\n  **`promptAliases`** (camelCase), omitted when absent; and an optional\n  `agent: Option<AgentConfig>` omitted when absent.\n\nExpose these public constants and defaults:\n\n- `DEFAULT_MODEL: &str` equal to `\"claude-sonnet-5\"`.\n- `DEFAULT_BACKEND: Backend` equal to the claude-cli variant.\n- `DEFAULT_AGENT_PRESET: AgentPreset` equal to the claude variant.\n- `default_agent_config() -> AgentConfig`: the claude preset with no command.\n\n## Parsing and validating a lock\n\nExpose `parse_lock(raw: &str) -> Result<HlLock, _>` that deserializes a JSON\nstring into an `HlLock` and then validates it. Deserialization failures (corrupt\nJSON, unknown backend spelling, unknown preset, unknown agent field, wrong\ntypes) are errors, not panics. After a structural parse, enforce:\n\n- `model` must not be empty — an empty model string is a validation error.\n- If `promptAliases` is present, every alias must be valid (see below).\n- If `agent` is present, it must be valid (see below).\n\n### Prompt-alias validation\n\nA prompt alias is a short string. Validate each one:\n\n- It must start with a `.` (dot). An alias not beginning with `.` is rejected.\n- After the leading dot it must have **1 or 2 Unicode code points** — no more,\n  no fewer. So `\".abc\"` (three code points after the dot) is rejected.\n- It must not contain a ZWJ (zero-width joiner, U+200D) anywhere. A ZWJ-joined\n  emoji sequence such as `\".👨‍💻\"` (man + ZWJ + laptop) is rejected even though it\n  is visually one glyph.\n\nThe exact error wording does not matter — only which aliases are accepted versus\nrejected. A valid override list is kept verbatim.\n\n### Agent-config validation\n\nValidate the agent configuration by preset:\n\n- The `custom` preset **requires** a non-empty `command` array. A custom preset\n  with no `command`, or with an empty `command`, is a validation error.\n- The `claude` and `codex` presets **must not** carry a `command`. Either of\n  those presets with a `command` present is a validation error.\n\n## Resolving effective configuration\n\nExpose two resolvers:\n\n- `resolve_prompt_aliases(lock: &HlLock) -> Vec<String>`: the lock's\n  `promptAliases` override if present, otherwise the curated default obtained by\n  calling the `extensions` module's `default_prompt_aliases()`.\n- `resolve_agent_config(lock: &HlLock) -> AgentConfig`: the lock's `agent`\n  override if present, otherwise `default_agent_config()` (the claude preset).\n",
+  "summary": "The lock document: model / backend / agent / prompt-alias configuration",
+  "files": [
+    {
+      "path": "schemas_lock/Cargo.toml",
+      "journalPath": ".napl/src/rust/schemas_lock/Cargo.toml",
+      "content": "[package]\nname = \"schemas_lock\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\nserde = { version = \"1\", features = [\"derive\"] }\nserde_json = \"1\"\nextensions = { path = \"../extensions\" }\n",
+      "language": "toml"
+    },
+    {
+      "path": "schemas_lock/src/lib.rs",
+      "journalPath": ".napl/src/rust/schemas_lock/src/lib.rs",
+      "content": "// GENERATED BY NAPL from schemas_lock.napl — edit the prompt, not this file\n\nuse serde::{Deserialize, Serialize};\n\nconst ZWJ: char = '\\u{200D}';\n\npub const DEFAULT_MODEL: &str = \"claude-sonnet-5\";\npub const DEFAULT_BACKEND: Backend = Backend::ClaudeCli;\npub const DEFAULT_AGENT_PRESET: AgentPreset = AgentPreset::Claude;\n\n#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]\n#[serde(rename_all = \"kebab-case\")]\npub enum Backend {\n    ClaudeCli,\n    AnthropicApi,\n}\n\n#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]\n#[serde(rename_all = \"lowercase\")]\npub enum AgentPreset {\n    Claude,\n    Codex,\n    Custom,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\n#[serde(deny_unknown_fields)]\npub struct AgentConfig {\n    pub preset: AgentPreset,\n    #[serde(skip_serializing_if = \"Option::is_none\", default)]\n    pub command: Option<Vec<String>>,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\npub struct HlLock {\n    pub model: String,\n    #[serde(default = \"default_backend_value\")]\n    pub backend: Backend,\n    #[serde(rename = \"promptAliases\", skip_serializing_if = \"Option::is_none\", default)]\n    pub prompt_aliases: Option<Vec<String>>,\n    #[serde(skip_serializing_if = \"Option::is_none\", default)]\n    pub agent: Option<AgentConfig>,\n}\n\nfn default_backend_value() -> Backend {\n    DEFAULT_BACKEND\n}\n\npub fn default_agent_config() -> AgentConfig {\n    AgentConfig {\n        preset: DEFAULT_AGENT_PRESET,\n        command: None,\n    }\n}\n\n#[derive(Debug, Clone, PartialEq, Eq)]\npub enum LockError {\n    Parse(String),\n    EmptyModel,\n    InvalidPromptAlias(String),\n    CustomAgentMissingCommand,\n    NonCustomAgentHasCommand,\n}\n\nimpl std::fmt::Display for LockError {\n    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n        match self {\n            LockError::Parse(msg) => write!(f, \"failed to parse lock document: {msg}\"),\n            LockError::EmptyModel => write!(f, \"model must not be empty\"),\n            LockError::InvalidPromptAlias(alias) => write!(f, \"invalid prompt alias: {alias}\"),\n            LockError::CustomAgentMissingCommand => {\n                write!(f, \"custom agent preset requires a non-empty command\")\n            }\n            LockError::NonCustomAgentHasCommand => {\n                write!(f, \"claude and codex agent presets must not carry a command\")\n            }\n        }\n    }\n}\n\nimpl std::error::Error for LockError {}\n\npub fn is_valid_prompt_alias(alias: &str) -> bool {\n    let Some(rest) = alias.strip_prefix('.') else {\n        return false;\n    };\n    let code_point_count = rest.chars().count();\n    if code_point_count < 1 || code_point_count > 2 {\n        return false;\n    }\n    if rest.contains(ZWJ) {\n        return false;\n    }\n    true\n}\n\npub fn validate_agent_config(agent: &AgentConfig) -> Result<(), LockError> {\n    match agent.preset {\n        AgentPreset::Custom => match &agent.command {\n            Some(command) if !command.is_empty() => Ok(()),\n            _ => Err(LockError::CustomAgentMissingCommand),\n        },\n        AgentPreset::Claude | AgentPreset::Codex => {\n            if agent.command.is_some() {\n                Err(LockError::NonCustomAgentHasCommand)\n            } else {\n                Ok(())\n            }\n        }\n    }\n}\n\npub fn parse_lock(raw: &str) -> Result<HlLock, LockError> {\n    let lock: HlLock = serde_json::from_str(raw).map_err(|e| LockError::Parse(e.to_string()))?;\n\n    if lock.model.is_empty() {\n        return Err(LockError::EmptyModel);\n    }\n\n    if let Some(aliases) = &lock.prompt_aliases {\n        for alias in aliases {\n            if !is_valid_prompt_alias(alias) {\n                return Err(LockError::InvalidPromptAlias(alias.clone()));\n            }\n        }\n    }\n\n    if let Some(agent) = &lock.agent {\n        validate_agent_config(agent)?;\n    }\n\n    Ok(lock)\n}\n\npub fn resolve_prompt_aliases(lock: &HlLock) -> Vec<String> {\n    lock.prompt_aliases\n        .clone()\n        .unwrap_or_else(extensions::default_prompt_aliases)\n}\n\npub fn resolve_agent_config(lock: &HlLock) -> AgentConfig {\n    lock.agent.clone().unwrap_or_else(default_agent_config)\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn backend_kebab_case_round_trip() {\n        assert_eq!(\n            serde_json::to_string(&Backend::ClaudeCli).unwrap(),\n            \"\\\"claude-cli\\\"\"\n        );\n        assert_eq!(\n            serde_json::to_string(&Backend::AnthropicApi).unwrap(),\n            \"\\\"anthropic-api\\\"\"\n        );\n        assert_eq!(\n            serde_json::from_str::<Backend>(\"\\\"claude-cli\\\"\").unwrap(),\n            Backend::ClaudeCli\n        );\n        assert_eq!(\n            serde_json::from_str::<Backend>(\"\\\"anthropic-api\\\"\").unwrap(),\n            Backend::AnthropicApi\n        );\n    }\n\n    #[test]\n    fn agent_preset_lowercase_round_trip() {\n        assert_eq!(serde_json::to_string(&AgentPreset::Claude).unwrap(), \"\\\"claude\\\"\");\n        assert_eq!(serde_json::to_string(&AgentPreset::Codex).unwrap(), \"\\\"codex\\\"\");\n        assert_eq!(serde_json::to_string(&AgentPreset::Custom).unwrap(), \"\\\"custom\\\"\");\n    }\n\n    #[test]\n    fn agent_config_denies_unknown_fields() {\n        let raw = r#\"{\"preset\": \"claude\", \"bogus\": 1}\"#;\n        assert!(serde_json::from_str::<AgentConfig>(raw).is_err());\n    }\n\n    #[test]\n    fn agent_config_command_omitted_when_absent() {\n        let config = AgentConfig {\n            preset: AgentPreset::Claude,\n            command: None,\n        };\n        let json = serde_json::to_string(&config).unwrap();\n        assert_eq!(json, r#\"{\"preset\":\"claude\"}\"#);\n    }\n\n    #[test]\n    fn hl_lock_defaults_backend_when_absent() {\n        let lock: HlLock = serde_json::from_str(r#\"{\"model\": \"m\"}\"#).unwrap();\n        assert_eq!(lock.backend, Backend::ClaudeCli);\n        assert_eq!(lock.prompt_aliases, None);\n        assert_eq!(lock.agent, None);\n    }\n\n    #[test]\n    fn hl_lock_prompt_aliases_use_camel_case_key() {\n        let lock: HlLock =\n            serde_json::from_str(r#\"{\"model\": \"m\", \"promptAliases\": [\".a\"]}\"#).unwrap();\n        assert_eq!(lock.prompt_aliases, Some(vec![\".a\".to_string()]));\n\n        let json = serde_json::to_string(&lock).unwrap();\n        assert!(json.contains(\"\\\"promptAliases\\\":[\\\".a\\\"]\"));\n    }\n\n    #[test]\n    fn parse_lock_rejects_corrupt_json() {\n        assert!(parse_lock(\"not json\").is_err());\n    }\n\n    #[test]\n    fn parse_lock_rejects_unknown_backend_spelling() {\n        let raw = r#\"{\"model\": \"m\", \"backend\": \"bogus\"}\"#;\n        assert!(parse_lock(raw).is_err());\n    }\n\n    #[test]\n    fn parse_lock_rejects_unknown_preset() {\n        let raw = r#\"{\"model\": \"m\", \"agent\": {\"preset\": \"bogus\"}}\"#;\n        assert!(parse_lock(raw).is_err());\n    }\n\n    #[test]\n    fn parse_lock_rejects_empty_model() {\n        let raw = r#\"{\"model\": \"\"}\"#;\n        assert_eq!(parse_lock(raw).unwrap_err(), LockError::EmptyModel);\n    }\n\n    #[test]\n    fn parse_lock_accepts_valid_document() {\n        let raw = r#\"{\n            \"model\": \"claude-sonnet-5\",\n            \"backend\": \"anthropic-api\",\n            \"promptAliases\": [\".a\", \".ab\"],\n            \"agent\": {\"preset\": \"custom\", \"command\": [\"run\", \"me\"]}\n        }\"#;\n        let lock = parse_lock(raw).unwrap();\n        assert_eq!(lock.model, \"claude-sonnet-5\");\n        assert_eq!(lock.backend, Backend::AnthropicApi);\n        assert_eq!(\n            lock.prompt_aliases,\n            Some(vec![\".a\".to_string(), \".ab\".to_string()])\n        );\n        assert_eq!(\n            lock.agent,\n            Some(AgentConfig {\n                preset: AgentPreset::Custom,\n                command: Some(vec![\"run\".to_string(), \"me\".to_string()])\n            })\n        );\n    }\n\n    #[test]\n    fn prompt_alias_must_start_with_dot() {\n        assert!(!is_valid_prompt_alias(\"abc\"));\n    }\n\n    #[test]\n    fn prompt_alias_allows_one_or_two_code_points_after_dot() {\n        assert!(is_valid_prompt_alias(\".a\"));\n        assert!(is_valid_prompt_alias(\".ab\"));\n        assert!(is_valid_prompt_alias(\".\\u{1F600}\"));\n    }\n\n    #[test]\n    fn prompt_alias_rejects_too_many_code_points() {\n        assert!(!is_valid_prompt_alias(\".abc\"));\n    }\n\n    #[test]\n    fn prompt_alias_rejects_zwj_sequences() {\n        // \".👨‍💻\" — man + ZWJ + laptop: visually one glyph, three code points after the dot.\n        assert!(!is_valid_prompt_alias(\".\\u{1F468}\\u{200D}\\u{1F4BB}\"));\n    }\n\n    #[test]\n    fn parse_lock_rejects_invalid_prompt_alias() {\n        let raw = r#\"{\"model\": \"m\", \"promptAliases\": [\"abc\"]}\"#;\n        assert!(matches!(\n            parse_lock(raw),\n            Err(LockError::InvalidPromptAlias(_))\n        ));\n    }\n\n    #[test]\n    fn custom_preset_requires_non_empty_command() {\n        let missing = AgentConfig {\n            preset: AgentPreset::Custom,\n            command: None,\n        };\n        assert_eq!(\n            validate_agent_config(&missing).unwrap_err(),\n            LockError::CustomAgentMissingCommand\n        );\n\n        let empty = AgentConfig {\n            preset: AgentPreset::Custom,\n            command: Some(vec![]),\n        };\n        assert_eq!(\n            validate_agent_config(&empty).unwrap_err(),\n            LockError::CustomAgentMissingCommand\n        );\n\n        let ok = AgentConfig {\n            preset: AgentPreset::Custom,\n            command: Some(vec![\"run\".to_string()]),\n        };\n        assert!(validate_agent_config(&ok).is_ok());\n    }\n\n    #[test]\n    fn claude_and_codex_presets_reject_command() {\n        let claude_with_command = AgentConfig {\n            preset: AgentPreset::Claude,\n            command: Some(vec![\"run\".to_string()]),\n        };\n        assert_eq!(\n            validate_agent_config(&claude_with_command).unwrap_err(),\n            LockError::NonCustomAgentHasCommand\n        );\n\n        let codex_with_command = AgentConfig {\n            preset: AgentPreset::Codex,\n            command: Some(vec![\"run\".to_string()]),\n        };\n        assert_eq!(\n            validate_agent_config(&codex_with_command).unwrap_err(),\n            LockError::NonCustomAgentHasCommand\n        );\n\n        let claude_ok = AgentConfig {\n            preset: AgentPreset::Claude,\n            command: None,\n        };\n        assert!(validate_agent_config(&claude_ok).is_ok());\n    }\n\n    #[test]\n    fn resolve_prompt_aliases_uses_override_or_curated_default() {\n        let with_override = HlLock {\n            model: \"m\".to_string(),\n            backend: Backend::ClaudeCli,\n            prompt_aliases: Some(vec![\".x\".to_string()]),\n            agent: None,\n        };\n        assert_eq!(resolve_prompt_aliases(&with_override), vec![\".x\".to_string()]);\n\n        let without_override = HlLock {\n            model: \"m\".to_string(),\n            backend: Backend::ClaudeCli,\n            prompt_aliases: None,\n            agent: None,\n        };\n        assert_eq!(\n            resolve_prompt_aliases(&without_override),\n            extensions::default_prompt_aliases()\n        );\n    }\n\n    #[test]\n    fn resolve_agent_config_uses_override_or_default() {\n        let with_override = HlLock {\n            model: \"m\".to_string(),\n            backend: Backend::ClaudeCli,\n            prompt_aliases: None,\n            agent: Some(AgentConfig {\n                preset: AgentPreset::Codex,\n                command: None,\n            }),\n        };\n        assert_eq!(\n            resolve_agent_config(&with_override),\n            AgentConfig {\n                preset: AgentPreset::Codex,\n                command: None\n            }\n        );\n\n        let without_override = HlLock {\n            model: \"m\".to_string(),\n            backend: Backend::ClaudeCli,\n            prompt_aliases: None,\n            agent: None,\n        };\n        assert_eq!(resolve_agent_config(&without_override), default_agent_config());\n    }\n}\n",
+      "language": "rust"
+    }
+  ],
+  "attribution": [
+    {
+      "promptLines": [
+        1,
+        6
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        1,
+        3
+      ],
+      "note": "module header, pure serde-based types"
+    },
+    {
+      "promptLines": [
+        38,
+        41
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        11,
+        16
+      ],
+      "note": "Backend enum, kebab-case, derives"
+    },
+    {
+      "promptLines": [
+        42,
+        43
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        18,
+        24
+      ],
+      "note": "AgentPreset enum, lowercase"
+    },
+    {
+      "promptLines": [
+        44,
+        48
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        26,
+        32
+      ],
+      "note": "AgentConfig struct, deny_unknown_fields, optional command"
+    },
+    {
+      "promptLines": [
+        49,
+        53
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        34,
+        43
+      ],
+      "note": "HlLock struct fields incl camelCase promptAliases, backend default"
+    },
+    {
+      "promptLines": [
+        50,
+        50
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        45,
+        47
+      ],
+      "note": "default backend value fn for serde default"
+    },
+    {
+      "promptLines": [
+        57,
+        57
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        7,
+        7
+      ],
+      "note": "DEFAULT_MODEL constant"
+    },
+    {
+      "promptLines": [
+        58,
+        58
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        8,
+        8
+      ],
+      "note": "DEFAULT_BACKEND constant"
+    },
+    {
+      "promptLines": [
+        59,
+        59
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        9,
+        9
+      ],
+      "note": "DEFAULT_AGENT_PRESET constant"
+    },
+    {
+      "promptLines": [
+        60,
+        60
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        49,
+        54
+      ],
+      "note": "default_agent_config fn"
+    },
+    {
+      "promptLines": [
+        64,
+        67
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        113,
+        118
+      ],
+      "note": "parse_lock deserializes then validates model"
+    },
+    {
+      "promptLines": [
+        69,
+        69
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        59,
+        59
+      ],
+      "note": "EmptyModel error variant"
+    },
+    {
+      "promptLines": [
+        69,
+        69
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        116,
+        118
+      ],
+      "note": "empty model check"
+    },
+    {
+      "promptLines": [
+        70,
+        70
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        120,
+        126
+      ],
+      "note": "validate each prompt alias"
+    },
+    {
+      "promptLines": [
+        71,
+        71
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        128,
+        130
+      ],
+      "note": "validate agent config if present"
+    },
+    {
+      "promptLines": [
+        75,
+        82
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        5,
+        5
+      ],
+      "note": "ZWJ constant used in alias validation"
+    },
+    {
+      "promptLines": [
+        77,
+        77
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        84,
+        86
+      ],
+      "note": "alias must start with dot"
+    },
+    {
+      "promptLines": [
+        78,
+        79
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        87,
+        90
+      ],
+      "note": "1-2 code points after dot check"
+    },
+    {
+      "promptLines": [
+        80,
+        82
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        91,
+        93
+      ],
+      "note": "reject ZWJ in alias"
+    },
+    {
+      "promptLines": [
+        83,
+        94
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        83,
+        95
+      ],
+      "note": "is_valid_prompt_alias function"
+    },
+    {
+      "promptLines": [
+        91,
+        92
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        99,
+        102
+      ],
+      "note": "custom preset requires non-empty command"
+    },
+    {
+      "promptLines": [
+        93,
+        94
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        103,
+        109
+      ],
+      "note": "claude/codex presets must not have command"
+    },
+    {
+      "promptLines": [
+        87,
+        95
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        97,
+        111
+      ],
+      "note": "validate_agent_config function"
+    },
+    {
+      "promptLines": [
+        65,
+        66
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        56,
+        63
+      ],
+      "note": "LockError variants covering parse/validation failures"
+    },
+    {
+      "promptLines": [
+        65,
+        66
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        65,
+        81
+      ],
+      "note": "Display/Error impls for LockError"
+    },
+    {
+      "promptLines": [
+        100,
+        102
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        135,
+        139
+      ],
+      "note": "resolve_prompt_aliases uses override or extensions default"
+    },
+    {
+      "promptLines": [
+        103,
+        104
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        141,
+        143
+      ],
+      "note": "resolve_agent_config uses override or default_agent_config"
+    },
+    {
+      "promptLines": [
+        21,
+        32
+      ],
+      "file": "schemas_lock/src/lib.rs",
+      "lines": [
+        138,
+        138
+      ],
+      "note": "calls sibling extensions crate's default_prompt_aliases"
+    }
+  ],
+  "attributionYaml": "module: schemas_lock\ntarget: rust\nentries:\n  - promptLines:\n      - 1\n      - 6\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 1\n      - 3\n    note: module header, pure serde-based types\n  - promptLines:\n      - 38\n      - 41\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 11\n      - 16\n    note: Backend enum, kebab-case, derives\n  - promptLines:\n      - 42\n      - 43\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 18\n      - 24\n    note: AgentPreset enum, lowercase\n  - promptLines:\n      - 44\n      - 48\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 26\n      - 32\n    note: AgentConfig struct, deny_unknown_fields, optional command\n  - promptLines:\n      - 49\n      - 53\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 34\n      - 43\n    note: HlLock struct fields incl camelCase promptAliases, backend default\n  - promptLines:\n      - 50\n      - 50\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 45\n      - 47\n    note: default backend value fn for serde default\n  - promptLines:\n      - 57\n      - 57\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 7\n      - 7\n    note: DEFAULT_MODEL constant\n  - promptLines:\n      - 58\n      - 58\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 8\n      - 8\n    note: DEFAULT_BACKEND constant\n  - promptLines:\n      - 59\n      - 59\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 9\n      - 9\n    note: DEFAULT_AGENT_PRESET constant\n  - promptLines:\n      - 60\n      - 60\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 49\n      - 54\n    note: default_agent_config fn\n  - promptLines:\n      - 64\n      - 67\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 113\n      - 118\n    note: parse_lock deserializes then validates model\n  - promptLines:\n      - 69\n      - 69\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 59\n      - 59\n    note: EmptyModel error variant\n  - promptLines:\n      - 69\n      - 69\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 116\n      - 118\n    note: empty model check\n  - promptLines:\n      - 70\n      - 70\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 120\n      - 126\n    note: validate each prompt alias\n  - promptLines:\n      - 71\n      - 71\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 128\n      - 130\n    note: validate agent config if present\n  - promptLines:\n      - 75\n      - 82\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 5\n      - 5\n    note: ZWJ constant used in alias validation\n  - promptLines:\n      - 77\n      - 77\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 84\n      - 86\n    note: alias must start with dot\n  - promptLines:\n      - 78\n      - 79\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 87\n      - 90\n    note: 1-2 code points after dot check\n  - promptLines:\n      - 80\n      - 82\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 91\n      - 93\n    note: reject ZWJ in alias\n  - promptLines:\n      - 83\n      - 94\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 83\n      - 95\n    note: is_valid_prompt_alias function\n  - promptLines:\n      - 91\n      - 92\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 99\n      - 102\n    note: custom preset requires non-empty command\n  - promptLines:\n      - 93\n      - 94\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 103\n      - 109\n    note: claude/codex presets must not have command\n  - promptLines:\n      - 87\n      - 95\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 97\n      - 111\n    note: validate_agent_config function\n  - promptLines:\n      - 65\n      - 66\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 56\n      - 63\n    note: LockError variants covering parse/validation failures\n  - promptLines:\n      - 65\n      - 66\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 65\n      - 81\n    note: Display/Error impls for LockError\n  - promptLines:\n      - 100\n      - 102\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 135\n      - 139\n    note: resolve_prompt_aliases uses override or extensions default\n  - promptLines:\n      - 103\n      - 104\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 141\n      - 143\n    note: resolve_agent_config uses override or default_agent_config\n  - promptLines:\n      - 21\n      - 32\n    file: schemas_lock/src/lib.rs\n    lines:\n      - 138\n      - 138\n    note: calls sibling extensions crate's default_prompt_aliases\n",
+  "mapl": [
+    {
+      "promptLines": [
+        10,
+        32
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "Diff only shows lib.rs; crate/workspace wiring (Cargo.toml, sibling path dep) isn't visible to confirm.",
+      "reasoning": "Prompt requires creating schemas_lock/Cargo.toml with a path dependency on ../extensions, and touching nothing else. The provided change list only contains schemas_lock/src/lib.rs — no Cargo.toml content was shown, so the package name, path dependency declaration, and workspace membership can't be verified from what was given, even though the agent's final message claims the whole workspace builds and tests pass.\n"
+    },
+    {
+      "promptLines": [
+        69,
+        69
+      ],
+      "kind": "assumption",
+      "severity": "warning",
+      "message": "Empty-model check treats only the literal empty string as invalid, not whitespace-only strings.",
+      "reasoning": "\"model must not be empty\" was implemented as `lock.model.is_empty()`, which only rejects the exact empty string \"\". A whitespace-only model like \" \" passes validation. The prompt doesn't address whitespace, so this literal interpretation was assumed to be correct.\n",
+      "suggestion": "model must not be empty or whitespace-only — reject after trimming."
+    }
+  ],
+  "journal": [
+    {
+      "gen": 15,
+      "timestamp": "2026-07-24T07:16:18.496Z",
+      "mode": "full",
+      "promptHash": "f36751c42e649c8872eaebc138cd4291c0172cc696f7b55b41d44e634424305e",
+      "files": [
+        {
+          "path": "schemas_lock/Cargo.toml",
+          "journalPath": ".napl/src/rust/schemas_lock/Cargo.toml",
+          "patch": "@@ -0,0 +1,9 @@\n+[package]\n+name = \"schemas_lock\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]\n+serde = { version = \"1\", features = [\"derive\"] }\n+serde_json = \"1\"\n+extensions = { path = \"../extensions\" }"
+        },
+        {
+          "path": "schemas_lock/src/lib.rs",
+          "journalPath": ".napl/src/rust/schemas_lock/src/lib.rs",
+          "patch": "@@ -0,0 +1,392 @@\n+// GENERATED BY NAPL from schemas_lock.napl — edit the prompt, not this file\n+\n+use serde::{Deserialize, Serialize};\n+\n+const ZWJ: char = '\\u{200D}';\n+\n+pub const DEFAULT_MODEL: &str = \"claude-sonnet-5\";\n+pub const DEFAULT_BACKEND: Backend = Backend::ClaudeCli;\n+pub const DEFAULT_AGENT_PRESET: AgentPreset = AgentPreset::Claude;\n+\n+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]\n+#[serde(rename_all = \"kebab-case\")]\n+pub enum Backend {\n+    ClaudeCli,\n+    AnthropicApi,\n+}\n+\n+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]\n+#[serde(rename_all = \"lowercase\")]\n+pub enum AgentPreset {\n+    Claude,\n+    Codex,\n+    Custom,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\n+#[serde(deny_unknown_fields)]\n+pub struct AgentConfig {\n+    pub preset: AgentPreset,\n+    #[serde(skip_serializing_if = \"Option::is_none\", default)]\n+    pub command: Option<Vec<String>>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\n+pub struct HlLock {\n+    pub model: String,\n+    #[serde(default = \"default_backend_value\")]\n+    pub backend: Backend,\n+    #[serde(rename = \"promptAliases\", skip_serializing_if = \"Option::is_none\", default)]\n+    pub prompt_aliases: Option<Vec<String>>,\n+    #[serde(skip_serializing_if = \"Option::is_none\", default)]\n+    pub agent: Option<AgentConfig>,\n+}\n+\n+fn default_backend_value() -> Backend {\n+    DEFAULT_BACKEND\n+}\n+\n+pub fn default_agent_config() -> AgentConfig {\n+    AgentConfig {\n+        preset: DEFAULT_AGENT_PRESET,\n+        command: None,\n+    }\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub enum LockError {\n+    Parse(String),\n+    EmptyModel,\n+    InvalidPromptAlias(String),\n+    CustomAgentMissingCommand,\n+    NonCustomAgentHasCommand,\n+}\n+\n+impl std::fmt::Display for LockError {\n+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n+        match self {\n+            LockError::Parse(msg) => write!(f, \"failed to parse lock document: {msg}\"),\n+            LockError::EmptyModel => write!(f, \"model must not be empty\"),\n+            LockError::InvalidPromptAlias(alias) => write!(f, \"invalid prompt alias: {alias}\"),\n+            LockError::CustomAgentMissingCommand => {\n+                write!(f, \"custom agent preset requires a non-empty command\")\n+            }\n+            LockError::NonCustomAgentHasCommand => {\n+                write!(f, \"claude and codex agent presets must not carry a command\")\n+            }\n+        }\n+    }\n+}\n+\n+impl std::error::Error for LockError {}\n+\n+pub fn is_valid_prompt_alias(alias: &str) -> bool {\n+    let Some(rest) = alias.strip_prefix('.') else {\n+        return false;\n+    };\n+    let code_point_count = rest.chars().count();\n+    if code_point_count < 1 || code_point_count > 2 {\n+        return false;\n+    }\n+    if rest.contains(ZWJ) {\n+        return false;\n+    }\n+    true\n+}\n+\n+pub fn validate_agent_config(agent: &AgentConfig) -> Result<(), LockError> {\n+    match agent.preset {\n+        AgentPreset::Custom => match &agent.command {\n+            Some(command) if !command.is_empty() => Ok(()),\n+            _ => Err(LockError::CustomAgentMissingCommand),\n+        },\n+        AgentPreset::Claude | AgentPreset::Codex => {\n+            if agent.command.is_some() {\n+                Err(LockError::NonCustomAgentHasCommand)\n+            } else {\n+                Ok(())\n+            }\n+        }\n+    }\n+}\n+\n+pub fn parse_lock(raw: &str) -> Result<HlLock, LockError> {\n+    let lock: HlLock = serde_json::from_str(raw).map_err(|e| LockError::Parse(e.to_string()))?;\n+\n+    if lock.model.is_empty() {\n+        return Err(LockError::EmptyModel);\n+    }\n+\n+    if let Some(aliases) = &lock.prompt_aliases {\n+        for alias in aliases {\n+            if !is_valid_prompt_alias(alias) {\n+                return Err(LockError::InvalidPromptAlias(alias.clone()));\n+            }\n+        }\n+    }\n+\n+    if let Some(agent) = &lock.agent {\n+        validate_agent_config(agent)?;\n+    }\n+\n+    Ok(lock)\n+}\n+\n+pub fn resolve_prompt_aliases(lock: &HlLock) -> Vec<String> {\n+    lock.prompt_aliases\n+        .clone()\n+        .unwrap_or_else(extensions::default_prompt_aliases)\n+}\n+\n+pub fn resolve_agent_config(lock: &HlLock) -> AgentConfig {\n+    lock.agent.clone().unwrap_or_else(default_agent_config)\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn backend_kebab_case_round_trip() {\n+        assert_eq!(\n+            serde_json::to_string(&Backend::ClaudeCli).unwrap(),\n+            \"\\\"claude-cli\\\"\"\n+        );\n+        assert_eq!(\n+            serde_json::to_string(&Backend::AnthropicApi).unwrap(),\n+            \"\\\"anthropic-api\\\"\"\n+        );\n+        assert_eq!(\n+            serde_json::from_str::<Backend>(\"\\\"claude-cli\\\"\").unwrap(),\n+            Backend::ClaudeCli\n+        );\n+        assert_eq!(\n+            serde_json::from_str::<Backend>(\"\\\"anthropic-api\\\"\").unwrap(),\n+            Backend::AnthropicApi\n+        );\n+    }\n+\n+    #[test]\n+    fn agent_preset_lowercase_round_trip() {\n+        assert_eq!(serde_json::to_string(&AgentPreset::Claude).unwrap(), \"\\\"claude\\\"\");\n+        assert_eq!(serde_json::to_string(&AgentPreset::Codex).unwrap(), \"\\\"codex\\\"\");\n+        assert_eq!(serde_json::to_string(&AgentPreset::Custom).unwrap(), \"\\\"custom\\\"\");\n+    }\n+\n+    #[test]\n+    fn agent_config_denies_unknown_fields() {\n+        let raw = r#\"{\"preset\": \"claude\", \"bogus\": 1}\"#;\n+        assert!(serde_json::from_str::<AgentConfig>(raw).is_err());\n+    }\n+\n+    #[test]\n+    fn agent_config_command_omitted_when_absent() {\n+        let config = AgentConfig {\n+            preset: AgentPreset::Claude,\n+            command: None,\n+        };\n+        let json = serde_json::to_string(&config).unwrap();\n+        assert_eq!(json, r#\"{\"preset\":\"claude\"}\"#);\n+    }\n+\n+    #[test]\n+    fn hl_lock_defaults_backend_when_absent() {\n+        let lock: HlLock = serde_json::from_str(r#\"{\"model\": \"m\"}\"#).unwrap();\n+        assert_eq!(lock.backend, Backend::ClaudeCli);\n+        assert_eq!(lock.prompt_aliases, None);\n+        assert_eq!(lock.agent, None);\n+    }\n+\n+    #[test]\n+    fn hl_lock_prompt_aliases_use_camel_case_key() {\n+        let lock: HlLock =\n+            serde_json::from_str(r#\"{\"model\": \"m\", \"promptAliases\": [\".a\"]}\"#).unwrap();\n+        assert_eq!(lock.prompt_aliases, Some(vec![\".a\".to_string()]));\n+\n+        let json = serde_json::to_string(&lock).unwrap();\n+        assert!(json.contains(\"\\\"promptAliases\\\":[\\\".a\\\"]\"));\n+    }\n+\n+    #[test]\n+    fn parse_lock_rejects_corrupt_json() {\n+        assert!(parse_lock(\"not json\").is_err());\n+    }\n+\n+    #[test]\n+    fn parse_lock_rejects_unknown_backend_spelling() {\n+        let raw = r#\"{\"model\": \"m\", \"backend\": \"bogus\"}\"#;\n+        assert!(parse_lock(raw).is_err());\n+    }\n+\n+    #[test]\n+    fn parse_lock_rejects_unknown_preset() {\n+        let raw = r#\"{\"model\": \"m\", \"agent\": {\"preset\": \"bogus\"}}\"#;\n+        assert!(parse_lock(raw).is_err());\n+    }\n+\n+    #[test]\n+    fn parse_lock_rejects_empty_model() {\n+        let raw = r#\"{\"model\": \"\"}\"#;\n+        assert_eq!(parse_lock(raw).unwrap_err(), LockError::EmptyModel);\n+    }\n+\n+    #[test]\n+    fn parse_lock_accepts_valid_document() {\n+        let raw = r#\"{\n+            \"model\": \"claude-sonnet-5\",\n+            \"backend\": \"anthropic-api\",\n+            \"promptAliases\": [\".a\", \".ab\"],\n+            \"agent\": {\"preset\": \"custom\", \"command\": [\"run\", \"me\"]}\n+        }\"#;\n+        let lock = parse_lock(raw).unwrap();\n+        assert_eq!(lock.model, \"claude-sonnet-5\");\n+        assert_eq!(lock.backend, Backend::AnthropicApi);\n+        assert_eq!(\n+            lock.prompt_aliases,\n+            Some(vec![\".a\".to_string(), \".ab\".to_string()])\n+        );\n+        assert_eq!(\n+            lock.agent,\n+            Some(AgentConfig {\n+                preset: AgentPreset::Custom,\n+                command: Some(vec![\"run\".to_string(), \"me\".to_string()])\n+            })\n+        );\n+    }\n+\n+    #[test]\n+    fn prompt_alias_must_start_with_dot() {\n+        assert!(!is_valid_prompt_alias(\"abc\"));\n+    }\n+\n+    #[test]\n+    fn prompt_alias_allows_one_or_two_code_points_after_dot() {\n+        assert!(is_valid_prompt_alias(\".a\"));\n+        assert!(is_valid_prompt_alias(\".ab\"));\n+        assert!(is_valid_prompt_alias(\".\\u{1F600}\"));\n+    }\n+\n+    #[test]\n+    fn prompt_alias_rejects_too_many_code_points() {\n+        assert!(!is_valid_prompt_alias(\".abc\"));\n+    }\n+\n+    #[test]\n+    fn prompt_alias_rejects_zwj_sequences() {\n+        // \".👨‍💻\" — man + ZWJ + laptop: visually one glyph, three code points after the dot.\n+        assert!(!is_valid_prompt_alias(\".\\u{1F468}\\u{200D}\\u{1F4BB}\"));\n+    }\n+\n+    #[test]\n+    fn parse_lock_rejects_invalid_prompt_alias() {\n+        let raw = r#\"{\"model\": \"m\", \"promptAliases\": [\"abc\"]}\"#;\n+        assert!(matches!(\n+            parse_lock(raw),\n+            Err(LockError::InvalidPromptAlias(_))\n+        ));\n+    }\n+\n+    #[test]\n+    fn custom_preset_requires_non_empty_command() {\n+        let missing = AgentConfig {\n+            preset: AgentPreset::Custom,\n+            command: None,\n+        };\n+        assert_eq!(\n+            validate_agent_config(&missing).unwrap_err(),\n+            LockError::CustomAgentMissingCommand\n+        );\n+\n+        let empty = AgentConfig {\n+            preset: AgentPreset::Custom,\n+            command: Some(vec![]),\n+        };\n+        assert_eq!(\n+            validate_agent_config(&empty).unwrap_err(),\n+            LockError::CustomAgentMissingCommand\n+        );\n+\n+        let ok = AgentConfig {\n+            preset: AgentPreset::Custom,\n+            command: Some(vec![\"run\".to_string()]),\n+        };\n+        assert!(validate_agent_config(&ok).is_ok());\n+    }\n+\n+    #[test]\n+    fn claude_and_codex_presets_reject_command() {\n+        let claude_with_command = AgentConfig {\n+            preset: AgentPreset::Claude,\n+            command: Some(vec![\"run\".to_string()]),\n+        };\n+        assert_eq!(\n+            validate_agent_config(&claude_with_command).unwrap_err(),\n+            LockError::NonCustomAgentHasCommand\n+        );\n+\n+        let codex_with_command = AgentConfig {\n+            preset: AgentPreset::Codex,\n+            command: Some(vec![\"run\".to_string()]),\n+        };\n+        assert_eq!(\n+            validate_agent_config(&codex_with_command).unwrap_err(),\n+            LockError::NonCustomAgentHasCommand\n+        );\n+\n+        let claude_ok = AgentConfig {\n+            preset: AgentPreset::Claude,\n+            command: None,\n+        };\n+        assert!(validate_agent_config(&claude_ok).is_ok());\n+    }\n+\n+    #[test]\n+    fn resolve_prompt_aliases_uses_override_or_curated_default() {\n+        let with_override = HlLock {\n+            model: \"m\".to_string(),\n+            backend: Backend::ClaudeCli,\n+            prompt_aliases: Some(vec![\".x\".to_string()]),\n+            agent: None,\n+        };\n+        assert_eq!(resolve_prompt_aliases(&with_override), vec![\".x\".to_string()]);\n+\n+        let without_override = HlLock {\n+            model: \"m\".to_string(),\n+            backend: Backend::ClaudeCli,\n+            prompt_aliases: None,\n+            agent: None,\n+        };\n+        assert_eq!(\n+            resolve_prompt_aliases(&without_override),\n+            extensions::default_prompt_aliases()\n+        );\n+    }\n+\n+    #[test]\n+    fn resolve_agent_config_uses_override_or_default() {\n+        let with_override = HlLock {\n+            model: \"m\".to_string(),\n+            backend: Backend::ClaudeCli,\n+            prompt_aliases: None,\n+            agent: Some(AgentConfig {\n+                preset: AgentPreset::Codex,\n+                command: None,\n+            }),\n+        };\n+        assert_eq!(\n+            resolve_agent_config(&with_override),\n+            AgentConfig {\n+                preset: AgentPreset::Codex,\n+                command: None\n+            }\n+        );\n+\n+        let without_override = HlLock {\n+            model: \"m\".to_string(),\n+            backend: Backend::ClaudeCli,\n+            prompt_aliases: None,\n+            agent: None,\n+        };\n+        assert_eq!(resolve_agent_config(&without_override), default_agent_config());\n+    }\n+}"
+        }
+      ]
+    }
+  ],
+  "lock": [
+    {
+      "path": "schemas_lock/Cargo.toml",
+      "hash": "fc0807f7b89a276c36375260b1f93a11451213ca1b265eb75938a56c6ccaee45"
+    },
+    {
+      "path": "schemas_lock/src/lib.rs",
+      "hash": "781b675c4700cd05ad1728b8784c72b5444e622a882739b71ccca45e003c0808"
+    }
+  ],
+  "session": {
+    "task": "napl gen rust → schemas_lock",
+    "files": {
+      "schemas_lock.napl": "---\nmodule: schemas_lock\ndeps: [extensions]\ntargets: [rust]\ntests:\n  - name: backend defaults to claude-cli when absent\n    given: { json: \"{\\\"model\\\":\\\"claude-sonnet-5\\\"}\" }\n    expect: { backend: claude-cli }\n  - name: an explicit anthropic-api backend is kept\n    given: { json: \"{\\\"model\\\":\\\"claude-sonnet-5\\\",\\\"backend\\\":\\\"anthropic-api\\\"}\" }\n    expect: { backend: anthropic-api }\n  - name: an explicit claude-cli backend is kept\n    given: { json: \"{\\\"model\\\":\\\"claude-opus-5\\\",\\\"backend\\\":\\\"claude-cli\\\"}\" }\n    expect: { backend: claude-cli, model: claude-opus-5 }\n  - name: an unknown backend is rejected\n    given: { json: \"{\\\"model\\\":\\\"x\\\",\\\"backend\\\":\\\"openai\\\"}\" }\n    expect: { accepts: false }\n  - name: corrupt json is rejected\n    given: { json: \"{not json\" }\n    expect: { accepts: false }\n  - name: an empty model is rejected\n    given: { json: \"{\\\"model\\\":\\\"\\\"}\" }\n    expect: { accepts: false }\n  - name: prompt aliases default to the curated list when absent\n    given: { json: \"{\\\"model\\\":\\\"m\\\"}\" }\n    expect: { promptAliases: curated-default }\n  - name: a valid prompt-alias override is kept verbatim\n    given: { json: \"{\\\"model\\\":\\\"m\\\",\\\"promptAliases\\\":[\\\".🧑\\\",\\\".🤠\\\"]}\" }\n    expect: { promptAliases: [\".🧑\", \".🤠\"] }\n  - name: an alias without a leading dot is rejected\n    given: { json: \"{\\\"model\\\":\\\"m\\\",\\\"promptAliases\\\":[\\\"🧑\\\"]}\" }\n    expect: { accepts: false }\n  - name: an alias with more than two code points after the dot is rejected\n    given: { json: \"{\\\"model\\\":\\\"m\\\",\\\"promptAliases\\\":[\\\".abc\\\"]}\" }\n    expect: { accepts: false }\n  - name: an alias containing a ZWJ sequence is rejected\n    given: { json: \"{\\\"model\\\":\\\"m\\\",\\\"promptAliases\\\":[\\\".👨‍💻\\\"]}\" }\n    expect: { accepts: false }\n  - name: the agent config defaults to the claude preset when absent\n    given: { json: \"{\\\"model\\\":\\\"m\\\"}\" }\n    expect: { agentPreset: claude }\n  - name: the codex preset is accepted\n    given: { json: \"{\\\"model\\\":\\\"m\\\",\\\"agent\\\":{\\\"preset\\\":\\\"codex\\\"}}\" }\n    expect: { agentPreset: codex }\n  - name: the custom preset with a command is accepted\n    given: { json: \"{\\\"model\\\":\\\"m\\\",\\\"agent\\\":{\\\"preset\\\":\\\"custom\\\",\\\"command\\\":[\\\"mycli\\\",\\\"--task-file\\\",\\\"{task}\\\"]}}\" }\n    expect: { agentPreset: custom, command: [\"mycli\", \"--task-file\", \"{task}\"] }\n  - name: an unknown preset is rejected\n    given: { json: \"{\\\"model\\\":\\\"m\\\",\\\"agent\\\":{\\\"preset\\\":\\\"gpt\\\"}}\" }\n    expect: { accepts: false }\n  - name: the custom preset without a command is rejected\n    given: { json: \"{\\\"model\\\":\\\"m\\\",\\\"agent\\\":{\\\"preset\\\":\\\"custom\\\"}}\" }\n    expect: { accepts: false }\n  - name: the custom preset with an empty command is rejected\n    given: { json: \"{\\\"model\\\":\\\"m\\\",\\\"agent\\\":{\\\"preset\\\":\\\"custom\\\",\\\"command\\\":[]}}\" }\n    expect: { accepts: false }\n  - name: the claude preset with a command is rejected\n    given: { json: \"{\\\"model\\\":\\\"m\\\",\\\"agent\\\":{\\\"preset\\\":\\\"claude\\\",\\\"command\\\":[\\\"x\\\"]}}\" }\n    expect: { accepts: false }\n  - name: an unknown field inside the agent config is rejected\n    given: { json: \"{\\\"model\\\":\\\"m\\\",\\\"agent\\\":{\\\"preset\\\":\\\"claude\\\",\\\"extra\\\":1}}\" }\n    expect: { accepts: false }\n---\n# The lock document: model / backend / agent / prompt-alias configuration\n\nThis module defines the serde types and validators for the NAPL lock document —\nthe small JSON configuration that pins which model, code-generation backend,\ncoding-agent engine, and prompt aliases the toolchain compiles through. It is\npure: no I/O. Bring in `serde` and `serde_json`.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `schemas_lock/`: `schemas_lock/Cargo.toml`\n(package name `schemas_lock`) and `schemas_lock/src/lib.rs`. Touch nothing\noutside `schemas_lock/`. Ensure `cargo test` passes from the workspace root\nbefore finishing.\n\n## Builds on the `extensions` module of this workspace\n\nThis module builds on the **`extensions`** module of this same workspace. The\n`extensions` module is generated as a sibling member crate in the `extensions/`\ndirectory (so `../extensions` relative to this crate). It exposes a public\nfunction `default_prompt_aliases() -> Vec<String>` returning the curated default\nlist of prompt-alias strings.\n\nAdd a path dependency on that sibling member crate in your `Cargo.toml`\n(depend on the `extensions` crate by path — it lives one directory up and over,\nat `../extensions`) and call its `default_prompt_aliases()` for the curated\ndefault below. Do **not** reimplement the curated alias list here, and do not\ndepend on any hand-written crate — depend only on the generated sibling\n`extensions` member crate. This sibling path dependency is part of the same\nworkspace, not an external crates.io dependency, so add it even though the\ngeneral guidance is to avoid outside dependencies.\n\n## The value types\n\nExpose these public types, deriving the serde traits noted:\n\n- `Backend`: an enum with two variants, `ClaudeCli` and `AnthropicApi`,\n  serialized/deserialized in **kebab-case** (so the JSON spellings are\n  `\"claude-cli\"` and `\"anthropic-api\"`). It derives serialize and deserialize,\n  and is comparable and copyable.\n- `AgentPreset`: an enum with three variants, `Claude`, `Codex`, and `Custom`,\n  serialized/deserialized in **lowercase** (`\"claude\"`, `\"codex\"`, `\"custom\"`).\n- `AgentConfig`: a struct with a public `preset: AgentPreset` and an optional\n  public `command: Option<Vec<String>>` (a command template; omitted from\n  serialized output and defaulting to `None` when absent). It **denies unknown\n  fields** — any JSON key other than `preset` and `command` is a deserialization\n  error.\n- `HlLock`: the lock document itself, with a public `model: String`; a\n  `backend: Backend` that defaults to claude-cli when the key is absent; an\n  optional `prompt_aliases: Option<Vec<String>>` whose JSON key is\n  **`promptAliases`** (camelCase), omitted when absent; and an optional\n  `agent: Option<AgentConfig>` omitted when absent.\n\nExpose these public constants and defaults:\n\n- `DEFAULT_MODEL: &str` equal to `\"claude-sonnet-5\"`.\n- `DEFAULT_BACKEND: Backend` equal to the claude-cli variant.\n- `DEFAULT_AGENT_PRESET: AgentPreset` equal to the claude variant.\n- `default_agent_config() -> AgentConfig`: the claude preset with no command.\n\n## Parsing and validating a lock\n\nExpose `parse_lock(raw: &str) -> Result<HlLock, _>` that deserializes a JSON\nstring into an `HlLock` and then validates it. Deserialization failures (corrupt\nJSON, unknown backend spelling, unknown preset, unknown agent field, wrong\ntypes) are errors, not panics. After a structural parse, enforce:\n\n- `model` must not be empty — an empty model string is a validation error.\n- If `promptAliases` is present, every alias must be valid (see below).\n- If `agent` is present, it must be valid (see below).\n\n### Prompt-alias validation\n\nA prompt alias is a short string. Validate each one:\n\n- It must start with a `.` (dot). An alias not beginning with `.` is rejected.\n- After the leading dot it must have **1 or 2 Unicode code points** — no more,\n  no fewer. So `\".abc\"` (three code points after the dot) is rejected.\n- It must not contain a ZWJ (zero-width joiner, U+200D) anywhere. A ZWJ-joined\n  emoji sequence such as `\".👨‍💻\"` (man + ZWJ + laptop) is rejected even though it\n  is visually one glyph.\n\nThe exact error wording does not matter — only which aliases are accepted versus\nrejected. A valid override list is kept verbatim.\n\n### Agent-config validation\n\nValidate the agent configuration by preset:\n\n- The `custom` preset **requires** a non-empty `command` array. A custom preset\n  with no `command`, or with an empty `command`, is a validation error.\n- The `claude` and `codex` presets **must not** carry a `command`. Either of\n  those presets with a `command` present is a validation error.\n\n## Resolving effective configuration\n\nExpose two resolvers:\n\n- `resolve_prompt_aliases(lock: &HlLock) -> Vec<String>`: the lock's\n  `promptAliases` override if present, otherwise the curated default obtained by\n  calling the `extensions` module's `default_prompt_aliases()`.\n- `resolve_agent_config(lock: &HlLock) -> AgentConfig`: the lock's `agent`\n  override if present, otherwise `default_agent_config()` (the claude preset).\n"
+    },
+    "events": [
+      {
+        "type": "task",
+        "task": "napl gen rust → schemas_lock"
+      },
+      {
+        "type": "diff",
+        "path": "schemas_lock/Cargo.toml",
+        "patch": "@@ -0,0 +1,9 @@\n+[package]\n+name = \"schemas_lock\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]\n+serde = { version = \"1\", features = [\"derive\"] }\n+serde_json = \"1\"\n+extensions = { path = \"../extensions\" }"
+      },
+      {
+        "type": "file-edit",
+        "path": "schemas_lock/Cargo.toml",
+        "content": "[package]\nname = \"schemas_lock\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\nserde = { version = \"1\", features = [\"derive\"] }\nserde_json = \"1\"\nextensions = { path = \"../extensions\" }\n"
+      },
+      {
+        "type": "diff",
+        "path": "schemas_lock/src/lib.rs",
+        "patch": "@@ -0,0 +1,392 @@\n+// GENERATED BY NAPL from schemas_lock.napl — edit the prompt, not this file\n+\n+use serde::{Deserialize, Serialize};\n+\n+const ZWJ: char = '\\u{200D}';\n+\n+pub const DEFAULT_MODEL: &str = \"claude-sonnet-5\";\n+pub const DEFAULT_BACKEND: Backend = Backend::ClaudeCli;\n+pub const DEFAULT_AGENT_PRESET: AgentPreset = AgentPreset::Claude;\n+\n+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]\n+#[serde(rename_all = \"kebab-case\")]\n+pub enum Backend {\n+    ClaudeCli,\n+    AnthropicApi,\n+}\n+\n+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]\n+#[serde(rename_all = \"lowercase\")]\n+pub enum AgentPreset {\n+    Claude,\n+    Codex,\n+    Custom,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\n+#[serde(deny_unknown_fields)]\n+pub struct AgentConfig {\n+    pub preset: AgentPreset,\n+    #[serde(skip_serializing_if = \"Option::is_none\", default)]\n+    pub command: Option<Vec<String>>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\n+pub struct HlLock {\n+    pub model: String,\n+    #[serde(default = \"default_backend_value\")]\n+    pub backend: Backend,\n+    #[serde(rename = \"promptAliases\", skip_serializing_if = \"Option::is_none\", default)]\n+    pub prompt_aliases: Option<Vec<String>>,\n+    #[serde(skip_serializing_if = \"Option::is_none\", default)]\n+    pub agent: Option<AgentConfig>,\n+}\n+\n+fn default_backend_value() -> Backend {\n+    DEFAULT_BACKEND\n+}\n+\n+pub fn default_agent_config() -> AgentConfig {\n+    AgentConfig {\n+        preset: DEFAULT_AGENT_PRESET,\n+        command: None,\n+    }\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub enum LockError {\n+    Parse(String),\n+    EmptyModel,\n+    InvalidPromptAlias(String),\n+    CustomAgentMissingCommand,\n+    NonCustomAgentHasCommand,\n+}\n+\n+impl std::fmt::Display for LockError {\n+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n+        match self {\n+            LockError::Parse(msg) => write!(f, \"failed to parse lock document: {msg}\"),\n+            LockError::EmptyModel => write!(f, \"model must not be empty\"),\n+            LockError::InvalidPromptAlias(alias) => write!(f, \"invalid prompt alias: {alias}\"),\n+            LockError::CustomAgentMissingCommand => {\n+                write!(f, \"custom agent preset requires a non-empty command\")\n+            }\n+            LockError::NonCustomAgentHasCommand => {\n+                write!(f, \"claude and codex agent presets must not carry a command\")\n+            }\n+        }\n+    }\n+}\n+\n+impl std::error::Error for LockError {}\n+\n+pub fn is_valid_prompt_alias(alias: &str) -> bool {\n+    let Some(rest) = alias.strip_prefix('.') else {\n+        return false;\n+    };\n+    let code_point_count = rest.chars().count();\n+    if code_point_count < 1 || code_point_count > 2 {\n+        return false;\n+    }\n+    if rest.contains(ZWJ) {\n+        return false;\n+    }\n+    true\n+}\n+\n+pub fn validate_agent_config(agent: &AgentConfig) -> Result<(), LockError> {\n+    match agent.preset {\n+        AgentPreset::Custom => match &agent.command {\n+            Some(command) if !command.is_empty() => Ok(()),\n+            _ => Err(LockError::CustomAgentMissingCommand),\n+        },\n+        AgentPreset::Claude | AgentPreset::Codex => {\n+            if agent.command.is_some() {\n+                Err(LockError::NonCustomAgentHasCommand)\n+            } else {\n+                Ok(())\n+            }\n+        }\n+    }\n+}\n+\n+pub fn parse_lock(raw: &str) -> Result<HlLock, LockError> {\n+    let lock: HlLock = serde_json::from_str(raw).map_err(|e| LockError::Parse(e.to_string()))?;\n+\n+    if lock.model.is_empty() {\n+        return Err(LockError::EmptyModel);\n+    }\n+\n+    if let Some(aliases) = &lock.prompt_aliases {\n+        for alias in aliases {\n+            if !is_valid_prompt_alias(alias) {\n+                return Err(LockError::InvalidPromptAlias(alias.clone()));\n+            }\n+        }\n+    }\n+\n+    if let Some(agent) = &lock.agent {\n+        validate_agent_config(agent)?;\n+    }\n+\n+    Ok(lock)\n+}\n+\n+pub fn resolve_prompt_aliases(lock: &HlLock) -> Vec<String> {\n+    lock.prompt_aliases\n+        .clone()\n+        .unwrap_or_else(extensions::default_prompt_aliases)\n+}\n+\n+pub fn resolve_agent_config(lock: &HlLock) -> AgentConfig {\n+    lock.agent.clone().unwrap_or_else(default_agent_config)\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn backend_kebab_case_round_trip() {\n+        assert_eq!(\n+            serde_json::to_string(&Backend::ClaudeCli).unwrap(),\n+            \"\\\"claude-cli\\\"\"\n+        );\n+        assert_eq!(\n+            serde_json::to_string(&Backend::AnthropicApi).unwrap(),\n+            \"\\\"anthropic-api\\\"\"\n+        );\n+        assert_eq!(\n+            serde_json::from_str::<Backend>(\"\\\"claude-cli\\\"\").unwrap(),\n+            Backend::ClaudeCli\n+        );\n+        assert_eq!(\n+            serde_json::from_str::<Backend>(\"\\\"anthropic-api\\\"\").unwrap(),\n+            Backend::AnthropicApi\n+        );\n+    }\n+\n+    #[test]\n+    fn agent_preset_lowercase_round_trip() {\n+        assert_eq!(serde_json::to_string(&AgentPreset::Claude).unwrap(), \"\\\"claude\\\"\");\n+        assert_eq!(serde_json::to_string(&AgentPreset::Codex).unwrap(), \"\\\"codex\\\"\");\n+        assert_eq!(serde_json::to_string(&AgentPreset::Custom).unwrap(), \"\\\"custom\\\"\");\n+    }\n+\n+    #[test]\n+    fn agent_config_denies_unknown_fields() {\n+        let raw = r#\"{\"preset\": \"claude\", \"bogus\": 1}\"#;\n+        assert!(serde_json::from_str::<AgentConfig>(raw).is_err());\n+    }\n+\n+    #[test]\n+    fn agent_config_command_omitted_when_absent() {\n+        let config = AgentConfig {\n+            preset: AgentPreset::Claude,\n+            command: None,\n+        };\n+        let json = serde_json::to_string(&config).unwrap();\n+        assert_eq!(json, r#\"{\"preset\":\"claude\"}\"#);\n+    }\n+\n+    #[test]\n+    fn hl_lock_defaults_backend_when_absent() {\n+        let lock: HlLock = serde_json::from_str(r#\"{\"model\": \"m\"}\"#).unwrap();\n+        assert_eq!(lock.backend, Backend::ClaudeCli);\n+        assert_eq!(lock.prompt_aliases, None);\n+        assert_eq!(lock.agent, None);\n+    }\n+\n+    #[test]\n+    fn hl_lock_prompt_aliases_use_camel_case_key() {\n+        let lock: HlLock =\n+            serde_json::from_str(r#\"{\"model\": \"m\", \"promptAliases\": [\".a\"]}\"#).unwrap();\n+        assert_eq!(lock.prompt_aliases, Some(vec![\".a\".to_string()]));\n+\n+        let json = serde_json::to_string(&lock).unwrap();\n+        assert!(json.contains(\"\\\"promptAliases\\\":[\\\".a\\\"]\"));\n+    }\n+\n+    #[test]\n+    fn parse_lock_rejects_corrupt_json() {\n+        assert!(parse_lock(\"not json\").is_err());\n+    }\n+\n+    #[test]\n+    fn parse_lock_rejects_unknown_backend_spelling() {\n+        let raw = r#\"{\"model\": \"m\", \"backend\": \"bogus\"}\"#;\n+        assert!(parse_lock(raw).is_err());\n+    }\n+\n+    #[test]\n+    fn parse_lock_rejects_unknown_preset() {\n+        let raw = r#\"{\"model\": \"m\", \"agent\": {\"preset\": \"bogus\"}}\"#;\n+        assert!(parse_lock(raw).is_err());\n+    }\n+\n+    #[test]\n+    fn parse_lock_rejects_empty_model() {\n+        let raw = r#\"{\"model\": \"\"}\"#;\n+        assert_eq!(parse_lock(raw).unwrap_err(), LockError::EmptyModel);\n+    }\n+\n+    #[test]\n+    fn parse_lock_accepts_valid_document() {\n+        let raw = r#\"{\n+            \"model\": \"claude-sonnet-5\",\n+            \"backend\": \"anthropic-api\",\n+            \"promptAliases\": [\".a\", \".ab\"],\n+            \"agent\": {\"preset\": \"custom\", \"command\": [\"run\", \"me\"]}\n+        }\"#;\n+        let lock = parse_lock(raw).unwrap();\n+        assert_eq!(lock.model, \"claude-sonnet-5\");\n+        assert_eq!(lock.backend, Backend::AnthropicApi);\n+        assert_eq!(\n+            lock.prompt_aliases,\n+            Some(vec![\".a\".to_string(), \".ab\".to_string()])\n+        );\n+        assert_eq!(\n+            lock.agent,\n+            Some(AgentConfig {\n+                preset: AgentPreset::Custom,\n+                command: Some(vec![\"run\".to_string(), \"me\".to_string()])\n+            })\n+        );\n+    }\n+\n+    #[test]\n+    fn prompt_alias_must_start_with_dot() {\n+        assert!(!is_valid_prompt_alias(\"abc\"));\n+    }\n+\n+    #[test]\n+    fn prompt_alias_allows_one_or_two_code_points_after_dot() {\n+        assert!(is_valid_prompt_alias(\".a\"));\n+        assert!(is_valid_prompt_alias(\".ab\"));\n+        assert!(is_valid_prompt_alias(\".\\u{1F600}\"));\n+    }\n+\n+    #[test]\n+    fn prompt_alias_rejects_too_many_code_points() {\n+        assert!(!is_valid_prompt_alias(\".abc\"));\n+    }\n+\n+    #[test]\n+    fn prompt_alias_rejects_zwj_sequences() {\n+        // \".👨‍💻\" — man + ZWJ + laptop: visually one glyph, three code points after the dot.\n+        assert!(!is_valid_prompt_alias(\".\\u{1F468}\\u{200D}\\u{1F4BB}\"));\n+    }\n+\n+    #[test]\n+    fn parse_lock_rejects_invalid_prompt_alias() {\n+        let raw = r#\"{\"model\": \"m\", \"promptAliases\": [\"abc\"]}\"#;\n+        assert!(matches!(\n+            parse_lock(raw),\n+            Err(LockError::InvalidPromptAlias(_))\n+        ));\n+    }\n+\n+    #[test]\n+    fn custom_preset_requires_non_empty_command() {\n+        let missing = AgentConfig {\n+            preset: AgentPreset::Custom,\n+            command: None,\n+        };\n+        assert_eq!(\n+            validate_agent_config(&missing).unwrap_err(),\n+            LockError::CustomAgentMissingCommand\n+        );\n+\n+        let empty = AgentConfig {\n+            preset: AgentPreset::Custom,\n+            command: Some(vec![]),\n+        };\n+        assert_eq!(\n+            validate_agent_config(&empty).unwrap_err(),\n+            LockError::CustomAgentMissingCommand\n+        );\n+\n+        let ok = AgentConfig {\n+            preset: AgentPreset::Custom,\n+            command: Some(vec![\"run\".to_string()]),\n+        };\n+        assert!(validate_agent_config(&ok).is_ok());\n+    }\n+\n+    #[test]\n+    fn claude_and_codex_presets_reject_command() {\n+        let claude_with_command = AgentConfig {\n+            preset: AgentPreset::Claude,\n+            command: Some(vec![\"run\".to_string()]),\n+        };\n+        assert_eq!(\n+            validate_agent_config(&claude_with_command).unwrap_err(),\n+            LockError::NonCustomAgentHasCommand\n+        );\n+\n+        let codex_with_command = AgentConfig {\n+            preset: AgentPreset::Codex,\n+            command: Some(vec![\"run\".to_string()]),\n+        };\n+        assert_eq!(\n+            validate_agent_config(&codex_with_command).unwrap_err(),\n+            LockError::NonCustomAgentHasCommand\n+        );\n+\n+        let claude_ok = AgentConfig {\n+            preset: AgentPreset::Claude,\n+            command: None,\n+        };\n+        assert!(validate_agent_config(&claude_ok).is_ok());\n+    }\n+\n+    #[test]\n+    fn resolve_prompt_aliases_uses_override_or_curated_default() {\n+        let with_override = HlLock {\n+            model: \"m\".to_string(),\n+            backend: Backend::ClaudeCli,\n+            prompt_aliases: Some(vec![\".x\".to_string()]),\n+            agent: None,\n+        };\n+        assert_eq!(resolve_prompt_aliases(&with_override), vec![\".x\".to_string()]);\n+\n+        let without_override = HlLock {\n+            model: \"m\".to_string(),\n+            backend: Backend::ClaudeCli,\n+            prompt_aliases: None,\n+            agent: None,\n+        };\n+        assert_eq!(\n+            resolve_prompt_aliases(&without_override),\n+            extensions::default_prompt_aliases()\n+        );\n+    }\n+\n+    #[test]\n+    fn resolve_agent_config_uses_override_or_default() {\n+        let with_override = HlLock {\n+            model: \"m\".to_string(),\n+            backend: Backend::ClaudeCli,\n+            prompt_aliases: None,\n+            agent: Some(AgentConfig {\n+                preset: AgentPreset::Codex,\n+                command: None,\n+            }),\n+        };\n+        assert_eq!(\n+            resolve_agent_config(&with_override),\n+            AgentConfig {\n+                preset: AgentPreset::Codex,\n+                command: None\n+            }\n+        );\n+\n+        let without_override = HlLock {\n+            model: \"m\".to_string(),\n+            backend: Backend::ClaudeCli,\n+            prompt_aliases: None,\n+            agent: None,\n+        };\n+        assert_eq!(resolve_agent_config(&without_override), default_agent_config());\n+    }\n+}"
+      },
+      {
+        "type": "file-edit",
+        "path": "schemas_lock/src/lib.rs",
+        "content": "// GENERATED BY NAPL from schemas_lock.napl — edit the prompt, not this file\n\nuse serde::{Deserialize, Serialize};\n\nconst ZWJ: char = '\\u{200D}';\n\npub const DEFAULT_MODEL: &str = \"claude-sonnet-5\";\npub const DEFAULT_BACKEND: Backend = Backend::ClaudeCli;\npub const DEFAULT_AGENT_PRESET: AgentPreset = AgentPreset::Claude;\n\n#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]\n#[serde(rename_all = \"kebab-case\")]\npub enum Backend {\n    ClaudeCli,\n    AnthropicApi,\n}\n\n#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]\n#[serde(rename_all = \"lowercase\")]\npub enum AgentPreset {\n    Claude,\n    Codex,\n    Custom,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\n#[serde(deny_unknown_fields)]\npub struct AgentConfig {\n    pub preset: AgentPreset,\n    #[serde(skip_serializing_if = \"Option::is_none\", default)]\n    pub command: Option<Vec<String>>,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\npub struct HlLock {\n    pub model: String,\n    #[serde(default = \"default_backend_value\")]\n    pub backend: Backend,\n    #[serde(rename = \"promptAliases\", skip_serializing_if = \"Option::is_none\", default)]\n    pub prompt_aliases: Option<Vec<String>>,\n    #[serde(skip_serializing_if = \"Option::is_none\", default)]\n    pub agent: Option<AgentConfig>,\n}\n\nfn default_backend_value() -> Backend {\n    DEFAULT_BACKEND\n}\n\npub fn default_agent_config() -> AgentConfig {\n    AgentConfig {\n        preset: DEFAULT_AGENT_PRESET,\n        command: None,\n    }\n}\n\n#[derive(Debug, Clone, PartialEq, Eq)]\npub enum LockError {\n    Parse(String),\n    EmptyModel,\n    InvalidPromptAlias(String),\n    CustomAgentMissingCommand,\n    NonCustomAgentHasCommand,\n}\n\nimpl std::fmt::Display for LockError {\n    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n        match self {\n            LockError::Parse(msg) => write!(f, \"failed to parse lock document: {msg}\"),\n            LockError::EmptyModel => write!(f, \"model must not be empty\"),\n            LockError::InvalidPromptAlias(alias) => write!(f, \"invalid prompt alias: {alias}\"),\n            LockError::CustomAgentMissingCommand => {\n                write!(f, \"custom agent preset requires a non-empty command\")\n            }\n            LockError::NonCustomAgentHasCommand => {\n                write!(f, \"claude and codex agent presets must not carry a command\")\n            }\n        }\n    }\n}\n\nimpl std::error::Error for LockError {}\n\npub fn is_valid_prompt_alias(alias: &str) -> bool {\n    let Some(rest) = alias.strip_prefix('.') else {\n        return false;\n    };\n    let code_point_count = rest.chars().count();\n    if code_point_count < 1 || code_point_count > 2 {\n        return false;\n    }\n    if rest.contains(ZWJ) {\n        return false;\n    }\n    true\n}\n\npub fn validate_agent_config(agent: &AgentConfig) -> Result<(), LockError> {\n    match agent.preset {\n        AgentPreset::Custom => match &agent.command {\n            Some(command) if !command.is_empty() => Ok(()),\n            _ => Err(LockError::CustomAgentMissingCommand),\n        },\n        AgentPreset::Claude | AgentPreset::Codex => {\n            if agent.command.is_some() {\n                Err(LockError::NonCustomAgentHasCommand)\n            } else {\n                Ok(())\n            }\n        }\n    }\n}\n\npub fn parse_lock(raw: &str) -> Result<HlLock, LockError> {\n    let lock: HlLock = serde_json::from_str(raw).map_err(|e| LockError::Parse(e.to_string()))?;\n\n    if lock.model.is_empty() {\n        return Err(LockError::EmptyModel);\n    }\n\n    if let Some(aliases) = &lock.prompt_aliases {\n        for alias in aliases {\n            if !is_valid_prompt_alias(alias) {\n                return Err(LockError::InvalidPromptAlias(alias.clone()));\n            }\n        }\n    }\n\n    if let Some(agent) = &lock.agent {\n        validate_agent_config(agent)?;\n    }\n\n    Ok(lock)\n}\n\npub fn resolve_prompt_aliases(lock: &HlLock) -> Vec<String> {\n    lock.prompt_aliases\n        .clone()\n        .unwrap_or_else(extensions::default_prompt_aliases)\n}\n\npub fn resolve_agent_config(lock: &HlLock) -> AgentConfig {\n    lock.agent.clone().unwrap_or_else(default_agent_config)\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn backend_kebab_case_round_trip() {\n        assert_eq!(\n            serde_json::to_string(&Backend::ClaudeCli).unwrap(),\n            \"\\\"claude-cli\\\"\"\n        );\n        assert_eq!(\n            serde_json::to_string(&Backend::AnthropicApi).unwrap(),\n            \"\\\"anthropic-api\\\"\"\n        );\n        assert_eq!(\n            serde_json::from_str::<Backend>(\"\\\"claude-cli\\\"\").unwrap(),\n            Backend::ClaudeCli\n        );\n        assert_eq!(\n            serde_json::from_str::<Backend>(\"\\\"anthropic-api\\\"\").unwrap(),\n            Backend::AnthropicApi\n        );\n    }\n\n    #[test]\n    fn agent_preset_lowercase_round_trip() {\n        assert_eq!(serde_json::to_string(&AgentPreset::Claude).unwrap(), \"\\\"claude\\\"\");\n        assert_eq!(serde_json::to_string(&AgentPreset::Codex).unwrap(), \"\\\"codex\\\"\");\n        assert_eq!(serde_json::to_string(&AgentPreset::Custom).unwrap(), \"\\\"custom\\\"\");\n    }\n\n    #[test]\n    fn agent_config_denies_unknown_fields() {\n        let raw = r#\"{\"preset\": \"claude\", \"bogus\": 1}\"#;\n        assert!(serde_json::from_str::<AgentConfig>(raw).is_err());\n    }\n\n    #[test]\n    fn agent_config_command_omitted_when_absent() {\n        let config = AgentConfig {\n            preset: AgentPreset::Claude,\n            command: None,\n        };\n        let json = serde_json::to_string(&config).unwrap();\n        assert_eq!(json, r#\"{\"preset\":\"claude\"}\"#);\n    }\n\n    #[test]\n    fn hl_lock_defaults_backend_when_absent() {\n        let lock: HlLock = serde_json::from_str(r#\"{\"model\": \"m\"}\"#).unwrap();\n        assert_eq!(lock.backend, Backend::ClaudeCli);\n        assert_eq!(lock.prompt_aliases, None);\n        assert_eq!(lock.agent, None);\n    }\n\n    #[test]\n    fn hl_lock_prompt_aliases_use_camel_case_key() {\n        let lock: HlLock =\n            serde_json::from_str(r#\"{\"model\": \"m\", \"promptAliases\": [\".a\"]}\"#).unwrap();\n        assert_eq!(lock.prompt_aliases, Some(vec![\".a\".to_string()]));\n\n        let json = serde_json::to_string(&lock).unwrap();\n        assert!(json.contains(\"\\\"promptAliases\\\":[\\\".a\\\"]\"));\n    }\n\n    #[test]\n    fn parse_lock_rejects_corrupt_json() {\n        assert!(parse_lock(\"not json\").is_err());\n    }\n\n    #[test]\n    fn parse_lock_rejects_unknown_backend_spelling() {\n        let raw = r#\"{\"model\": \"m\", \"backend\": \"bogus\"}\"#;\n        assert!(parse_lock(raw).is_err());\n    }\n\n    #[test]\n    fn parse_lock_rejects_unknown_preset() {\n        let raw = r#\"{\"model\": \"m\", \"agent\": {\"preset\": \"bogus\"}}\"#;\n        assert!(parse_lock(raw).is_err());\n    }\n\n    #[test]\n    fn parse_lock_rejects_empty_model() {\n        let raw = r#\"{\"model\": \"\"}\"#;\n        assert_eq!(parse_lock(raw).unwrap_err(), LockError::EmptyModel);\n    }\n\n    #[test]\n    fn parse_lock_accepts_valid_document() {\n        let raw = r#\"{\n            \"model\": \"claude-sonnet-5\",\n            \"backend\": \"anthropic-api\",\n            \"promptAliases\": [\".a\", \".ab\"],\n            \"agent\": {\"preset\": \"custom\", \"command\": [\"run\", \"me\"]}\n        }\"#;\n        let lock = parse_lock(raw).unwrap();\n        assert_eq!(lock.model, \"claude-sonnet-5\");\n        assert_eq!(lock.backend, Backend::AnthropicApi);\n        assert_eq!(\n            lock.prompt_aliases,\n            Some(vec![\".a\".to_string(), \".ab\".to_string()])\n        );\n        assert_eq!(\n            lock.agent,\n            Some(AgentConfig {\n                preset: AgentPreset::Custom,\n                command: Some(vec![\"run\".to_string(), \"me\".to_string()])\n            })\n        );\n    }\n\n    #[test]\n    fn prompt_alias_must_start_with_dot() {\n        assert!(!is_valid_prompt_alias(\"abc\"));\n    }\n\n    #[test]\n    fn prompt_alias_allows_one_or_two_code_points_after_dot() {\n        assert!(is_valid_prompt_alias(\".a\"));\n        assert!(is_valid_prompt_alias(\".ab\"));\n        assert!(is_valid_prompt_alias(\".\\u{1F600}\"));\n    }\n\n    #[test]\n    fn prompt_alias_rejects_too_many_code_points() {\n        assert!(!is_valid_prompt_alias(\".abc\"));\n    }\n\n    #[test]\n    fn prompt_alias_rejects_zwj_sequences() {\n        // \".👨‍💻\" — man + ZWJ + laptop: visually one glyph, three code points after the dot.\n        assert!(!is_valid_prompt_alias(\".\\u{1F468}\\u{200D}\\u{1F4BB}\"));\n    }\n\n    #[test]\n    fn parse_lock_rejects_invalid_prompt_alias() {\n        let raw = r#\"{\"model\": \"m\", \"promptAliases\": [\"abc\"]}\"#;\n        assert!(matches!(\n            parse_lock(raw),\n            Err(LockError::InvalidPromptAlias(_))\n        ));\n    }\n\n    #[test]\n    fn custom_preset_requires_non_empty_command() {\n        let missing = AgentConfig {\n            preset: AgentPreset::Custom,\n            command: None,\n        };\n        assert_eq!(\n            validate_agent_config(&missing).unwrap_err(),\n            LockError::CustomAgentMissingCommand\n        );\n\n        let empty = AgentConfig {\n            preset: AgentPreset::Custom,\n            command: Some(vec![]),\n        };\n        assert_eq!(\n            validate_agent_config(&empty).unwrap_err(),\n            LockError::CustomAgentMissingCommand\n        );\n\n        let ok = AgentConfig {\n            preset: AgentPreset::Custom,\n            command: Some(vec![\"run\".to_string()]),\n        };\n        assert!(validate_agent_config(&ok).is_ok());\n    }\n\n    #[test]\n    fn claude_and_codex_presets_reject_command() {\n        let claude_with_command = AgentConfig {\n            preset: AgentPreset::Claude,\n            command: Some(vec![\"run\".to_string()]),\n        };\n        assert_eq!(\n            validate_agent_config(&claude_with_command).unwrap_err(),\n            LockError::NonCustomAgentHasCommand\n        );\n\n        let codex_with_command = AgentConfig {\n            preset: AgentPreset::Codex,\n            command: Some(vec![\"run\".to_string()]),\n        };\n        assert_eq!(\n            validate_agent_config(&codex_with_command).unwrap_err(),\n            LockError::NonCustomAgentHasCommand\n        );\n\n        let claude_ok = AgentConfig {\n            preset: AgentPreset::Claude,\n            command: None,\n        };\n        assert!(validate_agent_config(&claude_ok).is_ok());\n    }\n\n    #[test]\n    fn resolve_prompt_aliases_uses_override_or_curated_default() {\n        let with_override = HlLock {\n            model: \"m\".to_string(),\n            backend: Backend::ClaudeCli,\n            prompt_aliases: Some(vec![\".x\".to_string()]),\n            agent: None,\n        };\n        assert_eq!(resolve_prompt_aliases(&with_override), vec![\".x\".to_string()]);\n\n        let without_override = HlLock {\n            model: \"m\".to_string(),\n            backend: Backend::ClaudeCli,\n            prompt_aliases: None,\n            agent: None,\n        };\n        assert_eq!(\n            resolve_prompt_aliases(&without_override),\n            extensions::default_prompt_aliases()\n        );\n    }\n\n    #[test]\n    fn resolve_agent_config_uses_override_or_default() {\n        let with_override = HlLock {\n            model: \"m\".to_string(),\n            backend: Backend::ClaudeCli,\n            prompt_aliases: None,\n            agent: Some(AgentConfig {\n                preset: AgentPreset::Codex,\n                command: None,\n            }),\n        };\n        assert_eq!(\n            resolve_agent_config(&with_override),\n            AgentConfig {\n                preset: AgentPreset::Codex,\n                command: None\n            }\n        );\n\n        let without_override = HlLock {\n            model: \"m\".to_string(),\n            backend: Backend::ClaudeCli,\n            prompt_aliases: None,\n            agent: None,\n        };\n        assert_eq!(resolve_agent_config(&without_override), default_agent_config());\n    }\n}\n"
+      },
+      {
+        "type": "attribution",
+        "module": "schemas_lock",
+        "target": "rust",
+        "entries": [
+          {
+            "promptLines": [
+              1,
+              6
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              1,
+              3
+            ],
+            "note": "module header, pure serde-based types"
+          },
+          {
+            "promptLines": [
+              38,
+              41
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              11,
+              16
+            ],
+            "note": "Backend enum, kebab-case, derives"
+          },
+          {
+            "promptLines": [
+              42,
+              43
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              18,
+              24
+            ],
+            "note": "AgentPreset enum, lowercase"
+          },
+          {
+            "promptLines": [
+              44,
+              48
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              26,
+              32
+            ],
+            "note": "AgentConfig struct, deny_unknown_fields, optional command"
+          },
+          {
+            "promptLines": [
+              49,
+              53
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              34,
+              43
+            ],
+            "note": "HlLock struct fields incl camelCase promptAliases, backend default"
+          },
+          {
+            "promptLines": [
+              50,
+              50
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              45,
+              47
+            ],
+            "note": "default backend value fn for serde default"
+          },
+          {
+            "promptLines": [
+              57,
+              57
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              7,
+              7
+            ],
+            "note": "DEFAULT_MODEL constant"
+          },
+          {
+            "promptLines": [
+              58,
+              58
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              8,
+              8
+            ],
+            "note": "DEFAULT_BACKEND constant"
+          },
+          {
+            "promptLines": [
+              59,
+              59
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              9,
+              9
+            ],
+            "note": "DEFAULT_AGENT_PRESET constant"
+          },
+          {
+            "promptLines": [
+              60,
+              60
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              49,
+              54
+            ],
+            "note": "default_agent_config fn"
+          },
+          {
+            "promptLines": [
+              64,
+              67
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              113,
+              118
+            ],
+            "note": "parse_lock deserializes then validates model"
+          },
+          {
+            "promptLines": [
+              69,
+              69
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              59,
+              59
+            ],
+            "note": "EmptyModel error variant"
+          },
+          {
+            "promptLines": [
+              69,
+              69
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              116,
+              118
+            ],
+            "note": "empty model check"
+          },
+          {
+            "promptLines": [
+              70,
+              70
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              120,
+              126
+            ],
+            "note": "validate each prompt alias"
+          },
+          {
+            "promptLines": [
+              71,
+              71
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              128,
+              130
+            ],
+            "note": "validate agent config if present"
+          },
+          {
+            "promptLines": [
+              75,
+              82
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              5,
+              5
+            ],
+            "note": "ZWJ constant used in alias validation"
+          },
+          {
+            "promptLines": [
+              77,
+              77
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              84,
+              86
+            ],
+            "note": "alias must start with dot"
+          },
+          {
+            "promptLines": [
+              78,
+              79
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              87,
+              90
+            ],
+            "note": "1-2 code points after dot check"
+          },
+          {
+            "promptLines": [
+              80,
+              82
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              91,
+              93
+            ],
+            "note": "reject ZWJ in alias"
+          },
+          {
+            "promptLines": [
+              83,
+              94
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              83,
+              95
+            ],
+            "note": "is_valid_prompt_alias function"
+          },
+          {
+            "promptLines": [
+              91,
+              92
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              99,
+              102
+            ],
+            "note": "custom preset requires non-empty command"
+          },
+          {
+            "promptLines": [
+              93,
+              94
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              103,
+              109
+            ],
+            "note": "claude/codex presets must not have command"
+          },
+          {
+            "promptLines": [
+              87,
+              95
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              97,
+              111
+            ],
+            "note": "validate_agent_config function"
+          },
+          {
+            "promptLines": [
+              65,
+              66
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              56,
+              63
+            ],
+            "note": "LockError variants covering parse/validation failures"
+          },
+          {
+            "promptLines": [
+              65,
+              66
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              65,
+              81
+            ],
+            "note": "Display/Error impls for LockError"
+          },
+          {
+            "promptLines": [
+              100,
+              102
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              135,
+              139
+            ],
+            "note": "resolve_prompt_aliases uses override or extensions default"
+          },
+          {
+            "promptLines": [
+              103,
+              104
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              141,
+              143
+            ],
+            "note": "resolve_agent_config uses override or default_agent_config"
+          },
+          {
+            "promptLines": [
+              21,
+              32
+            ],
+            "file": "schemas_lock/src/lib.rs",
+            "lines": [
+              138,
+              138
+            ],
+            "note": "calls sibling extensions crate's default_prompt_aliases"
+          }
+        ]
+      },
+      {
+        "type": "mapl-entry",
+        "path": "schemas_lock.mapl",
+        "entry": {
+          "promptLines": [
+            10,
+            32
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "Diff only shows lib.rs; crate/workspace wiring (Cargo.toml, sibling path dep) isn't visible to confirm.",
+          "reasoning": "Prompt requires creating schemas_lock/Cargo.toml with a path dependency on ../extensions, and touching nothing else. The provided change list only contains schemas_lock/src/lib.rs — no Cargo.toml content was shown, so the package name, path dependency declaration, and workspace membership can't be verified from what was given, even though the agent's final message claims the whole workspace builds and tests pass.\n"
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "schemas_lock.mapl",
+        "entry": {
+          "promptLines": [
+            69,
+            69
+          ],
+          "kind": "assumption",
+          "severity": "warning",
+          "message": "Empty-model check treats only the literal empty string as invalid, not whitespace-only strings.",
+          "reasoning": "\"model must not be empty\" was implemented as `lock.model.is_empty()`, which only rejects the exact empty string \"\". A whitespace-only model like \" \" passes validation. The prompt doesn't address whitespace, so this literal interpretation was assumed to be correct.\n",
+          "suggestion": "model must not be empty or whitespace-only — reject after trimming."
+        }
+      },
+      {
+        "type": "lock",
+        "module": "schemas_lock",
+        "target": "rust",
+        "files": [
+          {
+            "path": "schemas_lock/Cargo.toml",
+            "hash": "fc0807f7b89a276c36375260b1f93a11451213ca1b265eb75938a56c6ccaee45"
+          },
+          {
+            "path": "schemas_lock/src/lib.rs",
+            "hash": "781b675c4700cd05ad1728b8784c72b5444e622a882739b71ccca45e003c0808"
+          }
+        ]
+      }
+    ]
+  }
+}

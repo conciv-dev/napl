@@ -1,0 +1,502 @@
+{
+  "module": "driftdetect_replay",
+  "collection": "selfhost",
+  "target": "rust",
+  "targets": [
+    "rust"
+  ],
+  "prompt": {
+    "file": "driftdetect_replay.napl",
+    "path": "cli/driftdetect_replay.napl",
+    "content": "---\nmodule: driftdetect_replay\ndeps: [schemas_journal, text_diff]\ntargets: [rust]\ntests:\n  - name: replaying a file's patches oldest-to-newest rebuilds its content\n    given: { patches: [\"@@ -0,0 +1,1 @@\\n+line one\", \"@@ -1,1 +1,2 @@\\n line one\\n+line two\"] }\n    expect: { content: \"line one\\nline two\" }\n  - name: a file no entry touches reconstructs as nothing\n    given: { patches: [\"@@ -0,0 +1,1 @@\\n+x\"], query: \"other.ts\" }\n    expect: { content: null }\n---\n# Reconstructing a generated file from its journal patches\n\nThis module is the **pure** baseline-reconstruction core of the CLI's\ngeneration-time drift detector: given the journal entries and a file path, it\nreplays that file's recorded patches in gen order to rebuild the content the\ntoolchain last wrote. It is pure — no filesystem access; the I/O shell reads the\ncurrent file off disk and diffs it against this baseline. It depends only on\ngenerated sibling crates, never on a hand-written crate.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `driftdetect_replay/`:\n`driftdetect_replay/Cargo.toml` (package name `driftdetect_replay`) and\n`driftdetect_replay/src/lib.rs`. Touch nothing outside `driftdetect_replay/`.\nEnsure `cargo test` passes from the workspace root before finishing.\n\n## Builds on two modules of this workspace\n\nBoth are sibling member crates generated into this same workspace. Add a path\ndependency on each in your `Cargo.toml` (they are workspace siblings, not external\ncrates.io dependencies, so add them even though the general guidance is to avoid\noutside dependencies), use their public API, and do **not** reimplement their\nlogic or depend on any hand-written crate — depend only on the generated siblings.\n\n- **`schemas_journal`** (`../schemas_journal`): exposes the journal serde types.\n  You need `JournalEntry` — a public struct with (among others) a public field\n  `gen: i64` and a public field `files: Vec<JournalFile>`, where `JournalFile` has\n  public fields `path: String` and `patch: String`. Take journal entries as\n  `&[schemas_journal::JournalEntry]`.\n- **`text_diff`** (`../text_diff`): exposes `parse_hunks(patch: &str) -> Vec<Hunk>`\n  and `apply_hunks(base: &str, hunks: &[Hunk]) -> String`, which parse a unified\n  diff and apply it to a base text. Use these to apply each recorded patch.\n\n## `reconstruct_file_content(entries, file_path)`\n\n`reconstruct_file_content(entries: &[schemas_journal::JournalEntry], file_path: &str) -> Option<String>`:\nreplay the patches recorded for `file_path` across the journal, oldest gen first.\n\n- Order the entries by ascending `gen` (do not assume they arrive sorted; sort a\n  borrowed view, do not mutate the caller's slice).\n- Start with no content yet (conceptually `None`).\n- For each entry in gen order, look for a file in that entry's `files` whose `path`\n  equals `file_path`. If found, take the current content so far (the empty string\n  when there is none yet), apply that file's `patch` to it (parse the patch into\n  hunks, then apply the hunks), and let the result become the new current content.\n- After walking every entry, return the accumulated content, or `None` if no entry\n  ever touched `file_path`.\n\nSo two entries whose patches first insert `line one` then append `line two`\nreconstruct to exactly `line one\\nline two`, while querying a path that no entry\ntouches returns `None`.\n</content>\n"
+  },
+  "promptAtGen": "# Reconstructing a generated file from its journal patches\n\nThis module is the **pure** baseline-reconstruction core of the CLI's\ngeneration-time drift detector: given the journal entries and a file path, it\nreplays that file's recorded patches in gen order to rebuild the content the\ntoolchain last wrote. It is pure — no filesystem access; the I/O shell reads the\ncurrent file off disk and diffs it against this baseline. It depends only on\ngenerated sibling crates, never on a hand-written crate.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `driftdetect_replay/`:\n`driftdetect_replay/Cargo.toml` (package name `driftdetect_replay`) and\n`driftdetect_replay/src/lib.rs`. Touch nothing outside `driftdetect_replay/`.\nEnsure `cargo test` passes from the workspace root before finishing.\n\n## Builds on two modules of this workspace\n\nBoth are sibling member crates generated into this same workspace. Add a path\ndependency on each in your `Cargo.toml` (they are workspace siblings, not external\ncrates.io dependencies, so add them even though the general guidance is to avoid\noutside dependencies), use their public API, and do **not** reimplement their\nlogic or depend on any hand-written crate — depend only on the generated siblings.\n\n- **`schemas_journal`** (`../schemas_journal`): exposes the journal serde types.\n  You need `JournalEntry` — a public struct with (among others) a public field\n  `gen: i64` and a public field `files: Vec<JournalFile>`, where `JournalFile` has\n  public fields `path: String` and `patch: String`. Take journal entries as\n  `&[schemas_journal::JournalEntry]`.\n- **`text_diff`** (`../text_diff`): exposes `parse_hunks(patch: &str) -> Vec<Hunk>`\n  and `apply_hunks(base: &str, hunks: &[Hunk]) -> String`, which parse a unified\n  diff and apply it to a base text. Use these to apply each recorded patch.\n\n## `reconstruct_file_content(entries, file_path)`\n\n`reconstruct_file_content(entries: &[schemas_journal::JournalEntry], file_path: &str) -> Option<String>`:\nreplay the patches recorded for `file_path` across the journal, oldest gen first.\n\n- Order the entries by ascending `gen` (do not assume they arrive sorted; sort a\n  borrowed view, do not mutate the caller's slice).\n- Start with no content yet (conceptually `None`).\n- For each entry in gen order, look for a file in that entry's `files` whose `path`\n  equals `file_path`. If found, take the current content so far (the empty string\n  when there is none yet), apply that file's `patch` to it (parse the patch into\n  hunks, then apply the hunks), and let the result become the new current content.\n- After walking every entry, return the accumulated content, or `None` if no entry\n  ever touched `file_path`.\n\nSo two entries whose patches first insert `line one` then append `line two`\nreconstruct to exactly `line one\\nline two`, while querying a path that no entry\ntouches returns `None`.\n</content>\n",
+  "summary": "Reconstructing a generated file from its journal patches",
+  "files": [
+    {
+      "path": "driftdetect_replay/Cargo.toml",
+      "journalPath": ".napl/src/rust/driftdetect_replay/Cargo.toml",
+      "content": "[package]\nname = \"driftdetect_replay\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\nschemas_journal = { path = \"../schemas_journal\" }\ntext_diff = { path = \"../text_diff\" }\n",
+      "language": "toml"
+    },
+    {
+      "path": "driftdetect_replay/src/lib.rs",
+      "journalPath": ".napl/src/rust/driftdetect_replay/src/lib.rs",
+      "content": "//! Reconstructing a generated file's baseline content from journal patches.\n//!\n//! Pure baseline-reconstruction core of the generation-time drift detector:\n//! given journal entries and a file path, replay that file's recorded patches\n//! in gen order to rebuild the content the toolchain last wrote. No filesystem\n//! access — the I/O shell reads the current file and diffs it against this\n//! baseline.\n\nuse schemas_journal::JournalEntry;\n\n/// Replay the patches recorded for `file_path` across `entries`, oldest gen\n/// first, returning the reconstructed content or `None` if no entry ever\n/// touched `file_path`.\npub fn reconstruct_file_content(entries: &[JournalEntry], file_path: &str) -> Option<String> {\n    let mut ordered: Vec<&JournalEntry> = entries.iter().collect();\n    ordered.sort_by_key(|entry| entry.gen);\n\n    let mut content: Option<String> = None;\n    for entry in ordered {\n        if let Some(file) = entry.files.iter().find(|f| f.path == file_path) {\n            let base = content.unwrap_or_default();\n            let hunks = text_diff::parse_hunks(&file.patch);\n            content = Some(text_diff::apply_hunks(&base, &hunks));\n        }\n    }\n    content\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n    use schemas_journal::{JournalFile, JournalMode};\n\n    fn entry(gen: i64, path: &str, before: &str, after: &str) -> JournalEntry {\n        JournalEntry {\n            gen,\n            timestamp: \"2024-01-01T00:00:00Z\".to_string(),\n            module: \"m\".to_string(),\n            target: \"t\".to_string(),\n            prompt_hash: \"h\".to_string(),\n            prompt_diff: \"\".to_string(),\n            mode: JournalMode::Full,\n            files: vec![JournalFile {\n                path: path.to_string(),\n                patch: text_diff::unified_diff(before, after),\n                hash_before: None,\n                hash_after: \"h\".to_string(),\n            }],\n        }\n    }\n\n    #[test]\n    fn replays_two_patches_in_gen_order() {\n        let entries = vec![\n            entry(1, \"a.rs\", \"\", \"line one\"),\n            entry(2, \"a.rs\", \"line one\", \"line one\\nline two\"),\n        ];\n        assert_eq!(\n            reconstruct_file_content(&entries, \"a.rs\"),\n            Some(\"line one\\nline two\".to_string())\n        );\n    }\n\n    #[test]\n    fn sorts_out_of_order_entries_without_mutating_input() {\n        let entries = vec![\n            entry(2, \"a.rs\", \"line one\", \"line one\\nline two\"),\n            entry(1, \"a.rs\", \"\", \"line one\"),\n        ];\n        let original = entries.clone();\n        assert_eq!(\n            reconstruct_file_content(&entries, \"a.rs\"),\n            Some(\"line one\\nline two\".to_string())\n        );\n        assert_eq!(entries, original);\n    }\n\n    #[test]\n    fn returns_none_for_untouched_path() {\n        let entries = vec![entry(1, \"a.rs\", \"\", \"line one\")];\n        assert_eq!(reconstruct_file_content(&entries, \"b.rs\"), None);\n    }\n\n    #[test]\n    fn ignores_files_from_other_entries_with_different_paths() {\n        let mut e1 = entry(1, \"a.rs\", \"\", \"content a\");\n        e1.files.push(JournalFile {\n            path: \"b.rs\".to_string(),\n            patch: text_diff::unified_diff(\"\", \"content b\"),\n            hash_before: None,\n            hash_after: \"h\".to_string(),\n        });\n        let entries = vec![e1];\n        assert_eq!(\n            reconstruct_file_content(&entries, \"a.rs\"),\n            Some(\"content a\".to_string())\n        );\n        assert_eq!(\n            reconstruct_file_content(&entries, \"b.rs\"),\n            Some(\"content b\".to_string())\n        );\n    }\n\n    #[test]\n    fn three_entries_apply_in_ascending_gen_order() {\n        let entries = vec![\n            entry(3, \"a.rs\", \"v1\\nv2\", \"v1\\nv2\\nv3\"),\n            entry(1, \"a.rs\", \"\", \"v1\"),\n            entry(2, \"a.rs\", \"v1\", \"v1\\nv2\"),\n        ];\n        assert_eq!(\n            reconstruct_file_content(&entries, \"a.rs\"),\n            Some(\"v1\\nv2\\nv3\".to_string())\n        );\n    }\n}\n",
+      "language": "rust"
+    }
+  ],
+  "attribution": [
+    {
+      "promptLines": [
+        3,
+        8
+      ],
+      "file": "driftdetect_replay/src/lib.rs",
+      "lines": [
+        1,
+        7
+      ],
+      "note": "module doc summarizing pure baseline-reconstruction role"
+    },
+    {
+      "promptLines": [
+        27,
+        31
+      ],
+      "file": "driftdetect_replay/src/lib.rs",
+      "lines": [
+        9,
+        9
+      ],
+      "note": "import JournalEntry from schemas_journal sibling crate"
+    },
+    {
+      "promptLines": [
+        32,
+        34
+      ],
+      "file": "driftdetect_replay/src/lib.rs",
+      "lines": [
+        22,
+        23
+      ],
+      "note": "use text_diff parse_hunks/apply_hunks to apply recorded patch"
+    },
+    {
+      "promptLines": [
+        36,
+        39
+      ],
+      "file": "driftdetect_replay/src/lib.rs",
+      "lines": [
+        11,
+        14
+      ],
+      "note": "function signature and doc for reconstruct_file_content"
+    },
+    {
+      "promptLines": [
+        41,
+        42
+      ],
+      "file": "driftdetect_replay/src/lib.rs",
+      "lines": [
+        15,
+        16
+      ],
+      "note": "sort borrowed view of entries by ascending gen without mutating input"
+    },
+    {
+      "promptLines": [
+        43,
+        43
+      ],
+      "file": "driftdetect_replay/src/lib.rs",
+      "lines": [
+        18,
+        18
+      ],
+      "note": "start with no content (None)"
+    },
+    {
+      "promptLines": [
+        44,
+        47
+      ],
+      "file": "driftdetect_replay/src/lib.rs",
+      "lines": [
+        19,
+        24
+      ],
+      "note": "find matching file per entry, apply patch to current content"
+    },
+    {
+      "promptLines": [
+        48,
+        49
+      ],
+      "file": "driftdetect_replay/src/lib.rs",
+      "lines": [
+        26,
+        26
+      ],
+      "note": "return accumulated content or None"
+    },
+    {
+      "promptLines": [
+        51,
+        53
+      ],
+      "file": "driftdetect_replay/src/lib.rs",
+      "lines": [
+        52,
+        62
+      ],
+      "note": "test replays two patches in gen order to expected content"
+    },
+    {
+      "promptLines": [
+        41,
+        42
+      ],
+      "file": "driftdetect_replay/src/lib.rs",
+      "lines": [
+        64,
+        76
+      ],
+      "note": "test sorts out-of-order entries without mutating caller slice"
+    },
+    {
+      "promptLines": [
+        48,
+        49
+      ],
+      "file": "driftdetect_replay/src/lib.rs",
+      "lines": [
+        78,
+        82
+      ],
+      "note": "test returns None for untouched path"
+    },
+    {
+      "promptLines": [
+        44,
+        47
+      ],
+      "file": "driftdetect_replay/src/lib.rs",
+      "lines": [
+        84,
+        102
+      ],
+      "note": "test ignores files with different paths within/between entries"
+    },
+    {
+      "promptLines": [
+        41,
+        51
+      ],
+      "file": "driftdetect_replay/src/lib.rs",
+      "lines": [
+        104,
+        115
+      ],
+      "note": "test three entries apply in ascending gen order regardless of input order"
+    }
+  ],
+  "attributionYaml": "module: driftdetect_replay\ntarget: rust\nentries:\n  - promptLines:\n      - 3\n      - 8\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 1\n      - 7\n    note: module doc summarizing pure baseline-reconstruction role\n  - promptLines:\n      - 27\n      - 31\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 9\n      - 9\n    note: import JournalEntry from schemas_journal sibling crate\n  - promptLines:\n      - 32\n      - 34\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 22\n      - 23\n    note: use text_diff parse_hunks/apply_hunks to apply recorded patch\n  - promptLines:\n      - 36\n      - 39\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 11\n      - 14\n    note: function signature and doc for reconstruct_file_content\n  - promptLines:\n      - 41\n      - 42\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 15\n      - 16\n    note: sort borrowed view of entries by ascending gen without mutating input\n  - promptLines:\n      - 43\n      - 43\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 18\n      - 18\n    note: start with no content (None)\n  - promptLines:\n      - 44\n      - 47\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 19\n      - 24\n    note: find matching file per entry, apply patch to current content\n  - promptLines:\n      - 48\n      - 49\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 26\n      - 26\n    note: return accumulated content or None\n  - promptLines:\n      - 51\n      - 53\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 52\n      - 62\n    note: test replays two patches in gen order to expected content\n  - promptLines:\n      - 41\n      - 42\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 64\n      - 76\n    note: test sorts out-of-order entries without mutating caller slice\n  - promptLines:\n      - 48\n      - 49\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 78\n      - 82\n    note: test returns None for untouched path\n  - promptLines:\n      - 44\n      - 47\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 84\n      - 102\n    note: test ignores files with different paths within/between entries\n  - promptLines:\n      - 41\n      - 51\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 104\n      - 115\n    note: test three entries apply in ascending gen order regardless of input order\n",
+  "mapl": [
+    {
+      "promptLines": [
+        21,
+        25
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "sibling crate paths add as path deps, no reimpl — done straight.",
+      "reasoning": "Prompt say add path deps on schemas_journal + text_diff, use public API only. Code just `use schemas_journal::JournalEntry;` and calls `text_diff::parse_hunks`/`apply_hunks` directly, no reimpl. Clear, no guess needed."
+    },
+    {
+      "promptLines": [
+        41,
+        42
+      ],
+      "kind": "assumption",
+      "severity": "warning",
+      "message": "sort via Vec<&JournalEntry> collect, no mutate caller slice.",
+      "reasoning": "Prompt say \"sort a borrowed view, do not mutate caller's slice\" — agent pick collecting refs into new Vec<&JournalEntry> then sort_by_key. Reasonable, tests confirm original untouched (line 65-76 test)."
+    },
+    {
+      "promptLines": [
+        38,
+        38
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "signature match prompt exact, type path shortened via use.",
+      "reasoning": "Prompt spec full path `schemas_journal::JournalEntry` in signature; code use local import `JournalEntry` after `use schemas_journal::JournalEntry;` — same type, just shorter. No issue."
+    }
+  ],
+  "journal": [
+    {
+      "gen": 29,
+      "timestamp": "2026-07-24T09:10:06.871Z",
+      "mode": "full",
+      "promptHash": "2dc207581462ff8cc3269a946b1dcb811f7f20af2b496429e810bacc40d60e25",
+      "files": [
+        {
+          "path": "driftdetect_replay/Cargo.toml",
+          "journalPath": ".napl/src/rust/driftdetect_replay/Cargo.toml",
+          "patch": "@@ -0,0 +1,8 @@\n+[package]\n+name = \"driftdetect_replay\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]\n+schemas_journal = { path = \"../schemas_journal\" }\n+text_diff = { path = \"../text_diff\" }"
+        },
+        {
+          "path": "driftdetect_replay/src/lib.rs",
+          "journalPath": ".napl/src/rust/driftdetect_replay/src/lib.rs",
+          "patch": "@@ -0,0 +1,116 @@\n+//! Reconstructing a generated file's baseline content from journal patches.\n+//!\n+//! Pure baseline-reconstruction core of the generation-time drift detector:\n+//! given journal entries and a file path, replay that file's recorded patches\n+//! in gen order to rebuild the content the toolchain last wrote. No filesystem\n+//! access — the I/O shell reads the current file and diffs it against this\n+//! baseline.\n+\n+use schemas_journal::JournalEntry;\n+\n+/// Replay the patches recorded for `file_path` across `entries`, oldest gen\n+/// first, returning the reconstructed content or `None` if no entry ever\n+/// touched `file_path`.\n+pub fn reconstruct_file_content(entries: &[JournalEntry], file_path: &str) -> Option<String> {\n+    let mut ordered: Vec<&JournalEntry> = entries.iter().collect();\n+    ordered.sort_by_key(|entry| entry.gen);\n+\n+    let mut content: Option<String> = None;\n+    for entry in ordered {\n+        if let Some(file) = entry.files.iter().find(|f| f.path == file_path) {\n+            let base = content.unwrap_or_default();\n+            let hunks = text_diff::parse_hunks(&file.patch);\n+            content = Some(text_diff::apply_hunks(&base, &hunks));\n+        }\n+    }\n+    content\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+    use schemas_journal::{JournalFile, JournalMode};\n+\n+    fn entry(gen: i64, path: &str, before: &str, after: &str) -> JournalEntry {\n+        JournalEntry {\n+            gen,\n+            timestamp: \"2024-01-01T00:00:00Z\".to_string(),\n+            module: \"m\".to_string(),\n+            target: \"t\".to_string(),\n+            prompt_hash: \"h\".to_string(),\n+            prompt_diff: \"\".to_string(),\n+            mode: JournalMode::Full,\n+            files: vec![JournalFile {\n+                path: path.to_string(),\n+                patch: text_diff::unified_diff(before, after),\n+                hash_before: None,\n+                hash_after: \"h\".to_string(),\n+            }],\n+        }\n+    }\n+\n+    #[test]\n+    fn replays_two_patches_in_gen_order() {\n+        let entries = vec![\n+            entry(1, \"a.rs\", \"\", \"line one\"),\n+            entry(2, \"a.rs\", \"line one\", \"line one\\nline two\"),\n+        ];\n+        assert_eq!(\n+            reconstruct_file_content(&entries, \"a.rs\"),\n+            Some(\"line one\\nline two\".to_string())\n+        );\n+    }\n+\n+    #[test]\n+    fn sorts_out_of_order_entries_without_mutating_input() {\n+        let entries = vec![\n+            entry(2, \"a.rs\", \"line one\", \"line one\\nline two\"),\n+            entry(1, \"a.rs\", \"\", \"line one\"),\n+        ];\n+        let original = entries.clone();\n+        assert_eq!(\n+            reconstruct_file_content(&entries, \"a.rs\"),\n+            Some(\"line one\\nline two\".to_string())\n+        );\n+        assert_eq!(entries, original);\n+    }\n+\n+    #[test]\n+    fn returns_none_for_untouched_path() {\n+        let entries = vec![entry(1, \"a.rs\", \"\", \"line one\")];\n+        assert_eq!(reconstruct_file_content(&entries, \"b.rs\"), None);\n+    }\n+\n+    #[test]\n+    fn ignores_files_from_other_entries_with_different_paths() {\n+        let mut e1 = entry(1, \"a.rs\", \"\", \"content a\");\n+        e1.files.push(JournalFile {\n+            path: \"b.rs\".to_string(),\n+            patch: text_diff::unified_diff(\"\", \"content b\"),\n+            hash_before: None,\n+            hash_after: \"h\".to_string(),\n+        });\n+        let entries = vec![e1];\n+        assert_eq!(\n+            reconstruct_file_content(&entries, \"a.rs\"),\n+            Some(\"content a\".to_string())\n+        );\n+        assert_eq!(\n+            reconstruct_file_content(&entries, \"b.rs\"),\n+            Some(\"content b\".to_string())\n+        );\n+    }\n+\n+    #[test]\n+    fn three_entries_apply_in_ascending_gen_order() {\n+        let entries = vec![\n+            entry(3, \"a.rs\", \"v1\\nv2\", \"v1\\nv2\\nv3\"),\n+            entry(1, \"a.rs\", \"\", \"v1\"),\n+            entry(2, \"a.rs\", \"v1\", \"v1\\nv2\"),\n+        ];\n+        assert_eq!(\n+            reconstruct_file_content(&entries, \"a.rs\"),\n+            Some(\"v1\\nv2\\nv3\".to_string())\n+        );\n+    }\n+}"
+        }
+      ]
+    }
+  ],
+  "lock": [
+    {
+      "path": "driftdetect_replay/Cargo.toml",
+      "hash": "dd3df7524f45928c0d6e755caacb1df43bf204ed1f5afd7a00003de0d184f16e"
+    },
+    {
+      "path": "driftdetect_replay/src/lib.rs",
+      "hash": "990cbd8bc95cc4ac82674d2be0b9675578c4050ce0969cd5b963d3d69e5d8d81"
+    }
+  ],
+  "session": {
+    "task": "napl gen rust → driftdetect_replay",
+    "files": {
+      "driftdetect_replay.napl": "---\nmodule: driftdetect_replay\ndeps: [schemas_journal, text_diff]\ntargets: [rust]\ntests:\n  - name: replaying a file's patches oldest-to-newest rebuilds its content\n    given: { patches: [\"@@ -0,0 +1,1 @@\\n+line one\", \"@@ -1,1 +1,2 @@\\n line one\\n+line two\"] }\n    expect: { content: \"line one\\nline two\" }\n  - name: a file no entry touches reconstructs as nothing\n    given: { patches: [\"@@ -0,0 +1,1 @@\\n+x\"], query: \"other.ts\" }\n    expect: { content: null }\n---\n# Reconstructing a generated file from its journal patches\n\nThis module is the **pure** baseline-reconstruction core of the CLI's\ngeneration-time drift detector: given the journal entries and a file path, it\nreplays that file's recorded patches in gen order to rebuild the content the\ntoolchain last wrote. It is pure — no filesystem access; the I/O shell reads the\ncurrent file off disk and diffs it against this baseline. It depends only on\ngenerated sibling crates, never on a hand-written crate.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `driftdetect_replay/`:\n`driftdetect_replay/Cargo.toml` (package name `driftdetect_replay`) and\n`driftdetect_replay/src/lib.rs`. Touch nothing outside `driftdetect_replay/`.\nEnsure `cargo test` passes from the workspace root before finishing.\n\n## Builds on two modules of this workspace\n\nBoth are sibling member crates generated into this same workspace. Add a path\ndependency on each in your `Cargo.toml` (they are workspace siblings, not external\ncrates.io dependencies, so add them even though the general guidance is to avoid\noutside dependencies), use their public API, and do **not** reimplement their\nlogic or depend on any hand-written crate — depend only on the generated siblings.\n\n- **`schemas_journal`** (`../schemas_journal`): exposes the journal serde types.\n  You need `JournalEntry` — a public struct with (among others) a public field\n  `gen: i64` and a public field `files: Vec<JournalFile>`, where `JournalFile` has\n  public fields `path: String` and `patch: String`. Take journal entries as\n  `&[schemas_journal::JournalEntry]`.\n- **`text_diff`** (`../text_diff`): exposes `parse_hunks(patch: &str) -> Vec<Hunk>`\n  and `apply_hunks(base: &str, hunks: &[Hunk]) -> String`, which parse a unified\n  diff and apply it to a base text. Use these to apply each recorded patch.\n\n## `reconstruct_file_content(entries, file_path)`\n\n`reconstruct_file_content(entries: &[schemas_journal::JournalEntry], file_path: &str) -> Option<String>`:\nreplay the patches recorded for `file_path` across the journal, oldest gen first.\n\n- Order the entries by ascending `gen` (do not assume they arrive sorted; sort a\n  borrowed view, do not mutate the caller's slice).\n- Start with no content yet (conceptually `None`).\n- For each entry in gen order, look for a file in that entry's `files` whose `path`\n  equals `file_path`. If found, take the current content so far (the empty string\n  when there is none yet), apply that file's `patch` to it (parse the patch into\n  hunks, then apply the hunks), and let the result become the new current content.\n- After walking every entry, return the accumulated content, or `None` if no entry\n  ever touched `file_path`.\n\nSo two entries whose patches first insert `line one` then append `line two`\nreconstruct to exactly `line one\\nline two`, while querying a path that no entry\ntouches returns `None`.\n</content>\n"
+    },
+    "events": [
+      {
+        "type": "task",
+        "task": "napl gen rust → driftdetect_replay"
+      },
+      {
+        "type": "diff",
+        "path": "driftdetect_replay/Cargo.toml",
+        "patch": "@@ -0,0 +1,8 @@\n+[package]\n+name = \"driftdetect_replay\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]\n+schemas_journal = { path = \"../schemas_journal\" }\n+text_diff = { path = \"../text_diff\" }"
+      },
+      {
+        "type": "file-edit",
+        "path": "driftdetect_replay/Cargo.toml",
+        "content": "[package]\nname = \"driftdetect_replay\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\nschemas_journal = { path = \"../schemas_journal\" }\ntext_diff = { path = \"../text_diff\" }\n"
+      },
+      {
+        "type": "diff",
+        "path": "driftdetect_replay/src/lib.rs",
+        "patch": "@@ -0,0 +1,116 @@\n+//! Reconstructing a generated file's baseline content from journal patches.\n+//!\n+//! Pure baseline-reconstruction core of the generation-time drift detector:\n+//! given journal entries and a file path, replay that file's recorded patches\n+//! in gen order to rebuild the content the toolchain last wrote. No filesystem\n+//! access — the I/O shell reads the current file and diffs it against this\n+//! baseline.\n+\n+use schemas_journal::JournalEntry;\n+\n+/// Replay the patches recorded for `file_path` across `entries`, oldest gen\n+/// first, returning the reconstructed content or `None` if no entry ever\n+/// touched `file_path`.\n+pub fn reconstruct_file_content(entries: &[JournalEntry], file_path: &str) -> Option<String> {\n+    let mut ordered: Vec<&JournalEntry> = entries.iter().collect();\n+    ordered.sort_by_key(|entry| entry.gen);\n+\n+    let mut content: Option<String> = None;\n+    for entry in ordered {\n+        if let Some(file) = entry.files.iter().find(|f| f.path == file_path) {\n+            let base = content.unwrap_or_default();\n+            let hunks = text_diff::parse_hunks(&file.patch);\n+            content = Some(text_diff::apply_hunks(&base, &hunks));\n+        }\n+    }\n+    content\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+    use schemas_journal::{JournalFile, JournalMode};\n+\n+    fn entry(gen: i64, path: &str, before: &str, after: &str) -> JournalEntry {\n+        JournalEntry {\n+            gen,\n+            timestamp: \"2024-01-01T00:00:00Z\".to_string(),\n+            module: \"m\".to_string(),\n+            target: \"t\".to_string(),\n+            prompt_hash: \"h\".to_string(),\n+            prompt_diff: \"\".to_string(),\n+            mode: JournalMode::Full,\n+            files: vec![JournalFile {\n+                path: path.to_string(),\n+                patch: text_diff::unified_diff(before, after),\n+                hash_before: None,\n+                hash_after: \"h\".to_string(),\n+            }],\n+        }\n+    }\n+\n+    #[test]\n+    fn replays_two_patches_in_gen_order() {\n+        let entries = vec![\n+            entry(1, \"a.rs\", \"\", \"line one\"),\n+            entry(2, \"a.rs\", \"line one\", \"line one\\nline two\"),\n+        ];\n+        assert_eq!(\n+            reconstruct_file_content(&entries, \"a.rs\"),\n+            Some(\"line one\\nline two\".to_string())\n+        );\n+    }\n+\n+    #[test]\n+    fn sorts_out_of_order_entries_without_mutating_input() {\n+        let entries = vec![\n+            entry(2, \"a.rs\", \"line one\", \"line one\\nline two\"),\n+            entry(1, \"a.rs\", \"\", \"line one\"),\n+        ];\n+        let original = entries.clone();\n+        assert_eq!(\n+            reconstruct_file_content(&entries, \"a.rs\"),\n+            Some(\"line one\\nline two\".to_string())\n+        );\n+        assert_eq!(entries, original);\n+    }\n+\n+    #[test]\n+    fn returns_none_for_untouched_path() {\n+        let entries = vec![entry(1, \"a.rs\", \"\", \"line one\")];\n+        assert_eq!(reconstruct_file_content(&entries, \"b.rs\"), None);\n+    }\n+\n+    #[test]\n+    fn ignores_files_from_other_entries_with_different_paths() {\n+        let mut e1 = entry(1, \"a.rs\", \"\", \"content a\");\n+        e1.files.push(JournalFile {\n+            path: \"b.rs\".to_string(),\n+            patch: text_diff::unified_diff(\"\", \"content b\"),\n+            hash_before: None,\n+            hash_after: \"h\".to_string(),\n+        });\n+        let entries = vec![e1];\n+        assert_eq!(\n+            reconstruct_file_content(&entries, \"a.rs\"),\n+            Some(\"content a\".to_string())\n+        );\n+        assert_eq!(\n+            reconstruct_file_content(&entries, \"b.rs\"),\n+            Some(\"content b\".to_string())\n+        );\n+    }\n+\n+    #[test]\n+    fn three_entries_apply_in_ascending_gen_order() {\n+        let entries = vec![\n+            entry(3, \"a.rs\", \"v1\\nv2\", \"v1\\nv2\\nv3\"),\n+            entry(1, \"a.rs\", \"\", \"v1\"),\n+            entry(2, \"a.rs\", \"v1\", \"v1\\nv2\"),\n+        ];\n+        assert_eq!(\n+            reconstruct_file_content(&entries, \"a.rs\"),\n+            Some(\"v1\\nv2\\nv3\".to_string())\n+        );\n+    }\n+}"
+      },
+      {
+        "type": "file-edit",
+        "path": "driftdetect_replay/src/lib.rs",
+        "content": "//! Reconstructing a generated file's baseline content from journal patches.\n//!\n//! Pure baseline-reconstruction core of the generation-time drift detector:\n//! given journal entries and a file path, replay that file's recorded patches\n//! in gen order to rebuild the content the toolchain last wrote. No filesystem\n//! access — the I/O shell reads the current file and diffs it against this\n//! baseline.\n\nuse schemas_journal::JournalEntry;\n\n/// Replay the patches recorded for `file_path` across `entries`, oldest gen\n/// first, returning the reconstructed content or `None` if no entry ever\n/// touched `file_path`.\npub fn reconstruct_file_content(entries: &[JournalEntry], file_path: &str) -> Option<String> {\n    let mut ordered: Vec<&JournalEntry> = entries.iter().collect();\n    ordered.sort_by_key(|entry| entry.gen);\n\n    let mut content: Option<String> = None;\n    for entry in ordered {\n        if let Some(file) = entry.files.iter().find(|f| f.path == file_path) {\n            let base = content.unwrap_or_default();\n            let hunks = text_diff::parse_hunks(&file.patch);\n            content = Some(text_diff::apply_hunks(&base, &hunks));\n        }\n    }\n    content\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n    use schemas_journal::{JournalFile, JournalMode};\n\n    fn entry(gen: i64, path: &str, before: &str, after: &str) -> JournalEntry {\n        JournalEntry {\n            gen,\n            timestamp: \"2024-01-01T00:00:00Z\".to_string(),\n            module: \"m\".to_string(),\n            target: \"t\".to_string(),\n            prompt_hash: \"h\".to_string(),\n            prompt_diff: \"\".to_string(),\n            mode: JournalMode::Full,\n            files: vec![JournalFile {\n                path: path.to_string(),\n                patch: text_diff::unified_diff(before, after),\n                hash_before: None,\n                hash_after: \"h\".to_string(),\n            }],\n        }\n    }\n\n    #[test]\n    fn replays_two_patches_in_gen_order() {\n        let entries = vec![\n            entry(1, \"a.rs\", \"\", \"line one\"),\n            entry(2, \"a.rs\", \"line one\", \"line one\\nline two\"),\n        ];\n        assert_eq!(\n            reconstruct_file_content(&entries, \"a.rs\"),\n            Some(\"line one\\nline two\".to_string())\n        );\n    }\n\n    #[test]\n    fn sorts_out_of_order_entries_without_mutating_input() {\n        let entries = vec![\n            entry(2, \"a.rs\", \"line one\", \"line one\\nline two\"),\n            entry(1, \"a.rs\", \"\", \"line one\"),\n        ];\n        let original = entries.clone();\n        assert_eq!(\n            reconstruct_file_content(&entries, \"a.rs\"),\n            Some(\"line one\\nline two\".to_string())\n        );\n        assert_eq!(entries, original);\n    }\n\n    #[test]\n    fn returns_none_for_untouched_path() {\n        let entries = vec![entry(1, \"a.rs\", \"\", \"line one\")];\n        assert_eq!(reconstruct_file_content(&entries, \"b.rs\"), None);\n    }\n\n    #[test]\n    fn ignores_files_from_other_entries_with_different_paths() {\n        let mut e1 = entry(1, \"a.rs\", \"\", \"content a\");\n        e1.files.push(JournalFile {\n            path: \"b.rs\".to_string(),\n            patch: text_diff::unified_diff(\"\", \"content b\"),\n            hash_before: None,\n            hash_after: \"h\".to_string(),\n        });\n        let entries = vec![e1];\n        assert_eq!(\n            reconstruct_file_content(&entries, \"a.rs\"),\n            Some(\"content a\".to_string())\n        );\n        assert_eq!(\n            reconstruct_file_content(&entries, \"b.rs\"),\n            Some(\"content b\".to_string())\n        );\n    }\n\n    #[test]\n    fn three_entries_apply_in_ascending_gen_order() {\n        let entries = vec![\n            entry(3, \"a.rs\", \"v1\\nv2\", \"v1\\nv2\\nv3\"),\n            entry(1, \"a.rs\", \"\", \"v1\"),\n            entry(2, \"a.rs\", \"v1\", \"v1\\nv2\"),\n        ];\n        assert_eq!(\n            reconstruct_file_content(&entries, \"a.rs\"),\n            Some(\"v1\\nv2\\nv3\".to_string())\n        );\n    }\n}\n"
+      },
+      {
+        "type": "attribution",
+        "module": "driftdetect_replay",
+        "target": "rust",
+        "entries": [
+          {
+            "promptLines": [
+              3,
+              8
+            ],
+            "file": "driftdetect_replay/src/lib.rs",
+            "lines": [
+              1,
+              7
+            ],
+            "note": "module doc summarizing pure baseline-reconstruction role"
+          },
+          {
+            "promptLines": [
+              27,
+              31
+            ],
+            "file": "driftdetect_replay/src/lib.rs",
+            "lines": [
+              9,
+              9
+            ],
+            "note": "import JournalEntry from schemas_journal sibling crate"
+          },
+          {
+            "promptLines": [
+              32,
+              34
+            ],
+            "file": "driftdetect_replay/src/lib.rs",
+            "lines": [
+              22,
+              23
+            ],
+            "note": "use text_diff parse_hunks/apply_hunks to apply recorded patch"
+          },
+          {
+            "promptLines": [
+              36,
+              39
+            ],
+            "file": "driftdetect_replay/src/lib.rs",
+            "lines": [
+              11,
+              14
+            ],
+            "note": "function signature and doc for reconstruct_file_content"
+          },
+          {
+            "promptLines": [
+              41,
+              42
+            ],
+            "file": "driftdetect_replay/src/lib.rs",
+            "lines": [
+              15,
+              16
+            ],
+            "note": "sort borrowed view of entries by ascending gen without mutating input"
+          },
+          {
+            "promptLines": [
+              43,
+              43
+            ],
+            "file": "driftdetect_replay/src/lib.rs",
+            "lines": [
+              18,
+              18
+            ],
+            "note": "start with no content (None)"
+          },
+          {
+            "promptLines": [
+              44,
+              47
+            ],
+            "file": "driftdetect_replay/src/lib.rs",
+            "lines": [
+              19,
+              24
+            ],
+            "note": "find matching file per entry, apply patch to current content"
+          },
+          {
+            "promptLines": [
+              48,
+              49
+            ],
+            "file": "driftdetect_replay/src/lib.rs",
+            "lines": [
+              26,
+              26
+            ],
+            "note": "return accumulated content or None"
+          },
+          {
+            "promptLines": [
+              51,
+              53
+            ],
+            "file": "driftdetect_replay/src/lib.rs",
+            "lines": [
+              52,
+              62
+            ],
+            "note": "test replays two patches in gen order to expected content"
+          },
+          {
+            "promptLines": [
+              41,
+              42
+            ],
+            "file": "driftdetect_replay/src/lib.rs",
+            "lines": [
+              64,
+              76
+            ],
+            "note": "test sorts out-of-order entries without mutating caller slice"
+          },
+          {
+            "promptLines": [
+              48,
+              49
+            ],
+            "file": "driftdetect_replay/src/lib.rs",
+            "lines": [
+              78,
+              82
+            ],
+            "note": "test returns None for untouched path"
+          },
+          {
+            "promptLines": [
+              44,
+              47
+            ],
+            "file": "driftdetect_replay/src/lib.rs",
+            "lines": [
+              84,
+              102
+            ],
+            "note": "test ignores files with different paths within/between entries"
+          },
+          {
+            "promptLines": [
+              41,
+              51
+            ],
+            "file": "driftdetect_replay/src/lib.rs",
+            "lines": [
+              104,
+              115
+            ],
+            "note": "test three entries apply in ascending gen order regardless of input order"
+          }
+        ]
+      },
+      {
+        "type": "mapl-entry",
+        "path": "driftdetect_replay.mapl",
+        "entry": {
+          "promptLines": [
+            21,
+            25
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "sibling crate paths add as path deps, no reimpl — done straight.",
+          "reasoning": "Prompt say add path deps on schemas_journal + text_diff, use public API only. Code just `use schemas_journal::JournalEntry;` and calls `text_diff::parse_hunks`/`apply_hunks` directly, no reimpl. Clear, no guess needed."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "driftdetect_replay.mapl",
+        "entry": {
+          "promptLines": [
+            41,
+            42
+          ],
+          "kind": "assumption",
+          "severity": "warning",
+          "message": "sort via Vec<&JournalEntry> collect, no mutate caller slice.",
+          "reasoning": "Prompt say \"sort a borrowed view, do not mutate caller's slice\" — agent pick collecting refs into new Vec<&JournalEntry> then sort_by_key. Reasonable, tests confirm original untouched (line 65-76 test)."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "driftdetect_replay.mapl",
+        "entry": {
+          "promptLines": [
+            38,
+            38
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "signature match prompt exact, type path shortened via use.",
+          "reasoning": "Prompt spec full path `schemas_journal::JournalEntry` in signature; code use local import `JournalEntry` after `use schemas_journal::JournalEntry;` — same type, just shorter. No issue."
+        }
+      },
+      {
+        "type": "lock",
+        "module": "driftdetect_replay",
+        "target": "rust",
+        "files": [
+          {
+            "path": "driftdetect_replay/Cargo.toml",
+            "hash": "dd3df7524f45928c0d6e755caacb1df43bf204ed1f5afd7a00003de0d184f16e"
+          },
+          {
+            "path": "driftdetect_replay/src/lib.rs",
+            "hash": "990cbd8bc95cc4ac82674d2be0b9675578c4050ce0969cd5b963d3d69e5d8d81"
+          }
+        ]
+      }
+    ]
+  }
+}

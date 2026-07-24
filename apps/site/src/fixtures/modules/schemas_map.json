@@ -1,0 +1,1104 @@
+{
+  "module": "schemas_map",
+  "collection": "selfhost",
+  "target": "rust",
+  "targets": [
+    "rust"
+  ],
+  "prompt": {
+    "file": "schemas_map.napl",
+    "path": "schemas/schemas_map.napl",
+    "content": "---\nmodule: schemas_map\ndeps: [schemas_ordered_map]\ntargets: [rust]\ntests:\n  - name: an empty map is version 2 with no prompts\n    given: { call: empty_map }\n    expect: { version: 2, prompts: 0 }\n  - name: a written map round-trips through parse with a trailing newline\n    given: { seeded: true }\n    expect: { ends_with_newline: true, reparses_equal: true }\n  - name: corrupt json is rejected\n    given: { json: \"{ not json\" }\n    expect: { accepts: false }\n  - name: a sparse prompt record applies defaults\n    given: { json: \"{version:2, prompts:{'a.napl':{module:m, promptHash:h}}}\" }\n    expect: { declaredTargets: 0, targets: 0 }\n  - name: membership, declared targets and files resolve for a seeded module\n    given: { seeded: true, module: greeting }\n    expect: { has_module: true, declaredTargets: [typescript], files: 2 }\n  - name: a file attributed by two prompts records both\n    given: { seeded_plus_extra_prompt_same_file: true }\n    expect: { prompts: [\"examples/extra.napl\", \"examples/greeting.napl\"] }\n  - name: re-attributing a prompt to fewer files drops the orphaned file\n    given: { reattribute_greeting_to_one_file: true }\n    expect: { orphan_removed: true, remaining_files: [\".napl/src/typescript/greeting.ts\"] }\n  - name: is-prompt-gen-stale covers hash, target, missing and force cases\n    given: { seeded: true }\n    expect: { same_hash: false, changed_hash: true, other_target: true, no_record: true, forced: true }\n  - name: marking a target unattributed detaches its files and is stale\n    given: { unattribute_greeting: true }\n    expect: { unattributed: true, promptHashAtGen: null, files_detached: true, stale: true }\n  - name: a later attribution clears the unattributed flag\n    given: { unattribute_then_reattribute: true }\n    expect: { unattributed: null, promptHashAtGen: \"p2\" }\n---\n# The NAPL map v2 schema and its pure query/mutation helpers\n\nThis module defines the serde types and pure helpers for the NAPL **map** — the\n`v2` on-disk index recording, for every prompt, which target files it generated\n(with content hashes), and the reverse file→prompt attribution. It is pure: no\nI/O; every helper takes data in and returns data or mutates a passed map. Bring\nin `serde`, `serde_json`, and the standard library.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `schemas_map/`: `schemas_map/Cargo.toml` (package\nname `schemas_map`) and `schemas_map/src/lib.rs`. Touch nothing outside\n`schemas_map/`. Ensure `cargo test` passes from the workspace root before\nfinishing.\n\n## Builds on the `schemas_ordered_map` module of this workspace\n\nThe map preserves **insertion order** of its prompt keys, file keys, and each\nprompt's per-target sub-records. That ordered-map value type is the\n**`schemas_ordered_map`** module of this same workspace, generated as a sibling\nmember crate in the `schemas_ordered_map/` directory (so `../schemas_ordered_map`\nrelative to this crate). It exposes a public generic type `OrderedMap<V>` — an\ninsertion-ordered string-keyed map — with `new`, `len`, `is_empty`,\n`contains_key`, `get`, `get_mut`, `insert`, `remove`, `iter` (yielding\n`(&String, &V)` in insertion order), `keys`, and `values`, plus serde\n`Serialize`/`Deserialize` that round-trips as a JSON object preserving key order.\n\nAdd a path dependency on that sibling member crate in your `Cargo.toml` (depend\non the `schemas_ordered_map` crate by path — it lives at `../schemas_ordered_map`)\nand use its `OrderedMap<V>` for every ordered-map field below. Do **not**\nreimplement an ordered map here, and do not depend on any hand-written crate —\ndepend only on the generated sibling `schemas_ordered_map` member crate. This\nsibling path dependency is part of the same workspace, not an external crates.io\ndependency, so add it even though the general guidance is to avoid outside\ndependencies.\n\n## The types\n\nExpose these public types, all deriving serde serialize + deserialize, equality,\nand clone:\n\n- `PromptTargetRecord`: a per-target record inside a prompt entry, with public\n  fields:\n  - `prompt_hash_at_gen: Option<String>`, JSON key **`promptHashAtGen`**, omitted\n    from output when `None`, defaulting to `None` when absent.\n  - `files: Vec<String>`, defaulting to empty when absent.\n  - `unattributed: Option<bool>`, omitted from output when `None`, defaulting to\n    `None` when absent.\n- `PromptRecord`: a prompt entry, with public fields:\n  - `module: String`.\n  - `prompt_hash: String`, JSON key **`promptHash`**.\n  - `declared_targets: Vec<String>`, JSON key **`declaredTargets`**, defaulting to\n    empty when absent.\n  - `targets: OrderedMap<PromptTargetRecord>`, defaulting to empty when absent.\n- `FileRecord`: a file entry, with public fields:\n  - `target: String`.\n  - `hash: String`.\n  - `prompts: Vec<String>`, defaulting to empty when absent.\n- `NaplMap`: the whole map, with public fields:\n  - `version: u32`, defaulting to `2` when absent.\n  - `prompts: OrderedMap<PromptRecord>`, defaulting to empty when absent.\n  - `files: OrderedMap<FileRecord>`, defaulting to empty when absent.\n\nAnd these plain data structs (comparable/cloneable; no serde needed):\n\n- `ModuleFile` with public `target: String` and `file_path: String`.\n- `FileInput` with public `file_path: String` and `hash: String`.\n- `AttributionInput` with public `rel: String`, `module: String`,\n  `prompt_hash: String`, `target: String`, `declared_targets: Vec<String>`, and\n  `files: Vec<FileInput>`.\n- `UnattributedInput` with public `rel: String`, `module: String`,\n  `prompt_hash: String`, `target: String`, `declared_targets: Vec<String>`, and\n  `files: Vec<String>`.\n\n## Construction and (de)serialization\n\n- `empty_map() -> NaplMap`: version 2, empty prompts, empty files.\n- `parse_map(raw: &str) -> Result<NaplMap, _>`: deserialize a JSON string; then\n  if `version` is not `2`, it is a validation error (\"unsupported map version\").\n  Corrupt JSON is a deserialization error. Neither panics.\n- `map_to_json(map: &NaplMap) -> String`: pretty-print the map as JSON and append\n  a single trailing newline. A written map re-parses to an equal map.\n\n## Query helpers\n\n- `prompts_for_module(map, module) -> Vec<String>`: the relative prompt keys\n  whose record's `module` equals `module`, in insertion order.\n- `has_module(map, module) -> bool`: whether the module has any prompts.\n- `declared_targets_for_module(map, module) -> Vec<String>`: the union of the\n  `declared_targets` across the module's prompt records, deduplicated, in first-\n  seen order.\n- `files_for_module(map, module) -> Vec<ModuleFile>`: for each of the module's\n  prompts, for each `(target, target_record)` pair in insertion order, each file\n  path in `target_record.files`, deduplicated by the `(target, file_path)` pair,\n  in first-seen order.\n- `is_prompt_gen_stale(record: Option<&PromptRecord>, target, prompt_hash, force) -> bool`:\n  `true` if `force`; else `true` if the record is absent; else `true` if the\n  record has no target sub-record for `target`; else `true` if that sub-record's\n  `unattributed` is `Some(true)`; else `true` if its `prompt_hash_at_gen` is\n  absent or differs from `prompt_hash`; otherwise `false`.\n\n## Mutation helpers\n\nBoth mutate the passed map in place.\n\n### `record_attribution(map, input: &AttributionInput)`\n\nRecords a successful generation. Let `existing_targets` be the current prompt\nrecord's `targets` (if the prompt `rel` already exists), and `prior_files` be the\nfiles the `input.target` sub-record previously listed. For every prior file that\nis **not** among the new `input.files` paths, detach it (see \"Detaching\" below).\nThen set the `input.target` sub-record to a `PromptTargetRecord` with\n`prompt_hash_at_gen = Some(input.prompt_hash)`, `files` = the new file paths in\norder, and `unattributed = None`, keeping any other targets. Store the prompt\nrecord under `input.rel` with `module`, `prompt_hash`, `declared_targets`, and\nthose `targets`. Finally, for each new file, ensure a `FileRecord` under its path\nwith `target = input.target`, `hash` = that file's hash, and a `prompts` list\nthat includes `input.rel` (appended once if not already present, preserving any\nexisting prompts for a file shared across prompts).\n\n### `record_unattributed(map, input: &UnattributedInput)`\n\nRecords a generation that produced files but could not be attributed. As above,\ndetach **every** prior file of the `input.target` sub-record. Then set that\nsub-record to `prompt_hash_at_gen = None`, `files = input.files`, and\n`unattributed = Some(true)`, keeping other targets, and store the prompt record\nunder `input.rel`. Do **not** create `FileRecord` entries for the files.\n\n### Detaching a file from a prompt\n\nTo detach `file_path` from prompt `rel`: if the map has a `FileRecord` for\n`file_path`, remove `rel` from its `prompts`; if no prompts remain, remove the\nfile entry entirely; otherwise keep the file entry with the reduced `prompts`.\n\nThis is why re-attributing a prompt to a strictly smaller set of files drops the\nnow-orphaned file entry, and why marking a target unattributed detaches all of\nits files. A subsequent successful `record_attribution` for the same prompt/target\noverwrites the sub-record, clearing the `unattributed` flag and restoring a\n`prompt_hash_at_gen`.\n"
+  },
+  "promptAtGen": "# The NAPL map v2 schema and its pure query/mutation helpers\n\nThis module defines the serde types and pure helpers for the NAPL **map** — the\n`v2` on-disk index recording, for every prompt, which target files it generated\n(with content hashes), and the reverse file→prompt attribution. It is pure: no\nI/O; every helper takes data in and returns data or mutates a passed map. Bring\nin `serde`, `serde_json`, and the standard library.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `schemas_map/`: `schemas_map/Cargo.toml` (package\nname `schemas_map`) and `schemas_map/src/lib.rs`. Touch nothing outside\n`schemas_map/`. Ensure `cargo test` passes from the workspace root before\nfinishing.\n\n## Builds on the `schemas_ordered_map` module of this workspace\n\nThe map preserves **insertion order** of its prompt keys, file keys, and each\nprompt's per-target sub-records. That ordered-map value type is the\n**`schemas_ordered_map`** module of this same workspace, generated as a sibling\nmember crate in the `schemas_ordered_map/` directory (so `../schemas_ordered_map`\nrelative to this crate). It exposes a public generic type `OrderedMap<V>` — an\ninsertion-ordered string-keyed map — with `new`, `len`, `is_empty`,\n`contains_key`, `get`, `get_mut`, `insert`, `remove`, `iter` (yielding\n`(&String, &V)` in insertion order), `keys`, and `values`, plus serde\n`Serialize`/`Deserialize` that round-trips as a JSON object preserving key order.\n\nAdd a path dependency on that sibling member crate in your `Cargo.toml` (depend\non the `schemas_ordered_map` crate by path — it lives at `../schemas_ordered_map`)\nand use its `OrderedMap<V>` for every ordered-map field below. Do **not**\nreimplement an ordered map here, and do not depend on any hand-written crate —\ndepend only on the generated sibling `schemas_ordered_map` member crate. This\nsibling path dependency is part of the same workspace, not an external crates.io\ndependency, so add it even though the general guidance is to avoid outside\ndependencies.\n\n## The types\n\nExpose these public types, all deriving serde serialize + deserialize, equality,\nand clone:\n\n- `PromptTargetRecord`: a per-target record inside a prompt entry, with public\n  fields:\n  - `prompt_hash_at_gen: Option<String>`, JSON key **`promptHashAtGen`**, omitted\n    from output when `None`, defaulting to `None` when absent.\n  - `files: Vec<String>`, defaulting to empty when absent.\n  - `unattributed: Option<bool>`, omitted from output when `None`, defaulting to\n    `None` when absent.\n- `PromptRecord`: a prompt entry, with public fields:\n  - `module: String`.\n  - `prompt_hash: String`, JSON key **`promptHash`**.\n  - `declared_targets: Vec<String>`, JSON key **`declaredTargets`**, defaulting to\n    empty when absent.\n  - `targets: OrderedMap<PromptTargetRecord>`, defaulting to empty when absent.\n- `FileRecord`: a file entry, with public fields:\n  - `target: String`.\n  - `hash: String`.\n  - `prompts: Vec<String>`, defaulting to empty when absent.\n- `NaplMap`: the whole map, with public fields:\n  - `version: u32`, defaulting to `2` when absent.\n  - `prompts: OrderedMap<PromptRecord>`, defaulting to empty when absent.\n  - `files: OrderedMap<FileRecord>`, defaulting to empty when absent.\n\nAnd these plain data structs (comparable/cloneable; no serde needed):\n\n- `ModuleFile` with public `target: String` and `file_path: String`.\n- `FileInput` with public `file_path: String` and `hash: String`.\n- `AttributionInput` with public `rel: String`, `module: String`,\n  `prompt_hash: String`, `target: String`, `declared_targets: Vec<String>`, and\n  `files: Vec<FileInput>`.\n- `UnattributedInput` with public `rel: String`, `module: String`,\n  `prompt_hash: String`, `target: String`, `declared_targets: Vec<String>`, and\n  `files: Vec<String>`.\n\n## Construction and (de)serialization\n\n- `empty_map() -> NaplMap`: version 2, empty prompts, empty files.\n- `parse_map(raw: &str) -> Result<NaplMap, _>`: deserialize a JSON string; then\n  if `version` is not `2`, it is a validation error (\"unsupported map version\").\n  Corrupt JSON is a deserialization error. Neither panics.\n- `map_to_json(map: &NaplMap) -> String`: pretty-print the map as JSON and append\n  a single trailing newline. A written map re-parses to an equal map.\n\n## Query helpers\n\n- `prompts_for_module(map, module) -> Vec<String>`: the relative prompt keys\n  whose record's `module` equals `module`, in insertion order.\n- `has_module(map, module) -> bool`: whether the module has any prompts.\n- `declared_targets_for_module(map, module) -> Vec<String>`: the union of the\n  `declared_targets` across the module's prompt records, deduplicated, in first-\n  seen order.\n- `files_for_module(map, module) -> Vec<ModuleFile>`: for each of the module's\n  prompts, for each `(target, target_record)` pair in insertion order, each file\n  path in `target_record.files`, deduplicated by the `(target, file_path)` pair,\n  in first-seen order.\n- `is_prompt_gen_stale(record: Option<&PromptRecord>, target, prompt_hash, force) -> bool`:\n  `true` if `force`; else `true` if the record is absent; else `true` if the\n  record has no target sub-record for `target`; else `true` if that sub-record's\n  `unattributed` is `Some(true)`; else `true` if its `prompt_hash_at_gen` is\n  absent or differs from `prompt_hash`; otherwise `false`.\n\n## Mutation helpers\n\nBoth mutate the passed map in place.\n\n### `record_attribution(map, input: &AttributionInput)`\n\nRecords a successful generation. Let `existing_targets` be the current prompt\nrecord's `targets` (if the prompt `rel` already exists), and `prior_files` be the\nfiles the `input.target` sub-record previously listed. For every prior file that\nis **not** among the new `input.files` paths, detach it (see \"Detaching\" below).\nThen set the `input.target` sub-record to a `PromptTargetRecord` with\n`prompt_hash_at_gen = Some(input.prompt_hash)`, `files` = the new file paths in\norder, and `unattributed = None`, keeping any other targets. Store the prompt\nrecord under `input.rel` with `module`, `prompt_hash`, `declared_targets`, and\nthose `targets`. Finally, for each new file, ensure a `FileRecord` under its path\nwith `target = input.target`, `hash` = that file's hash, and a `prompts` list\nthat includes `input.rel` (appended once if not already present, preserving any\nexisting prompts for a file shared across prompts).\n\n### `record_unattributed(map, input: &UnattributedInput)`\n\nRecords a generation that produced files but could not be attributed. As above,\ndetach **every** prior file of the `input.target` sub-record. Then set that\nsub-record to `prompt_hash_at_gen = None`, `files = input.files`, and\n`unattributed = Some(true)`, keeping other targets, and store the prompt record\nunder `input.rel`. Do **not** create `FileRecord` entries for the files.\n\n### Detaching a file from a prompt\n\nTo detach `file_path` from prompt `rel`: if the map has a `FileRecord` for\n`file_path`, remove `rel` from its `prompts`; if no prompts remain, remove the\nfile entry entirely; otherwise keep the file entry with the reduced `prompts`.\n\nThis is why re-attributing a prompt to a strictly smaller set of files drops the\nnow-orphaned file entry, and why marking a target unattributed detaches all of\nits files. A subsequent successful `record_attribution` for the same prompt/target\noverwrites the sub-record, clearing the `unattributed` flag and restoring a\n`prompt_hash_at_gen`.\n",
+  "summary": "The NAPL map v2 schema and its pure query/mutation helpers",
+  "files": [
+    {
+      "path": "schemas_map/Cargo.toml",
+      "journalPath": ".napl/src/rust/schemas_map/Cargo.toml",
+      "content": "[package]\nname = \"schemas_map\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\nserde = { version = \"1\", features = [\"derive\"] }\nserde_json = \"1\"\nschemas_ordered_map = { path = \"../schemas_ordered_map\" }\n\n[dev-dependencies]\nserde_json = \"1\"\n",
+      "language": "toml"
+    },
+    {
+      "path": "schemas_map/src/lib.rs",
+      "journalPath": ".napl/src/rust/schemas_map/src/lib.rs",
+      "content": "// GENERATED BY NAPL from schemas_map.napl — edit the prompt, not this file\n\nuse schemas_ordered_map::OrderedMap;\nuse serde::{Deserialize, Serialize};\n\nfn default_version() -> u32 {\n    2\n}\n\n#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\npub struct PromptTargetRecord {\n    #[serde(rename = \"promptHashAtGen\", default, skip_serializing_if = \"Option::is_none\")]\n    pub prompt_hash_at_gen: Option<String>,\n    #[serde(default)]\n    pub files: Vec<String>,\n    #[serde(default, skip_serializing_if = \"Option::is_none\")]\n    pub unattributed: Option<bool>,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\npub struct PromptRecord {\n    pub module: String,\n    #[serde(rename = \"promptHash\")]\n    pub prompt_hash: String,\n    #[serde(rename = \"declaredTargets\", default)]\n    pub declared_targets: Vec<String>,\n    #[serde(default)]\n    pub targets: OrderedMap<PromptTargetRecord>,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\npub struct FileRecord {\n    pub target: String,\n    pub hash: String,\n    #[serde(default)]\n    pub prompts: Vec<String>,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\npub struct NaplMap {\n    #[serde(default = \"default_version\")]\n    pub version: u32,\n    #[serde(default)]\n    pub prompts: OrderedMap<PromptRecord>,\n    #[serde(default)]\n    pub files: OrderedMap<FileRecord>,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq)]\npub struct ModuleFile {\n    pub target: String,\n    pub file_path: String,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq)]\npub struct FileInput {\n    pub file_path: String,\n    pub hash: String,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq)]\npub struct AttributionInput {\n    pub rel: String,\n    pub module: String,\n    pub prompt_hash: String,\n    pub target: String,\n    pub declared_targets: Vec<String>,\n    pub files: Vec<FileInput>,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq)]\npub struct UnattributedInput {\n    pub rel: String,\n    pub module: String,\n    pub prompt_hash: String,\n    pub target: String,\n    pub declared_targets: Vec<String>,\n    pub files: Vec<String>,\n}\n\npub fn empty_map() -> NaplMap {\n    NaplMap {\n        version: 2,\n        prompts: OrderedMap::new(),\n        files: OrderedMap::new(),\n    }\n}\n\npub fn parse_map(raw: &str) -> Result<NaplMap, String> {\n    let map: NaplMap = serde_json::from_str(raw).map_err(|e| e.to_string())?;\n    if map.version != 2 {\n        return Err(\"unsupported map version\".to_string());\n    }\n    Ok(map)\n}\n\npub fn map_to_json(map: &NaplMap) -> String {\n    let mut json = serde_json::to_string_pretty(map).expect(\"NaplMap always serializes\");\n    json.push('\\n');\n    json\n}\n\npub fn prompts_for_module(map: &NaplMap, module: &str) -> Vec<String> {\n    map.prompts\n        .iter()\n        .filter(|(_, record)| record.module == module)\n        .map(|(rel, _)| rel.clone())\n        .collect()\n}\n\npub fn has_module(map: &NaplMap, module: &str) -> bool {\n    map.prompts.iter().any(|(_, record)| record.module == module)\n}\n\npub fn declared_targets_for_module(map: &NaplMap, module: &str) -> Vec<String> {\n    let mut seen = Vec::new();\n    for (_, record) in map.prompts.iter() {\n        if record.module != module {\n            continue;\n        }\n        for target in &record.declared_targets {\n            if !seen.contains(target) {\n                seen.push(target.clone());\n            }\n        }\n    }\n    seen\n}\n\npub fn files_for_module(map: &NaplMap, module: &str) -> Vec<ModuleFile> {\n    let mut result: Vec<ModuleFile> = Vec::new();\n    for (_, record) in map.prompts.iter() {\n        if record.module != module {\n            continue;\n        }\n        for (target, target_record) in record.targets.iter() {\n            for file_path in &target_record.files {\n                let already = result\n                    .iter()\n                    .any(|mf| &mf.target == target && &mf.file_path == file_path);\n                if !already {\n                    result.push(ModuleFile {\n                        target: target.clone(),\n                        file_path: file_path.clone(),\n                    });\n                }\n            }\n        }\n    }\n    result\n}\n\npub fn is_prompt_gen_stale(\n    record: Option<&PromptRecord>,\n    target: &str,\n    prompt_hash: &str,\n    force: bool,\n) -> bool {\n    if force {\n        return true;\n    }\n    let Some(record) = record else {\n        return true;\n    };\n    let Some(target_record) = record.targets.get(target) else {\n        return true;\n    };\n    if target_record.unattributed == Some(true) {\n        return true;\n    }\n    match &target_record.prompt_hash_at_gen {\n        Some(hash) => hash != prompt_hash,\n        None => true,\n    }\n}\n\nfn detach_file(map: &mut NaplMap, rel: &str, file_path: &str) {\n    let Some(file_record) = map.files.get_mut(file_path) else {\n        return;\n    };\n    file_record.prompts.retain(|p| p != rel);\n    if file_record.prompts.is_empty() {\n        map.files.remove(file_path);\n    }\n}\n\npub fn record_attribution(map: &mut NaplMap, input: &AttributionInput) {\n    let mut targets = map\n        .prompts\n        .get(&input.rel)\n        .map(|record| record.targets.clone())\n        .unwrap_or_default();\n\n    let prior_files: Vec<String> = targets\n        .get(&input.target)\n        .map(|target_record| target_record.files.clone())\n        .unwrap_or_default();\n\n    let new_file_paths: Vec<String> = input.files.iter().map(|f| f.file_path.clone()).collect();\n\n    for prior_file in &prior_files {\n        if !new_file_paths.contains(prior_file) {\n            detach_file(map, &input.rel, prior_file);\n        }\n    }\n\n    targets.insert(\n        input.target.clone(),\n        PromptTargetRecord {\n            prompt_hash_at_gen: Some(input.prompt_hash.clone()),\n            files: new_file_paths.clone(),\n            unattributed: None,\n        },\n    );\n\n    map.prompts.insert(\n        input.rel.clone(),\n        PromptRecord {\n            module: input.module.clone(),\n            prompt_hash: input.prompt_hash.clone(),\n            declared_targets: input.declared_targets.clone(),\n            targets,\n        },\n    );\n\n    for file in &input.files {\n        match map.files.get_mut(&file.file_path) {\n            Some(existing) => {\n                existing.target = input.target.clone();\n                existing.hash = file.hash.clone();\n                if !existing.prompts.iter().any(|p| p == &input.rel) {\n                    existing.prompts.push(input.rel.clone());\n                }\n            }\n            None => {\n                map.files.insert(\n                    file.file_path.clone(),\n                    FileRecord {\n                        target: input.target.clone(),\n                        hash: file.hash.clone(),\n                        prompts: vec![input.rel.clone()],\n                    },\n                );\n            }\n        }\n    }\n}\n\npub fn record_unattributed(map: &mut NaplMap, input: &UnattributedInput) {\n    let mut targets = map\n        .prompts\n        .get(&input.rel)\n        .map(|record| record.targets.clone())\n        .unwrap_or_default();\n\n    let prior_files: Vec<String> = targets\n        .get(&input.target)\n        .map(|target_record| target_record.files.clone())\n        .unwrap_or_default();\n\n    for prior_file in &prior_files {\n        detach_file(map, &input.rel, prior_file);\n    }\n\n    targets.insert(\n        input.target.clone(),\n        PromptTargetRecord {\n            prompt_hash_at_gen: None,\n            files: input.files.clone(),\n            unattributed: Some(true),\n        },\n    );\n\n    map.prompts.insert(\n        input.rel.clone(),\n        PromptRecord {\n            module: input.module.clone(),\n            prompt_hash: input.prompt_hash.clone(),\n            declared_targets: input.declared_targets.clone(),\n            targets,\n        },\n    );\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn empty_map_has_version_2_and_no_entries() {\n        let map = empty_map();\n        assert_eq!(map.version, 2);\n        assert!(map.prompts.is_empty());\n        assert!(map.files.is_empty());\n    }\n\n    #[test]\n    fn map_round_trips_through_json() {\n        let mut map = empty_map();\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h1\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![\"rust\".to_string()],\n                files: vec![FileInput {\n                    file_path: \"src/a.rs\".to_string(),\n                    hash: \"fh1\".to_string(),\n                }],\n            },\n        );\n\n        let json = map_to_json(&map);\n        assert!(json.ends_with('\\n'));\n        let reparsed = parse_map(&json).unwrap();\n        assert_eq!(reparsed, map);\n    }\n\n    #[test]\n    fn parse_map_rejects_unsupported_version() {\n        let raw = r#\"{\"version\": 3, \"prompts\": {}, \"files\": {}}\"#;\n        let err = parse_map(raw).unwrap_err();\n        assert_eq!(err, \"unsupported map version\");\n    }\n\n    #[test]\n    fn parse_map_rejects_corrupt_json() {\n        let raw = \"{not json\";\n        assert!(parse_map(raw).is_err());\n    }\n\n    #[test]\n    fn parse_map_defaults_absent_fields() {\n        let raw = r#\"{\"version\": 2}\"#;\n        let map = parse_map(raw).unwrap();\n        assert!(map.prompts.is_empty());\n        assert!(map.files.is_empty());\n    }\n\n    #[test]\n    fn prompt_target_record_omits_none_fields_in_json() {\n        let record = PromptTargetRecord {\n            prompt_hash_at_gen: None,\n            files: vec![\"a.rs\".to_string()],\n            unattributed: None,\n        };\n        let json = serde_json::to_string(&record).unwrap();\n        assert_eq!(json, r#\"{\"files\":[\"a.rs\"]}\"#);\n    }\n\n    #[test]\n    fn prompts_for_module_returns_matching_keys_in_order() {\n        let mut map = empty_map();\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m1\".to_string(),\n                prompt_hash: \"h1\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![],\n            },\n        );\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"b.napl\".to_string(),\n                module: \"m2\".to_string(),\n                prompt_hash: \"h2\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![],\n            },\n        );\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"c.napl\".to_string(),\n                module: \"m1\".to_string(),\n                prompt_hash: \"h3\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![],\n            },\n        );\n\n        assert_eq!(\n            prompts_for_module(&map, \"m1\"),\n            vec![\"a.napl\".to_string(), \"c.napl\".to_string()]\n        );\n        assert_eq!(has_module(&map, \"m1\"), true);\n        assert_eq!(has_module(&map, \"nope\"), false);\n    }\n\n    #[test]\n    fn declared_targets_for_module_deduplicates_in_first_seen_order() {\n        let mut map = empty_map();\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h1\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![\"rust\".to_string(), \"ts\".to_string()],\n                files: vec![],\n            },\n        );\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"b.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h2\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![\"ts\".to_string(), \"go\".to_string()],\n                files: vec![],\n            },\n        );\n\n        assert_eq!(\n            declared_targets_for_module(&map, \"m\"),\n            vec![\"rust\".to_string(), \"ts\".to_string(), \"go\".to_string()]\n        );\n    }\n\n    #[test]\n    fn files_for_module_dedupes_by_target_and_path() {\n        let mut map = empty_map();\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h1\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![\n                    FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() },\n                    FileInput { file_path: \"src/b.rs\".to_string(), hash: \"f2\".to_string() },\n                ],\n            },\n        );\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"b.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h2\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() }],\n            },\n        );\n\n        let files = files_for_module(&map, \"m\");\n        assert_eq!(\n            files,\n            vec![\n                ModuleFile { target: \"rust\".to_string(), file_path: \"src/a.rs\".to_string() },\n                ModuleFile { target: \"rust\".to_string(), file_path: \"src/b.rs\".to_string() },\n            ]\n        );\n    }\n\n    #[test]\n    fn is_prompt_gen_stale_covers_all_cases() {\n        assert!(is_prompt_gen_stale(None, \"rust\", \"h1\", true));\n        assert!(is_prompt_gen_stale(None, \"rust\", \"h1\", false));\n\n        let mut targets = OrderedMap::new();\n        targets.insert(\n            \"rust\".to_string(),\n            PromptTargetRecord {\n                prompt_hash_at_gen: Some(\"h1\".to_string()),\n                files: vec![\"a.rs\".to_string()],\n                unattributed: None,\n            },\n        );\n        let record = PromptRecord {\n            module: \"m\".to_string(),\n            prompt_hash: \"h1\".to_string(),\n            declared_targets: vec![],\n            targets,\n        };\n\n        assert!(!is_prompt_gen_stale(Some(&record), \"rust\", \"h1\", false));\n        assert!(is_prompt_gen_stale(Some(&record), \"rust\", \"h2\", false));\n        assert!(is_prompt_gen_stale(Some(&record), \"ts\", \"h1\", false));\n\n        let mut targets2 = OrderedMap::new();\n        targets2.insert(\n            \"rust\".to_string(),\n            PromptTargetRecord {\n                prompt_hash_at_gen: None,\n                files: vec![\"a.rs\".to_string()],\n                unattributed: Some(true),\n            },\n        );\n        let record2 = PromptRecord {\n            module: \"m\".to_string(),\n            prompt_hash: \"h1\".to_string(),\n            declared_targets: vec![],\n            targets: targets2,\n        };\n        assert!(is_prompt_gen_stale(Some(&record2), \"rust\", \"h1\", false));\n    }\n\n    #[test]\n    fn record_attribution_detaches_orphaned_prior_files() {\n        let mut map = empty_map();\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h1\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![\n                    FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() },\n                    FileInput { file_path: \"src/b.rs\".to_string(), hash: \"f2\".to_string() },\n                ],\n            },\n        );\n        assert!(map.files.contains_key(\"src/a.rs\"));\n        assert!(map.files.contains_key(\"src/b.rs\"));\n\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h2\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1b\".to_string() }],\n            },\n        );\n\n        assert!(map.files.contains_key(\"src/a.rs\"));\n        assert!(!map.files.contains_key(\"src/b.rs\"));\n        let record = map.prompts.get(\"a.napl\").unwrap();\n        let target_record = record.targets.get(\"rust\").unwrap();\n        assert_eq!(target_record.prompt_hash_at_gen, Some(\"h2\".to_string()));\n        assert_eq!(target_record.files, vec![\"src/a.rs\".to_string()]);\n    }\n\n    #[test]\n    fn record_attribution_keeps_shared_file_prompts_list() {\n        let mut map = empty_map();\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h1\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![FileInput { file_path: \"src/shared.rs\".to_string(), hash: \"f1\".to_string() }],\n            },\n        );\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"b.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h2\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![FileInput { file_path: \"src/shared.rs\".to_string(), hash: \"f1\".to_string() }],\n            },\n        );\n\n        let file_record = map.files.get(\"src/shared.rs\").unwrap();\n        assert_eq!(\n            file_record.prompts,\n            vec![\"a.napl\".to_string(), \"b.napl\".to_string()]\n        );\n    }\n\n    #[test]\n    fn record_attribution_keeps_other_targets_for_same_prompt() {\n        let mut map = empty_map();\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h1\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() }],\n            },\n        );\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h1\".to_string(),\n                target: \"ts\".to_string(),\n                declared_targets: vec![],\n                files: vec![FileInput { file_path: \"src/a.ts\".to_string(), hash: \"f2\".to_string() }],\n            },\n        );\n\n        let record = map.prompts.get(\"a.napl\").unwrap();\n        assert!(record.targets.contains_key(\"rust\"));\n        assert!(record.targets.contains_key(\"ts\"));\n    }\n\n    #[test]\n    fn record_unattributed_detaches_all_prior_files_and_creates_no_file_records() {\n        let mut map = empty_map();\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h1\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() }],\n            },\n        );\n        assert!(map.files.contains_key(\"src/a.rs\"));\n\n        record_unattributed(\n            &mut map,\n            &UnattributedInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h2\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![\"src/a.rs\".to_string(), \"src/orphan.rs\".to_string()],\n            },\n        );\n\n        assert!(!map.files.contains_key(\"src/a.rs\"));\n        assert!(!map.files.contains_key(\"src/orphan.rs\"));\n\n        let record = map.prompts.get(\"a.napl\").unwrap();\n        let target_record = record.targets.get(\"rust\").unwrap();\n        assert_eq!(target_record.unattributed, Some(true));\n        assert_eq!(target_record.prompt_hash_at_gen, None);\n        assert_eq!(\n            target_record.files,\n            vec![\"src/a.rs\".to_string(), \"src/orphan.rs\".to_string()]\n        );\n    }\n\n    #[test]\n    fn record_attribution_after_unattributed_overwrites_and_clears_flag() {\n        let mut map = empty_map();\n        record_unattributed(\n            &mut map,\n            &UnattributedInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h1\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![\"src/a.rs\".to_string()],\n            },\n        );\n\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h2\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() }],\n            },\n        );\n\n        let record = map.prompts.get(\"a.napl\").unwrap();\n        let target_record = record.targets.get(\"rust\").unwrap();\n        assert_eq!(target_record.unattributed, None);\n        assert_eq!(target_record.prompt_hash_at_gen, Some(\"h2\".to_string()));\n        assert!(map.files.contains_key(\"src/a.rs\"));\n    }\n}\n",
+      "language": "rust"
+    }
+  ],
+  "attribution": [
+    {
+      "promptLines": [
+        1,
+        7
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        1,
+        4
+      ],
+      "note": "module header, imports serde/serde_json"
+    },
+    {
+      "promptLines": [
+        24,
+        28
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        3,
+        3
+      ],
+      "note": "import OrderedMap from schemas_ordered_map sibling crate"
+    },
+    {
+      "promptLines": [
+        41,
+        50
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        10,
+        18
+      ],
+      "note": "PromptTargetRecord struct with serde attrs"
+    },
+    {
+      "promptLines": [
+        46,
+        47
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        12,
+        13
+      ],
+      "note": "promptHashAtGen field, omit if None, default None"
+    },
+    {
+      "promptLines": [
+        48,
+        48
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        14,
+        15
+      ],
+      "note": "files field defaulting to empty"
+    },
+    {
+      "promptLines": [
+        49,
+        50
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        16,
+        17
+      ],
+      "note": "unattributed field, omit if None"
+    },
+    {
+      "promptLines": [
+        51,
+        56
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        20,
+        29
+      ],
+      "note": "PromptRecord struct"
+    },
+    {
+      "promptLines": [
+        52,
+        52
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        22,
+        22
+      ],
+      "note": "module field"
+    },
+    {
+      "promptLines": [
+        53,
+        53
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        23,
+        24
+      ],
+      "note": "prompt_hash field renamed promptHash"
+    },
+    {
+      "promptLines": [
+        54,
+        55
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        25,
+        26
+      ],
+      "note": "declared_targets field renamed declaredTargets, default empty"
+    },
+    {
+      "promptLines": [
+        56,
+        56
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        27,
+        28
+      ],
+      "note": "targets OrderedMap field default empty"
+    },
+    {
+      "promptLines": [
+        57,
+        60
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        31,
+        37
+      ],
+      "note": "FileRecord struct"
+    },
+    {
+      "promptLines": [
+        61,
+        64
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        39,
+        47
+      ],
+      "note": "NaplMap struct"
+    },
+    {
+      "promptLines": [
+        62,
+        62
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        6,
+        8
+      ],
+      "note": "default_version helper returning 2"
+    },
+    {
+      "promptLines": [
+        62,
+        62
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        41,
+        42
+      ],
+      "note": "version field defaults via default_version"
+    },
+    {
+      "promptLines": [
+        63,
+        64
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        43,
+        46
+      ],
+      "note": "prompts and files OrderedMap fields default empty"
+    },
+    {
+      "promptLines": [
+        68,
+        68
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        49,
+        53
+      ],
+      "note": "ModuleFile plain struct"
+    },
+    {
+      "promptLines": [
+        69,
+        69
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        55,
+        59
+      ],
+      "note": "FileInput plain struct"
+    },
+    {
+      "promptLines": [
+        70,
+        72
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        61,
+        69
+      ],
+      "note": "AttributionInput plain struct"
+    },
+    {
+      "promptLines": [
+        73,
+        75
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        71,
+        79
+      ],
+      "note": "UnattributedInput plain struct"
+    },
+    {
+      "promptLines": [
+        79,
+        79
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        81,
+        87
+      ],
+      "note": "empty_map constructor"
+    },
+    {
+      "promptLines": [
+        80,
+        82
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        89,
+        95
+      ],
+      "note": "parse_map deserializes JSON and validates version"
+    },
+    {
+      "promptLines": [
+        83,
+        84
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        97,
+        101
+      ],
+      "note": "map_to_json pretty-prints with trailing newline"
+    },
+    {
+      "promptLines": [
+        88,
+        89
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        103,
+        109
+      ],
+      "note": "prompts_for_module filters by module, insertion order"
+    },
+    {
+      "promptLines": [
+        90,
+        90
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        111,
+        113
+      ],
+      "note": "has_module checks any matching prompt"
+    },
+    {
+      "promptLines": [
+        91,
+        93
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        115,
+        128
+      ],
+      "note": "declared_targets_for_module dedup union first-seen order"
+    },
+    {
+      "promptLines": [
+        94,
+        97
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        130,
+        151
+      ],
+      "note": "files_for_module dedup by (target, file_path)"
+    },
+    {
+      "promptLines": [
+        98,
+        102
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        153,
+        175
+      ],
+      "note": "is_prompt_gen_stale staleness logic"
+    },
+    {
+      "promptLines": [
+        131,
+        135
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        177,
+        185
+      ],
+      "note": "detach_file helper removes prompt from file record"
+    },
+    {
+      "promptLines": [
+        108,
+        121
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        187,
+        247
+      ],
+      "note": "record_attribution mutation helper"
+    },
+    {
+      "promptLines": [
+        110,
+        113
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        188,
+        205
+      ],
+      "note": "compute existing_targets, prior_files, detach stale files"
+    },
+    {
+      "promptLines": [
+        114,
+        116
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        207,
+        214
+      ],
+      "note": "set target sub-record with prompt_hash_at_gen/files/unattributed None"
+    },
+    {
+      "promptLines": [
+        116,
+        117
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        216,
+        224
+      ],
+      "note": "store prompt record under rel"
+    },
+    {
+      "promptLines": [
+        118,
+        121
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        226,
+        246
+      ],
+      "note": "ensure FileRecord per new file, append prompt if absent"
+    },
+    {
+      "promptLines": [
+        123,
+        129
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        249,
+        283
+      ],
+      "note": "record_unattributed mutation helper"
+    },
+    {
+      "promptLines": [
+        125,
+        126
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        256,
+        263
+      ],
+      "note": "detach every prior file of target sub-record"
+    },
+    {
+      "promptLines": [
+        127,
+        128
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        265,
+        272
+      ],
+      "note": "set sub-record unattributed=Some(true), prompt_hash_at_gen=None"
+    },
+    {
+      "promptLines": [
+        128,
+        129
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        274,
+        282
+      ],
+      "note": "store prompt record, no FileRecord created"
+    }
+  ],
+  "attributionYaml": "module: schemas_map\ntarget: rust\nentries:\n  - promptLines:\n      - 1\n      - 7\n    file: schemas_map/src/lib.rs\n    lines:\n      - 1\n      - 4\n    note: module header, imports serde/serde_json\n  - promptLines:\n      - 24\n      - 28\n    file: schemas_map/src/lib.rs\n    lines:\n      - 3\n      - 3\n    note: import OrderedMap from schemas_ordered_map sibling crate\n  - promptLines:\n      - 41\n      - 50\n    file: schemas_map/src/lib.rs\n    lines:\n      - 10\n      - 18\n    note: PromptTargetRecord struct with serde attrs\n  - promptLines:\n      - 46\n      - 47\n    file: schemas_map/src/lib.rs\n    lines:\n      - 12\n      - 13\n    note: promptHashAtGen field, omit if None, default None\n  - promptLines:\n      - 48\n      - 48\n    file: schemas_map/src/lib.rs\n    lines:\n      - 14\n      - 15\n    note: files field defaulting to empty\n  - promptLines:\n      - 49\n      - 50\n    file: schemas_map/src/lib.rs\n    lines:\n      - 16\n      - 17\n    note: unattributed field, omit if None\n  - promptLines:\n      - 51\n      - 56\n    file: schemas_map/src/lib.rs\n    lines:\n      - 20\n      - 29\n    note: PromptRecord struct\n  - promptLines:\n      - 52\n      - 52\n    file: schemas_map/src/lib.rs\n    lines:\n      - 22\n      - 22\n    note: module field\n  - promptLines:\n      - 53\n      - 53\n    file: schemas_map/src/lib.rs\n    lines:\n      - 23\n      - 24\n    note: prompt_hash field renamed promptHash\n  - promptLines:\n      - 54\n      - 55\n    file: schemas_map/src/lib.rs\n    lines:\n      - 25\n      - 26\n    note: declared_targets field renamed declaredTargets, default empty\n  - promptLines:\n      - 56\n      - 56\n    file: schemas_map/src/lib.rs\n    lines:\n      - 27\n      - 28\n    note: targets OrderedMap field default empty\n  - promptLines:\n      - 57\n      - 60\n    file: schemas_map/src/lib.rs\n    lines:\n      - 31\n      - 37\n    note: FileRecord struct\n  - promptLines:\n      - 61\n      - 64\n    file: schemas_map/src/lib.rs\n    lines:\n      - 39\n      - 47\n    note: NaplMap struct\n  - promptLines:\n      - 62\n      - 62\n    file: schemas_map/src/lib.rs\n    lines:\n      - 6\n      - 8\n    note: default_version helper returning 2\n  - promptLines:\n      - 62\n      - 62\n    file: schemas_map/src/lib.rs\n    lines:\n      - 41\n      - 42\n    note: version field defaults via default_version\n  - promptLines:\n      - 63\n      - 64\n    file: schemas_map/src/lib.rs\n    lines:\n      - 43\n      - 46\n    note: prompts and files OrderedMap fields default empty\n  - promptLines:\n      - 68\n      - 68\n    file: schemas_map/src/lib.rs\n    lines:\n      - 49\n      - 53\n    note: ModuleFile plain struct\n  - promptLines:\n      - 69\n      - 69\n    file: schemas_map/src/lib.rs\n    lines:\n      - 55\n      - 59\n    note: FileInput plain struct\n  - promptLines:\n      - 70\n      - 72\n    file: schemas_map/src/lib.rs\n    lines:\n      - 61\n      - 69\n    note: AttributionInput plain struct\n  - promptLines:\n      - 73\n      - 75\n    file: schemas_map/src/lib.rs\n    lines:\n      - 71\n      - 79\n    note: UnattributedInput plain struct\n  - promptLines:\n      - 79\n      - 79\n    file: schemas_map/src/lib.rs\n    lines:\n      - 81\n      - 87\n    note: empty_map constructor\n  - promptLines:\n      - 80\n      - 82\n    file: schemas_map/src/lib.rs\n    lines:\n      - 89\n      - 95\n    note: parse_map deserializes JSON and validates version\n  - promptLines:\n      - 83\n      - 84\n    file: schemas_map/src/lib.rs\n    lines:\n      - 97\n      - 101\n    note: map_to_json pretty-prints with trailing newline\n  - promptLines:\n      - 88\n      - 89\n    file: schemas_map/src/lib.rs\n    lines:\n      - 103\n      - 109\n    note: prompts_for_module filters by module, insertion order\n  - promptLines:\n      - 90\n      - 90\n    file: schemas_map/src/lib.rs\n    lines:\n      - 111\n      - 113\n    note: has_module checks any matching prompt\n  - promptLines:\n      - 91\n      - 93\n    file: schemas_map/src/lib.rs\n    lines:\n      - 115\n      - 128\n    note: declared_targets_for_module dedup union first-seen order\n  - promptLines:\n      - 94\n      - 97\n    file: schemas_map/src/lib.rs\n    lines:\n      - 130\n      - 151\n    note: files_for_module dedup by (target, file_path)\n  - promptLines:\n      - 98\n      - 102\n    file: schemas_map/src/lib.rs\n    lines:\n      - 153\n      - 175\n    note: is_prompt_gen_stale staleness logic\n  - promptLines:\n      - 131\n      - 135\n    file: schemas_map/src/lib.rs\n    lines:\n      - 177\n      - 185\n    note: detach_file helper removes prompt from file record\n  - promptLines:\n      - 108\n      - 121\n    file: schemas_map/src/lib.rs\n    lines:\n      - 187\n      - 247\n    note: record_attribution mutation helper\n  - promptLines:\n      - 110\n      - 113\n    file: schemas_map/src/lib.rs\n    lines:\n      - 188\n      - 205\n    note: compute existing_targets, prior_files, detach stale files\n  - promptLines:\n      - 114\n      - 116\n    file: schemas_map/src/lib.rs\n    lines:\n      - 207\n      - 214\n    note: set target sub-record with prompt_hash_at_gen/files/unattributed None\n  - promptLines:\n      - 116\n      - 117\n    file: schemas_map/src/lib.rs\n    lines:\n      - 216\n      - 224\n    note: store prompt record under rel\n  - promptLines:\n      - 118\n      - 121\n    file: schemas_map/src/lib.rs\n    lines:\n      - 226\n      - 246\n    note: ensure FileRecord per new file, append prompt if absent\n  - promptLines:\n      - 123\n      - 129\n    file: schemas_map/src/lib.rs\n    lines:\n      - 249\n      - 283\n    note: record_unattributed mutation helper\n  - promptLines:\n      - 125\n      - 126\n    file: schemas_map/src/lib.rs\n    lines:\n      - 256\n      - 263\n    note: detach every prior file of target sub-record\n  - promptLines:\n      - 127\n      - 128\n    file: schemas_map/src/lib.rs\n    lines:\n      - 265\n      - 272\n    note: set sub-record unattributed=Some(true), prompt_hash_at_gen=None\n  - promptLines:\n      - 128\n      - 129\n    file: schemas_map/src/lib.rs\n    lines:\n      - 274\n      - 282\n    note: store prompt record, no FileRecord created\n",
+  "mapl": [
+    {
+      "promptLines": [
+        11,
+        16
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "Agent scoped work correctly to schemas_map/, root Cargo.toml untouched.",
+      "reasoning": "Prompt required leaving workspace root manifest alone and touching nothing outside schemas_map/. Verified only schemas_map/Cargo.toml and schemas_map/src/lib.rs were created; root manifest was not modified. No ambiguity, just confirming correct scope discipline."
+    },
+    {
+      "promptLines": [
+        118,
+        121
+      ],
+      "kind": "assumption",
+      "severity": "warning",
+      "message": "FileRecord fields overwritten unconditionally on every attribution, even for pre-existing files.",
+      "reasoning": "Spec says \"ensure a FileRecord under its path with target=input.target, hash=that file's hash, and a prompts list that includes input.rel.\" It doesn't explicitly say whether target/hash on an already-existing FileRecord (e.g. shared across prompts under a different target) should be overwritten or left alone if it already matches a different owner. Agent chose to always overwrite target and hash on the existing record while only appending to prompts if absent, which is a reasonable reading of \"ensure\" but not the only one (an alternate reading only fills in missing records and never touches existing target/hash of a shared file record). Not tested by the shipped test suite for a cross-target conflict case.",
+      "suggestion": "Clarify whether target/hash should be overwritten when a FileRecord for the given path already exists under a different attribution."
+    },
+    {
+      "promptLines": [
+        94,
+        97
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "files_for_module dedup logic matches spec exactly (dedup by target+path, first-seen order), verified by test.",
+      "reasoning": "No ambiguity found; implementation and accompanying test (files_for_module_dedupes_by_target_and_path) directly mirror the prompt's requirement."
+    }
+  ],
+  "journal": [
+    {
+      "gen": 18,
+      "timestamp": "2026-07-24T07:27:02.384Z",
+      "mode": "full",
+      "promptHash": "fa144f25203c81777b06913519ce5d3e026a33dd2e48c5ab68dc6f178c0b978f",
+      "files": [
+        {
+          "path": "schemas_map/Cargo.toml",
+          "journalPath": ".napl/src/rust/schemas_map/Cargo.toml",
+          "patch": "@@ -0,0 +1,12 @@\n+[package]\n+name = \"schemas_map\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]\n+serde = { version = \"1\", features = [\"derive\"] }\n+serde_json = \"1\"\n+schemas_ordered_map = { path = \"../schemas_ordered_map\" }\n+\n+[dev-dependencies]\n+serde_json = \"1\""
+        },
+        {
+          "path": "schemas_map/src/lib.rs",
+          "journalPath": ".napl/src/rust/schemas_map/src/lib.rs",
+          "patch": "@@ -0,0 +1,690 @@\n+// GENERATED BY NAPL from schemas_map.napl — edit the prompt, not this file\n+\n+use schemas_ordered_map::OrderedMap;\n+use serde::{Deserialize, Serialize};\n+\n+fn default_version() -> u32 {\n+    2\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\n+pub struct PromptTargetRecord {\n+    #[serde(rename = \"promptHashAtGen\", default, skip_serializing_if = \"Option::is_none\")]\n+    pub prompt_hash_at_gen: Option<String>,\n+    #[serde(default)]\n+    pub files: Vec<String>,\n+    #[serde(default, skip_serializing_if = \"Option::is_none\")]\n+    pub unattributed: Option<bool>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\n+pub struct PromptRecord {\n+    pub module: String,\n+    #[serde(rename = \"promptHash\")]\n+    pub prompt_hash: String,\n+    #[serde(rename = \"declaredTargets\", default)]\n+    pub declared_targets: Vec<String>,\n+    #[serde(default)]\n+    pub targets: OrderedMap<PromptTargetRecord>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\n+pub struct FileRecord {\n+    pub target: String,\n+    pub hash: String,\n+    #[serde(default)]\n+    pub prompts: Vec<String>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\n+pub struct NaplMap {\n+    #[serde(default = \"default_version\")]\n+    pub version: u32,\n+    #[serde(default)]\n+    pub prompts: OrderedMap<PromptRecord>,\n+    #[serde(default)]\n+    pub files: OrderedMap<FileRecord>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct ModuleFile {\n+    pub target: String,\n+    pub file_path: String,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct FileInput {\n+    pub file_path: String,\n+    pub hash: String,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct AttributionInput {\n+    pub rel: String,\n+    pub module: String,\n+    pub prompt_hash: String,\n+    pub target: String,\n+    pub declared_targets: Vec<String>,\n+    pub files: Vec<FileInput>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct UnattributedInput {\n+    pub rel: String,\n+    pub module: String,\n+    pub prompt_hash: String,\n+    pub target: String,\n+    pub declared_targets: Vec<String>,\n+    pub files: Vec<String>,\n+}\n+\n+pub fn empty_map() -> NaplMap {\n+    NaplMap {\n+        version: 2,\n+        prompts: OrderedMap::new(),\n+        files: OrderedMap::new(),\n+    }\n+}\n+\n+pub fn parse_map(raw: &str) -> Result<NaplMap, String> {\n+    let map: NaplMap = serde_json::from_str(raw).map_err(|e| e.to_string())?;\n+    if map.version != 2 {\n+        return Err(\"unsupported map version\".to_string());\n+    }\n+    Ok(map)\n+}\n+\n+pub fn map_to_json(map: &NaplMap) -> String {\n+    let mut json = serde_json::to_string_pretty(map).expect(\"NaplMap always serializes\");\n+    json.push('\\n');\n+    json\n+}\n+\n+pub fn prompts_for_module(map: &NaplMap, module: &str) -> Vec<String> {\n+    map.prompts\n+        .iter()\n+        .filter(|(_, record)| record.module == module)\n+        .map(|(rel, _)| rel.clone())\n+        .collect()\n+}\n+\n+pub fn has_module(map: &NaplMap, module: &str) -> bool {\n+    map.prompts.iter().any(|(_, record)| record.module == module)\n+}\n+\n+pub fn declared_targets_for_module(map: &NaplMap, module: &str) -> Vec<String> {\n+    let mut seen = Vec::new();\n+    for (_, record) in map.prompts.iter() {\n+        if record.module != module {\n+            continue;\n+        }\n+        for target in &record.declared_targets {\n+            if !seen.contains(target) {\n+                seen.push(target.clone());\n+            }\n+        }\n+    }\n+    seen\n+}\n+\n+pub fn files_for_module(map: &NaplMap, module: &str) -> Vec<ModuleFile> {\n+    let mut result: Vec<ModuleFile> = Vec::new();\n+    for (_, record) in map.prompts.iter() {\n+        if record.module != module {\n+            continue;\n+        }\n+        for (target, target_record) in record.targets.iter() {\n+            for file_path in &target_record.files {\n+                let already = result\n+                    .iter()\n+                    .any(|mf| &mf.target == target && &mf.file_path == file_path);\n+                if !already {\n+                    result.push(ModuleFile {\n+                        target: target.clone(),\n+                        file_path: file_path.clone(),\n+                    });\n+                }\n+            }\n+        }\n+    }\n+    result\n+}\n+\n+pub fn is_prompt_gen_stale(\n+    record: Option<&PromptRecord>,\n+    target: &str,\n+    prompt_hash: &str,\n+    force: bool,\n+) -> bool {\n+    if force {\n+        return true;\n+    }\n+    let Some(record) = record else {\n+        return true;\n+    };\n+    let Some(target_record) = record.targets.get(target) else {\n+        return true;\n+    };\n+    if target_record.unattributed == Some(true) {\n+        return true;\n+    }\n+    match &target_record.prompt_hash_at_gen {\n+        Some(hash) => hash != prompt_hash,\n+        None => true,\n+    }\n+}\n+\n+fn detach_file(map: &mut NaplMap, rel: &str, file_path: &str) {\n+    let Some(file_record) = map.files.get_mut(file_path) else {\n+        return;\n+    };\n+    file_record.prompts.retain(|p| p != rel);\n+    if file_record.prompts.is_empty() {\n+        map.files.remove(file_path);\n+    }\n+}\n+\n+pub fn record_attribution(map: &mut NaplMap, input: &AttributionInput) {\n+    let mut targets = map\n+        .prompts\n+        .get(&input.rel)\n+        .map(|record| record.targets.clone())\n+        .unwrap_or_default();\n+\n+    let prior_files: Vec<String> = targets\n+        .get(&input.target)\n+        .map(|target_record| target_record.files.clone())\n+        .unwrap_or_default();\n+\n+    let new_file_paths: Vec<String> = input.files.iter().map(|f| f.file_path.clone()).collect();\n+\n+    for prior_file in &prior_files {\n+        if !new_file_paths.contains(prior_file) {\n+            detach_file(map, &input.rel, prior_file);\n+        }\n+    }\n+\n+    targets.insert(\n+        input.target.clone(),\n+        PromptTargetRecord {\n+            prompt_hash_at_gen: Some(input.prompt_hash.clone()),\n+            files: new_file_paths.clone(),\n+            unattributed: None,\n+        },\n+    );\n+\n+    map.prompts.insert(\n+        input.rel.clone(),\n+        PromptRecord {\n+            module: input.module.clone(),\n+            prompt_hash: input.prompt_hash.clone(),\n+            declared_targets: input.declared_targets.clone(),\n+            targets,\n+        },\n+    );\n+\n+    for file in &input.files {\n+        match map.files.get_mut(&file.file_path) {\n+            Some(existing) => {\n+                existing.target = input.target.clone();\n+                existing.hash = file.hash.clone();\n+                if !existing.prompts.iter().any(|p| p == &input.rel) {\n+                    existing.prompts.push(input.rel.clone());\n+                }\n+            }\n+            None => {\n+                map.files.insert(\n+                    file.file_path.clone(),\n+                    FileRecord {\n+                        target: input.target.clone(),\n+                        hash: file.hash.clone(),\n+                        prompts: vec![input.rel.clone()],\n+                    },\n+                );\n+            }\n+        }\n+    }\n+}\n+\n+pub fn record_unattributed(map: &mut NaplMap, input: &UnattributedInput) {\n+    let mut targets = map\n+        .prompts\n+        .get(&input.rel)\n+        .map(|record| record.targets.clone())\n+        .unwrap_or_default();\n+\n+    let prior_files: Vec<String> = targets\n+        .get(&input.target)\n+        .map(|target_record| target_record.files.clone())\n+        .unwrap_or_default();\n+\n+    for prior_file in &prior_files {\n+        detach_file(map, &input.rel, prior_file);\n+    }\n+\n+    targets.insert(\n+        input.target.clone(),\n+        PromptTargetRecord {\n+            prompt_hash_at_gen: None,\n+            files: input.files.clone(),\n+            unattributed: Some(true),\n+        },\n+    );\n+\n+    map.prompts.insert(\n+        input.rel.clone(),\n+        PromptRecord {\n+            module: input.module.clone(),\n+            prompt_hash: input.prompt_hash.clone(),\n+            declared_targets: input.declared_targets.clone(),\n+            targets,\n+        },\n+    );\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn empty_map_has_version_2_and_no_entries() {\n+        let map = empty_map();\n+        assert_eq!(map.version, 2);\n+        assert!(map.prompts.is_empty());\n+        assert!(map.files.is_empty());\n+    }\n+\n+    #[test]\n+    fn map_round_trips_through_json() {\n+        let mut map = empty_map();\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![\"rust\".to_string()],\n+                files: vec![FileInput {\n+                    file_path: \"src/a.rs\".to_string(),\n+                    hash: \"fh1\".to_string(),\n+                }],\n+            },\n+        );\n+\n+        let json = map_to_json(&map);\n+        assert!(json.ends_with('\\n'));\n+        let reparsed = parse_map(&json).unwrap();\n+        assert_eq!(reparsed, map);\n+    }\n+\n+    #[test]\n+    fn parse_map_rejects_unsupported_version() {\n+        let raw = r#\"{\"version\": 3, \"prompts\": {}, \"files\": {}}\"#;\n+        let err = parse_map(raw).unwrap_err();\n+        assert_eq!(err, \"unsupported map version\");\n+    }\n+\n+    #[test]\n+    fn parse_map_rejects_corrupt_json() {\n+        let raw = \"{not json\";\n+        assert!(parse_map(raw).is_err());\n+    }\n+\n+    #[test]\n+    fn parse_map_defaults_absent_fields() {\n+        let raw = r#\"{\"version\": 2}\"#;\n+        let map = parse_map(raw).unwrap();\n+        assert!(map.prompts.is_empty());\n+        assert!(map.files.is_empty());\n+    }\n+\n+    #[test]\n+    fn prompt_target_record_omits_none_fields_in_json() {\n+        let record = PromptTargetRecord {\n+            prompt_hash_at_gen: None,\n+            files: vec![\"a.rs\".to_string()],\n+            unattributed: None,\n+        };\n+        let json = serde_json::to_string(&record).unwrap();\n+        assert_eq!(json, r#\"{\"files\":[\"a.rs\"]}\"#);\n+    }\n+\n+    #[test]\n+    fn prompts_for_module_returns_matching_keys_in_order() {\n+        let mut map = empty_map();\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m1\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![],\n+            },\n+        );\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"b.napl\".to_string(),\n+                module: \"m2\".to_string(),\n+                prompt_hash: \"h2\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![],\n+            },\n+        );\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"c.napl\".to_string(),\n+                module: \"m1\".to_string(),\n+                prompt_hash: \"h3\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![],\n+            },\n+        );\n+\n+        assert_eq!(\n+            prompts_for_module(&map, \"m1\"),\n+            vec![\"a.napl\".to_string(), \"c.napl\".to_string()]\n+        );\n+        assert_eq!(has_module(&map, \"m1\"), true);\n+        assert_eq!(has_module(&map, \"nope\"), false);\n+    }\n+\n+    #[test]\n+    fn declared_targets_for_module_deduplicates_in_first_seen_order() {\n+        let mut map = empty_map();\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![\"rust\".to_string(), \"ts\".to_string()],\n+                files: vec![],\n+            },\n+        );\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"b.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h2\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![\"ts\".to_string(), \"go\".to_string()],\n+                files: vec![],\n+            },\n+        );\n+\n+        assert_eq!(\n+            declared_targets_for_module(&map, \"m\"),\n+            vec![\"rust\".to_string(), \"ts\".to_string(), \"go\".to_string()]\n+        );\n+    }\n+\n+    #[test]\n+    fn files_for_module_dedupes_by_target_and_path() {\n+        let mut map = empty_map();\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![\n+                    FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() },\n+                    FileInput { file_path: \"src/b.rs\".to_string(), hash: \"f2\".to_string() },\n+                ],\n+            },\n+        );\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"b.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h2\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() }],\n+            },\n+        );\n+\n+        let files = files_for_module(&map, \"m\");\n+        assert_eq!(\n+            files,\n+            vec![\n+                ModuleFile { target: \"rust\".to_string(), file_path: \"src/a.rs\".to_string() },\n+                ModuleFile { target: \"rust\".to_string(), file_path: \"src/b.rs\".to_string() },\n+            ]\n+        );\n+    }\n+\n+    #[test]\n+    fn is_prompt_gen_stale_covers_all_cases() {\n+        assert!(is_prompt_gen_stale(None, \"rust\", \"h1\", true));\n+        assert!(is_prompt_gen_stale(None, \"rust\", \"h1\", false));\n+\n+        let mut targets = OrderedMap::new();\n+        targets.insert(\n+            \"rust\".to_string(),\n+            PromptTargetRecord {\n+                prompt_hash_at_gen: Some(\"h1\".to_string()),\n+                files: vec![\"a.rs\".to_string()],\n+                unattributed: None,\n+            },\n+        );\n+        let record = PromptRecord {\n+            module: \"m\".to_string(),\n+            prompt_hash: \"h1\".to_string(),\n+            declared_targets: vec![],\n+            targets,\n+        };\n+\n+        assert!(!is_prompt_gen_stale(Some(&record), \"rust\", \"h1\", false));\n+        assert!(is_prompt_gen_stale(Some(&record), \"rust\", \"h2\", false));\n+        assert!(is_prompt_gen_stale(Some(&record), \"ts\", \"h1\", false));\n+\n+        let mut targets2 = OrderedMap::new();\n+        targets2.insert(\n+            \"rust\".to_string(),\n+            PromptTargetRecord {\n+                prompt_hash_at_gen: None,\n+                files: vec![\"a.rs\".to_string()],\n+                unattributed: Some(true),\n+            },\n+        );\n+        let record2 = PromptRecord {\n+            module: \"m\".to_string(),\n+            prompt_hash: \"h1\".to_string(),\n+            declared_targets: vec![],\n+            targets: targets2,\n+        };\n+        assert!(is_prompt_gen_stale(Some(&record2), \"rust\", \"h1\", false));\n+    }\n+\n+    #[test]\n+    fn record_attribution_detaches_orphaned_prior_files() {\n+        let mut map = empty_map();\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![\n+                    FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() },\n+                    FileInput { file_path: \"src/b.rs\".to_string(), hash: \"f2\".to_string() },\n+                ],\n+            },\n+        );\n+        assert!(map.files.contains_key(\"src/a.rs\"));\n+        assert!(map.files.contains_key(\"src/b.rs\"));\n+\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h2\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1b\".to_string() }],\n+            },\n+        );\n+\n+        assert!(map.files.contains_key(\"src/a.rs\"));\n+        assert!(!map.files.contains_key(\"src/b.rs\"));\n+        let record = map.prompts.get(\"a.napl\").unwrap();\n+        let target_record = record.targets.get(\"rust\").unwrap();\n+        assert_eq!(target_record.prompt_hash_at_gen, Some(\"h2\".to_string()));\n+        assert_eq!(target_record.files, vec![\"src/a.rs\".to_string()]);\n+    }\n+\n+    #[test]\n+    fn record_attribution_keeps_shared_file_prompts_list() {\n+        let mut map = empty_map();\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![FileInput { file_path: \"src/shared.rs\".to_string(), hash: \"f1\".to_string() }],\n+            },\n+        );\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"b.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h2\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![FileInput { file_path: \"src/shared.rs\".to_string(), hash: \"f1\".to_string() }],\n+            },\n+        );\n+\n+        let file_record = map.files.get(\"src/shared.rs\").unwrap();\n+        assert_eq!(\n+            file_record.prompts,\n+            vec![\"a.napl\".to_string(), \"b.napl\".to_string()]\n+        );\n+    }\n+\n+    #[test]\n+    fn record_attribution_keeps_other_targets_for_same_prompt() {\n+        let mut map = empty_map();\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() }],\n+            },\n+        );\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"ts\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![FileInput { file_path: \"src/a.ts\".to_string(), hash: \"f2\".to_string() }],\n+            },\n+        );\n+\n+        let record = map.prompts.get(\"a.napl\").unwrap();\n+        assert!(record.targets.contains_key(\"rust\"));\n+        assert!(record.targets.contains_key(\"ts\"));\n+    }\n+\n+    #[test]\n+    fn record_unattributed_detaches_all_prior_files_and_creates_no_file_records() {\n+        let mut map = empty_map();\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() }],\n+            },\n+        );\n+        assert!(map.files.contains_key(\"src/a.rs\"));\n+\n+        record_unattributed(\n+            &mut map,\n+            &UnattributedInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h2\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![\"src/a.rs\".to_string(), \"src/orphan.rs\".to_string()],\n+            },\n+        );\n+\n+        assert!(!map.files.contains_key(\"src/a.rs\"));\n+        assert!(!map.files.contains_key(\"src/orphan.rs\"));\n+\n+        let record = map.prompts.get(\"a.napl\").unwrap();\n+        let target_record = record.targets.get(\"rust\").unwrap();\n+        assert_eq!(target_record.unattributed, Some(true));\n+        assert_eq!(target_record.prompt_hash_at_gen, None);\n+        assert_eq!(\n+            target_record.files,\n+            vec![\"src/a.rs\".to_string(), \"src/orphan.rs\".to_string()]\n+        );\n+    }\n+\n+    #[test]\n+    fn record_attribution_after_unattributed_overwrites_and_clears_flag() {\n+        let mut map = empty_map();\n+        record_unattributed(\n+            &mut map,\n+            &UnattributedInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![\"src/a.rs\".to_string()],\n+            },\n+        );\n+\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h2\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() }],\n+            },\n+        );\n+\n+        let record = map.prompts.get(\"a.napl\").unwrap();\n+        let target_record = record.targets.get(\"rust\").unwrap();\n+        assert_eq!(target_record.unattributed, None);\n+        assert_eq!(target_record.prompt_hash_at_gen, Some(\"h2\".to_string()));\n+        assert!(map.files.contains_key(\"src/a.rs\"));\n+    }\n+}"
+        }
+      ]
+    }
+  ],
+  "lock": [
+    {
+      "path": "schemas_map/Cargo.toml",
+      "hash": "0fda37b2feb99164dfabd008ae876946ab7c7578dc62762d38f18d028a35a487"
+    },
+    {
+      "path": "schemas_map/src/lib.rs",
+      "hash": "fdfd1a199609827854596ac690aa57d958182596da8550cc18a4bda74f84914e"
+    }
+  ],
+  "session": {
+    "task": "napl gen rust → schemas_map",
+    "files": {
+      "schemas_map.napl": "---\nmodule: schemas_map\ndeps: [schemas_ordered_map]\ntargets: [rust]\ntests:\n  - name: an empty map is version 2 with no prompts\n    given: { call: empty_map }\n    expect: { version: 2, prompts: 0 }\n  - name: a written map round-trips through parse with a trailing newline\n    given: { seeded: true }\n    expect: { ends_with_newline: true, reparses_equal: true }\n  - name: corrupt json is rejected\n    given: { json: \"{ not json\" }\n    expect: { accepts: false }\n  - name: a sparse prompt record applies defaults\n    given: { json: \"{version:2, prompts:{'a.napl':{module:m, promptHash:h}}}\" }\n    expect: { declaredTargets: 0, targets: 0 }\n  - name: membership, declared targets and files resolve for a seeded module\n    given: { seeded: true, module: greeting }\n    expect: { has_module: true, declaredTargets: [typescript], files: 2 }\n  - name: a file attributed by two prompts records both\n    given: { seeded_plus_extra_prompt_same_file: true }\n    expect: { prompts: [\"examples/extra.napl\", \"examples/greeting.napl\"] }\n  - name: re-attributing a prompt to fewer files drops the orphaned file\n    given: { reattribute_greeting_to_one_file: true }\n    expect: { orphan_removed: true, remaining_files: [\".napl/src/typescript/greeting.ts\"] }\n  - name: is-prompt-gen-stale covers hash, target, missing and force cases\n    given: { seeded: true }\n    expect: { same_hash: false, changed_hash: true, other_target: true, no_record: true, forced: true }\n  - name: marking a target unattributed detaches its files and is stale\n    given: { unattribute_greeting: true }\n    expect: { unattributed: true, promptHashAtGen: null, files_detached: true, stale: true }\n  - name: a later attribution clears the unattributed flag\n    given: { unattribute_then_reattribute: true }\n    expect: { unattributed: null, promptHashAtGen: \"p2\" }\n---\n# The NAPL map v2 schema and its pure query/mutation helpers\n\nThis module defines the serde types and pure helpers for the NAPL **map** — the\n`v2` on-disk index recording, for every prompt, which target files it generated\n(with content hashes), and the reverse file→prompt attribution. It is pure: no\nI/O; every helper takes data in and returns data or mutates a passed map. Bring\nin `serde`, `serde_json`, and the standard library.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `schemas_map/`: `schemas_map/Cargo.toml` (package\nname `schemas_map`) and `schemas_map/src/lib.rs`. Touch nothing outside\n`schemas_map/`. Ensure `cargo test` passes from the workspace root before\nfinishing.\n\n## Builds on the `schemas_ordered_map` module of this workspace\n\nThe map preserves **insertion order** of its prompt keys, file keys, and each\nprompt's per-target sub-records. That ordered-map value type is the\n**`schemas_ordered_map`** module of this same workspace, generated as a sibling\nmember crate in the `schemas_ordered_map/` directory (so `../schemas_ordered_map`\nrelative to this crate). It exposes a public generic type `OrderedMap<V>` — an\ninsertion-ordered string-keyed map — with `new`, `len`, `is_empty`,\n`contains_key`, `get`, `get_mut`, `insert`, `remove`, `iter` (yielding\n`(&String, &V)` in insertion order), `keys`, and `values`, plus serde\n`Serialize`/`Deserialize` that round-trips as a JSON object preserving key order.\n\nAdd a path dependency on that sibling member crate in your `Cargo.toml` (depend\non the `schemas_ordered_map` crate by path — it lives at `../schemas_ordered_map`)\nand use its `OrderedMap<V>` for every ordered-map field below. Do **not**\nreimplement an ordered map here, and do not depend on any hand-written crate —\ndepend only on the generated sibling `schemas_ordered_map` member crate. This\nsibling path dependency is part of the same workspace, not an external crates.io\ndependency, so add it even though the general guidance is to avoid outside\ndependencies.\n\n## The types\n\nExpose these public types, all deriving serde serialize + deserialize, equality,\nand clone:\n\n- `PromptTargetRecord`: a per-target record inside a prompt entry, with public\n  fields:\n  - `prompt_hash_at_gen: Option<String>`, JSON key **`promptHashAtGen`**, omitted\n    from output when `None`, defaulting to `None` when absent.\n  - `files: Vec<String>`, defaulting to empty when absent.\n  - `unattributed: Option<bool>`, omitted from output when `None`, defaulting to\n    `None` when absent.\n- `PromptRecord`: a prompt entry, with public fields:\n  - `module: String`.\n  - `prompt_hash: String`, JSON key **`promptHash`**.\n  - `declared_targets: Vec<String>`, JSON key **`declaredTargets`**, defaulting to\n    empty when absent.\n  - `targets: OrderedMap<PromptTargetRecord>`, defaulting to empty when absent.\n- `FileRecord`: a file entry, with public fields:\n  - `target: String`.\n  - `hash: String`.\n  - `prompts: Vec<String>`, defaulting to empty when absent.\n- `NaplMap`: the whole map, with public fields:\n  - `version: u32`, defaulting to `2` when absent.\n  - `prompts: OrderedMap<PromptRecord>`, defaulting to empty when absent.\n  - `files: OrderedMap<FileRecord>`, defaulting to empty when absent.\n\nAnd these plain data structs (comparable/cloneable; no serde needed):\n\n- `ModuleFile` with public `target: String` and `file_path: String`.\n- `FileInput` with public `file_path: String` and `hash: String`.\n- `AttributionInput` with public `rel: String`, `module: String`,\n  `prompt_hash: String`, `target: String`, `declared_targets: Vec<String>`, and\n  `files: Vec<FileInput>`.\n- `UnattributedInput` with public `rel: String`, `module: String`,\n  `prompt_hash: String`, `target: String`, `declared_targets: Vec<String>`, and\n  `files: Vec<String>`.\n\n## Construction and (de)serialization\n\n- `empty_map() -> NaplMap`: version 2, empty prompts, empty files.\n- `parse_map(raw: &str) -> Result<NaplMap, _>`: deserialize a JSON string; then\n  if `version` is not `2`, it is a validation error (\"unsupported map version\").\n  Corrupt JSON is a deserialization error. Neither panics.\n- `map_to_json(map: &NaplMap) -> String`: pretty-print the map as JSON and append\n  a single trailing newline. A written map re-parses to an equal map.\n\n## Query helpers\n\n- `prompts_for_module(map, module) -> Vec<String>`: the relative prompt keys\n  whose record's `module` equals `module`, in insertion order.\n- `has_module(map, module) -> bool`: whether the module has any prompts.\n- `declared_targets_for_module(map, module) -> Vec<String>`: the union of the\n  `declared_targets` across the module's prompt records, deduplicated, in first-\n  seen order.\n- `files_for_module(map, module) -> Vec<ModuleFile>`: for each of the module's\n  prompts, for each `(target, target_record)` pair in insertion order, each file\n  path in `target_record.files`, deduplicated by the `(target, file_path)` pair,\n  in first-seen order.\n- `is_prompt_gen_stale(record: Option<&PromptRecord>, target, prompt_hash, force) -> bool`:\n  `true` if `force`; else `true` if the record is absent; else `true` if the\n  record has no target sub-record for `target`; else `true` if that sub-record's\n  `unattributed` is `Some(true)`; else `true` if its `prompt_hash_at_gen` is\n  absent or differs from `prompt_hash`; otherwise `false`.\n\n## Mutation helpers\n\nBoth mutate the passed map in place.\n\n### `record_attribution(map, input: &AttributionInput)`\n\nRecords a successful generation. Let `existing_targets` be the current prompt\nrecord's `targets` (if the prompt `rel` already exists), and `prior_files` be the\nfiles the `input.target` sub-record previously listed. For every prior file that\nis **not** among the new `input.files` paths, detach it (see \"Detaching\" below).\nThen set the `input.target` sub-record to a `PromptTargetRecord` with\n`prompt_hash_at_gen = Some(input.prompt_hash)`, `files` = the new file paths in\norder, and `unattributed = None`, keeping any other targets. Store the prompt\nrecord under `input.rel` with `module`, `prompt_hash`, `declared_targets`, and\nthose `targets`. Finally, for each new file, ensure a `FileRecord` under its path\nwith `target = input.target`, `hash` = that file's hash, and a `prompts` list\nthat includes `input.rel` (appended once if not already present, preserving any\nexisting prompts for a file shared across prompts).\n\n### `record_unattributed(map, input: &UnattributedInput)`\n\nRecords a generation that produced files but could not be attributed. As above,\ndetach **every** prior file of the `input.target` sub-record. Then set that\nsub-record to `prompt_hash_at_gen = None`, `files = input.files`, and\n`unattributed = Some(true)`, keeping other targets, and store the prompt record\nunder `input.rel`. Do **not** create `FileRecord` entries for the files.\n\n### Detaching a file from a prompt\n\nTo detach `file_path` from prompt `rel`: if the map has a `FileRecord` for\n`file_path`, remove `rel` from its `prompts`; if no prompts remain, remove the\nfile entry entirely; otherwise keep the file entry with the reduced `prompts`.\n\nThis is why re-attributing a prompt to a strictly smaller set of files drops the\nnow-orphaned file entry, and why marking a target unattributed detaches all of\nits files. A subsequent successful `record_attribution` for the same prompt/target\noverwrites the sub-record, clearing the `unattributed` flag and restoring a\n`prompt_hash_at_gen`.\n"
+    },
+    "events": [
+      {
+        "type": "task",
+        "task": "napl gen rust → schemas_map"
+      },
+      {
+        "type": "diff",
+        "path": "schemas_map/Cargo.toml",
+        "patch": "@@ -0,0 +1,12 @@\n+[package]\n+name = \"schemas_map\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]\n+serde = { version = \"1\", features = [\"derive\"] }\n+serde_json = \"1\"\n+schemas_ordered_map = { path = \"../schemas_ordered_map\" }\n+\n+[dev-dependencies]\n+serde_json = \"1\""
+      },
+      {
+        "type": "file-edit",
+        "path": "schemas_map/Cargo.toml",
+        "content": "[package]\nname = \"schemas_map\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\nserde = { version = \"1\", features = [\"derive\"] }\nserde_json = \"1\"\nschemas_ordered_map = { path = \"../schemas_ordered_map\" }\n\n[dev-dependencies]\nserde_json = \"1\"\n"
+      },
+      {
+        "type": "diff",
+        "path": "schemas_map/src/lib.rs",
+        "patch": "@@ -0,0 +1,690 @@\n+// GENERATED BY NAPL from schemas_map.napl — edit the prompt, not this file\n+\n+use schemas_ordered_map::OrderedMap;\n+use serde::{Deserialize, Serialize};\n+\n+fn default_version() -> u32 {\n+    2\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\n+pub struct PromptTargetRecord {\n+    #[serde(rename = \"promptHashAtGen\", default, skip_serializing_if = \"Option::is_none\")]\n+    pub prompt_hash_at_gen: Option<String>,\n+    #[serde(default)]\n+    pub files: Vec<String>,\n+    #[serde(default, skip_serializing_if = \"Option::is_none\")]\n+    pub unattributed: Option<bool>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\n+pub struct PromptRecord {\n+    pub module: String,\n+    #[serde(rename = \"promptHash\")]\n+    pub prompt_hash: String,\n+    #[serde(rename = \"declaredTargets\", default)]\n+    pub declared_targets: Vec<String>,\n+    #[serde(default)]\n+    pub targets: OrderedMap<PromptTargetRecord>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\n+pub struct FileRecord {\n+    pub target: String,\n+    pub hash: String,\n+    #[serde(default)]\n+    pub prompts: Vec<String>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\n+pub struct NaplMap {\n+    #[serde(default = \"default_version\")]\n+    pub version: u32,\n+    #[serde(default)]\n+    pub prompts: OrderedMap<PromptRecord>,\n+    #[serde(default)]\n+    pub files: OrderedMap<FileRecord>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct ModuleFile {\n+    pub target: String,\n+    pub file_path: String,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct FileInput {\n+    pub file_path: String,\n+    pub hash: String,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct AttributionInput {\n+    pub rel: String,\n+    pub module: String,\n+    pub prompt_hash: String,\n+    pub target: String,\n+    pub declared_targets: Vec<String>,\n+    pub files: Vec<FileInput>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct UnattributedInput {\n+    pub rel: String,\n+    pub module: String,\n+    pub prompt_hash: String,\n+    pub target: String,\n+    pub declared_targets: Vec<String>,\n+    pub files: Vec<String>,\n+}\n+\n+pub fn empty_map() -> NaplMap {\n+    NaplMap {\n+        version: 2,\n+        prompts: OrderedMap::new(),\n+        files: OrderedMap::new(),\n+    }\n+}\n+\n+pub fn parse_map(raw: &str) -> Result<NaplMap, String> {\n+    let map: NaplMap = serde_json::from_str(raw).map_err(|e| e.to_string())?;\n+    if map.version != 2 {\n+        return Err(\"unsupported map version\".to_string());\n+    }\n+    Ok(map)\n+}\n+\n+pub fn map_to_json(map: &NaplMap) -> String {\n+    let mut json = serde_json::to_string_pretty(map).expect(\"NaplMap always serializes\");\n+    json.push('\\n');\n+    json\n+}\n+\n+pub fn prompts_for_module(map: &NaplMap, module: &str) -> Vec<String> {\n+    map.prompts\n+        .iter()\n+        .filter(|(_, record)| record.module == module)\n+        .map(|(rel, _)| rel.clone())\n+        .collect()\n+}\n+\n+pub fn has_module(map: &NaplMap, module: &str) -> bool {\n+    map.prompts.iter().any(|(_, record)| record.module == module)\n+}\n+\n+pub fn declared_targets_for_module(map: &NaplMap, module: &str) -> Vec<String> {\n+    let mut seen = Vec::new();\n+    for (_, record) in map.prompts.iter() {\n+        if record.module != module {\n+            continue;\n+        }\n+        for target in &record.declared_targets {\n+            if !seen.contains(target) {\n+                seen.push(target.clone());\n+            }\n+        }\n+    }\n+    seen\n+}\n+\n+pub fn files_for_module(map: &NaplMap, module: &str) -> Vec<ModuleFile> {\n+    let mut result: Vec<ModuleFile> = Vec::new();\n+    for (_, record) in map.prompts.iter() {\n+        if record.module != module {\n+            continue;\n+        }\n+        for (target, target_record) in record.targets.iter() {\n+            for file_path in &target_record.files {\n+                let already = result\n+                    .iter()\n+                    .any(|mf| &mf.target == target && &mf.file_path == file_path);\n+                if !already {\n+                    result.push(ModuleFile {\n+                        target: target.clone(),\n+                        file_path: file_path.clone(),\n+                    });\n+                }\n+            }\n+        }\n+    }\n+    result\n+}\n+\n+pub fn is_prompt_gen_stale(\n+    record: Option<&PromptRecord>,\n+    target: &str,\n+    prompt_hash: &str,\n+    force: bool,\n+) -> bool {\n+    if force {\n+        return true;\n+    }\n+    let Some(record) = record else {\n+        return true;\n+    };\n+    let Some(target_record) = record.targets.get(target) else {\n+        return true;\n+    };\n+    if target_record.unattributed == Some(true) {\n+        return true;\n+    }\n+    match &target_record.prompt_hash_at_gen {\n+        Some(hash) => hash != prompt_hash,\n+        None => true,\n+    }\n+}\n+\n+fn detach_file(map: &mut NaplMap, rel: &str, file_path: &str) {\n+    let Some(file_record) = map.files.get_mut(file_path) else {\n+        return;\n+    };\n+    file_record.prompts.retain(|p| p != rel);\n+    if file_record.prompts.is_empty() {\n+        map.files.remove(file_path);\n+    }\n+}\n+\n+pub fn record_attribution(map: &mut NaplMap, input: &AttributionInput) {\n+    let mut targets = map\n+        .prompts\n+        .get(&input.rel)\n+        .map(|record| record.targets.clone())\n+        .unwrap_or_default();\n+\n+    let prior_files: Vec<String> = targets\n+        .get(&input.target)\n+        .map(|target_record| target_record.files.clone())\n+        .unwrap_or_default();\n+\n+    let new_file_paths: Vec<String> = input.files.iter().map(|f| f.file_path.clone()).collect();\n+\n+    for prior_file in &prior_files {\n+        if !new_file_paths.contains(prior_file) {\n+            detach_file(map, &input.rel, prior_file);\n+        }\n+    }\n+\n+    targets.insert(\n+        input.target.clone(),\n+        PromptTargetRecord {\n+            prompt_hash_at_gen: Some(input.prompt_hash.clone()),\n+            files: new_file_paths.clone(),\n+            unattributed: None,\n+        },\n+    );\n+\n+    map.prompts.insert(\n+        input.rel.clone(),\n+        PromptRecord {\n+            module: input.module.clone(),\n+            prompt_hash: input.prompt_hash.clone(),\n+            declared_targets: input.declared_targets.clone(),\n+            targets,\n+        },\n+    );\n+\n+    for file in &input.files {\n+        match map.files.get_mut(&file.file_path) {\n+            Some(existing) => {\n+                existing.target = input.target.clone();\n+                existing.hash = file.hash.clone();\n+                if !existing.prompts.iter().any(|p| p == &input.rel) {\n+                    existing.prompts.push(input.rel.clone());\n+                }\n+            }\n+            None => {\n+                map.files.insert(\n+                    file.file_path.clone(),\n+                    FileRecord {\n+                        target: input.target.clone(),\n+                        hash: file.hash.clone(),\n+                        prompts: vec![input.rel.clone()],\n+                    },\n+                );\n+            }\n+        }\n+    }\n+}\n+\n+pub fn record_unattributed(map: &mut NaplMap, input: &UnattributedInput) {\n+    let mut targets = map\n+        .prompts\n+        .get(&input.rel)\n+        .map(|record| record.targets.clone())\n+        .unwrap_or_default();\n+\n+    let prior_files: Vec<String> = targets\n+        .get(&input.target)\n+        .map(|target_record| target_record.files.clone())\n+        .unwrap_or_default();\n+\n+    for prior_file in &prior_files {\n+        detach_file(map, &input.rel, prior_file);\n+    }\n+\n+    targets.insert(\n+        input.target.clone(),\n+        PromptTargetRecord {\n+            prompt_hash_at_gen: None,\n+            files: input.files.clone(),\n+            unattributed: Some(true),\n+        },\n+    );\n+\n+    map.prompts.insert(\n+        input.rel.clone(),\n+        PromptRecord {\n+            module: input.module.clone(),\n+            prompt_hash: input.prompt_hash.clone(),\n+            declared_targets: input.declared_targets.clone(),\n+            targets,\n+        },\n+    );\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn empty_map_has_version_2_and_no_entries() {\n+        let map = empty_map();\n+        assert_eq!(map.version, 2);\n+        assert!(map.prompts.is_empty());\n+        assert!(map.files.is_empty());\n+    }\n+\n+    #[test]\n+    fn map_round_trips_through_json() {\n+        let mut map = empty_map();\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![\"rust\".to_string()],\n+                files: vec![FileInput {\n+                    file_path: \"src/a.rs\".to_string(),\n+                    hash: \"fh1\".to_string(),\n+                }],\n+            },\n+        );\n+\n+        let json = map_to_json(&map);\n+        assert!(json.ends_with('\\n'));\n+        let reparsed = parse_map(&json).unwrap();\n+        assert_eq!(reparsed, map);\n+    }\n+\n+    #[test]\n+    fn parse_map_rejects_unsupported_version() {\n+        let raw = r#\"{\"version\": 3, \"prompts\": {}, \"files\": {}}\"#;\n+        let err = parse_map(raw).unwrap_err();\n+        assert_eq!(err, \"unsupported map version\");\n+    }\n+\n+    #[test]\n+    fn parse_map_rejects_corrupt_json() {\n+        let raw = \"{not json\";\n+        assert!(parse_map(raw).is_err());\n+    }\n+\n+    #[test]\n+    fn parse_map_defaults_absent_fields() {\n+        let raw = r#\"{\"version\": 2}\"#;\n+        let map = parse_map(raw).unwrap();\n+        assert!(map.prompts.is_empty());\n+        assert!(map.files.is_empty());\n+    }\n+\n+    #[test]\n+    fn prompt_target_record_omits_none_fields_in_json() {\n+        let record = PromptTargetRecord {\n+            prompt_hash_at_gen: None,\n+            files: vec![\"a.rs\".to_string()],\n+            unattributed: None,\n+        };\n+        let json = serde_json::to_string(&record).unwrap();\n+        assert_eq!(json, r#\"{\"files\":[\"a.rs\"]}\"#);\n+    }\n+\n+    #[test]\n+    fn prompts_for_module_returns_matching_keys_in_order() {\n+        let mut map = empty_map();\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m1\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![],\n+            },\n+        );\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"b.napl\".to_string(),\n+                module: \"m2\".to_string(),\n+                prompt_hash: \"h2\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![],\n+            },\n+        );\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"c.napl\".to_string(),\n+                module: \"m1\".to_string(),\n+                prompt_hash: \"h3\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![],\n+            },\n+        );\n+\n+        assert_eq!(\n+            prompts_for_module(&map, \"m1\"),\n+            vec![\"a.napl\".to_string(), \"c.napl\".to_string()]\n+        );\n+        assert_eq!(has_module(&map, \"m1\"), true);\n+        assert_eq!(has_module(&map, \"nope\"), false);\n+    }\n+\n+    #[test]\n+    fn declared_targets_for_module_deduplicates_in_first_seen_order() {\n+        let mut map = empty_map();\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![\"rust\".to_string(), \"ts\".to_string()],\n+                files: vec![],\n+            },\n+        );\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"b.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h2\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![\"ts\".to_string(), \"go\".to_string()],\n+                files: vec![],\n+            },\n+        );\n+\n+        assert_eq!(\n+            declared_targets_for_module(&map, \"m\"),\n+            vec![\"rust\".to_string(), \"ts\".to_string(), \"go\".to_string()]\n+        );\n+    }\n+\n+    #[test]\n+    fn files_for_module_dedupes_by_target_and_path() {\n+        let mut map = empty_map();\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![\n+                    FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() },\n+                    FileInput { file_path: \"src/b.rs\".to_string(), hash: \"f2\".to_string() },\n+                ],\n+            },\n+        );\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"b.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h2\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() }],\n+            },\n+        );\n+\n+        let files = files_for_module(&map, \"m\");\n+        assert_eq!(\n+            files,\n+            vec![\n+                ModuleFile { target: \"rust\".to_string(), file_path: \"src/a.rs\".to_string() },\n+                ModuleFile { target: \"rust\".to_string(), file_path: \"src/b.rs\".to_string() },\n+            ]\n+        );\n+    }\n+\n+    #[test]\n+    fn is_prompt_gen_stale_covers_all_cases() {\n+        assert!(is_prompt_gen_stale(None, \"rust\", \"h1\", true));\n+        assert!(is_prompt_gen_stale(None, \"rust\", \"h1\", false));\n+\n+        let mut targets = OrderedMap::new();\n+        targets.insert(\n+            \"rust\".to_string(),\n+            PromptTargetRecord {\n+                prompt_hash_at_gen: Some(\"h1\".to_string()),\n+                files: vec![\"a.rs\".to_string()],\n+                unattributed: None,\n+            },\n+        );\n+        let record = PromptRecord {\n+            module: \"m\".to_string(),\n+            prompt_hash: \"h1\".to_string(),\n+            declared_targets: vec![],\n+            targets,\n+        };\n+\n+        assert!(!is_prompt_gen_stale(Some(&record), \"rust\", \"h1\", false));\n+        assert!(is_prompt_gen_stale(Some(&record), \"rust\", \"h2\", false));\n+        assert!(is_prompt_gen_stale(Some(&record), \"ts\", \"h1\", false));\n+\n+        let mut targets2 = OrderedMap::new();\n+        targets2.insert(\n+            \"rust\".to_string(),\n+            PromptTargetRecord {\n+                prompt_hash_at_gen: None,\n+                files: vec![\"a.rs\".to_string()],\n+                unattributed: Some(true),\n+            },\n+        );\n+        let record2 = PromptRecord {\n+            module: \"m\".to_string(),\n+            prompt_hash: \"h1\".to_string(),\n+            declared_targets: vec![],\n+            targets: targets2,\n+        };\n+        assert!(is_prompt_gen_stale(Some(&record2), \"rust\", \"h1\", false));\n+    }\n+\n+    #[test]\n+    fn record_attribution_detaches_orphaned_prior_files() {\n+        let mut map = empty_map();\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![\n+                    FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() },\n+                    FileInput { file_path: \"src/b.rs\".to_string(), hash: \"f2\".to_string() },\n+                ],\n+            },\n+        );\n+        assert!(map.files.contains_key(\"src/a.rs\"));\n+        assert!(map.files.contains_key(\"src/b.rs\"));\n+\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h2\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1b\".to_string() }],\n+            },\n+        );\n+\n+        assert!(map.files.contains_key(\"src/a.rs\"));\n+        assert!(!map.files.contains_key(\"src/b.rs\"));\n+        let record = map.prompts.get(\"a.napl\").unwrap();\n+        let target_record = record.targets.get(\"rust\").unwrap();\n+        assert_eq!(target_record.prompt_hash_at_gen, Some(\"h2\".to_string()));\n+        assert_eq!(target_record.files, vec![\"src/a.rs\".to_string()]);\n+    }\n+\n+    #[test]\n+    fn record_attribution_keeps_shared_file_prompts_list() {\n+        let mut map = empty_map();\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![FileInput { file_path: \"src/shared.rs\".to_string(), hash: \"f1\".to_string() }],\n+            },\n+        );\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"b.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h2\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![FileInput { file_path: \"src/shared.rs\".to_string(), hash: \"f1\".to_string() }],\n+            },\n+        );\n+\n+        let file_record = map.files.get(\"src/shared.rs\").unwrap();\n+        assert_eq!(\n+            file_record.prompts,\n+            vec![\"a.napl\".to_string(), \"b.napl\".to_string()]\n+        );\n+    }\n+\n+    #[test]\n+    fn record_attribution_keeps_other_targets_for_same_prompt() {\n+        let mut map = empty_map();\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() }],\n+            },\n+        );\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"ts\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![FileInput { file_path: \"src/a.ts\".to_string(), hash: \"f2\".to_string() }],\n+            },\n+        );\n+\n+        let record = map.prompts.get(\"a.napl\").unwrap();\n+        assert!(record.targets.contains_key(\"rust\"));\n+        assert!(record.targets.contains_key(\"ts\"));\n+    }\n+\n+    #[test]\n+    fn record_unattributed_detaches_all_prior_files_and_creates_no_file_records() {\n+        let mut map = empty_map();\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() }],\n+            },\n+        );\n+        assert!(map.files.contains_key(\"src/a.rs\"));\n+\n+        record_unattributed(\n+            &mut map,\n+            &UnattributedInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h2\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![\"src/a.rs\".to_string(), \"src/orphan.rs\".to_string()],\n+            },\n+        );\n+\n+        assert!(!map.files.contains_key(\"src/a.rs\"));\n+        assert!(!map.files.contains_key(\"src/orphan.rs\"));\n+\n+        let record = map.prompts.get(\"a.napl\").unwrap();\n+        let target_record = record.targets.get(\"rust\").unwrap();\n+        assert_eq!(target_record.unattributed, Some(true));\n+        assert_eq!(target_record.prompt_hash_at_gen, None);\n+        assert_eq!(\n+            target_record.files,\n+            vec![\"src/a.rs\".to_string(), \"src/orphan.rs\".to_string()]\n+        );\n+    }\n+\n+    #[test]\n+    fn record_attribution_after_unattributed_overwrites_and_clears_flag() {\n+        let mut map = empty_map();\n+        record_unattributed(\n+            &mut map,\n+            &UnattributedInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![\"src/a.rs\".to_string()],\n+            },\n+        );\n+\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h2\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() }],\n+            },\n+        );\n+\n+        let record = map.prompts.get(\"a.napl\").unwrap();\n+        let target_record = record.targets.get(\"rust\").unwrap();\n+        assert_eq!(target_record.unattributed, None);\n+        assert_eq!(target_record.prompt_hash_at_gen, Some(\"h2\".to_string()));\n+        assert!(map.files.contains_key(\"src/a.rs\"));\n+    }\n+}"
+      },
+      {
+        "type": "file-edit",
+        "path": "schemas_map/src/lib.rs",
+        "content": "// GENERATED BY NAPL from schemas_map.napl — edit the prompt, not this file\n\nuse schemas_ordered_map::OrderedMap;\nuse serde::{Deserialize, Serialize};\n\nfn default_version() -> u32 {\n    2\n}\n\n#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\npub struct PromptTargetRecord {\n    #[serde(rename = \"promptHashAtGen\", default, skip_serializing_if = \"Option::is_none\")]\n    pub prompt_hash_at_gen: Option<String>,\n    #[serde(default)]\n    pub files: Vec<String>,\n    #[serde(default, skip_serializing_if = \"Option::is_none\")]\n    pub unattributed: Option<bool>,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\npub struct PromptRecord {\n    pub module: String,\n    #[serde(rename = \"promptHash\")]\n    pub prompt_hash: String,\n    #[serde(rename = \"declaredTargets\", default)]\n    pub declared_targets: Vec<String>,\n    #[serde(default)]\n    pub targets: OrderedMap<PromptTargetRecord>,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\npub struct FileRecord {\n    pub target: String,\n    pub hash: String,\n    #[serde(default)]\n    pub prompts: Vec<String>,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\npub struct NaplMap {\n    #[serde(default = \"default_version\")]\n    pub version: u32,\n    #[serde(default)]\n    pub prompts: OrderedMap<PromptRecord>,\n    #[serde(default)]\n    pub files: OrderedMap<FileRecord>,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq)]\npub struct ModuleFile {\n    pub target: String,\n    pub file_path: String,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq)]\npub struct FileInput {\n    pub file_path: String,\n    pub hash: String,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq)]\npub struct AttributionInput {\n    pub rel: String,\n    pub module: String,\n    pub prompt_hash: String,\n    pub target: String,\n    pub declared_targets: Vec<String>,\n    pub files: Vec<FileInput>,\n}\n\n#[derive(Debug, Clone, PartialEq, Eq)]\npub struct UnattributedInput {\n    pub rel: String,\n    pub module: String,\n    pub prompt_hash: String,\n    pub target: String,\n    pub declared_targets: Vec<String>,\n    pub files: Vec<String>,\n}\n\npub fn empty_map() -> NaplMap {\n    NaplMap {\n        version: 2,\n        prompts: OrderedMap::new(),\n        files: OrderedMap::new(),\n    }\n}\n\npub fn parse_map(raw: &str) -> Result<NaplMap, String> {\n    let map: NaplMap = serde_json::from_str(raw).map_err(|e| e.to_string())?;\n    if map.version != 2 {\n        return Err(\"unsupported map version\".to_string());\n    }\n    Ok(map)\n}\n\npub fn map_to_json(map: &NaplMap) -> String {\n    let mut json = serde_json::to_string_pretty(map).expect(\"NaplMap always serializes\");\n    json.push('\\n');\n    json\n}\n\npub fn prompts_for_module(map: &NaplMap, module: &str) -> Vec<String> {\n    map.prompts\n        .iter()\n        .filter(|(_, record)| record.module == module)\n        .map(|(rel, _)| rel.clone())\n        .collect()\n}\n\npub fn has_module(map: &NaplMap, module: &str) -> bool {\n    map.prompts.iter().any(|(_, record)| record.module == module)\n}\n\npub fn declared_targets_for_module(map: &NaplMap, module: &str) -> Vec<String> {\n    let mut seen = Vec::new();\n    for (_, record) in map.prompts.iter() {\n        if record.module != module {\n            continue;\n        }\n        for target in &record.declared_targets {\n            if !seen.contains(target) {\n                seen.push(target.clone());\n            }\n        }\n    }\n    seen\n}\n\npub fn files_for_module(map: &NaplMap, module: &str) -> Vec<ModuleFile> {\n    let mut result: Vec<ModuleFile> = Vec::new();\n    for (_, record) in map.prompts.iter() {\n        if record.module != module {\n            continue;\n        }\n        for (target, target_record) in record.targets.iter() {\n            for file_path in &target_record.files {\n                let already = result\n                    .iter()\n                    .any(|mf| &mf.target == target && &mf.file_path == file_path);\n                if !already {\n                    result.push(ModuleFile {\n                        target: target.clone(),\n                        file_path: file_path.clone(),\n                    });\n                }\n            }\n        }\n    }\n    result\n}\n\npub fn is_prompt_gen_stale(\n    record: Option<&PromptRecord>,\n    target: &str,\n    prompt_hash: &str,\n    force: bool,\n) -> bool {\n    if force {\n        return true;\n    }\n    let Some(record) = record else {\n        return true;\n    };\n    let Some(target_record) = record.targets.get(target) else {\n        return true;\n    };\n    if target_record.unattributed == Some(true) {\n        return true;\n    }\n    match &target_record.prompt_hash_at_gen {\n        Some(hash) => hash != prompt_hash,\n        None => true,\n    }\n}\n\nfn detach_file(map: &mut NaplMap, rel: &str, file_path: &str) {\n    let Some(file_record) = map.files.get_mut(file_path) else {\n        return;\n    };\n    file_record.prompts.retain(|p| p != rel);\n    if file_record.prompts.is_empty() {\n        map.files.remove(file_path);\n    }\n}\n\npub fn record_attribution(map: &mut NaplMap, input: &AttributionInput) {\n    let mut targets = map\n        .prompts\n        .get(&input.rel)\n        .map(|record| record.targets.clone())\n        .unwrap_or_default();\n\n    let prior_files: Vec<String> = targets\n        .get(&input.target)\n        .map(|target_record| target_record.files.clone())\n        .unwrap_or_default();\n\n    let new_file_paths: Vec<String> = input.files.iter().map(|f| f.file_path.clone()).collect();\n\n    for prior_file in &prior_files {\n        if !new_file_paths.contains(prior_file) {\n            detach_file(map, &input.rel, prior_file);\n        }\n    }\n\n    targets.insert(\n        input.target.clone(),\n        PromptTargetRecord {\n            prompt_hash_at_gen: Some(input.prompt_hash.clone()),\n            files: new_file_paths.clone(),\n            unattributed: None,\n        },\n    );\n\n    map.prompts.insert(\n        input.rel.clone(),\n        PromptRecord {\n            module: input.module.clone(),\n            prompt_hash: input.prompt_hash.clone(),\n            declared_targets: input.declared_targets.clone(),\n            targets,\n        },\n    );\n\n    for file in &input.files {\n        match map.files.get_mut(&file.file_path) {\n            Some(existing) => {\n                existing.target = input.target.clone();\n                existing.hash = file.hash.clone();\n                if !existing.prompts.iter().any(|p| p == &input.rel) {\n                    existing.prompts.push(input.rel.clone());\n                }\n            }\n            None => {\n                map.files.insert(\n                    file.file_path.clone(),\n                    FileRecord {\n                        target: input.target.clone(),\n                        hash: file.hash.clone(),\n                        prompts: vec![input.rel.clone()],\n                    },\n                );\n            }\n        }\n    }\n}\n\npub fn record_unattributed(map: &mut NaplMap, input: &UnattributedInput) {\n    let mut targets = map\n        .prompts\n        .get(&input.rel)\n        .map(|record| record.targets.clone())\n        .unwrap_or_default();\n\n    let prior_files: Vec<String> = targets\n        .get(&input.target)\n        .map(|target_record| target_record.files.clone())\n        .unwrap_or_default();\n\n    for prior_file in &prior_files {\n        detach_file(map, &input.rel, prior_file);\n    }\n\n    targets.insert(\n        input.target.clone(),\n        PromptTargetRecord {\n            prompt_hash_at_gen: None,\n            files: input.files.clone(),\n            unattributed: Some(true),\n        },\n    );\n\n    map.prompts.insert(\n        input.rel.clone(),\n        PromptRecord {\n            module: input.module.clone(),\n            prompt_hash: input.prompt_hash.clone(),\n            declared_targets: input.declared_targets.clone(),\n            targets,\n        },\n    );\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn empty_map_has_version_2_and_no_entries() {\n        let map = empty_map();\n        assert_eq!(map.version, 2);\n        assert!(map.prompts.is_empty());\n        assert!(map.files.is_empty());\n    }\n\n    #[test]\n    fn map_round_trips_through_json() {\n        let mut map = empty_map();\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h1\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![\"rust\".to_string()],\n                files: vec![FileInput {\n                    file_path: \"src/a.rs\".to_string(),\n                    hash: \"fh1\".to_string(),\n                }],\n            },\n        );\n\n        let json = map_to_json(&map);\n        assert!(json.ends_with('\\n'));\n        let reparsed = parse_map(&json).unwrap();\n        assert_eq!(reparsed, map);\n    }\n\n    #[test]\n    fn parse_map_rejects_unsupported_version() {\n        let raw = r#\"{\"version\": 3, \"prompts\": {}, \"files\": {}}\"#;\n        let err = parse_map(raw).unwrap_err();\n        assert_eq!(err, \"unsupported map version\");\n    }\n\n    #[test]\n    fn parse_map_rejects_corrupt_json() {\n        let raw = \"{not json\";\n        assert!(parse_map(raw).is_err());\n    }\n\n    #[test]\n    fn parse_map_defaults_absent_fields() {\n        let raw = r#\"{\"version\": 2}\"#;\n        let map = parse_map(raw).unwrap();\n        assert!(map.prompts.is_empty());\n        assert!(map.files.is_empty());\n    }\n\n    #[test]\n    fn prompt_target_record_omits_none_fields_in_json() {\n        let record = PromptTargetRecord {\n            prompt_hash_at_gen: None,\n            files: vec![\"a.rs\".to_string()],\n            unattributed: None,\n        };\n        let json = serde_json::to_string(&record).unwrap();\n        assert_eq!(json, r#\"{\"files\":[\"a.rs\"]}\"#);\n    }\n\n    #[test]\n    fn prompts_for_module_returns_matching_keys_in_order() {\n        let mut map = empty_map();\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m1\".to_string(),\n                prompt_hash: \"h1\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![],\n            },\n        );\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"b.napl\".to_string(),\n                module: \"m2\".to_string(),\n                prompt_hash: \"h2\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![],\n            },\n        );\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"c.napl\".to_string(),\n                module: \"m1\".to_string(),\n                prompt_hash: \"h3\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![],\n            },\n        );\n\n        assert_eq!(\n            prompts_for_module(&map, \"m1\"),\n            vec![\"a.napl\".to_string(), \"c.napl\".to_string()]\n        );\n        assert_eq!(has_module(&map, \"m1\"), true);\n        assert_eq!(has_module(&map, \"nope\"), false);\n    }\n\n    #[test]\n    fn declared_targets_for_module_deduplicates_in_first_seen_order() {\n        let mut map = empty_map();\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h1\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![\"rust\".to_string(), \"ts\".to_string()],\n                files: vec![],\n            },\n        );\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"b.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h2\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![\"ts\".to_string(), \"go\".to_string()],\n                files: vec![],\n            },\n        );\n\n        assert_eq!(\n            declared_targets_for_module(&map, \"m\"),\n            vec![\"rust\".to_string(), \"ts\".to_string(), \"go\".to_string()]\n        );\n    }\n\n    #[test]\n    fn files_for_module_dedupes_by_target_and_path() {\n        let mut map = empty_map();\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h1\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![\n                    FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() },\n                    FileInput { file_path: \"src/b.rs\".to_string(), hash: \"f2\".to_string() },\n                ],\n            },\n        );\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"b.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h2\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() }],\n            },\n        );\n\n        let files = files_for_module(&map, \"m\");\n        assert_eq!(\n            files,\n            vec![\n                ModuleFile { target: \"rust\".to_string(), file_path: \"src/a.rs\".to_string() },\n                ModuleFile { target: \"rust\".to_string(), file_path: \"src/b.rs\".to_string() },\n            ]\n        );\n    }\n\n    #[test]\n    fn is_prompt_gen_stale_covers_all_cases() {\n        assert!(is_prompt_gen_stale(None, \"rust\", \"h1\", true));\n        assert!(is_prompt_gen_stale(None, \"rust\", \"h1\", false));\n\n        let mut targets = OrderedMap::new();\n        targets.insert(\n            \"rust\".to_string(),\n            PromptTargetRecord {\n                prompt_hash_at_gen: Some(\"h1\".to_string()),\n                files: vec![\"a.rs\".to_string()],\n                unattributed: None,\n            },\n        );\n        let record = PromptRecord {\n            module: \"m\".to_string(),\n            prompt_hash: \"h1\".to_string(),\n            declared_targets: vec![],\n            targets,\n        };\n\n        assert!(!is_prompt_gen_stale(Some(&record), \"rust\", \"h1\", false));\n        assert!(is_prompt_gen_stale(Some(&record), \"rust\", \"h2\", false));\n        assert!(is_prompt_gen_stale(Some(&record), \"ts\", \"h1\", false));\n\n        let mut targets2 = OrderedMap::new();\n        targets2.insert(\n            \"rust\".to_string(),\n            PromptTargetRecord {\n                prompt_hash_at_gen: None,\n                files: vec![\"a.rs\".to_string()],\n                unattributed: Some(true),\n            },\n        );\n        let record2 = PromptRecord {\n            module: \"m\".to_string(),\n            prompt_hash: \"h1\".to_string(),\n            declared_targets: vec![],\n            targets: targets2,\n        };\n        assert!(is_prompt_gen_stale(Some(&record2), \"rust\", \"h1\", false));\n    }\n\n    #[test]\n    fn record_attribution_detaches_orphaned_prior_files() {\n        let mut map = empty_map();\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h1\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![\n                    FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() },\n                    FileInput { file_path: \"src/b.rs\".to_string(), hash: \"f2\".to_string() },\n                ],\n            },\n        );\n        assert!(map.files.contains_key(\"src/a.rs\"));\n        assert!(map.files.contains_key(\"src/b.rs\"));\n\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h2\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1b\".to_string() }],\n            },\n        );\n\n        assert!(map.files.contains_key(\"src/a.rs\"));\n        assert!(!map.files.contains_key(\"src/b.rs\"));\n        let record = map.prompts.get(\"a.napl\").unwrap();\n        let target_record = record.targets.get(\"rust\").unwrap();\n        assert_eq!(target_record.prompt_hash_at_gen, Some(\"h2\".to_string()));\n        assert_eq!(target_record.files, vec![\"src/a.rs\".to_string()]);\n    }\n\n    #[test]\n    fn record_attribution_keeps_shared_file_prompts_list() {\n        let mut map = empty_map();\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h1\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![FileInput { file_path: \"src/shared.rs\".to_string(), hash: \"f1\".to_string() }],\n            },\n        );\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"b.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h2\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![FileInput { file_path: \"src/shared.rs\".to_string(), hash: \"f1\".to_string() }],\n            },\n        );\n\n        let file_record = map.files.get(\"src/shared.rs\").unwrap();\n        assert_eq!(\n            file_record.prompts,\n            vec![\"a.napl\".to_string(), \"b.napl\".to_string()]\n        );\n    }\n\n    #[test]\n    fn record_attribution_keeps_other_targets_for_same_prompt() {\n        let mut map = empty_map();\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h1\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() }],\n            },\n        );\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h1\".to_string(),\n                target: \"ts\".to_string(),\n                declared_targets: vec![],\n                files: vec![FileInput { file_path: \"src/a.ts\".to_string(), hash: \"f2\".to_string() }],\n            },\n        );\n\n        let record = map.prompts.get(\"a.napl\").unwrap();\n        assert!(record.targets.contains_key(\"rust\"));\n        assert!(record.targets.contains_key(\"ts\"));\n    }\n\n    #[test]\n    fn record_unattributed_detaches_all_prior_files_and_creates_no_file_records() {\n        let mut map = empty_map();\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h1\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() }],\n            },\n        );\n        assert!(map.files.contains_key(\"src/a.rs\"));\n\n        record_unattributed(\n            &mut map,\n            &UnattributedInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h2\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![\"src/a.rs\".to_string(), \"src/orphan.rs\".to_string()],\n            },\n        );\n\n        assert!(!map.files.contains_key(\"src/a.rs\"));\n        assert!(!map.files.contains_key(\"src/orphan.rs\"));\n\n        let record = map.prompts.get(\"a.napl\").unwrap();\n        let target_record = record.targets.get(\"rust\").unwrap();\n        assert_eq!(target_record.unattributed, Some(true));\n        assert_eq!(target_record.prompt_hash_at_gen, None);\n        assert_eq!(\n            target_record.files,\n            vec![\"src/a.rs\".to_string(), \"src/orphan.rs\".to_string()]\n        );\n    }\n\n    #[test]\n    fn record_attribution_after_unattributed_overwrites_and_clears_flag() {\n        let mut map = empty_map();\n        record_unattributed(\n            &mut map,\n            &UnattributedInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h1\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![\"src/a.rs\".to_string()],\n            },\n        );\n\n        record_attribution(\n            &mut map,\n            &AttributionInput {\n                rel: \"a.napl\".to_string(),\n                module: \"m\".to_string(),\n                prompt_hash: \"h2\".to_string(),\n                target: \"rust\".to_string(),\n                declared_targets: vec![],\n                files: vec![FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() }],\n            },\n        );\n\n        let record = map.prompts.get(\"a.napl\").unwrap();\n        let target_record = record.targets.get(\"rust\").unwrap();\n        assert_eq!(target_record.unattributed, None);\n        assert_eq!(target_record.prompt_hash_at_gen, Some(\"h2\".to_string()));\n        assert!(map.files.contains_key(\"src/a.rs\"));\n    }\n}\n"
+      },
+      {
+        "type": "attribution",
+        "module": "schemas_map",
+        "target": "rust",
+        "entries": [
+          {
+            "promptLines": [
+              1,
+              7
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              1,
+              4
+            ],
+            "note": "module header, imports serde/serde_json"
+          },
+          {
+            "promptLines": [
+              24,
+              28
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              3,
+              3
+            ],
+            "note": "import OrderedMap from schemas_ordered_map sibling crate"
+          },
+          {
+            "promptLines": [
+              41,
+              50
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              10,
+              18
+            ],
+            "note": "PromptTargetRecord struct with serde attrs"
+          },
+          {
+            "promptLines": [
+              46,
+              47
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              12,
+              13
+            ],
+            "note": "promptHashAtGen field, omit if None, default None"
+          },
+          {
+            "promptLines": [
+              48,
+              48
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              14,
+              15
+            ],
+            "note": "files field defaulting to empty"
+          },
+          {
+            "promptLines": [
+              49,
+              50
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              16,
+              17
+            ],
+            "note": "unattributed field, omit if None"
+          },
+          {
+            "promptLines": [
+              51,
+              56
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              20,
+              29
+            ],
+            "note": "PromptRecord struct"
+          },
+          {
+            "promptLines": [
+              52,
+              52
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              22,
+              22
+            ],
+            "note": "module field"
+          },
+          {
+            "promptLines": [
+              53,
+              53
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              23,
+              24
+            ],
+            "note": "prompt_hash field renamed promptHash"
+          },
+          {
+            "promptLines": [
+              54,
+              55
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              25,
+              26
+            ],
+            "note": "declared_targets field renamed declaredTargets, default empty"
+          },
+          {
+            "promptLines": [
+              56,
+              56
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              27,
+              28
+            ],
+            "note": "targets OrderedMap field default empty"
+          },
+          {
+            "promptLines": [
+              57,
+              60
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              31,
+              37
+            ],
+            "note": "FileRecord struct"
+          },
+          {
+            "promptLines": [
+              61,
+              64
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              39,
+              47
+            ],
+            "note": "NaplMap struct"
+          },
+          {
+            "promptLines": [
+              62,
+              62
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              6,
+              8
+            ],
+            "note": "default_version helper returning 2"
+          },
+          {
+            "promptLines": [
+              62,
+              62
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              41,
+              42
+            ],
+            "note": "version field defaults via default_version"
+          },
+          {
+            "promptLines": [
+              63,
+              64
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              43,
+              46
+            ],
+            "note": "prompts and files OrderedMap fields default empty"
+          },
+          {
+            "promptLines": [
+              68,
+              68
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              49,
+              53
+            ],
+            "note": "ModuleFile plain struct"
+          },
+          {
+            "promptLines": [
+              69,
+              69
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              55,
+              59
+            ],
+            "note": "FileInput plain struct"
+          },
+          {
+            "promptLines": [
+              70,
+              72
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              61,
+              69
+            ],
+            "note": "AttributionInput plain struct"
+          },
+          {
+            "promptLines": [
+              73,
+              75
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              71,
+              79
+            ],
+            "note": "UnattributedInput plain struct"
+          },
+          {
+            "promptLines": [
+              79,
+              79
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              81,
+              87
+            ],
+            "note": "empty_map constructor"
+          },
+          {
+            "promptLines": [
+              80,
+              82
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              89,
+              95
+            ],
+            "note": "parse_map deserializes JSON and validates version"
+          },
+          {
+            "promptLines": [
+              83,
+              84
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              97,
+              101
+            ],
+            "note": "map_to_json pretty-prints with trailing newline"
+          },
+          {
+            "promptLines": [
+              88,
+              89
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              103,
+              109
+            ],
+            "note": "prompts_for_module filters by module, insertion order"
+          },
+          {
+            "promptLines": [
+              90,
+              90
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              111,
+              113
+            ],
+            "note": "has_module checks any matching prompt"
+          },
+          {
+            "promptLines": [
+              91,
+              93
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              115,
+              128
+            ],
+            "note": "declared_targets_for_module dedup union first-seen order"
+          },
+          {
+            "promptLines": [
+              94,
+              97
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              130,
+              151
+            ],
+            "note": "files_for_module dedup by (target, file_path)"
+          },
+          {
+            "promptLines": [
+              98,
+              102
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              153,
+              175
+            ],
+            "note": "is_prompt_gen_stale staleness logic"
+          },
+          {
+            "promptLines": [
+              131,
+              135
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              177,
+              185
+            ],
+            "note": "detach_file helper removes prompt from file record"
+          },
+          {
+            "promptLines": [
+              108,
+              121
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              187,
+              247
+            ],
+            "note": "record_attribution mutation helper"
+          },
+          {
+            "promptLines": [
+              110,
+              113
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              188,
+              205
+            ],
+            "note": "compute existing_targets, prior_files, detach stale files"
+          },
+          {
+            "promptLines": [
+              114,
+              116
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              207,
+              214
+            ],
+            "note": "set target sub-record with prompt_hash_at_gen/files/unattributed None"
+          },
+          {
+            "promptLines": [
+              116,
+              117
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              216,
+              224
+            ],
+            "note": "store prompt record under rel"
+          },
+          {
+            "promptLines": [
+              118,
+              121
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              226,
+              246
+            ],
+            "note": "ensure FileRecord per new file, append prompt if absent"
+          },
+          {
+            "promptLines": [
+              123,
+              129
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              249,
+              283
+            ],
+            "note": "record_unattributed mutation helper"
+          },
+          {
+            "promptLines": [
+              125,
+              126
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              256,
+              263
+            ],
+            "note": "detach every prior file of target sub-record"
+          },
+          {
+            "promptLines": [
+              127,
+              128
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              265,
+              272
+            ],
+            "note": "set sub-record unattributed=Some(true), prompt_hash_at_gen=None"
+          },
+          {
+            "promptLines": [
+              128,
+              129
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              274,
+              282
+            ],
+            "note": "store prompt record, no FileRecord created"
+          }
+        ]
+      },
+      {
+        "type": "mapl-entry",
+        "path": "schemas_map.mapl",
+        "entry": {
+          "promptLines": [
+            11,
+            16
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "Agent scoped work correctly to schemas_map/, root Cargo.toml untouched.",
+          "reasoning": "Prompt required leaving workspace root manifest alone and touching nothing outside schemas_map/. Verified only schemas_map/Cargo.toml and schemas_map/src/lib.rs were created; root manifest was not modified. No ambiguity, just confirming correct scope discipline."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "schemas_map.mapl",
+        "entry": {
+          "promptLines": [
+            118,
+            121
+          ],
+          "kind": "assumption",
+          "severity": "warning",
+          "message": "FileRecord fields overwritten unconditionally on every attribution, even for pre-existing files.",
+          "reasoning": "Spec says \"ensure a FileRecord under its path with target=input.target, hash=that file's hash, and a prompts list that includes input.rel.\" It doesn't explicitly say whether target/hash on an already-existing FileRecord (e.g. shared across prompts under a different target) should be overwritten or left alone if it already matches a different owner. Agent chose to always overwrite target and hash on the existing record while only appending to prompts if absent, which is a reasonable reading of \"ensure\" but not the only one (an alternate reading only fills in missing records and never touches existing target/hash of a shared file record). Not tested by the shipped test suite for a cross-target conflict case.",
+          "suggestion": "Clarify whether target/hash should be overwritten when a FileRecord for the given path already exists under a different attribution."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "schemas_map.mapl",
+        "entry": {
+          "promptLines": [
+            94,
+            97
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "files_for_module dedup logic matches spec exactly (dedup by target+path, first-seen order), verified by test.",
+          "reasoning": "No ambiguity found; implementation and accompanying test (files_for_module_dedupes_by_target_and_path) directly mirror the prompt's requirement."
+        }
+      },
+      {
+        "type": "lock",
+        "module": "schemas_map",
+        "target": "rust",
+        "files": [
+          {
+            "path": "schemas_map/Cargo.toml",
+            "hash": "0fda37b2feb99164dfabd008ae876946ab7c7578dc62762d38f18d028a35a487"
+          },
+          {
+            "path": "schemas_map/src/lib.rs",
+            "hash": "fdfd1a199609827854596ac690aa57d958182596da8550cc18a4bda74f84914e"
+          }
+        ]
+      }
+    ]
+  }
+}

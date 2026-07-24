@@ -1,0 +1,600 @@
+{
+  "module": "paths_core",
+  "collection": "selfhost",
+  "target": "rust",
+  "targets": [
+    "rust"
+  ],
+  "prompt": {
+    "file": "paths_core.napl",
+    "path": "cli/paths_core.napl",
+    "content": "---\nmodule: paths_core\ndeps: []\ntargets: [rust]\ntests:\n  - name: rel_to renders a child path POSIX-style relative to the root\n    given: { root: \"/project\", path: \"/project/.napl/map.json\" }\n    expect: { rel: \".napl/map.json\" }\n  - name: resolve_paths places the map under the .napl directory\n    given: { root: \"/p\" }\n    expect: { map_path: \"/p/.napl/map.json\" }\n  - name: resolve_paths places examples beside .napl, not inside it\n    given: { root: \"/p\" }\n    expect: { examples_dir: \"/p/examples\" }\n  - name: resolve_paths uses mapl (not ml) for the machine-layer directory\n    given: { root: \"/p\" }\n    expect: { ml_dir: \"/p/.napl/mapl\" }\n---\n# Path algebra for the `.napl` project layout\n\nThis module is the **pure** path-algebra core of the CLI's path module: it\ncomputes where the `.napl` layout lives under a project root and renders POSIX\nrelative paths. It is pure — no filesystem access, no reading directories, no\ndependencies on other project modules. (The I/O shell that walks the tree to find\nprompt files stays hand-written and calls into this module.)\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `paths_core/`: `paths_core/Cargo.toml` (package name\n`paths_core`) and `paths_core/src/lib.rs`. Touch nothing outside `paths_core/`.\nEnsure `cargo test` passes from the workspace root before finishing.\n\n## The resolved layout struct\n\nExpose a public struct `NaplPaths` with these public fields, each a\n`std::path::PathBuf`:\n\n- `ir_dir`\n- `src_dir`\n- `map_path`\n- `lock_path`\n- `gen_lock_path`\n- `journal_path`\n- `prompts_at_gen_dir`\n- `examples_dir`\n- `attribution_dir`\n- `ml_dir`\n\n## `resolve_paths(root)`\n\n`resolve_paths(root: &std::path::Path) -> NaplPaths`: given a project root, build\nthe layout. Let `napl_dir` be `root` joined with `.napl`. Then:\n\n- `ir_dir` = `napl_dir` joined with `ir`\n- `src_dir` = `napl_dir` joined with `src`\n- `map_path` = `napl_dir` joined with `map.json`\n- `lock_path` = `napl_dir` joined with `lock.json`\n- `gen_lock_path` = `napl_dir` joined with `gen.lock`\n- `journal_path` = `napl_dir` joined with `journal.jsonl`\n- `prompts_at_gen_dir` = `napl_dir` joined with `prompts-at-gen`\n- `examples_dir` = **`root`** joined with `examples` (beside `.napl`, not inside it)\n- `attribution_dir` = `napl_dir` joined with `attribution`\n- `ml_dir` = `napl_dir` joined with `mapl` (the directory is named `mapl`)\n\nFor example, under root `/p`: `map_path` is `/p/.napl/map.json`, `examples_dir` is\n`/p/examples`, and `ml_dir` is `/p/.napl/mapl`.\n\n## `rel_to(root, path)`\n\n`rel_to(root: &std::path::Path, path: &std::path::Path) -> String`: the path of\n`path` relative to `root`, rendered with forward slashes. Strip the `root` prefix\nfrom `path`; if `path` is not under `root`, use `path` unchanged. Then render the\nresult as a string with the platform path separator replaced by `/` so the output\nis always POSIX-style. For example, with root `/project`, the path\n`/project/.napl/map.json` renders as `.napl/map.json`.\n</content>\n"
+  },
+  "promptAtGen": "# Path algebra for the `.napl` project layout\n\nThis module is the **pure** path-algebra core of the CLI's path module: it\ncomputes where the `.napl` layout lives under a project root and renders POSIX\nrelative paths. It is pure — no filesystem access, no reading directories, no\ndependencies on other project modules. (The I/O shell that walks the tree to find\nprompt files stays hand-written and calls into this module.)\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `paths_core/`: `paths_core/Cargo.toml` (package name\n`paths_core`) and `paths_core/src/lib.rs`. Touch nothing outside `paths_core/`.\nEnsure `cargo test` passes from the workspace root before finishing.\n\n## The resolved layout struct\n\nExpose a public struct `NaplPaths` with these public fields, each a\n`std::path::PathBuf`:\n\n- `ir_dir`\n- `src_dir`\n- `map_path`\n- `lock_path`\n- `gen_lock_path`\n- `journal_path`\n- `prompts_at_gen_dir`\n- `examples_dir`\n- `attribution_dir`\n- `ml_dir`\n\n## `resolve_paths(root)`\n\n`resolve_paths(root: &std::path::Path) -> NaplPaths`: given a project root, build\nthe layout. Let `napl_dir` be `root` joined with `.napl`. Then:\n\n- `ir_dir` = `napl_dir` joined with `ir`\n- `src_dir` = `napl_dir` joined with `src`\n- `map_path` = `napl_dir` joined with `map.json`\n- `lock_path` = `napl_dir` joined with `lock.json`\n- `gen_lock_path` = `napl_dir` joined with `gen.lock`\n- `journal_path` = `napl_dir` joined with `journal.jsonl`\n- `prompts_at_gen_dir` = `napl_dir` joined with `prompts-at-gen`\n- `examples_dir` = **`root`** joined with `examples` (beside `.napl`, not inside it)\n- `attribution_dir` = `napl_dir` joined with `attribution`\n- `ml_dir` = `napl_dir` joined with `mapl` (the directory is named `mapl`)\n\nFor example, under root `/p`: `map_path` is `/p/.napl/map.json`, `examples_dir` is\n`/p/examples`, and `ml_dir` is `/p/.napl/mapl`.\n\n## `rel_to(root, path)`\n\n`rel_to(root: &std::path::Path, path: &std::path::Path) -> String`: the path of\n`path` relative to `root`, rendered with forward slashes. Strip the `root` prefix\nfrom `path`; if `path` is not under `root`, use `path` unchanged. Then render the\nresult as a string with the platform path separator replaced by `/` so the output\nis always POSIX-style. For example, with root `/project`, the path\n`/project/.napl/map.json` renders as `.napl/map.json`.\n</content>\n",
+  "summary": "Path algebra for the `.napl` project layout",
+  "files": [
+    {
+      "path": "paths_core/Cargo.toml",
+      "journalPath": ".napl/src/rust/paths_core/Cargo.toml",
+      "content": "[package]\nname = \"paths_core\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n",
+      "language": "toml"
+    },
+    {
+      "path": "paths_core/src/lib.rs",
+      "journalPath": ".napl/src/rust/paths_core/src/lib.rs",
+      "content": "use std::path::{Component, Path, PathBuf};\n\npub struct NaplPaths {\n    pub ir_dir: PathBuf,\n    pub src_dir: PathBuf,\n    pub map_path: PathBuf,\n    pub lock_path: PathBuf,\n    pub gen_lock_path: PathBuf,\n    pub journal_path: PathBuf,\n    pub prompts_at_gen_dir: PathBuf,\n    pub examples_dir: PathBuf,\n    pub attribution_dir: PathBuf,\n    pub ml_dir: PathBuf,\n}\n\npub fn resolve_paths(root: &Path) -> NaplPaths {\n    let napl_dir = root.join(\".napl\");\n    NaplPaths {\n        ir_dir: napl_dir.join(\"ir\"),\n        src_dir: napl_dir.join(\"src\"),\n        map_path: napl_dir.join(\"map.json\"),\n        lock_path: napl_dir.join(\"lock.json\"),\n        gen_lock_path: napl_dir.join(\"gen.lock\"),\n        journal_path: napl_dir.join(\"journal.jsonl\"),\n        prompts_at_gen_dir: napl_dir.join(\"prompts-at-gen\"),\n        examples_dir: root.join(\"examples\"),\n        attribution_dir: napl_dir.join(\"attribution\"),\n        ml_dir: napl_dir.join(\"mapl\"),\n    }\n}\n\npub fn rel_to(root: &Path, path: &Path) -> String {\n    let rel = path.strip_prefix(root).unwrap_or(path);\n    rel.components()\n        .filter_map(|c| match c {\n            Component::Normal(part) => Some(part.to_string_lossy().into_owned()),\n            Component::CurDir => None,\n            Component::ParentDir => Some(\"..\".to_string()),\n            Component::RootDir => Some(String::new()),\n            Component::Prefix(prefix) => Some(prefix.as_os_str().to_string_lossy().into_owned()),\n        })\n        .collect::<Vec<_>>()\n        .join(\"/\")\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn resolve_paths_places_fields_under_napl_dir() {\n        let paths = resolve_paths(Path::new(\"/p\"));\n        assert_eq!(paths.ir_dir, PathBuf::from(\"/p/.napl/ir\"));\n        assert_eq!(paths.src_dir, PathBuf::from(\"/p/.napl/src\"));\n        assert_eq!(paths.map_path, PathBuf::from(\"/p/.napl/map.json\"));\n        assert_eq!(paths.lock_path, PathBuf::from(\"/p/.napl/lock.json\"));\n        assert_eq!(paths.gen_lock_path, PathBuf::from(\"/p/.napl/gen.lock\"));\n        assert_eq!(paths.journal_path, PathBuf::from(\"/p/.napl/journal.jsonl\"));\n        assert_eq!(\n            paths.prompts_at_gen_dir,\n            PathBuf::from(\"/p/.napl/prompts-at-gen\")\n        );\n        assert_eq!(paths.attribution_dir, PathBuf::from(\"/p/.napl/attribution\"));\n    }\n\n    #[test]\n    fn examples_dir_sits_beside_napl_not_inside_it() {\n        let paths = resolve_paths(Path::new(\"/p\"));\n        assert_eq!(paths.examples_dir, PathBuf::from(\"/p/examples\"));\n    }\n\n    #[test]\n    fn ml_dir_is_named_mapl() {\n        let paths = resolve_paths(Path::new(\"/p\"));\n        assert_eq!(paths.ml_dir, PathBuf::from(\"/p/.napl/mapl\"));\n    }\n\n    #[test]\n    fn rel_to_strips_root_prefix() {\n        let out = rel_to(Path::new(\"/project\"), Path::new(\"/project/.napl/map.json\"));\n        assert_eq!(out, \".napl/map.json\");\n    }\n\n    #[test]\n    fn rel_to_returns_path_unchanged_when_not_under_root() {\n        let out = rel_to(Path::new(\"/project\"), Path::new(\"/other/file.txt\"));\n        assert_eq!(out, \"/other/file.txt\");\n    }\n\n    #[test]\n    fn rel_to_renders_forward_slashes() {\n        let out = rel_to(Path::new(\"/root\"), Path::new(\"/root/a/b/c/d.txt\"));\n        assert_eq!(out, \"a/b/c/d.txt\");\n        assert!(!out.contains('\\\\'));\n    }\n}\n",
+      "language": "rust"
+    }
+  ],
+  "attribution": [
+    {
+      "promptLines": [
+        19,
+        31
+      ],
+      "file": "paths_core/src/lib.rs",
+      "lines": [
+        3,
+        14
+      ],
+      "note": "NaplPaths struct with public PathBuf fields"
+    },
+    {
+      "promptLines": [
+        35,
+        36
+      ],
+      "file": "paths_core/src/lib.rs",
+      "lines": [
+        16,
+        17
+      ],
+      "note": "resolve_paths signature and napl_dir computation"
+    },
+    {
+      "promptLines": [
+        38,
+        38
+      ],
+      "file": "paths_core/src/lib.rs",
+      "lines": [
+        19,
+        19
+      ],
+      "note": "ir_dir = napl_dir/ir"
+    },
+    {
+      "promptLines": [
+        39,
+        39
+      ],
+      "file": "paths_core/src/lib.rs",
+      "lines": [
+        20,
+        20
+      ],
+      "note": "src_dir = napl_dir/src"
+    },
+    {
+      "promptLines": [
+        40,
+        40
+      ],
+      "file": "paths_core/src/lib.rs",
+      "lines": [
+        21,
+        21
+      ],
+      "note": "map_path = napl_dir/map.json"
+    },
+    {
+      "promptLines": [
+        41,
+        41
+      ],
+      "file": "paths_core/src/lib.rs",
+      "lines": [
+        22,
+        22
+      ],
+      "note": "lock_path = napl_dir/lock.json"
+    },
+    {
+      "promptLines": [
+        42,
+        42
+      ],
+      "file": "paths_core/src/lib.rs",
+      "lines": [
+        23,
+        23
+      ],
+      "note": "gen_lock_path = napl_dir/gen.lock"
+    },
+    {
+      "promptLines": [
+        43,
+        43
+      ],
+      "file": "paths_core/src/lib.rs",
+      "lines": [
+        24,
+        24
+      ],
+      "note": "journal_path = napl_dir/journal.jsonl"
+    },
+    {
+      "promptLines": [
+        44,
+        44
+      ],
+      "file": "paths_core/src/lib.rs",
+      "lines": [
+        25,
+        25
+      ],
+      "note": "prompts_at_gen_dir = napl_dir/prompts-at-gen"
+    },
+    {
+      "promptLines": [
+        45,
+        45
+      ],
+      "file": "paths_core/src/lib.rs",
+      "lines": [
+        26,
+        26
+      ],
+      "note": "examples_dir = root/examples, beside .napl"
+    },
+    {
+      "promptLines": [
+        46,
+        46
+      ],
+      "file": "paths_core/src/lib.rs",
+      "lines": [
+        27,
+        27
+      ],
+      "note": "attribution_dir = napl_dir/attribution"
+    },
+    {
+      "promptLines": [
+        47,
+        47
+      ],
+      "file": "paths_core/src/lib.rs",
+      "lines": [
+        28,
+        28
+      ],
+      "note": "ml_dir = napl_dir/mapl"
+    },
+    {
+      "promptLines": [
+        49,
+        50
+      ],
+      "file": "paths_core/src/lib.rs",
+      "lines": [
+        51,
+        76
+      ],
+      "note": "example resolve_paths assertions covering map_path/examples_dir/ml_dir"
+    },
+    {
+      "promptLines": [
+        54,
+        57
+      ],
+      "file": "paths_core/src/lib.rs",
+      "lines": [
+        32,
+        33
+      ],
+      "note": "rel_to signature, strip_prefix with fallback to unchanged path"
+    },
+    {
+      "promptLines": [
+        55,
+        57
+      ],
+      "file": "paths_core/src/lib.rs",
+      "lines": [
+        34,
+        43
+      ],
+      "note": "render components with POSIX forward-slash separator"
+    },
+    {
+      "promptLines": [
+        58,
+        59
+      ],
+      "file": "paths_core/src/lib.rs",
+      "lines": [
+        79,
+        82
+      ],
+      "note": "test: rel_to strips root prefix example"
+    },
+    {
+      "promptLines": [
+        56,
+        56
+      ],
+      "file": "paths_core/src/lib.rs",
+      "lines": [
+        85,
+        88
+      ],
+      "note": "test: path unchanged when not under root"
+    },
+    {
+      "promptLines": [
+        57,
+        57
+      ],
+      "file": "paths_core/src/lib.rs",
+      "lines": [
+        91,
+        95
+      ],
+      "note": "test: forward slashes rendered, no backslashes"
+    }
+  ],
+  "attributionYaml": "module: paths_core\ntarget: rust\nentries:\n  - promptLines:\n      - 19\n      - 31\n    file: paths_core/src/lib.rs\n    lines:\n      - 3\n      - 14\n    note: NaplPaths struct with public PathBuf fields\n  - promptLines:\n      - 35\n      - 36\n    file: paths_core/src/lib.rs\n    lines:\n      - 16\n      - 17\n    note: resolve_paths signature and napl_dir computation\n  - promptLines:\n      - 38\n      - 38\n    file: paths_core/src/lib.rs\n    lines:\n      - 19\n      - 19\n    note: ir_dir = napl_dir/ir\n  - promptLines:\n      - 39\n      - 39\n    file: paths_core/src/lib.rs\n    lines:\n      - 20\n      - 20\n    note: src_dir = napl_dir/src\n  - promptLines:\n      - 40\n      - 40\n    file: paths_core/src/lib.rs\n    lines:\n      - 21\n      - 21\n    note: map_path = napl_dir/map.json\n  - promptLines:\n      - 41\n      - 41\n    file: paths_core/src/lib.rs\n    lines:\n      - 22\n      - 22\n    note: lock_path = napl_dir/lock.json\n  - promptLines:\n      - 42\n      - 42\n    file: paths_core/src/lib.rs\n    lines:\n      - 23\n      - 23\n    note: gen_lock_path = napl_dir/gen.lock\n  - promptLines:\n      - 43\n      - 43\n    file: paths_core/src/lib.rs\n    lines:\n      - 24\n      - 24\n    note: journal_path = napl_dir/journal.jsonl\n  - promptLines:\n      - 44\n      - 44\n    file: paths_core/src/lib.rs\n    lines:\n      - 25\n      - 25\n    note: prompts_at_gen_dir = napl_dir/prompts-at-gen\n  - promptLines:\n      - 45\n      - 45\n    file: paths_core/src/lib.rs\n    lines:\n      - 26\n      - 26\n    note: examples_dir = root/examples, beside .napl\n  - promptLines:\n      - 46\n      - 46\n    file: paths_core/src/lib.rs\n    lines:\n      - 27\n      - 27\n    note: attribution_dir = napl_dir/attribution\n  - promptLines:\n      - 47\n      - 47\n    file: paths_core/src/lib.rs\n    lines:\n      - 28\n      - 28\n    note: ml_dir = napl_dir/mapl\n  - promptLines:\n      - 49\n      - 50\n    file: paths_core/src/lib.rs\n    lines:\n      - 51\n      - 76\n    note: example resolve_paths assertions covering map_path/examples_dir/ml_dir\n  - promptLines:\n      - 54\n      - 57\n    file: paths_core/src/lib.rs\n    lines:\n      - 32\n      - 33\n    note: rel_to signature, strip_prefix with fallback to unchanged path\n  - promptLines:\n      - 55\n      - 57\n    file: paths_core/src/lib.rs\n    lines:\n      - 34\n      - 43\n    note: render components with POSIX forward-slash separator\n  - promptLines:\n      - 58\n      - 59\n    file: paths_core/src/lib.rs\n    lines:\n      - 79\n      - 82\n    note: \"test: rel_to strips root prefix example\"\n  - promptLines:\n      - 56\n      - 56\n    file: paths_core/src/lib.rs\n    lines:\n      - 85\n      - 88\n    note: \"test: path unchanged when not under root\"\n  - promptLines:\n      - 57\n      - 57\n    file: paths_core/src/lib.rs\n    lines:\n      - 91\n      - 95\n    note: \"test: forward slashes rendered, no backslashes\"\n",
+  "mapl": [
+    {
+      "promptLines": [
+        47,
+        47
+      ],
+      "kind": "ambiguity",
+      "severity": "error",
+      "message": "ml_dir field maps to a directory literally named \"mapl\", not \"ml\".",
+      "reasoning": "The prompt names field `ml_dir` but explicitly says the directory itself is called `mapl` (not `ml` as the field name would suggest). This mismatch reads like it could be a typo either in the field name or the directory name, but the prompt is explicit enough (\"the directory is named mapl\") that the agent implemented it literally as stated rather than assuming a typo. Flagging since a careful reviewer would want to confirm this odd field/directory name mismatch is intentional. ",
+      "suggestion": "Clarify why ml_dir points to \"mapl\" — confirm this isn't a typo for \"ml\"."
+    },
+    {
+      "promptLines": [
+        52,
+        59
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "rel_to spec described as strip+replace; implementation uses component-wise rebuild, behaviorally equivalent.",
+      "reasoning": "The prompt describes rel_to procedurally as \"strip the root prefix, then replace the platform separator with /\". The agent instead implemented it by iterating path Components and rejoining with \"/\", which handles edge cases (root dir, parent dir, prefix components) not explicitly spelled out in the prompt. This produces the same observable results for all given examples and tests, so no behavior change, just noting the implementation strategy diverges from the literal wording of the spec."
+    }
+  ],
+  "journal": [
+    {
+      "gen": 27,
+      "timestamp": "2026-07-24T09:06:18.703Z",
+      "mode": "full",
+      "promptHash": "a017d3f9f5a60901f4dd44a63278f805c3e42dc95cfd69d6b80888948e753d4b",
+      "files": [
+        {
+          "path": "paths_core/Cargo.toml",
+          "journalPath": ".napl/src/rust/paths_core/Cargo.toml",
+          "patch": "@@ -0,0 +1,6 @@\n+[package]\n+name = \"paths_core\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]"
+        },
+        {
+          "path": "paths_core/src/lib.rs",
+          "journalPath": ".napl/src/rust/paths_core/src/lib.rs",
+          "patch": "@@ -0,0 +1,96 @@\n+use std::path::{Component, Path, PathBuf};\n+\n+pub struct NaplPaths {\n+    pub ir_dir: PathBuf,\n+    pub src_dir: PathBuf,\n+    pub map_path: PathBuf,\n+    pub lock_path: PathBuf,\n+    pub gen_lock_path: PathBuf,\n+    pub journal_path: PathBuf,\n+    pub prompts_at_gen_dir: PathBuf,\n+    pub examples_dir: PathBuf,\n+    pub attribution_dir: PathBuf,\n+    pub ml_dir: PathBuf,\n+}\n+\n+pub fn resolve_paths(root: &Path) -> NaplPaths {\n+    let napl_dir = root.join(\".napl\");\n+    NaplPaths {\n+        ir_dir: napl_dir.join(\"ir\"),\n+        src_dir: napl_dir.join(\"src\"),\n+        map_path: napl_dir.join(\"map.json\"),\n+        lock_path: napl_dir.join(\"lock.json\"),\n+        gen_lock_path: napl_dir.join(\"gen.lock\"),\n+        journal_path: napl_dir.join(\"journal.jsonl\"),\n+        prompts_at_gen_dir: napl_dir.join(\"prompts-at-gen\"),\n+        examples_dir: root.join(\"examples\"),\n+        attribution_dir: napl_dir.join(\"attribution\"),\n+        ml_dir: napl_dir.join(\"mapl\"),\n+    }\n+}\n+\n+pub fn rel_to(root: &Path, path: &Path) -> String {\n+    let rel = path.strip_prefix(root).unwrap_or(path);\n+    rel.components()\n+        .filter_map(|c| match c {\n+            Component::Normal(part) => Some(part.to_string_lossy().into_owned()),\n+            Component::CurDir => None,\n+            Component::ParentDir => Some(\"..\".to_string()),\n+            Component::RootDir => Some(String::new()),\n+            Component::Prefix(prefix) => Some(prefix.as_os_str().to_string_lossy().into_owned()),\n+        })\n+        .collect::<Vec<_>>()\n+        .join(\"/\")\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn resolve_paths_places_fields_under_napl_dir() {\n+        let paths = resolve_paths(Path::new(\"/p\"));\n+        assert_eq!(paths.ir_dir, PathBuf::from(\"/p/.napl/ir\"));\n+        assert_eq!(paths.src_dir, PathBuf::from(\"/p/.napl/src\"));\n+        assert_eq!(paths.map_path, PathBuf::from(\"/p/.napl/map.json\"));\n+        assert_eq!(paths.lock_path, PathBuf::from(\"/p/.napl/lock.json\"));\n+        assert_eq!(paths.gen_lock_path, PathBuf::from(\"/p/.napl/gen.lock\"));\n+        assert_eq!(paths.journal_path, PathBuf::from(\"/p/.napl/journal.jsonl\"));\n+        assert_eq!(\n+            paths.prompts_at_gen_dir,\n+            PathBuf::from(\"/p/.napl/prompts-at-gen\")\n+        );\n+        assert_eq!(paths.attribution_dir, PathBuf::from(\"/p/.napl/attribution\"));\n+    }\n+\n+    #[test]\n+    fn examples_dir_sits_beside_napl_not_inside_it() {\n+        let paths = resolve_paths(Path::new(\"/p\"));\n+        assert_eq!(paths.examples_dir, PathBuf::from(\"/p/examples\"));\n+    }\n+\n+    #[test]\n+    fn ml_dir_is_named_mapl() {\n+        let paths = resolve_paths(Path::new(\"/p\"));\n+        assert_eq!(paths.ml_dir, PathBuf::from(\"/p/.napl/mapl\"));\n+    }\n+\n+    #[test]\n+    fn rel_to_strips_root_prefix() {\n+        let out = rel_to(Path::new(\"/project\"), Path::new(\"/project/.napl/map.json\"));\n+        assert_eq!(out, \".napl/map.json\");\n+    }\n+\n+    #[test]\n+    fn rel_to_returns_path_unchanged_when_not_under_root() {\n+        let out = rel_to(Path::new(\"/project\"), Path::new(\"/other/file.txt\"));\n+        assert_eq!(out, \"/other/file.txt\");\n+    }\n+\n+    #[test]\n+    fn rel_to_renders_forward_slashes() {\n+        let out = rel_to(Path::new(\"/root\"), Path::new(\"/root/a/b/c/d.txt\"));\n+        assert_eq!(out, \"a/b/c/d.txt\");\n+        assert!(!out.contains('\\\\'));\n+    }\n+}"
+        }
+      ]
+    }
+  ],
+  "lock": [
+    {
+      "path": "paths_core/Cargo.toml",
+      "hash": "261e4e0ea691194e88b9d933b193ca76f81c396f19d361dee2e67487d2e65596"
+    },
+    {
+      "path": "paths_core/src/lib.rs",
+      "hash": "9c10bae4dbefd7f8e7505dc64ec06a6711f1bedf6a129c79205ebd16326abcb0"
+    }
+  ],
+  "session": {
+    "task": "napl gen rust → paths_core",
+    "files": {
+      "paths_core.napl": "---\nmodule: paths_core\ndeps: []\ntargets: [rust]\ntests:\n  - name: rel_to renders a child path POSIX-style relative to the root\n    given: { root: \"/project\", path: \"/project/.napl/map.json\" }\n    expect: { rel: \".napl/map.json\" }\n  - name: resolve_paths places the map under the .napl directory\n    given: { root: \"/p\" }\n    expect: { map_path: \"/p/.napl/map.json\" }\n  - name: resolve_paths places examples beside .napl, not inside it\n    given: { root: \"/p\" }\n    expect: { examples_dir: \"/p/examples\" }\n  - name: resolve_paths uses mapl (not ml) for the machine-layer directory\n    given: { root: \"/p\" }\n    expect: { ml_dir: \"/p/.napl/mapl\" }\n---\n# Path algebra for the `.napl` project layout\n\nThis module is the **pure** path-algebra core of the CLI's path module: it\ncomputes where the `.napl` layout lives under a project root and renders POSIX\nrelative paths. It is pure — no filesystem access, no reading directories, no\ndependencies on other project modules. (The I/O shell that walks the tree to find\nprompt files stays hand-written and calls into this module.)\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `paths_core/`: `paths_core/Cargo.toml` (package name\n`paths_core`) and `paths_core/src/lib.rs`. Touch nothing outside `paths_core/`.\nEnsure `cargo test` passes from the workspace root before finishing.\n\n## The resolved layout struct\n\nExpose a public struct `NaplPaths` with these public fields, each a\n`std::path::PathBuf`:\n\n- `ir_dir`\n- `src_dir`\n- `map_path`\n- `lock_path`\n- `gen_lock_path`\n- `journal_path`\n- `prompts_at_gen_dir`\n- `examples_dir`\n- `attribution_dir`\n- `ml_dir`\n\n## `resolve_paths(root)`\n\n`resolve_paths(root: &std::path::Path) -> NaplPaths`: given a project root, build\nthe layout. Let `napl_dir` be `root` joined with `.napl`. Then:\n\n- `ir_dir` = `napl_dir` joined with `ir`\n- `src_dir` = `napl_dir` joined with `src`\n- `map_path` = `napl_dir` joined with `map.json`\n- `lock_path` = `napl_dir` joined with `lock.json`\n- `gen_lock_path` = `napl_dir` joined with `gen.lock`\n- `journal_path` = `napl_dir` joined with `journal.jsonl`\n- `prompts_at_gen_dir` = `napl_dir` joined with `prompts-at-gen`\n- `examples_dir` = **`root`** joined with `examples` (beside `.napl`, not inside it)\n- `attribution_dir` = `napl_dir` joined with `attribution`\n- `ml_dir` = `napl_dir` joined with `mapl` (the directory is named `mapl`)\n\nFor example, under root `/p`: `map_path` is `/p/.napl/map.json`, `examples_dir` is\n`/p/examples`, and `ml_dir` is `/p/.napl/mapl`.\n\n## `rel_to(root, path)`\n\n`rel_to(root: &std::path::Path, path: &std::path::Path) -> String`: the path of\n`path` relative to `root`, rendered with forward slashes. Strip the `root` prefix\nfrom `path`; if `path` is not under `root`, use `path` unchanged. Then render the\nresult as a string with the platform path separator replaced by `/` so the output\nis always POSIX-style. For example, with root `/project`, the path\n`/project/.napl/map.json` renders as `.napl/map.json`.\n</content>\n"
+    },
+    "events": [
+      {
+        "type": "task",
+        "task": "napl gen rust → paths_core"
+      },
+      {
+        "type": "diff",
+        "path": "paths_core/Cargo.toml",
+        "patch": "@@ -0,0 +1,6 @@\n+[package]\n+name = \"paths_core\"\n+version = \"0.1.0\"\n+edition = \"2021\"\n+\n+[dependencies]"
+      },
+      {
+        "type": "file-edit",
+        "path": "paths_core/Cargo.toml",
+        "content": "[package]\nname = \"paths_core\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n"
+      },
+      {
+        "type": "diff",
+        "path": "paths_core/src/lib.rs",
+        "patch": "@@ -0,0 +1,96 @@\n+use std::path::{Component, Path, PathBuf};\n+\n+pub struct NaplPaths {\n+    pub ir_dir: PathBuf,\n+    pub src_dir: PathBuf,\n+    pub map_path: PathBuf,\n+    pub lock_path: PathBuf,\n+    pub gen_lock_path: PathBuf,\n+    pub journal_path: PathBuf,\n+    pub prompts_at_gen_dir: PathBuf,\n+    pub examples_dir: PathBuf,\n+    pub attribution_dir: PathBuf,\n+    pub ml_dir: PathBuf,\n+}\n+\n+pub fn resolve_paths(root: &Path) -> NaplPaths {\n+    let napl_dir = root.join(\".napl\");\n+    NaplPaths {\n+        ir_dir: napl_dir.join(\"ir\"),\n+        src_dir: napl_dir.join(\"src\"),\n+        map_path: napl_dir.join(\"map.json\"),\n+        lock_path: napl_dir.join(\"lock.json\"),\n+        gen_lock_path: napl_dir.join(\"gen.lock\"),\n+        journal_path: napl_dir.join(\"journal.jsonl\"),\n+        prompts_at_gen_dir: napl_dir.join(\"prompts-at-gen\"),\n+        examples_dir: root.join(\"examples\"),\n+        attribution_dir: napl_dir.join(\"attribution\"),\n+        ml_dir: napl_dir.join(\"mapl\"),\n+    }\n+}\n+\n+pub fn rel_to(root: &Path, path: &Path) -> String {\n+    let rel = path.strip_prefix(root).unwrap_or(path);\n+    rel.components()\n+        .filter_map(|c| match c {\n+            Component::Normal(part) => Some(part.to_string_lossy().into_owned()),\n+            Component::CurDir => None,\n+            Component::ParentDir => Some(\"..\".to_string()),\n+            Component::RootDir => Some(String::new()),\n+            Component::Prefix(prefix) => Some(prefix.as_os_str().to_string_lossy().into_owned()),\n+        })\n+        .collect::<Vec<_>>()\n+        .join(\"/\")\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn resolve_paths_places_fields_under_napl_dir() {\n+        let paths = resolve_paths(Path::new(\"/p\"));\n+        assert_eq!(paths.ir_dir, PathBuf::from(\"/p/.napl/ir\"));\n+        assert_eq!(paths.src_dir, PathBuf::from(\"/p/.napl/src\"));\n+        assert_eq!(paths.map_path, PathBuf::from(\"/p/.napl/map.json\"));\n+        assert_eq!(paths.lock_path, PathBuf::from(\"/p/.napl/lock.json\"));\n+        assert_eq!(paths.gen_lock_path, PathBuf::from(\"/p/.napl/gen.lock\"));\n+        assert_eq!(paths.journal_path, PathBuf::from(\"/p/.napl/journal.jsonl\"));\n+        assert_eq!(\n+            paths.prompts_at_gen_dir,\n+            PathBuf::from(\"/p/.napl/prompts-at-gen\")\n+        );\n+        assert_eq!(paths.attribution_dir, PathBuf::from(\"/p/.napl/attribution\"));\n+    }\n+\n+    #[test]\n+    fn examples_dir_sits_beside_napl_not_inside_it() {\n+        let paths = resolve_paths(Path::new(\"/p\"));\n+        assert_eq!(paths.examples_dir, PathBuf::from(\"/p/examples\"));\n+    }\n+\n+    #[test]\n+    fn ml_dir_is_named_mapl() {\n+        let paths = resolve_paths(Path::new(\"/p\"));\n+        assert_eq!(paths.ml_dir, PathBuf::from(\"/p/.napl/mapl\"));\n+    }\n+\n+    #[test]\n+    fn rel_to_strips_root_prefix() {\n+        let out = rel_to(Path::new(\"/project\"), Path::new(\"/project/.napl/map.json\"));\n+        assert_eq!(out, \".napl/map.json\");\n+    }\n+\n+    #[test]\n+    fn rel_to_returns_path_unchanged_when_not_under_root() {\n+        let out = rel_to(Path::new(\"/project\"), Path::new(\"/other/file.txt\"));\n+        assert_eq!(out, \"/other/file.txt\");\n+    }\n+\n+    #[test]\n+    fn rel_to_renders_forward_slashes() {\n+        let out = rel_to(Path::new(\"/root\"), Path::new(\"/root/a/b/c/d.txt\"));\n+        assert_eq!(out, \"a/b/c/d.txt\");\n+        assert!(!out.contains('\\\\'));\n+    }\n+}"
+      },
+      {
+        "type": "file-edit",
+        "path": "paths_core/src/lib.rs",
+        "content": "use std::path::{Component, Path, PathBuf};\n\npub struct NaplPaths {\n    pub ir_dir: PathBuf,\n    pub src_dir: PathBuf,\n    pub map_path: PathBuf,\n    pub lock_path: PathBuf,\n    pub gen_lock_path: PathBuf,\n    pub journal_path: PathBuf,\n    pub prompts_at_gen_dir: PathBuf,\n    pub examples_dir: PathBuf,\n    pub attribution_dir: PathBuf,\n    pub ml_dir: PathBuf,\n}\n\npub fn resolve_paths(root: &Path) -> NaplPaths {\n    let napl_dir = root.join(\".napl\");\n    NaplPaths {\n        ir_dir: napl_dir.join(\"ir\"),\n        src_dir: napl_dir.join(\"src\"),\n        map_path: napl_dir.join(\"map.json\"),\n        lock_path: napl_dir.join(\"lock.json\"),\n        gen_lock_path: napl_dir.join(\"gen.lock\"),\n        journal_path: napl_dir.join(\"journal.jsonl\"),\n        prompts_at_gen_dir: napl_dir.join(\"prompts-at-gen\"),\n        examples_dir: root.join(\"examples\"),\n        attribution_dir: napl_dir.join(\"attribution\"),\n        ml_dir: napl_dir.join(\"mapl\"),\n    }\n}\n\npub fn rel_to(root: &Path, path: &Path) -> String {\n    let rel = path.strip_prefix(root).unwrap_or(path);\n    rel.components()\n        .filter_map(|c| match c {\n            Component::Normal(part) => Some(part.to_string_lossy().into_owned()),\n            Component::CurDir => None,\n            Component::ParentDir => Some(\"..\".to_string()),\n            Component::RootDir => Some(String::new()),\n            Component::Prefix(prefix) => Some(prefix.as_os_str().to_string_lossy().into_owned()),\n        })\n        .collect::<Vec<_>>()\n        .join(\"/\")\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn resolve_paths_places_fields_under_napl_dir() {\n        let paths = resolve_paths(Path::new(\"/p\"));\n        assert_eq!(paths.ir_dir, PathBuf::from(\"/p/.napl/ir\"));\n        assert_eq!(paths.src_dir, PathBuf::from(\"/p/.napl/src\"));\n        assert_eq!(paths.map_path, PathBuf::from(\"/p/.napl/map.json\"));\n        assert_eq!(paths.lock_path, PathBuf::from(\"/p/.napl/lock.json\"));\n        assert_eq!(paths.gen_lock_path, PathBuf::from(\"/p/.napl/gen.lock\"));\n        assert_eq!(paths.journal_path, PathBuf::from(\"/p/.napl/journal.jsonl\"));\n        assert_eq!(\n            paths.prompts_at_gen_dir,\n            PathBuf::from(\"/p/.napl/prompts-at-gen\")\n        );\n        assert_eq!(paths.attribution_dir, PathBuf::from(\"/p/.napl/attribution\"));\n    }\n\n    #[test]\n    fn examples_dir_sits_beside_napl_not_inside_it() {\n        let paths = resolve_paths(Path::new(\"/p\"));\n        assert_eq!(paths.examples_dir, PathBuf::from(\"/p/examples\"));\n    }\n\n    #[test]\n    fn ml_dir_is_named_mapl() {\n        let paths = resolve_paths(Path::new(\"/p\"));\n        assert_eq!(paths.ml_dir, PathBuf::from(\"/p/.napl/mapl\"));\n    }\n\n    #[test]\n    fn rel_to_strips_root_prefix() {\n        let out = rel_to(Path::new(\"/project\"), Path::new(\"/project/.napl/map.json\"));\n        assert_eq!(out, \".napl/map.json\");\n    }\n\n    #[test]\n    fn rel_to_returns_path_unchanged_when_not_under_root() {\n        let out = rel_to(Path::new(\"/project\"), Path::new(\"/other/file.txt\"));\n        assert_eq!(out, \"/other/file.txt\");\n    }\n\n    #[test]\n    fn rel_to_renders_forward_slashes() {\n        let out = rel_to(Path::new(\"/root\"), Path::new(\"/root/a/b/c/d.txt\"));\n        assert_eq!(out, \"a/b/c/d.txt\");\n        assert!(!out.contains('\\\\'));\n    }\n}\n"
+      },
+      {
+        "type": "attribution",
+        "module": "paths_core",
+        "target": "rust",
+        "entries": [
+          {
+            "promptLines": [
+              19,
+              31
+            ],
+            "file": "paths_core/src/lib.rs",
+            "lines": [
+              3,
+              14
+            ],
+            "note": "NaplPaths struct with public PathBuf fields"
+          },
+          {
+            "promptLines": [
+              35,
+              36
+            ],
+            "file": "paths_core/src/lib.rs",
+            "lines": [
+              16,
+              17
+            ],
+            "note": "resolve_paths signature and napl_dir computation"
+          },
+          {
+            "promptLines": [
+              38,
+              38
+            ],
+            "file": "paths_core/src/lib.rs",
+            "lines": [
+              19,
+              19
+            ],
+            "note": "ir_dir = napl_dir/ir"
+          },
+          {
+            "promptLines": [
+              39,
+              39
+            ],
+            "file": "paths_core/src/lib.rs",
+            "lines": [
+              20,
+              20
+            ],
+            "note": "src_dir = napl_dir/src"
+          },
+          {
+            "promptLines": [
+              40,
+              40
+            ],
+            "file": "paths_core/src/lib.rs",
+            "lines": [
+              21,
+              21
+            ],
+            "note": "map_path = napl_dir/map.json"
+          },
+          {
+            "promptLines": [
+              41,
+              41
+            ],
+            "file": "paths_core/src/lib.rs",
+            "lines": [
+              22,
+              22
+            ],
+            "note": "lock_path = napl_dir/lock.json"
+          },
+          {
+            "promptLines": [
+              42,
+              42
+            ],
+            "file": "paths_core/src/lib.rs",
+            "lines": [
+              23,
+              23
+            ],
+            "note": "gen_lock_path = napl_dir/gen.lock"
+          },
+          {
+            "promptLines": [
+              43,
+              43
+            ],
+            "file": "paths_core/src/lib.rs",
+            "lines": [
+              24,
+              24
+            ],
+            "note": "journal_path = napl_dir/journal.jsonl"
+          },
+          {
+            "promptLines": [
+              44,
+              44
+            ],
+            "file": "paths_core/src/lib.rs",
+            "lines": [
+              25,
+              25
+            ],
+            "note": "prompts_at_gen_dir = napl_dir/prompts-at-gen"
+          },
+          {
+            "promptLines": [
+              45,
+              45
+            ],
+            "file": "paths_core/src/lib.rs",
+            "lines": [
+              26,
+              26
+            ],
+            "note": "examples_dir = root/examples, beside .napl"
+          },
+          {
+            "promptLines": [
+              46,
+              46
+            ],
+            "file": "paths_core/src/lib.rs",
+            "lines": [
+              27,
+              27
+            ],
+            "note": "attribution_dir = napl_dir/attribution"
+          },
+          {
+            "promptLines": [
+              47,
+              47
+            ],
+            "file": "paths_core/src/lib.rs",
+            "lines": [
+              28,
+              28
+            ],
+            "note": "ml_dir = napl_dir/mapl"
+          },
+          {
+            "promptLines": [
+              49,
+              50
+            ],
+            "file": "paths_core/src/lib.rs",
+            "lines": [
+              51,
+              76
+            ],
+            "note": "example resolve_paths assertions covering map_path/examples_dir/ml_dir"
+          },
+          {
+            "promptLines": [
+              54,
+              57
+            ],
+            "file": "paths_core/src/lib.rs",
+            "lines": [
+              32,
+              33
+            ],
+            "note": "rel_to signature, strip_prefix with fallback to unchanged path"
+          },
+          {
+            "promptLines": [
+              55,
+              57
+            ],
+            "file": "paths_core/src/lib.rs",
+            "lines": [
+              34,
+              43
+            ],
+            "note": "render components with POSIX forward-slash separator"
+          },
+          {
+            "promptLines": [
+              58,
+              59
+            ],
+            "file": "paths_core/src/lib.rs",
+            "lines": [
+              79,
+              82
+            ],
+            "note": "test: rel_to strips root prefix example"
+          },
+          {
+            "promptLines": [
+              56,
+              56
+            ],
+            "file": "paths_core/src/lib.rs",
+            "lines": [
+              85,
+              88
+            ],
+            "note": "test: path unchanged when not under root"
+          },
+          {
+            "promptLines": [
+              57,
+              57
+            ],
+            "file": "paths_core/src/lib.rs",
+            "lines": [
+              91,
+              95
+            ],
+            "note": "test: forward slashes rendered, no backslashes"
+          }
+        ]
+      },
+      {
+        "type": "mapl-entry",
+        "path": "paths_core.mapl",
+        "entry": {
+          "promptLines": [
+            47,
+            47
+          ],
+          "kind": "ambiguity",
+          "severity": "error",
+          "message": "ml_dir field maps to a directory literally named \"mapl\", not \"ml\".",
+          "reasoning": "The prompt names field `ml_dir` but explicitly says the directory itself is called `mapl` (not `ml` as the field name would suggest). This mismatch reads like it could be a typo either in the field name or the directory name, but the prompt is explicit enough (\"the directory is named mapl\") that the agent implemented it literally as stated rather than assuming a typo. Flagging since a careful reviewer would want to confirm this odd field/directory name mismatch is intentional. ",
+          "suggestion": "Clarify why ml_dir points to \"mapl\" — confirm this isn't a typo for \"ml\"."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "paths_core.mapl",
+        "entry": {
+          "promptLines": [
+            52,
+            59
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "rel_to spec described as strip+replace; implementation uses component-wise rebuild, behaviorally equivalent.",
+          "reasoning": "The prompt describes rel_to procedurally as \"strip the root prefix, then replace the platform separator with /\". The agent instead implemented it by iterating path Components and rejoining with \"/\", which handles edge cases (root dir, parent dir, prefix components) not explicitly spelled out in the prompt. This produces the same observable results for all given examples and tests, so no behavior change, just noting the implementation strategy diverges from the literal wording of the spec."
+        }
+      },
+      {
+        "type": "lock",
+        "module": "paths_core",
+        "target": "rust",
+        "files": [
+          {
+            "path": "paths_core/Cargo.toml",
+            "hash": "261e4e0ea691194e88b9d933b193ca76f81c396f19d361dee2e67487d2e65596"
+          },
+          {
+            "path": "paths_core/src/lib.rs",
+            "hash": "9c10bae4dbefd7f8e7505dc64ec06a6711f1bedf6a129c79205ebd16326abcb0"
+          }
+        ]
+      }
+    ]
+  }
+}

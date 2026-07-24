@@ -2,6 +2,7 @@ import {Link} from '@tanstack/react-router'
 import {HomeLayout} from 'fumadocs-ui/layouts/home'
 import {CodeBlock} from 'fumadocs-ui/components/codeblock'
 import {baseOptions} from '@/lib/layout.shared'
+import {NaplPlayground} from '@/components/playground/napl-playground'
 
 export const PROMPT_EXAMPLE = `---
 module: greeting
@@ -66,13 +67,20 @@ export function LandingPage({sampleHtml}: {sampleHtml: string}) {
           </div>
         </section>
 
-        <section className="w-full max-w-2xl text-left">
-          <CodeBlock title="greeting.napl" className="my-0 [&_pre]:px-4">
-            <div dangerouslySetInnerHTML={{__html: sampleHtml}} />
-          </CodeBlock>
+        <section className="w-full max-w-3xl text-left">
+          <NaplPlayground
+            module="greeting"
+            compact
+            speed={1.4}
+            fallback={
+              <CodeBlock title="greeting.napl" className="my-0 [&_pre]:px-4">
+                <div dangerouslySetInnerHTML={{__html: sampleHtml}} />
+              </CodeBlock>
+            }
+          />
           <p className="mt-3 text-center text-sm text-fd-muted-foreground">
             <code className="font-mono">napl gen typescript</code> hands this to a coding agent, then proves the
-            connection.
+            connection. Press <strong>Run gen</strong> to replay it.
           </p>
         </section>
 
