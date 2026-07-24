@@ -17,6 +17,12 @@ drift = { path = "../.napl/src/rust/drift" }
 guard = { path = "../.napl/src/rust/guard" }
 targets = { path = "../.napl/src/rust/targets" }
 scanner = { path = "../.napl/src/rust/scanner" }
+schemas_lock = { path = "../.napl/src/rust/schemas_lock" }
+schemas_attribution = { path = "../.napl/src/rust/schemas_attribution" }
+schemas_ml = { path = "../.napl/src/rust/schemas_ml" }
+schemas_map = { path = "../.napl/src/rust/schemas_map" }
+blame = { path = "../.napl/src/rust/blame" }
+reverse = { path = "../.napl/src/rust/reverse" }
 
 [dev-dependencies]
 serde_json = "1"

@@ -1,0 +1,118 @@
+---
+module: schemas_attribution
+deps: [schemas_line_range]
+targets: [rust]
+tests:
+  - name: a well-formed document with three entries validates
+    given: { module: greeting, target: typescript, entries: 3 }
+    expect: { entries: 3 }
+  - name: an entry missing its file is rejected
+    given: { entry: "{promptLines:[1,1], lines:[1,1], note:x}" }
+    expect: { accepts: false }
+  - name: an entry with an empty file string is rejected
+    given: { entry: "{promptLines:[1,1], file:'', lines:[1,1]}" }
+    expect: { accepts: false }
+  - name: a non-integer line range is rejected
+    given: { entry: "{promptLines:[1,1], file:a.ts, lines:[1.5,2]}" }
+    expect: { accepts: false }
+  - name: a single-line range normalizes to a start-equals-end pair
+    given: { entry: "{promptLines:[8], file:a.ts, lines:3}" }
+    expect: { promptLines: [8, 8], lines: [3, 3] }
+  - name: a missing note defaults to the empty string
+    given: { entry: "{promptLines:[1,1], file:a.ts, lines:[1,1]}" }
+    expect: { note: "" }
+  - name: parsing a non-list of entries yields an empty list
+    given: { entries: "{}" }
+    expect: { entries: 0 }
+  - name: a malformed entry list is rejected
+    given: { entries: "[{promptLines:'nope', file:a, lines:[1,2]}]" }
+    expect: { accepts: false }
+  - name: entries-at-body-line returns every entry whose prompt range contains the line
+    given: { body_line: 3 }
+    expect: { notes: ["covers trimming", "trims whitespace"] }
+---
+# The attribution schema: prompt-line to file-line mappings
+
+This module defines the serde types and validators for a NAPL **attribution
+document** — the record mapping ranges of a prompt's body lines to the ranges of
+generated file lines they produced. It is pure: no I/O. Bring in `serde`,
+`serde_json`.
+
+## Where this code lives
+
+The working directory is a Cargo workspace whose root manifest is written and
+owned by the toolchain — leave it alone. Create this module as its own member
+crate in a subdirectory named `schemas_attribution/`:
+`schemas_attribution/Cargo.toml` (package name `schemas_attribution`) and
+`schemas_attribution/src/lib.rs`. Touch nothing outside `schemas_attribution/`.
+Ensure `cargo test` passes from the workspace root before finishing.
+
+## Builds on the `schemas_line_range` module of this workspace
+
+Every line range in this schema is an inclusive 1-based line range that accepts
+several JSON spellings (a bare number `n` meaning `n..=n`, a one-element array
+`[n]` meaning `n..=n`, or a two-element array `[a, b]`), with each endpoint
+required to be an integer at least 1. That value type — and its lenient
+deserializer — is the **`schemas_line_range`** module of this same workspace,
+generated as a sibling member crate in the `schemas_line_range/` directory (so
+`../schemas_line_range` relative to this crate). It exposes a public type
+`LineRange` with public `start` and `end` fields (`u32`), a
+`new(start, end)` constructor, equality, copy, and a serde `Deserialize` that
+performs exactly the normalization above.
+
+Add a path dependency on that sibling member crate in your `Cargo.toml` (depend
+on the `schemas_line_range` crate by path — it lives at `../schemas_line_range`)
+and use its `LineRange` for every line-range field below. Do **not** reimplement
+line-range parsing here, and do not depend on any hand-written crate — depend
+only on the generated sibling `schemas_line_range` member crate. This sibling
+path dependency is part of the same workspace, not an external crates.io
+dependency, so add it even though the general guidance is to avoid outside
+dependencies.
+
+## The types
+
+Expose these public types:
+
+- `AttributionEntry`: one mapping entry, deserializable, comparable, cloneable,
+  with public fields:
+  - `prompt_lines: LineRange` whose JSON key is **`promptLines`** (camelCase).
+  - `file: String`.
+  - `lines: LineRange`.
+  - `note: String` defaulting to the empty string when the key is absent.
+- `Attribution`: a whole document, deserializable, comparable, cloneable, with
+  public fields:
+  - `module: String`.
+  - `target: String`.
+  - `entries: Vec<AttributionEntry>` defaulting to empty when absent.
+
+## Validation
+
+- `validate_attribution(value: serde_json::Value) -> Result<Attribution, _>`:
+  deserialize the JSON value into an `Attribution`, then validate it. `module`
+  must not be empty, `target` must not be empty, and every entry's `file` must
+  not be empty. A structurally malformed value (for example a line range that is
+  not an integer, such as `1.5`) is a deserialization error. An entry missing
+  its `file`, or with an empty `file`, is rejected. Rejection is an error, not a
+  panic.
+- `parse_attribution_entries(value: serde_json::Value) -> Result<Vec<AttributionEntry>, _>`:
+  if the value is **not** a JSON array, return an empty list (no error).
+  Otherwise deserialize it as a list of entries and validate each entry's
+  non-empty `file`. A malformed list (an entry whose `promptLines` is a string,
+  say) is an error.
+
+Because line ranges deserialize leniently, a single-line spelling normalizes:
+an entry with `"promptLines": [8]` and `"lines": 3` yields `prompt_lines`
+`8..=8` and `lines` `3..=3`. A missing `note` yields the empty string.
+
+## Lookup
+
+- `entries_at_body_line(attribution: &Attribution, body_line: u32) -> Vec<&AttributionEntry>`:
+  return references to every entry whose `promptLines` range contains
+  `body_line` (inclusive on both ends), in document order.
+
+For example, given a document whose entries are
+`{promptLines:[2,2], note:"builds the greeting"}`,
+`{promptLines:[3,4], note:"trims whitespace"}`, and
+`{promptLines:[3,3], note:"covers trimming"}`, the entries at body line 3 are the
+two whose ranges contain 3 ("trims whitespace" and "covers trimming"), body line
+2 yields only "builds the greeting", and body line 9 yields none.

@@ -1,0 +1,9 @@
+[package]
+name = "reverse"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+schemas_line_range = { path = "../schemas_line_range" }
+schemas_attribution = { path = "../schemas_attribution" }
+body_lines = { path = "../body_lines" }

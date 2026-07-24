@@ -3,16 +3,22 @@
 [workspace]
 resolver = "2"
 members = [
+    "blame",
     "body_lines",
     "drift",
     "extensions",
     "guard",
     "hash",
     "parse_output",
+    "reverse",
     "scanner",
+    "schemas_attribution",
     "schemas_frontmatter",
     "schemas_ir",
     "schemas_line_range",
+    "schemas_lock",
+    "schemas_map",
+    "schemas_ml",
     "schemas_ordered_map",
     "targets",
     "text_diff",

@@ -1,0 +1,227 @@
+module: schemas_lock
+target: rust
+entries:
+  - promptLines:
+      - 1
+      - 6
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 1
+      - 3
+    note: module header, pure serde-based types
+  - promptLines:
+      - 38
+      - 41
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 11
+      - 16
+    note: Backend enum, kebab-case, derives
+  - promptLines:
+      - 42
+      - 43
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 18
+      - 24
+    note: AgentPreset enum, lowercase
+  - promptLines:
+      - 44
+      - 48
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 26
+      - 32
+    note: AgentConfig struct, deny_unknown_fields, optional command
+  - promptLines:
+      - 49
+      - 53
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 34
+      - 43
+    note: HlLock struct fields incl camelCase promptAliases, backend default
+  - promptLines:
+      - 50
+      - 50
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 45
+      - 47
+    note: default backend value fn for serde default
+  - promptLines:
+      - 57
+      - 57
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 7
+      - 7
+    note: DEFAULT_MODEL constant
+  - promptLines:
+      - 58
+      - 58
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 8
+      - 8
+    note: DEFAULT_BACKEND constant
+  - promptLines:
+      - 59
+      - 59
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 9
+      - 9
+    note: DEFAULT_AGENT_PRESET constant
+  - promptLines:
+      - 60
+      - 60
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 49
+      - 54
+    note: default_agent_config fn
+  - promptLines:
+      - 64
+      - 67
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 113
+      - 118
+    note: parse_lock deserializes then validates model
+  - promptLines:
+      - 69
+      - 69
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 59
+      - 59
+    note: EmptyModel error variant
+  - promptLines:
+      - 69
+      - 69
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 116
+      - 118
+    note: empty model check
+  - promptLines:
+      - 70
+      - 70
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 120
+      - 126
+    note: validate each prompt alias
+  - promptLines:
+      - 71
+      - 71
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 128
+      - 130
+    note: validate agent config if present
+  - promptLines:
+      - 75
+      - 82
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 5
+      - 5
+    note: ZWJ constant used in alias validation
+  - promptLines:
+      - 77
+      - 77
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 84
+      - 86
+    note: alias must start with dot
+  - promptLines:
+      - 78
+      - 79
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 87
+      - 90
+    note: 1-2 code points after dot check
+  - promptLines:
+      - 80
+      - 82
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 91
+      - 93
+    note: reject ZWJ in alias
+  - promptLines:
+      - 83
+      - 94
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 83
+      - 95
+    note: is_valid_prompt_alias function
+  - promptLines:
+      - 91
+      - 92
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 99
+      - 102
+    note: custom preset requires non-empty command
+  - promptLines:
+      - 93
+      - 94
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 103
+      - 109
+    note: claude/codex presets must not have command
+  - promptLines:
+      - 87
+      - 95
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 97
+      - 111
+    note: validate_agent_config function
+  - promptLines:
+      - 65
+      - 66
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 56
+      - 63
+    note: LockError variants covering parse/validation failures
+  - promptLines:
+      - 65
+      - 66
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 65
+      - 81
+    note: Display/Error impls for LockError
+  - promptLines:
+      - 100
+      - 102
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 135
+      - 139
+    note: resolve_prompt_aliases uses override or extensions default
+  - promptLines:
+      - 103
+      - 104
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 141
+      - 143
+    note: resolve_agent_config uses override or default_agent_config
+  - promptLines:
+      - 21
+      - 32
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 138
+      - 138
+    note: calls sibling extensions crate's default_prompt_aliases

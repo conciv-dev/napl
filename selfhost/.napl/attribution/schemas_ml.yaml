@@ -1,0 +1,187 @@
+module: schemas_ml
+target: rust
+entries:
+  - promptLines:
+      - 1
+      - 6
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 1
+      - 4
+    note: module doc, imports serde
+  - promptLines:
+      - 19
+      - 27
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 3
+      - 3
+    note: use shared LineRange type
+  - promptLines:
+      - 42
+      - 45
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 6
+      - 13
+    note: MlKind enum kebab-case variants
+  - promptLines:
+      - 46
+      - 52
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 15
+      - 29
+    note: MlEntry fields, defaults for reasoning/suggestion
+  - promptLines:
+      - 48
+      - 48
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 21
+      - 22
+    note: promptLines rename camelCase key
+  - promptLines:
+      - 51
+      - 51
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 15
+      - 17
+    note: default_reasoning fn
+  - promptLines:
+      - 51
+      - 51
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 25
+      - 26
+    note: reasoning default attr
+  - promptLines:
+      - 52
+      - 52
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 27
+      - 28
+    note: suggestion default None
+  - promptLines:
+      - 53
+      - 57
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 31
+      - 37
+    note: Ml document struct, entries default empty
+  - promptLines:
+      - 61
+      - 67
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 60
+      - 76
+    note: validate_ml deserialize then validate module/target/message
+  - promptLines:
+      - 62
+      - 63
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 63
+      - 65
+    note: reject empty module
+  - promptLines:
+      - 62
+      - 63
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 66
+      - 68
+    note: reject empty target
+  - promptLines:
+      - 63
+      - 63
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 69
+      - 73
+    note: reject empty entry message
+  - promptLines:
+      - 64
+      - 65
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 39
+      - 58
+    note: MlError enum and error type, deserialization errors surfaced
+  - promptLines:
+      - 68
+      - 71
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 78
+      - 93
+    note: parse_ml_entries non-array empty list else deserialize and validate
+  - promptLines:
+      - 75
+      - 77
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 95
+      - 100
+    note: ml_entries_at_body_line lookup filter
+  - promptLines:
+      - 79
+      - 81
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 266
+      - 288
+    note: example lookup test matching prompt example
+  - promptLines:
+      - 42
+      - 45
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 108
+      - 130
+    note: tests for kind kebab-case spellings and unknown kind error
+  - promptLines:
+      - 51
+      - 52
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 133
+      - 160
+    note: tests for entry defaults and explicit reasoning/suggestion
+  - promptLines:
+      - 64
+      - 66
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 162
+      - 170
+    note: test promptLines string is deserialize error
+  - promptLines:
+      - 61
+      - 67
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 172
+      - 233
+    note: validate_ml tests for valid doc, defaults, empty fields, unknown kind, string promptLines
+  - promptLines:
+      - 68
+      - 71
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 236
+      - 264
+    note: parse_ml_entries tests non-array, valid array, empty message, malformed list
+  - promptLines:
+      - 75
+      - 81
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 278
+      - 295
+    note: lookup tests covering/uncovered lines

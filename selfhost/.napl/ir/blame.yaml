@@ -1,0 +1,70 @@
+module: blame
+deps:
+  - text_diff
+types:
+  - name: BlameSourceEntry
+    description: "One recorded generation touching file. Fields: gen (i64 generation number), timestamp (string), module (string), patch (string, unified-diff patch generation applied to file), prompt_diff (string, diff of prompt body at that generation). Comparable, cloneable.\n"
+  - name: BlameLine
+    description: "One blamed line of current content. Fields: line (usize, 1-based), gen (i64, generation that wrote line), timestamp (string), module (string), text (string, line content). Comparable, cloneable.\n"
+functions:
+  - name: apply_patch_to_blame
+    signature: "apply_patch_to_blame(blame: &[i64], patch: &str, gen: i64) -> Vec<i64>"
+    behavior: "Replays one unified-diff patch against per-line generation vector where blame[i] is generation that wrote old line i. Parses patch into hunks; if no hunks, returns input unchanged. Walks cursor old_idx from 0. For each hunk, copies untouched entries before hunk start (while old_idx < hunk.old_start-1, saturating, and in bounds), pushing blame[old_idx] and advancing. Then for each hunk line: context pushes blame[old_idx] (or gen if past end) and advances old_idx; deletion advances old_idx without pushing; insertion pushes gen without advancing. After last hunk, appends any remaining blame[old_idx..].\n"
+  - name: blame_file
+    signature: "blame_file(history: &[BlameSourceEntry], current_content: &str) -> Vec<BlameLine>"
+    behavior: "Sorts copy of history ascending by gen. Folds apply_patch_to_blame over entries in order starting from empty blame vector, threading gen and patch through. Builds gen->entry lookup; fallback gen is last (highest) entry's gen, or 0 if history empty. Splits current_content into lines; for each 0-based index, generation is blame[index] if present else fallback. Produces BlameLine per line: line = index+1, gen as computed, timestamp/module from looked-up entry (empty strings if none found), text = line content. Output order matches line order in current_content.\n"
+  - name: blame_line_at
+    signature: "blame_line_at(history: &[BlameSourceEntry], current_content: &str, line: usize) -> Option<BlameLine>"
+    behavior: "Computes full blame_file result and returns the BlameLine whose line field equals given 1-based line number, or None if no such line exists (out of range).\n"
+  - name: first_prompt_diff_line
+    signature: "first_prompt_diff_line(prompt_diff: &str) -> String"
+    behavior: "Scans diff lines (trailing \\r stripped from each). Ignores all lines until first hunk header line (starts with \"@@\"); header lines themselves skipped and not scanned further as headers once past first. For each subsequent line, takes text after first char (marker +/-/space), trims it, skips if empty after trim. Returns first added line's (marker '+') trimmed text if any found; else first removed line's (marker '-') trimmed text; else empty string if no hunk found or no add/remove lines with non-empty text.\n"
+tests:
+  - name: apply_patch_to_blame_empty_patch_returns_unchanged
+    given: blame vector [1,1,2] and empty patch string, gen 3
+    expect: result equals input blame vector unchanged
+  - name: apply_patch_to_blame_pure_insertion_into_empty
+    given: empty old content, patch inserting "a\nb\n", gen 1, empty blame vector
+    expect: result is [1, 1]
+  - name: apply_patch_to_blame_context_lines_preserve_gen
+    given: blame [1,1,1] for "a\nb\nc\n", patch changing middle line to "B", gen 2
+    expect: result is [1, 2, 1]
+  - name: apply_patch_to_blame_deletion_removes_entry
+    given: blame [1,1,1] for "a\nb\nc\n", patch deleting middle line, gen 2
+    expect: result is [1, 1]
+  - name: apply_patch_to_blame_trailing_untouched_lines_preserved
+    given: blame [1,1,1,1] for "a\nb\nc\nd\n", patch changing first line, gen 2
+    expect: result is [2, 1, 1, 1]
+  - name: blame_file_empty_history_uses_fallback_zero
+    given: empty history, current content "a\nb\n"
+    expect: two lines, gen 0, empty timestamp/module, correct text, line numbers 1 and 2
+  - name: blame_file_single_generation
+    given: history with one entry gen 1 "t1"/"mod1" whose patch inserts "a\nb\n", current content "a\nb\n"
+    expect: both lines have gen 1, timestamp "t1", module "mod1", text "a" and "b" respectively
+  - name: blame_file_multiple_generations_out_of_order_input
+    given: history with entry gen2 (patch changing middle line) listed before entry gen1 (patch inserting all lines), current content after gen2
+    expect: sorted by gen before folding; line1 gen1/mod1, line2 gen2/mod2, line3 gen1
+  - name: blame_line_at_returns_correct_line
+    given: history with one insertion entry gen1, current content "a\nb\nc\n", requested line 2
+    expect: Some BlameLine with line 2, text "b"
+  - name: blame_line_at_out_of_range_returns_none
+    given: empty history, current content "a\nb\n", requested line 5
+    expect: None
+  - name: first_prompt_diff_line_prefers_added_over_removed
+    given: diff with hunk containing both a removed line "old line" and added line "new line"
+    expect: returns "new line"
+  - name: first_prompt_diff_line_falls_back_to_removed
+    given: diff with hunk containing only a removed line "removed line" and context, no added line
+    expect: returns "removed line"
+  - name: first_prompt_diff_line_no_hunk_returns_empty
+    given: diff with only file headers, no "@@" hunk header
+    expect: returns empty string
+  - name: first_prompt_diff_line_skips_empty_lines_and_header
+    given: diff with hunk header, blank context line, whitespace-only added line, then added line "actual content"
+    expect: returns "actual content"
+  - name: first_prompt_diff_line_no_changes_returns_empty
+    given: diff with hunk header and only a context line, no add/remove
+    expect: returns empty string
+  - name: first_prompt_diff_line_strips_trailing_cr
+    given: diff using CRLF line endings with hunk header and added line "added"
+    expect: returns "added" (no trailing carriage return)

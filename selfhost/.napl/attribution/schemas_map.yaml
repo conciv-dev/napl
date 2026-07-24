@@ -1,0 +1,307 @@
+module: schemas_map
+target: rust
+entries:
+  - promptLines:
+      - 1
+      - 7
+    file: schemas_map/src/lib.rs
+    lines:
+      - 1
+      - 4
+    note: module header, imports serde/serde_json
+  - promptLines:
+      - 24
+      - 28
+    file: schemas_map/src/lib.rs
+    lines:
+      - 3
+      - 3
+    note: import OrderedMap from schemas_ordered_map sibling crate
+  - promptLines:
+      - 41
+      - 50
+    file: schemas_map/src/lib.rs
+    lines:
+      - 10
+      - 18
+    note: PromptTargetRecord struct with serde attrs
+  - promptLines:
+      - 46
+      - 47
+    file: schemas_map/src/lib.rs
+    lines:
+      - 12
+      - 13
+    note: promptHashAtGen field, omit if None, default None
+  - promptLines:
+      - 48
+      - 48
+    file: schemas_map/src/lib.rs
+    lines:
+      - 14
+      - 15
+    note: files field defaulting to empty
+  - promptLines:
+      - 49
+      - 50
+    file: schemas_map/src/lib.rs
+    lines:
+      - 16
+      - 17
+    note: unattributed field, omit if None
+  - promptLines:
+      - 51
+      - 56
+    file: schemas_map/src/lib.rs
+    lines:
+      - 20
+      - 29
+    note: PromptRecord struct
+  - promptLines:
+      - 52
+      - 52
+    file: schemas_map/src/lib.rs
+    lines:
+      - 22
+      - 22
+    note: module field
+  - promptLines:
+      - 53
+      - 53
+    file: schemas_map/src/lib.rs
+    lines:
+      - 23
+      - 24
+    note: prompt_hash field renamed promptHash
+  - promptLines:
+      - 54
+      - 55
+    file: schemas_map/src/lib.rs
+    lines:
+      - 25
+      - 26
+    note: declared_targets field renamed declaredTargets, default empty
+  - promptLines:
+      - 56
+      - 56
+    file: schemas_map/src/lib.rs
+    lines:
+      - 27
+      - 28
+    note: targets OrderedMap field default empty
+  - promptLines:
+      - 57
+      - 60
+    file: schemas_map/src/lib.rs
+    lines:
+      - 31
+      - 37
+    note: FileRecord struct
+  - promptLines:
+      - 61
+      - 64
+    file: schemas_map/src/lib.rs
+    lines:
+      - 39
+      - 47
+    note: NaplMap struct
+  - promptLines:
+      - 62
+      - 62
+    file: schemas_map/src/lib.rs
+    lines:
+      - 6
+      - 8
+    note: default_version helper returning 2
+  - promptLines:
+      - 62
+      - 62
+    file: schemas_map/src/lib.rs
+    lines:
+      - 41
+      - 42
+    note: version field defaults via default_version
+  - promptLines:
+      - 63
+      - 64
+    file: schemas_map/src/lib.rs
+    lines:
+      - 43
+      - 46
+    note: prompts and files OrderedMap fields default empty
+  - promptLines:
+      - 68
+      - 68
+    file: schemas_map/src/lib.rs
+    lines:
+      - 49
+      - 53
+    note: ModuleFile plain struct
+  - promptLines:
+      - 69
+      - 69
+    file: schemas_map/src/lib.rs
+    lines:
+      - 55
+      - 59
+    note: FileInput plain struct
+  - promptLines:
+      - 70
+      - 72
+    file: schemas_map/src/lib.rs
+    lines:
+      - 61
+      - 69
+    note: AttributionInput plain struct
+  - promptLines:
+      - 73
+      - 75
+    file: schemas_map/src/lib.rs
+    lines:
+      - 71
+      - 79
+    note: UnattributedInput plain struct
+  - promptLines:
+      - 79
+      - 79
+    file: schemas_map/src/lib.rs
+    lines:
+      - 81
+      - 87
+    note: empty_map constructor
+  - promptLines:
+      - 80
+      - 82
+    file: schemas_map/src/lib.rs
+    lines:
+      - 89
+      - 95
+    note: parse_map deserializes JSON and validates version
+  - promptLines:
+      - 83
+      - 84
+    file: schemas_map/src/lib.rs
+    lines:
+      - 97
+      - 101
+    note: map_to_json pretty-prints with trailing newline
+  - promptLines:
+      - 88
+      - 89
+    file: schemas_map/src/lib.rs
+    lines:
+      - 103
+      - 109
+    note: prompts_for_module filters by module, insertion order
+  - promptLines:
+      - 90
+      - 90
+    file: schemas_map/src/lib.rs
+    lines:
+      - 111
+      - 113
+    note: has_module checks any matching prompt
+  - promptLines:
+      - 91
+      - 93
+    file: schemas_map/src/lib.rs
+    lines:
+      - 115
+      - 128
+    note: declared_targets_for_module dedup union first-seen order
+  - promptLines:
+      - 94
+      - 97
+    file: schemas_map/src/lib.rs
+    lines:
+      - 130
+      - 151
+    note: files_for_module dedup by (target, file_path)
+  - promptLines:
+      - 98
+      - 102
+    file: schemas_map/src/lib.rs
+    lines:
+      - 153
+      - 175
+    note: is_prompt_gen_stale staleness logic
+  - promptLines:
+      - 131
+      - 135
+    file: schemas_map/src/lib.rs
+    lines:
+      - 177
+      - 185
+    note: detach_file helper removes prompt from file record
+  - promptLines:
+      - 108
+      - 121
+    file: schemas_map/src/lib.rs
+    lines:
+      - 187
+      - 247
+    note: record_attribution mutation helper
+  - promptLines:
+      - 110
+      - 113
+    file: schemas_map/src/lib.rs
+    lines:
+      - 188
+      - 205
+    note: compute existing_targets, prior_files, detach stale files
+  - promptLines:
+      - 114
+      - 116
+    file: schemas_map/src/lib.rs
+    lines:
+      - 207
+      - 214
+    note: set target sub-record with prompt_hash_at_gen/files/unattributed None
+  - promptLines:
+      - 116
+      - 117
+    file: schemas_map/src/lib.rs
+    lines:
+      - 216
+      - 224
+    note: store prompt record under rel
+  - promptLines:
+      - 118
+      - 121
+    file: schemas_map/src/lib.rs
+    lines:
+      - 226
+      - 246
+    note: ensure FileRecord per new file, append prompt if absent
+  - promptLines:
+      - 123
+      - 129
+    file: schemas_map/src/lib.rs
+    lines:
+      - 249
+      - 283
+    note: record_unattributed mutation helper
+  - promptLines:
+      - 125
+      - 126
+    file: schemas_map/src/lib.rs
+    lines:
+      - 256
+      - 263
+    note: detach every prior file of target sub-record
+  - promptLines:
+      - 127
+      - 128
+    file: schemas_map/src/lib.rs
+    lines:
+      - 265
+      - 272
+    note: set sub-record unattributed=Some(true), prompt_hash_at_gen=None
+  - promptLines:
+      - 128
+      - 129
+    file: schemas_map/src/lib.rs
+    lines:
+      - 274
+      - 282
+    note: store prompt record, no FileRecord created

@@ -1,0 +1,22 @@
+module: schemas_map
+target: rust
+entries:
+  - promptLines:
+      - 11
+      - 16
+    kind: note
+    message: Agent scoped work correctly to schemas_map/, root Cargo.toml untouched.
+    reasoning: Prompt required leaving workspace root manifest alone and touching nothing outside schemas_map/. Verified only schemas_map/Cargo.toml and schemas_map/src/lib.rs were created; root manifest was not modified. No ambiguity, just confirming correct scope discipline.
+  - promptLines:
+      - 118
+      - 121
+    kind: assumption
+    message: FileRecord fields overwritten unconditionally on every attribution, even for pre-existing files.
+    reasoning: Spec says "ensure a FileRecord under its path with target=input.target, hash=that file's hash, and a prompts list that includes input.rel." It doesn't explicitly say whether target/hash on an already-existing FileRecord (e.g. shared across prompts under a different target) should be overwritten or left alone if it already matches a different owner. Agent chose to always overwrite target and hash on the existing record while only appending to prompts if absent, which is a reasonable reading of "ensure" but not the only one (an alternate reading only fills in missing records and never touches existing target/hash of a shared file record). Not tested by the shipped test suite for a cross-target conflict case.
+    suggestion: Clarify whether target/hash should be overwritten when a FileRecord for the given path already exists under a different attribution.
+  - promptLines:
+      - 94
+      - 97
+    kind: note
+    message: files_for_module dedup logic matches spec exactly (dedup by target+path, first-seen order), verified by test.
+    reasoning: No ambiguity found; implementation and accompanying test (files_for_module_dedupes_by_target_and_path) directly mirror the prompt's requirement.

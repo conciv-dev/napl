@@ -51,16 +51,28 @@ depth and corpus size.
 
 Wave 1 is fully self-hosted: **13/13 modules**, 83 equivalence cases green.
 
+Waves 1–2 together: **19/19 modules, 155 equivalence cases green**, escape-hatch
+list still empty.
+
 ### Wave 2 — depends only on wave 1
+
+Wave 2 is fully self-hosted: **6/6 modules, 72 equivalence cases green** (slice 3),
+each generated on attempt 1 of 3. Every generated wave-2 crate **path-deps the
+generated wave-1 crate(s)** it builds on — it composes on the generated code, not
+on hand-written napl-core.
 
 | Module | LOC | Unit tests | Intra-crate deps | Self-host status |
 | --- | ---: | ---: | --- | --- |
-| `blame` | 303 | 13 | `text_diff` | queued |
-| `reverse` | 297 | 12 | `body_lines`, `schemas` | queued |
-| `schemas::attribution` | 173 | 9 | `line_range` | queued |
-| `schemas::lock` | 290 | 19 | `extensions` | queued |
-| `schemas::map` | 553 | 10 | `ordered_map` | queued |
-| `schemas::ml` | 185 | 8 | `line_range` | queued |
+| `blame` | 303 | 13 | `text_diff` | **done** (slice 3, 13/13 — path-deps generated `text_diff`) |
+| `reverse` | 297 | 12 | `body_lines`, `schemas` | **done** (slice 3, 12/12 — path-deps generated `body_lines` + `schemas_attribution` + `schemas_line_range`) |
+| `schemas::attribution` | 173 | 9 | `line_range` | **done** (slice 3, 9/9 — path-deps generated `schemas_line_range`) |
+| `schemas::lock` | 290 | 19 | `extensions` | **done** (slice 3, 20/20 — path-deps generated `extensions`; +1 empty-model case) |
+| `schemas::map` | 553 | 10 | `ordered_map` | **done** (slice 3, 10/10 — path-deps generated `schemas_ordered_map`) |
+| `schemas::ml` | 185 | 8 | `line_range` | **done** (slice 3, 8/8 — path-deps generated `schemas_line_range`) |
+
+`blame` was confirmed to depend **only** on `text_diff`: its `BlameSourceEntry`
+is a blame-local struct, not a `schemas::journal` type, so no wave-3 journal
+pull-forward was needed. (`schemas::journal` depends on `blame`, not the reverse.)
 
 ### Wave 3 — aggregates over waves 1–2
 
@@ -121,7 +133,8 @@ Modules that stay hand-written because current stage0 + prompt cannot reproduce
 their behavior under the equivalence gate. A module leaves the list only when its
 prompt drives a passing generation.
 
-- *(empty)* — no wave-1 module has failed to converge yet.
+- *(empty)* — no wave-1 or wave-2 module has failed to converge yet (19/19 on
+  attempt 1).
 
 ## Layout note (RESOLVED in slice 2 — Cargo workspace)
 

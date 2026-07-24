@@ -1,0 +1,16 @@
+module: schemas_lock
+target: rust
+entries:
+  - promptLines:
+      - 10
+      - 32
+    kind: note
+    message: Diff only shows lib.rs; crate/workspace wiring (Cargo.toml, sibling path dep) isn't visible to confirm.
+    reasoning: "Prompt requires creating schemas_lock/Cargo.toml with a path dependency on ../extensions, and touching nothing else. The provided change list only contains schemas_lock/src/lib.rs — no Cargo.toml content was shown, so the package name, path dependency declaration, and workspace membership can't be verified from what was given, even though the agent's final message claims the whole workspace builds and tests pass.\n"
+  - promptLines:
+      - 69
+      - 69
+    kind: assumption
+    message: Empty-model check treats only the literal empty string as invalid, not whitespace-only strings.
+    reasoning: "\"model must not be empty\" was implemented as `lock.model.is_empty()`, which only rejects the exact empty string \"\". A whitespace-only model like \" \" passes validation. The prompt doesn't address whitespace, so this literal interpretation was assumed to be correct.\n"
+    suggestion: model must not be empty or whitespace-only — reject after trimming.

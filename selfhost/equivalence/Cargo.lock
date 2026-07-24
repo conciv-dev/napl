@@ -3,6 +3,13 @@
 version = 4
 
 [[package]]
+name = "blame"
+version = "0.1.0"
+dependencies = [
+ "text_diff",
+]
+
+[[package]]
 name = "block-buffer"
 version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -58,16 +65,22 @@ version = "0.1.0"
 name = "equivalence"
 version = "0.1.0"
 dependencies = [
+ "blame",
  "body_lines",
  "drift",
  "extensions",
  "guard",
  "hash",
  "parse_output",
+ "reverse",
  "scanner",
+ "schemas_attribution",
  "schemas_frontmatter",
  "schemas_ir",
  "schemas_line_range",
+ "schemas_lock",
+ "schemas_map",
+ "schemas_ml",
  "schemas_ordered_map",
  "serde_json",
  "serde_yaml",
@@ -166,6 +179,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "reverse"
+version = "0.1.0"
+dependencies = [
+ "body_lines",
+ "schemas_attribution",
+ "schemas_line_range",
+]
+
+[[package]]
 name = "ryu"
 version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -174,6 +196,15 @@ checksum = "9774ba4a74de5f7b1c1451ed6cd5285a32eddb5cccb8cc655a4e50009e06477f"
 [[package]]
 name = "scanner"
 version = "0.1.0"
+
+[[package]]
+name = "schemas_attribution"
+version = "0.1.0"
+dependencies = [
+ "schemas_line_range",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "schemas_frontmatter"
@@ -195,6 +226,33 @@ dependencies = [
 name = "schemas_line_range"
 version = "0.1.0"
 dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "schemas_lock"
+version = "0.1.0"
+dependencies = [
+ "extensions",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "schemas_map"
+version = "0.1.0"
+dependencies = [
+ "schemas_ordered_map",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "schemas_ml"
+version = "0.1.0"
+dependencies = [
+ "schemas_line_range",
  "serde",
  "serde_json",
 ]

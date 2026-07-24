@@ -1,0 +1,7 @@
+[package]
+name = "blame"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+text_diff = { path = "../text_diff" }

@@ -320,3 +320,111 @@ eight more behavior-only prompts — including the 634-LOC UTF-16 `scanner` and 
 string-pinned `drift`/`targets`/`guard` — drove stage0 to behaviorally equivalent
 Rust on the first attempt each, across 53 new corpus cases (83 total). Wave 1 self-
 hosts end to end.
+
+## Scale-out — slice 3 (wave 2)
+
+Slice 3 generates all six **wave-2** `napl-core` modules — the ones that depend on
+wave-1 crates. Waves 1–2 together now self-host: **19/19 modules, 155 equivalence
+cases green**, escape-hatch list still empty, every wave-2 module converged on
+**attempt 1 of 3**.
+
+| Module | Builds on (generated crate) | Attempts | Equivalence |
+| --- | --- | ---: | --- |
+| `schemas::lock` | `extensions` | 1/3 | **20/20** |
+| `schemas::attribution` | `schemas_line_range` | 1/3 | **9/9** |
+| `schemas::ml` | `schemas_line_range` | 1/3 | **8/8** |
+| `schemas::map` | `schemas_ordered_map` | 1/3 | **10/10** |
+| `blame` | `text_diff` | 1/3 | **13/13** |
+| `reverse` | `body_lines` + `schemas_attribution` + `schemas_line_range` | 1/3 | **12/12** |
+
+(`schemas::lock` replays the hand-written 19-case corpus plus one added
+empty-model rejection case, 20 total.)
+
+### The new wiring — intra-workspace path-deps between generated crates
+
+This is the first slice where a generated module composes on **another generated
+module**, not just on external crates. The self-hosting claim depends on this being
+real: a wave-2 crate must build on the *generated* wave-1 crate, not re-implement
+its logic inline and not depend on hand-written `napl-core`.
+
+The mechanism that emerged, using only existing toolchain machinery:
+
+- **Prompt frontmatter `deps:`** names the NAPL-level dependency modules
+  (`deps: [extensions]`, `deps: [schemas_line_range]`, …). The gen loop already
+  surfaces this to the coding agent as a `Declared dependencies: …` line
+  (`build_agent_task`), alongside a one-line summary of every other module in the
+  project. No toolchain change was needed to read or route `deps:`.
+- **Prompt prose** makes the requirement concrete and actionable. Each wave-2
+  prompt carries a "Builds on the `<x>` module of this workspace" section that
+  states, in words: the sibling member crate lives at `../<x>`, add a path
+  dependency on it in your `Cargo.toml`, use its public API (named explicitly:
+  `default_prompt_aliases`, `LineRange`, `OrderedMap`, `to_lines`/`parse_hunks`,
+  `PromptBody`, `AttributionEntry`), do not reimplement it, and depend only on the
+  generated sibling — never on a hand-written crate. No Rust or TOML is pasted; the
+  requirement is prose, and the gen agent owns the resulting `Cargo.toml`.
+- **The result**: every generated wave-2 crate's `Cargo.toml` carries the right
+  path-dep (`extensions = { path = "../extensions" }`,
+  `schemas_line_range = { path = "../schemas_line_range" }`, …) and its `src/lib.rs`
+  calls the sibling's public items. `schemas_lock` calls
+  `extensions::default_prompt_aliases`; `schemas_map` stores
+  `schemas_ordered_map::OrderedMap`; `blame` parses hunks with
+  `text_diff::{parse_hunks, to_lines, HunkKind}`; `reverse` path-deps three
+  generated siblings at once. This is stage1 as a genuine composition.
+
+The one friction the idiom guidance could have caused — its "Add no external
+dependencies unless the described behavior genuinely requires one" line, and its
+"leave every sibling module crate untouched" line — was pre-empted in prose:
+each dep section states that the sibling path-dep is *part of the same workspace,
+not an external crates.io dependency*, and depending on a sibling by path only
+reads it (never edits it), which the "leave siblings untouched" rule permits. With
+that phrasing, **no toolchain change was required**: `targets.rs` idiom text is
+untouched, the 40-scenario corpus is byte-identical, and scenario 74's goldens did
+not need regenerating (the rust adapter's layout output is unchanged).
+
+### The equivalence harness at cross-module scale
+
+Each wave-2 module's harness file replays that module's exact hand-written
+`napl-core` corpus against the generated crate, and — the new part — **constructs
+its inputs from the generated sibling crates' types**. `reverse`'s test builds
+`schemas_attribution::AttributionEntry` values out of `schemas_line_range::LineRange`
+values and feeds them to the generated `reverse`; `blame`'s test builds patches
+with `text_diff::unified_diff`; `schemas_map`'s round-trips through the generated
+`OrderedMap` serde. Because path-deps to the same member crate unify, the
+`LineRange` a `reverse` match carries *is* the `LineRange` its `AttributionEntry`
+was built from — the composition is type-real, not just behavior-real. Divergences
+are bridged behaviorally as before: each generated crate surfaces its **own** error
+type (`LockError`, `AttributionError`, `MlError`, a `String` parse error) where the
+hand-written module shares one `SchemaError`; equivalence compares accept/reject and
+resolved values, never the error type.
+
+### The `blame`/`journal` call
+
+`blame` was parked in the map as "→ `text_diff`, journal types". Reading the
+hand-written source settled it: `blame` depends **only** on `text_diff`
+(`parse_hunks`, `to_lines`, `HunkKind`, and `unified_diff` in its tests). Its
+`BlameSourceEntry` is a blame-local struct, not a `schemas::journal` type — the
+dependency runs the other way (`schemas::journal` → `blame`, a wave-3 edge). So no
+journal pull-forward was needed; `blame` generated cleanly against `text_diff`
+alone.
+
+### Escape-hatch list
+
+Still **empty** — 19/19 modules across waves 1–2 converged on attempt 1.
+
+### Wave-3 readiness
+
+Waves 1–2 are a complete, self-hosted base, and every wave-3 module's intra-crate
+deps are now generated: `schemas::journal` (→ `blame`, `text_diff`), `prompts`
+(→ `schemas`, `targets`), `yaml` (→ `schemas`), `incremental` (→ `schemas`). The
+path-dep-in-prose idiom proven here carries directly to them; `prompts` and `yaml`
+are the larger corpora and the first real test of composing over the whole
+`schemas` surface at once.
+
+### Verdict
+
+Wave 2 self-hosts end to end. Six behavior-only prompts — including the 553-LOC
+`schemas::map` mutation engine and the three-sibling `reverse` — drove stage0 to
+behaviorally equivalent Rust on the first attempt each, across 72 new corpus cases
+(155 total). The decisive new evidence is compositional: the generated modules
+build on the *generated* wave-1 crates by path, expressed entirely in prompt prose,
+with no toolchain change and the conformance corpus byte-identical.

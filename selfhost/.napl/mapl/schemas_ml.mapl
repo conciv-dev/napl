@@ -1,0 +1,17 @@
+module: schemas_ml
+target: rust
+entries:
+  - promptLines:
+      - 59
+      - 71
+    kind: note
+    message: Rejection paths match spec exactly — bad kind or promptLines-as-string errors, not panics.
+    reasoning: validate_ml and parse_ml_entries both use serde_json::from_value and map errors to MlError::Parse, satisfying "rejection is error not panic" and structural-invalid cases. Tests confirm behavior. No gaps found.
+    suggestion: ""
+  - promptLines:
+      - 17
+      - 36
+    kind: assumption
+    message: Assumed schemas_line_range sibling crate already exists with matching API.
+    reasoning: Code depends on schemas_line_range::LineRange via path dep, per spec. Couldn't verify sibling crate's actual contents in this review, just that lib.rs uses it correctly per described API (new, start, end, Deserialize). Assumed prior generation of that module was correct/consistent.
+    suggestion: ""

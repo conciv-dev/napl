@@ -1,0 +1,90 @@
+module: schemas_ml
+deps:
+  - schemas_line_range
+types:
+  - name: MlKind
+    description: 'Enum of annotation kinds. Deserializable from kebab-case JSON strings: "ambiguity" -> Ambiguity, "assumption" -> Assumption, "note" -> Note, "no-op" -> NoOp. Comparable (equality) and copyable. Unknown string values fail deserialization.
+'
+  - name: MlEntry
+    description: 'One model-authored annotation. Fields: prompt_lines (LineRange, JSON key "promptLines") — the inclusive 1-based line range the annotation applies to; kind (MlKind); message (String, required, non-empty when validated); reasoning (String, defaults to empty string when absent from JSON); suggestion (Option<String>, defaults to None when absent from JSON). Deserializable, comparable (equality), cloneable.
+'
+  - name: Ml
+    description: "A whole machine-layer document. Fields: module (String, required, non-empty when validated); target (String, required, non-empty when validated); entries (Vec<MlEntry>, defaults to empty list when absent from JSON). Deserializable, comparable (equality), cloneable.\n"
+  - name: MlError
+    description: "Error type returned by validation/parsing functions. Variants: Parse (wraps a description of a deserialization failure), EmptyModule, EmptyTarget, EmptyMessage. Displayable and usable as a standard error; comparable (equality), cloneable.\n"
+functions:
+  - name: validate_ml
+    signature: "validate_ml(value: JSON value) -> Result<Ml, MlError>"
+    behavior: "Deserializes the given JSON value into an Ml document (structural errors — e.g. an unknown kind string, or a promptLines that is a string — produce MlError::Parse rather than panicking). After successful deserialization, validates that module is non-empty (else EmptyModule), target is non-empty (else EmptyTarget), and every entry's message is non-empty (else EmptyMessage, checked in document order). Returns the validated Ml on success. A scalar promptLines such as 18 normalizes to the range 18..=18; an absent suggestion becomes None; an absent reasoning becomes the empty string; an absent entries list becomes empty.\n"
+  - name: parse_ml_entries
+    signature: "parse_ml_entries(value: JSON value) -> Result<Vec<MlEntry>, MlError>"
+    behavior: "If the given JSON value is not an array, returns an empty list without error. If it is an array, deserializes it as a list of MlEntry (malformed elements produce MlError::Parse), then validates that every entry's message is non-empty (else EmptyMessage). Returns the parsed, validated entries in document order on success.\n"
+  - name: ml_entries_at_body_line
+    signature: "ml_entries_at_body_line(ml: &Ml, body_line: u32) -> Vec<&MlEntry>"
+    behavior: "Returns references to every entry in ml.entries whose prompt_lines range covers body_line inclusively (prompt_lines.start <= body_line <= prompt_lines.end), preserving document order. Returns an empty list when no entry covers the given line.\n"
+tests:
+  - name: kind_kebab_case_spellings
+    given: JSON strings "ambiguity", "assumption", "note", "no-op"
+    expect: deserialize to MlKind::Ambiguity, Assumption, Note, NoOp respectively
+  - name: unknown_kind_is_error
+    given: JSON string "bogus" deserialized as MlKind
+    expect: deserialization fails
+  - name: entry_defaults_reasoning_and_suggestion
+    given: 'an entry JSON with only promptLines:18, kind:"note", message:"hello" (no reasoning, no suggestion)
+'
+    expect: 'prompt_lines equals LineRange 18..=18, kind is Note, message is "hello", reasoning is "", suggestion is None
+'
+  - name: entry_with_reasoning_and_suggestion
+    given: 'an entry JSON with promptLines:[3,5], kind:"assumption", message:"m", reasoning:"r", suggestion:"s"
+'
+    expect: 'prompt_lines equals LineRange 3..=5, reasoning is "r", suggestion is Some("s")
+'
+  - name: prompt_lines_string_is_deserialize_error
+    given: an entry JSON with promptLines:"1-2"
+    expect: deserialization fails
+  - name: validate_ml_accepts_valid_document
+    given: 'a document with module "m", target "t", and one entry {promptLines:[1,2], kind:"ambiguity", message:"a"}
+'
+    expect: 'validate_ml succeeds returning module "m", target "t", and one entry
+'
+  - name: validate_ml_defaults_missing_entries_to_empty
+    given: a document with only module "m" and target "t"
+    expect: validate_ml succeeds with an empty entries list
+  - name: validate_ml_rejects_empty_module
+    given: a document with module "" and target "t"
+    expect: validate_ml returns MlError::EmptyModule
+  - name: validate_ml_rejects_empty_target
+    given: a document with module "m" and target ""
+    expect: validate_ml returns MlError::EmptyTarget
+  - name: validate_ml_rejects_empty_entry_message
+    given: 'a document with module "m", target "t", and one entry with an empty message
+'
+    expect: validate_ml returns MlError::EmptyMessage
+  - name: validate_ml_rejects_unknown_kind
+    given: a document whose entry has kind "bogus"
+    expect: validate_ml returns MlError::Parse
+  - name: validate_ml_rejects_string_prompt_lines
+    given: a document whose entry has promptLines "1-2"
+    expect: validate_ml returns MlError::Parse
+  - name: parse_ml_entries_returns_empty_for_non_array
+    given: JSON values that are an object, a string, and a number
+    expect: parse_ml_entries returns an empty list without error for each
+  - name: parse_ml_entries_parses_valid_array
+    given: 'a JSON array of two valid entries (promptLines [1,2]/"note"/"a" and promptLines 5/"no-op"/"b")
+'
+    expect: 'parse_ml_entries returns two entries, first with message "a", second with kind NoOp
+'
+  - name: parse_ml_entries_rejects_empty_message
+    given: a JSON array with one entry whose message is empty
+    expect: parse_ml_entries returns MlError::EmptyMessage
+  - name: parse_ml_entries_rejects_malformed_list
+    given: a JSON array with one entry whose kind is "bogus"
+    expect: parse_ml_entries returns MlError::Parse
+  - name: lookup_finds_covering_entries_in_order
+    given: 'an Ml with entries {promptLines:[1,2], message:"a"} and {promptLines:[5,7], message:"b"}
+'
+    expect: 'ml_entries_at_body_line at line 1 returns only "a"; at line 6 returns only "b"
+'
+  - name: lookup_returns_empty_for_uncovered_line
+    given: the same Ml as above
+    expect: ml_entries_at_body_line at line 4 returns an empty list

@@ -1,0 +1,15 @@
+module: reverse
+target: rust
+entries:
+  - promptLines:
+      - 16
+      - 25
+    kind: note
+    message: Sibling crate path deps added correctly as instructed.
+    reasoning: Cargo.toml uses path = "../schemas_line_range" etc., matching "one directory up and over" layout; no ambiguity, confirms compile matched prompt intent.
+  - promptLines:
+      - 47
+      - 48
+    kind: note
+    message: DRIFT_LENS_PREFIX constant defined but never used or tested.
+    reasoning: Prompt only asks to "expose" the constant with a fixed value; agent did exactly that (no consumer logic specified), so lack of usage/test is expected, not a defect.
