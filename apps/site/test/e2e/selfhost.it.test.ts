@@ -125,6 +125,86 @@ describe('/selfhost workbench interactions', () => {
     }
   })
 
+  it('opens the machine-layer .mapl file with mapl highlighting', async () => {
+    const page = await browser.newPage({viewport: {width: 1440, height: 900}})
+    await openSelfhost(page)
+    await page.getByTestId('tree-file-body_lines').click()
+    await expect
+      .poll(() => page.getByTestId('module-name').textContent(), {timeout: 15_000})
+      .toBe('body_lines')
+    const maplTab = page.locator('button').filter({hasText: /\.mapl$/}).first()
+    await expect.poll(() => maplTab.count(), {timeout: 15_000}).toBeGreaterThan(0)
+    await maplTab.click()
+    await expect
+      .poll(
+        () => page.getByTestId('generated-pane').locator('.cm-content').textContent(),
+        {timeout: 15_000},
+      )
+      .toContain('kind')
+    const content = await page.getByTestId('generated-pane').locator('.cm-content').textContent()
+    expect(content).toContain('entries')
+    await page.close()
+  })
+
+  it('keeps the attribution card open when the pointer moves into it, then jumps', async () => {
+    const page = await browser.newPage({viewport: {width: 1440, height: 900}})
+    await openSelfhost(page)
+    await page.getByTestId('tree-file-gen_prompt_diff').click()
+    const genLine = page
+      .getByTestId('generated-pane')
+      .locator('.cm-line', {hasText: 'compute_prompt_diff'})
+      .first()
+    await expect.poll(() => genLine.count(), {timeout: 15_000}).toBeGreaterThan(0)
+    await genLine.hover()
+    const card = page.locator('.cm-napl-card')
+    await expect.poll(() => card.count(), {timeout: 10_000}).toBeGreaterThan(0)
+    const box = await card.first().boundingBox()
+    expect(box).not.toBeNull()
+    await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2, {steps: 8})
+    await page.waitForTimeout(400)
+    expect(await card.count()).toBeGreaterThan(0)
+    const jump = card.locator('.cm-napl-card__jump')
+    await expect.poll(() => jump.count(), {timeout: 5_000}).toBeGreaterThan(0)
+    await jump.first().click()
+    await expect
+      .poll(() => page.getByTestId('prompt-pane').locator('.cm-napl-linked').count(), {
+        timeout: 10_000,
+      })
+      .toBeGreaterThan(0)
+    await page.close()
+  })
+
+  it('renders the attribution card below the pane header, never overlapping it', async () => {
+    const page = await browser.newPage({viewport: {width: 1440, height: 900}})
+    await openSelfhost(page)
+    await page.getByTestId('tree-file-gen_prompt_diff').click()
+    const genPane = page.getByTestId('generated-pane')
+    const genLine = genPane
+      .locator('.cm-line', {hasText: 'compute_prompt_diff'})
+      .first()
+    await expect.poll(() => genLine.count(), {timeout: 15_000}).toBeGreaterThan(0)
+    await genLine.hover()
+    const card = page.locator('.cm-napl-card')
+    await expect.poll(() => card.count(), {timeout: 10_000}).toBeGreaterThan(0)
+    const cardBox = await card.first().boundingBox()
+    const paneBox = await genPane.boundingBox()
+    expect(cardBox).not.toBeNull()
+    expect(paneBox).not.toBeNull()
+    expect(cardBox!.y).toBeGreaterThanOrEqual(paneBox!.y - 2)
+    await page.close()
+  })
+
+  it('keeps the workbench within the viewport (no page vertical scroll)', async () => {
+    const page = await browser.newPage({viewport: {width: 1440, height: 900}})
+    await openSelfhost(page)
+    const overflow = await page.evaluate(() => {
+      const el = document.scrollingElement ?? document.documentElement
+      return el.scrollHeight - el.clientHeight
+    })
+    expect(overflow).toBeLessThanOrEqual(4)
+    await page.close()
+  })
+
   it('renders editor tokens in both themes', async () => {
     for (const [theme, expectDark] of [
       ['dark', true],

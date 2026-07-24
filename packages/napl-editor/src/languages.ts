@@ -5,7 +5,7 @@ import { yaml } from '@codemirror/lang-yaml';
 import { rust } from '@codemirror/legacy-modes/mode/rust';
 import { toml } from '@codemirror/legacy-modes/mode/toml';
 import type { Extension } from '@codemirror/state';
-import { naplStreamLanguage } from './napl-language.ts';
+import { maplLanguage, naplStreamLanguage } from './napl-language.ts';
 
 export type EditorLanguage =
   | 'napl'
@@ -23,6 +23,7 @@ export const resolveLanguage = (language: EditorLanguage): Extension => {
     case 'napl':
       return naplStreamLanguage;
     case 'mapl':
+      return maplLanguage();
     case 'yaml':
       return yaml();
     case 'javascript':

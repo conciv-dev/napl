@@ -57,6 +57,8 @@ export interface ShowcaseModule {
   attribution: ShowcaseAttribution[]
   attributionYaml: string
   mapl: ShowcaseMapl[]
+  maplContent: string
+  maplFile: string
   journal: ShowcaseJournalEntry[]
   lock: ShowcaseLock[]
   session: RecordedSession

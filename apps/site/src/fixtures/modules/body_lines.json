@@ -29,75 +29,123 @@
   "attribution": [
     {
       "promptLines": [
-        3,
-        5
+        16,
+        17
       ],
       "file": "body_lines/src/lib.rs",
       "lines": [
-        3,
-        8
-      ],
-      "note": "PromptBody struct definition matching module purpose"
-    },
-    {
-      "promptLines": [
-        10,
+        11,
         12
       ],
-      "file": "body_lines/src/lib.rs",
-      "lines": [
-        1,
-        1
-      ],
-      "note": "generated module marker, no cross-crate deps"
+      "note": "split on newline, strip trailing carriage return"
     },
     {
       "promptLines": [
-        16,
+        19,
         21
       ],
       "file": "body_lines/src/lib.rs",
       "lines": [
         10,
-        14
+        13
       ],
-      "note": "split_lines: strip trailing CR, never drop last line"
+      "note": "split never drops lines, yields trailing empty line"
     },
     {
       "promptLines": [
         25,
+        27
+      ],
+      "file": "body_lines/src/lib.rs",
+      "lines": [
+        5,
+        8
+      ],
+      "note": "PromptBody struct with two public fields"
+    },
+    {
+      "promptLines": [
+        28,
+        29
+      ],
+      "file": "body_lines/src/lib.rs",
+      "lines": [
+        6,
+        6
+      ],
+      "note": "body_start_line field"
+    },
+    {
+      "promptLines": [
+        30,
         30
       ],
       "file": "body_lines/src/lib.rs",
       "lines": [
-        17,
-        18
+        7,
+        7
       ],
-      "note": "prompt_body_lines signature and initial split"
+      "note": "lines field as owned strings"
     },
     {
       "promptLines": [
         32,
-        34
+        33
       ],
       "file": "body_lines/src/lib.rs",
       "lines": [
         20,
-        30
+        22
       ],
-      "note": "detect opening/closing --- delimiters ignoring trailing whitespace"
+      "note": "first line == --- ignoring trailing whitespace"
+    },
+    {
+      "promptLines": [
+        33,
+        34
+      ],
+      "file": "body_lines/src/lib.rs",
+      "lines": [
+        25,
+        31
+      ],
+      "note": "find later closing --- ignoring trailing whitespace"
     },
     {
       "promptLines": [
         35,
+        36
+      ],
+      "file": "body_lines/src/lib.rs",
+      "lines": [
+        32,
+        32
+      ],
+      "note": "body_start_line is index after closing delimiter"
+    },
+    {
+      "promptLines": [
+        36,
+        37
+      ],
+      "file": "body_lines/src/lib.rs",
+      "lines": [
+        36,
+        41
+      ],
+      "note": "lines holds remaining lines after closing"
+    },
+    {
+      "promptLines": [
+        37,
         39
       ],
       "file": "body_lines/src/lib.rs",
       "lines": [
-        31,
+        45,
         48
       ],
-      "note": "body starts after closing delimiter; else whole doc, start 0"
+      "note": "no frontmatter: start 0, whole document"
     },
     {
       "promptLines": [
@@ -109,7 +157,7 @@
         33,
         34
       ],
-      "note": "frontmatter immediately followed by nothing yields one empty line"
+      "note": "frontmatter followed by nothing yields one empty line"
     },
     {
       "promptLines": [
@@ -121,34 +169,46 @@
         53,
         56
       ],
-      "note": "compute body_line as doc_line - body_start_line + 1"
+      "note": "compute doc_line - body_start_line + 1, signed i64"
     },
     {
       "promptLines": [
         49,
-        51
+        50
       ],
       "file": "body_lines/src/lib.rs",
       "lines": [
         57,
-        62
+        58
       ],
-      "note": "validate body line within range, else None"
+      "note": "valid when >= 1 and <= body line count"
+    },
+    {
+      "promptLines": [
+        50,
+        51
+      ],
+      "file": "body_lines/src/lib.rs",
+      "lines": [
+        59,
+        60
+      ],
+      "note": "return None when out of range"
     },
     {
       "promptLines": [
         55,
-        58
+        56
       ],
       "file": "body_lines/src/lib.rs",
       "lines": [
         65,
-        72
+        71
       ],
-      "note": "number_lines renders 1-based prefixed lines joined by newline"
+      "note": "prefix 1-based position + ': ', join by newlines"
     }
   ],
-  "attributionYaml": "module: body_lines\ntarget: rust\nentries:\n  - promptLines:\n      - 3\n      - 5\n    file: body_lines/src/lib.rs\n    lines:\n      - 3\n      - 8\n    note: PromptBody struct definition matching module purpose\n  - promptLines:\n      - 10\n      - 12\n    file: body_lines/src/lib.rs\n    lines:\n      - 1\n      - 1\n    note: generated module marker, no cross-crate deps\n  - promptLines:\n      - 16\n      - 21\n    file: body_lines/src/lib.rs\n    lines:\n      - 10\n      - 14\n    note: \"split_lines: strip trailing CR, never drop last line\"\n  - promptLines:\n      - 25\n      - 30\n    file: body_lines/src/lib.rs\n    lines:\n      - 17\n      - 18\n    note: prompt_body_lines signature and initial split\n  - promptLines:\n      - 32\n      - 34\n    file: body_lines/src/lib.rs\n    lines:\n      - 20\n      - 30\n    note: detect opening/closing --- delimiters ignoring trailing whitespace\n  - promptLines:\n      - 35\n      - 39\n    file: body_lines/src/lib.rs\n    lines:\n      - 31\n      - 48\n    note: body starts after closing delimiter; else whole doc, start 0\n  - promptLines:\n      - 41\n      - 42\n    file: body_lines/src/lib.rs\n    lines:\n      - 33\n      - 34\n    note: frontmatter immediately followed by nothing yields one empty line\n  - promptLines:\n      - 46\n      - 48\n    file: body_lines/src/lib.rs\n    lines:\n      - 53\n      - 56\n    note: compute body_line as doc_line - body_start_line + 1\n  - promptLines:\n      - 49\n      - 51\n    file: body_lines/src/lib.rs\n    lines:\n      - 57\n      - 62\n    note: validate body line within range, else None\n  - promptLines:\n      - 55\n      - 58\n    file: body_lines/src/lib.rs\n    lines:\n      - 65\n      - 72\n    note: number_lines renders 1-based prefixed lines joined by newline\n",
+  "attributionYaml": "module: body_lines\ntarget: rust\nentries:\n  - promptLines:\n      - 16\n      - 17\n    file: body_lines/src/lib.rs\n    lines:\n      - 11\n      - 12\n    note: split on newline, strip trailing carriage return\n  - promptLines:\n      - 19\n      - 21\n    file: body_lines/src/lib.rs\n    lines:\n      - 10\n      - 13\n    note: split never drops lines, yields trailing empty line\n  - promptLines:\n      - 25\n      - 27\n    file: body_lines/src/lib.rs\n    lines:\n      - 5\n      - 8\n    note: PromptBody struct with two public fields\n  - promptLines:\n      - 28\n      - 29\n    file: body_lines/src/lib.rs\n    lines:\n      - 6\n      - 6\n    note: body_start_line field\n  - promptLines:\n      - 30\n      - 30\n    file: body_lines/src/lib.rs\n    lines:\n      - 7\n      - 7\n    note: lines field as owned strings\n  - promptLines:\n      - 32\n      - 33\n    file: body_lines/src/lib.rs\n    lines:\n      - 20\n      - 22\n    note: first line == --- ignoring trailing whitespace\n  - promptLines:\n      - 33\n      - 34\n    file: body_lines/src/lib.rs\n    lines:\n      - 25\n      - 31\n    note: find later closing --- ignoring trailing whitespace\n  - promptLines:\n      - 35\n      - 36\n    file: body_lines/src/lib.rs\n    lines:\n      - 32\n      - 32\n    note: body_start_line is index after closing delimiter\n  - promptLines:\n      - 36\n      - 37\n    file: body_lines/src/lib.rs\n    lines:\n      - 36\n      - 41\n    note: lines holds remaining lines after closing\n  - promptLines:\n      - 37\n      - 39\n    file: body_lines/src/lib.rs\n    lines:\n      - 45\n      - 48\n    note: \"no frontmatter: start 0, whole document\"\n  - promptLines:\n      - 41\n      - 42\n    file: body_lines/src/lib.rs\n    lines:\n      - 33\n      - 34\n    note: frontmatter followed by nothing yields one empty line\n  - promptLines:\n      - 46\n      - 48\n    file: body_lines/src/lib.rs\n    lines:\n      - 53\n      - 56\n    note: compute doc_line - body_start_line + 1, signed i64\n  - promptLines:\n      - 49\n      - 50\n    file: body_lines/src/lib.rs\n    lines:\n      - 57\n      - 58\n    note: valid when >= 1 and <= body line count\n  - promptLines:\n      - 50\n      - 51\n    file: body_lines/src/lib.rs\n    lines:\n      - 59\n      - 60\n    note: return None when out of range\n  - promptLines:\n      - 55\n      - 56\n    file: body_lines/src/lib.rs\n    lines:\n      - 65\n      - 71\n    note: \"prefix 1-based position + ': ', join by newlines\"\n",
   "mapl": [
     {
       "promptLines": [
@@ -157,21 +217,12 @@
       ],
       "kind": "no-op",
       "severity": "warning",
-      "message": "Agent made no changes; claims 15 tests pass against existing code.",
-      "reasoning": "Changes field is \"NO CHANGES\" and final message says code already satisfies spec (15 tests pass, clean). No evidence in this transcript that body_lines/ crate was actually created or verified against these exact rules (frontmatter detection, CRLF stripping, body_line_for_doc_line bounds, number_lines format) — the agent did not report inspecting or writing body_lines/Cargo.toml or src/lib.rs. Recording as no-op per instructions since no source edits occurred, but this should be double-checked: confirm the crate exists at body_lines/ with the specified public API before trusting the \"all clean\" claim. "
-    },
-    {
-      "promptLines": [
-        9,
-        12
-      ],
-      "kind": "ambiguity",
-      "severity": "error",
-      "message": "Workspace root manifest ownership vs. member crate registration unclear.",
-      "reasoning": "Prompt says \"root manifest is owned by toolchain — leave it alone\" but a new member crate under body_lines/ typically needs registration in the root Cargo.toml's [workspace.members] to build/test as part of the workspace. It's unclear whether \"leave it alone\" forbids adding the new path to members (which would make `cargo test` at the workspace root not discover it) or only forbids other edits. Assumed the crate should still be buildable/testable somehow, but the prompt doesn't resolve this tension explicitly.\n",
-      "suggestion": "Clarify whether body_lines/ must be added to the root Cargo.toml's [workspace.members] list, or whether the workspace uses path-based auto-discovery that requires no root edit."
+      "message": "No changes made — existing body_lines crate already matches the full prompt spec.",
+      "reasoning": "The agent reported \"NO CHANGES\": the body_lines member crate (Cargo.toml, src/lib.rs) and all four described items — line splitting with CR stripping, prompt_body_lines/PromptBody, body_line_for_doc_line, and number_lines — already exist and satisfy the prompt exactly, with all 15 tests passing. Nothing needed to be produced. No independent verification of the \"already matches\" claim is possible from the diff alone; it rests on the agent's test run."
     }
   ],
+  "maplContent": "module: body_lines\ntarget: rust\nentries:\n  - promptLines:\n      - 1\n      - 59\n    kind: no-op\n    message: No changes made — existing body_lines crate already matches the full prompt spec.\n    reasoning: \"The agent reported \\\"NO CHANGES\\\": the body_lines member crate (Cargo.toml, src/lib.rs) and all four described items — line splitting with CR stripping, prompt_body_lines/PromptBody, body_line_for_doc_line, and number_lines — already exist and satisfy the prompt exactly, with all 15 tests passing. Nothing needed to be produced. No independent verification of the \\\"already matches\\\" claim is possible from the diff alone; it rests on the agent's test run.\"\n",
+  "maplFile": "body_lines.mapl",
   "journal": [
     {
       "gen": 1,
@@ -212,6 +263,13 @@
     {
       "gen": 44,
       "timestamp": "2026-07-24T12:27:08.983Z",
+      "mode": "incremental",
+      "promptHash": "f5bfbff4e852f6a907e7e28ebfba093137b0e7624f33e7a605d3caae5eeb65c4",
+      "files": []
+    },
+    {
+      "gen": 53,
+      "timestamp": "2026-07-24T12:40:20.697Z",
       "mode": "incremental",
       "promptHash": "f5bfbff4e852f6a907e7e28ebfba093137b0e7624f33e7a605d3caae5eeb65c4",
       "files": []
@@ -284,75 +342,123 @@
         "entries": [
           {
             "promptLines": [
-              3,
-              5
+              16,
+              17
             ],
             "file": "body_lines/src/lib.rs",
             "lines": [
-              3,
-              8
-            ],
-            "note": "PromptBody struct definition matching module purpose"
-          },
-          {
-            "promptLines": [
-              10,
+              11,
               12
             ],
-            "file": "body_lines/src/lib.rs",
-            "lines": [
-              1,
-              1
-            ],
-            "note": "generated module marker, no cross-crate deps"
+            "note": "split on newline, strip trailing carriage return"
           },
           {
             "promptLines": [
-              16,
+              19,
               21
             ],
             "file": "body_lines/src/lib.rs",
             "lines": [
               10,
-              14
+              13
             ],
-            "note": "split_lines: strip trailing CR, never drop last line"
+            "note": "split never drops lines, yields trailing empty line"
           },
           {
             "promptLines": [
               25,
+              27
+            ],
+            "file": "body_lines/src/lib.rs",
+            "lines": [
+              5,
+              8
+            ],
+            "note": "PromptBody struct with two public fields"
+          },
+          {
+            "promptLines": [
+              28,
+              29
+            ],
+            "file": "body_lines/src/lib.rs",
+            "lines": [
+              6,
+              6
+            ],
+            "note": "body_start_line field"
+          },
+          {
+            "promptLines": [
+              30,
               30
             ],
             "file": "body_lines/src/lib.rs",
             "lines": [
-              17,
-              18
+              7,
+              7
             ],
-            "note": "prompt_body_lines signature and initial split"
+            "note": "lines field as owned strings"
           },
           {
             "promptLines": [
               32,
-              34
+              33
             ],
             "file": "body_lines/src/lib.rs",
             "lines": [
               20,
-              30
+              22
             ],
-            "note": "detect opening/closing --- delimiters ignoring trailing whitespace"
+            "note": "first line == --- ignoring trailing whitespace"
+          },
+          {
+            "promptLines": [
+              33,
+              34
+            ],
+            "file": "body_lines/src/lib.rs",
+            "lines": [
+              25,
+              31
+            ],
+            "note": "find later closing --- ignoring trailing whitespace"
           },
           {
             "promptLines": [
               35,
+              36
+            ],
+            "file": "body_lines/src/lib.rs",
+            "lines": [
+              32,
+              32
+            ],
+            "note": "body_start_line is index after closing delimiter"
+          },
+          {
+            "promptLines": [
+              36,
+              37
+            ],
+            "file": "body_lines/src/lib.rs",
+            "lines": [
+              36,
+              41
+            ],
+            "note": "lines holds remaining lines after closing"
+          },
+          {
+            "promptLines": [
+              37,
               39
             ],
             "file": "body_lines/src/lib.rs",
             "lines": [
-              31,
+              45,
               48
             ],
-            "note": "body starts after closing delimiter; else whole doc, start 0"
+            "note": "no frontmatter: start 0, whole document"
           },
           {
             "promptLines": [
@@ -364,7 +470,7 @@
               33,
               34
             ],
-            "note": "frontmatter immediately followed by nothing yields one empty line"
+            "note": "frontmatter followed by nothing yields one empty line"
           },
           {
             "promptLines": [
@@ -376,31 +482,43 @@
               53,
               56
             ],
-            "note": "compute body_line as doc_line - body_start_line + 1"
+            "note": "compute doc_line - body_start_line + 1, signed i64"
           },
           {
             "promptLines": [
               49,
-              51
+              50
             ],
             "file": "body_lines/src/lib.rs",
             "lines": [
               57,
-              62
+              58
             ],
-            "note": "validate body line within range, else None"
+            "note": "valid when >= 1 and <= body line count"
+          },
+          {
+            "promptLines": [
+              50,
+              51
+            ],
+            "file": "body_lines/src/lib.rs",
+            "lines": [
+              59,
+              60
+            ],
+            "note": "return None when out of range"
           },
           {
             "promptLines": [
               55,
-              58
+              56
             ],
             "file": "body_lines/src/lib.rs",
             "lines": [
               65,
-              72
+              71
             ],
-            "note": "number_lines renders 1-based prefixed lines joined by newline"
+            "note": "prefix 1-based position + ': ', join by newlines"
           }
         ]
       },
@@ -414,23 +532,8 @@
           ],
           "kind": "no-op",
           "severity": "warning",
-          "message": "Agent made no changes; claims 15 tests pass against existing code.",
-          "reasoning": "Changes field is \"NO CHANGES\" and final message says code already satisfies spec (15 tests pass, clean). No evidence in this transcript that body_lines/ crate was actually created or verified against these exact rules (frontmatter detection, CRLF stripping, body_line_for_doc_line bounds, number_lines format) — the agent did not report inspecting or writing body_lines/Cargo.toml or src/lib.rs. Recording as no-op per instructions since no source edits occurred, but this should be double-checked: confirm the crate exists at body_lines/ with the specified public API before trusting the \"all clean\" claim. "
-        }
-      },
-      {
-        "type": "mapl-entry",
-        "path": "body_lines.mapl",
-        "entry": {
-          "promptLines": [
-            9,
-            12
-          ],
-          "kind": "ambiguity",
-          "severity": "error",
-          "message": "Workspace root manifest ownership vs. member crate registration unclear.",
-          "reasoning": "Prompt says \"root manifest is owned by toolchain — leave it alone\" but a new member crate under body_lines/ typically needs registration in the root Cargo.toml's [workspace.members] to build/test as part of the workspace. It's unclear whether \"leave it alone\" forbids adding the new path to members (which would make `cargo test` at the workspace root not discover it) or only forbids other edits. Assumed the crate should still be buildable/testable somehow, but the prompt doesn't resolve this tension explicitly.\n",
-          "suggestion": "Clarify whether body_lines/ must be added to the root Cargo.toml's [workspace.members] list, or whether the workspace uses path-based auto-discovery that requires no root edit."
+          "message": "No changes made — existing body_lines crate already matches the full prompt spec.",
+          "reasoning": "The agent reported \"NO CHANGES\": the body_lines member crate (Cargo.toml, src/lib.rs) and all four described items — line splitting with CR stripping, prompt_body_lines/PromptBody, body_line_for_doc_line, and number_lines — already exist and satisfy the prompt exactly, with all 15 tests passing. Nothing needed to be produced. No independent verification of the \"already matches\" claim is possible from the diff alone; it rests on the agent's test run."
         }
       },
       {

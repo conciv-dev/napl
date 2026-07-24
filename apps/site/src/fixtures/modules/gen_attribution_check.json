@@ -29,15 +29,15 @@
   "attribution": [
     {
       "promptLines": [
-        3,
-        8
+        34,
+        34
       ],
       "file": "gen_attribution_check/src/lib.rs",
       "lines": [
-        1,
-        18
+        3,
+        3
       ],
-      "note": "module summary implemented as pure sanity-check function"
+      "note": "function signature assert_attribution_sane"
     },
     {
       "promptLines": [
@@ -49,43 +49,67 @@
         1,
         1
       ],
-      "note": "import Attribution from sibling schemas_attribution crate"
-    },
-    {
-      "promptLines": [
-        34,
-        34
-      ],
-      "file": "gen_attribution_check/src/lib.rs",
-      "lines": [
-        3,
-        3
-      ],
-      "note": "function signature matches spec"
+      "note": "imports Attribution from sibling crate"
     },
     {
       "promptLines": [
         39,
-        41
+        39
       ],
       "file": "gen_attribution_check/src/lib.rs",
       "lines": [
         4,
-        6
+        4
       ],
-      "note": "rule 1 - non-empty allowed with empty entries errors"
+      "note": "checks allowed non-empty and entries empty"
+    },
+    {
+      "promptLines": [
+        40,
+        41
+      ],
+      "file": "gen_attribution_check/src/lib.rs",
+      "lines": [
+        5,
+        5
+      ],
+      "note": "returns exact no-entries error message"
     },
     {
       "promptLines": [
         42,
-        47
+        42
       ],
       "file": "gen_attribution_check/src/lib.rs",
       "lines": [
         8,
-        15
+        9
       ],
-      "note": "rule 2 - entry file not in allowed errors with exact message"
+      "note": "iterates entries, checks file not in allowed"
+    },
+    {
+      "promptLines": [
+        43,
+        47
+      ],
+      "file": "gen_attribution_check/src/lib.rs",
+      "lines": [
+        10,
+        13
+      ],
+      "note": "returns outside-set error with file substituted"
+    },
+    {
+      "promptLines": [
+        52,
+        53
+      ],
+      "file": "gen_attribution_check/src/lib.rs",
+      "lines": [
+        8,
+        14
+      ],
+      "note": "checks entries in order, returns first violation"
     },
     {
       "promptLines": [
@@ -97,106 +121,34 @@
         17,
         17
       ],
-      "note": "rule 3 - fallback Ok"
-    },
-    {
-      "promptLines": [
-        50,
-        53
-      ],
-      "file": "gen_attribution_check/src/lib.rs",
-      "lines": [
-        44,
-        91
-      ],
-      "note": "tests covering all described scenarios in order"
-    },
-    {
-      "promptLines": [
-        50,
-        50
-      ],
-      "file": "gen_attribution_check/src/lib.rs",
-      "lines": [
-        44,
-        47
-      ],
-      "note": "empty allowed + empty entries -> Ok test"
-    },
-    {
-      "promptLines": [
-        50,
-        51
-      ],
-      "file": "gen_attribution_check/src/lib.rs",
-      "lines": [
-        49,
-        57
-      ],
-      "note": "non-empty allowed + empty entries -> error test"
-    },
-    {
-      "promptLines": [
-        51,
-        51
-      ],
-      "file": "gen_attribution_check/src/lib.rs",
-      "lines": [
-        59,
-        64
-      ],
-      "note": "entry within allowed -> Ok test"
-    },
-    {
-      "promptLines": [
-        52,
-        52
-      ],
-      "file": "gen_attribution_check/src/lib.rs",
-      "lines": [
-        66,
-        74
-      ],
-      "note": "entry outside allowed -> error naming file test"
-    },
-    {
-      "promptLines": [
-        52,
-        53
-      ],
-      "file": "gen_attribution_check/src/lib.rs",
-      "lines": [
-        76,
-        84
-      ],
-      "note": "check entries in order, return first violation test"
-    },
-    {
-      "promptLines": [
-        51,
-        51
-      ],
-      "file": "gen_attribution_check/src/lib.rs",
-      "lines": [
-        86,
-        91
-      ],
-      "note": "all entries within allowed multiple -> Ok test"
+      "note": "returns Ok when no rule fires"
     }
   ],
-  "attributionYaml": "module: gen_attribution_check\ntarget: rust\nentries:\n  - promptLines:\n      - 3\n      - 8\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 1\n      - 18\n    note: module summary implemented as pure sanity-check function\n  - promptLines:\n      - 26\n      - 29\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 1\n      - 1\n    note: import Attribution from sibling schemas_attribution crate\n  - promptLines:\n      - 34\n      - 34\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 3\n      - 3\n    note: function signature matches spec\n  - promptLines:\n      - 39\n      - 41\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 4\n      - 6\n    note: rule 1 - non-empty allowed with empty entries errors\n  - promptLines:\n      - 42\n      - 47\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 8\n      - 15\n    note: rule 2 - entry file not in allowed errors with exact message\n  - promptLines:\n      - 48\n      - 48\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 17\n      - 17\n    note: rule 3 - fallback Ok\n  - promptLines:\n      - 50\n      - 53\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 44\n      - 91\n    note: tests covering all described scenarios in order\n  - promptLines:\n      - 50\n      - 50\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 44\n      - 47\n    note: empty allowed + empty entries -> Ok test\n  - promptLines:\n      - 50\n      - 51\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 49\n      - 57\n    note: non-empty allowed + empty entries -> error test\n  - promptLines:\n      - 51\n      - 51\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 59\n      - 64\n    note: entry within allowed -> Ok test\n  - promptLines:\n      - 52\n      - 52\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 66\n      - 74\n    note: entry outside allowed -> error naming file test\n  - promptLines:\n      - 52\n      - 53\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 76\n      - 84\n    note: check entries in order, return first violation test\n  - promptLines:\n      - 51\n      - 51\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 86\n      - 91\n    note: all entries within allowed multiple -> Ok test\n",
+  "attributionYaml": "module: gen_attribution_check\ntarget: rust\nentries:\n  - promptLines:\n      - 34\n      - 34\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 3\n      - 3\n    note: function signature assert_attribution_sane\n  - promptLines:\n      - 26\n      - 29\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 1\n      - 1\n    note: imports Attribution from sibling crate\n  - promptLines:\n      - 39\n      - 39\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 4\n      - 4\n    note: checks allowed non-empty and entries empty\n  - promptLines:\n      - 40\n      - 41\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 5\n      - 5\n    note: returns exact no-entries error message\n  - promptLines:\n      - 42\n      - 42\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 8\n      - 9\n    note: iterates entries, checks file not in allowed\n  - promptLines:\n      - 43\n      - 47\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 10\n      - 13\n    note: returns outside-set error with file substituted\n  - promptLines:\n      - 52\n      - 53\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 8\n      - 14\n    note: checks entries in order, returns first violation\n  - promptLines:\n      - 48\n      - 48\n    file: gen_attribution_check/src/lib.rs\n    lines:\n      - 17\n      - 17\n    note: returns Ok when no rule fires\n",
   "mapl": [
     {
       "promptLines": [
-        39,
+        1,
+        54
+      ],
+      "kind": "no-op",
+      "severity": "warning",
+      "message": "No changes made — existing crate already matches the prompt exactly.",
+      "reasoning": "Agent reported the prompt diff was empty: gen_attribution_check crate, Cargo.toml, lib.rs, the assert_attribution_sane signature, both exact error messages, and ordering all already present. All 6 tests pass, so no edits were needed. Cannot independently confirm test run from this layer, but the agent claims the target state was already satisfied."
+    },
+    {
+      "promptLines": [
+        34,
         47
       ],
       "kind": "note",
       "severity": "info",
-      "message": "Rules 1 and 2 implemented exactly as spec'd, error strings match verbatim.",
-      "reasoning": "Agent's code matches message text char-for-char including quoting style, order of checks, and iteration-stops-at-first-violation behavior. No ambiguity here, just confirming correct compile."
+      "message": "Exact error-message strings and file-substitution format are pinned; verify existing code matches byte-for-byte.",
+      "reasoning": "Prompt demands two verbatim error messages, one with the offending file path wrapped in straight double quotes. Since no changes were made, correctness rests entirely on the pre-existing code already producing these exact strings. Worth a human byte-level check that the empty-diff claim holds against lines 41 and 45-47."
     }
   ],
+  "maplContent": "module: gen_attribution_check\ntarget: rust\nentries:\n  - promptLines:\n      - 1\n      - 54\n    kind: no-op\n    message: No changes made — existing crate already matches the prompt exactly.\n    reasoning: \"Agent reported the prompt diff was empty: gen_attribution_check crate, Cargo.toml, lib.rs, the assert_attribution_sane signature, both exact error messages, and ordering all already present. All 6 tests pass, so no edits were needed. Cannot independently confirm test run from this layer, but the agent claims the target state was already satisfied.\"\n  - promptLines:\n      - 34\n      - 47\n    kind: note\n    message: Exact error-message strings and file-substitution format are pinned; verify existing code matches byte-for-byte.\n    reasoning: Prompt demands two verbatim error messages, one with the offending file path wrapped in straight double quotes. Since no changes were made, correctness rests entirely on the pre-existing code already producing these exact strings. Worth a human byte-level check that the empty-diff claim holds against lines 41 and 45-47.\n",
+  "maplFile": "gen_attribution_check.mapl",
   "journal": [
     {
       "gen": 37,
@@ -215,6 +167,13 @@
           "patch": "@@ -0,0 +1,92 @@\n+use schemas_attribution::Attribution;\n+\n+pub fn assert_attribution_sane(attribution: &Attribution, allowed: &[String]) -> Result<(), String> {\n+    if !allowed.is_empty() && attribution.entries.is_empty() {\n+        return Err(\"attribution has no entries but the module has attributed source files\".to_string());\n+    }\n+\n+    for entry in &attribution.entries {\n+        if !allowed.iter().any(|file| file == &entry.file) {\n+            return Err(format!(\n+                \"attribution entry references file \\\"{}\\\" which is outside the attributed file set\",\n+                entry.file\n+            ));\n+        }\n+    }\n+\n+    Ok(())\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+    use schemas_attribution::AttributionEntry;\n+    use schemas_line_range::LineRange;\n+\n+    fn entry(file: &str) -> AttributionEntry {\n+        AttributionEntry {\n+            prompt_lines: LineRange::new(1, 1),\n+            file: file.to_string(),\n+            lines: LineRange::new(1, 1),\n+            note: String::new(),\n+        }\n+    }\n+\n+    fn attribution(entries: Vec<AttributionEntry>) -> Attribution {\n+        Attribution {\n+            module: \"m\".to_string(),\n+            target: \"t\".to_string(),\n+            entries,\n+        }\n+    }\n+\n+    #[test]\n+    fn empty_allowed_and_empty_entries_is_ok() {\n+        let attr = attribution(vec![]);\n+        assert_eq!(assert_attribution_sane(&attr, &[]), Ok(()));\n+    }\n+\n+    #[test]\n+    fn nonempty_allowed_and_empty_entries_errors() {\n+        let attr = attribution(vec![]);\n+        let allowed = vec![\"a.ts\".to_string()];\n+        assert_eq!(\n+            assert_attribution_sane(&attr, &allowed),\n+            Err(\"attribution has no entries but the module has attributed source files\".to_string())\n+        );\n+    }\n+\n+    #[test]\n+    fn entry_within_allowed_is_ok() {\n+        let attr = attribution(vec![entry(\"a.ts\")]);\n+        let allowed = vec![\"a.ts\".to_string()];\n+        assert_eq!(assert_attribution_sane(&attr, &allowed), Ok(()));\n+    }\n+\n+    #[test]\n+    fn entry_outside_allowed_errors_with_exact_message() {\n+        let attr = attribution(vec![entry(\"b.ts\")]);\n+        let allowed = vec![\"a.ts\".to_string()];\n+        assert_eq!(\n+            assert_attribution_sane(&attr, &allowed),\n+            Err(\"attribution entry references file \\\"b.ts\\\" which is outside the attributed file set\".to_string())\n+        );\n+    }\n+\n+    #[test]\n+    fn returns_first_violation_in_order() {\n+        let attr = attribution(vec![entry(\"a.ts\"), entry(\"b.ts\"), entry(\"c.ts\")]);\n+        let allowed = vec![\"a.ts\".to_string(), \"c.ts\".to_string()];\n+        assert_eq!(\n+            assert_attribution_sane(&attr, &allowed),\n+            Err(\"attribution entry references file \\\"b.ts\\\" which is outside the attributed file set\".to_string())\n+        );\n+    }\n+\n+    #[test]\n+    fn all_entries_within_allowed_multiple_is_ok() {\n+        let attr = attribution(vec![entry(\"a.ts\"), entry(\"c.ts\")]);\n+        let allowed = vec![\"a.ts\".to_string(), \"b.ts\".to_string(), \"c.ts\".to_string()];\n+        assert_eq!(assert_attribution_sane(&attr, &allowed), Ok(()));\n+    }\n+}"
         }
       ]
+    },
+    {
+      "gen": 85,
+      "timestamp": "2026-07-24T13:37:33.616Z",
+      "mode": "incremental",
+      "promptHash": "b4c17dd61957714a9953a0a631236ceae382b2b389450f2b7eea1416a53cd897",
+      "files": []
     }
   ],
   "lock": [
@@ -264,15 +223,15 @@
         "entries": [
           {
             "promptLines": [
-              3,
-              8
+              34,
+              34
             ],
             "file": "gen_attribution_check/src/lib.rs",
             "lines": [
-              1,
-              18
+              3,
+              3
             ],
-            "note": "module summary implemented as pure sanity-check function"
+            "note": "function signature assert_attribution_sane"
           },
           {
             "promptLines": [
@@ -284,43 +243,67 @@
               1,
               1
             ],
-            "note": "import Attribution from sibling schemas_attribution crate"
-          },
-          {
-            "promptLines": [
-              34,
-              34
-            ],
-            "file": "gen_attribution_check/src/lib.rs",
-            "lines": [
-              3,
-              3
-            ],
-            "note": "function signature matches spec"
+            "note": "imports Attribution from sibling crate"
           },
           {
             "promptLines": [
               39,
-              41
+              39
             ],
             "file": "gen_attribution_check/src/lib.rs",
             "lines": [
               4,
-              6
+              4
             ],
-            "note": "rule 1 - non-empty allowed with empty entries errors"
+            "note": "checks allowed non-empty and entries empty"
+          },
+          {
+            "promptLines": [
+              40,
+              41
+            ],
+            "file": "gen_attribution_check/src/lib.rs",
+            "lines": [
+              5,
+              5
+            ],
+            "note": "returns exact no-entries error message"
           },
           {
             "promptLines": [
               42,
-              47
+              42
             ],
             "file": "gen_attribution_check/src/lib.rs",
             "lines": [
               8,
-              15
+              9
             ],
-            "note": "rule 2 - entry file not in allowed errors with exact message"
+            "note": "iterates entries, checks file not in allowed"
+          },
+          {
+            "promptLines": [
+              43,
+              47
+            ],
+            "file": "gen_attribution_check/src/lib.rs",
+            "lines": [
+              10,
+              13
+            ],
+            "note": "returns outside-set error with file substituted"
+          },
+          {
+            "promptLines": [
+              52,
+              53
+            ],
+            "file": "gen_attribution_check/src/lib.rs",
+            "lines": [
+              8,
+              14
+            ],
+            "note": "checks entries in order, returns first violation"
           },
           {
             "promptLines": [
@@ -332,91 +315,7 @@
               17,
               17
             ],
-            "note": "rule 3 - fallback Ok"
-          },
-          {
-            "promptLines": [
-              50,
-              53
-            ],
-            "file": "gen_attribution_check/src/lib.rs",
-            "lines": [
-              44,
-              91
-            ],
-            "note": "tests covering all described scenarios in order"
-          },
-          {
-            "promptLines": [
-              50,
-              50
-            ],
-            "file": "gen_attribution_check/src/lib.rs",
-            "lines": [
-              44,
-              47
-            ],
-            "note": "empty allowed + empty entries -> Ok test"
-          },
-          {
-            "promptLines": [
-              50,
-              51
-            ],
-            "file": "gen_attribution_check/src/lib.rs",
-            "lines": [
-              49,
-              57
-            ],
-            "note": "non-empty allowed + empty entries -> error test"
-          },
-          {
-            "promptLines": [
-              51,
-              51
-            ],
-            "file": "gen_attribution_check/src/lib.rs",
-            "lines": [
-              59,
-              64
-            ],
-            "note": "entry within allowed -> Ok test"
-          },
-          {
-            "promptLines": [
-              52,
-              52
-            ],
-            "file": "gen_attribution_check/src/lib.rs",
-            "lines": [
-              66,
-              74
-            ],
-            "note": "entry outside allowed -> error naming file test"
-          },
-          {
-            "promptLines": [
-              52,
-              53
-            ],
-            "file": "gen_attribution_check/src/lib.rs",
-            "lines": [
-              76,
-              84
-            ],
-            "note": "check entries in order, return first violation test"
-          },
-          {
-            "promptLines": [
-              51,
-              51
-            ],
-            "file": "gen_attribution_check/src/lib.rs",
-            "lines": [
-              86,
-              91
-            ],
-            "note": "all entries within allowed multiple -> Ok test"
+            "note": "returns Ok when no rule fires"
           }
         ]
       },
@@ -425,13 +324,27 @@
         "path": "gen_attribution_check.mapl",
         "entry": {
           "promptLines": [
-            39,
+            1,
+            54
+          ],
+          "kind": "no-op",
+          "severity": "warning",
+          "message": "No changes made — existing crate already matches the prompt exactly.",
+          "reasoning": "Agent reported the prompt diff was empty: gen_attribution_check crate, Cargo.toml, lib.rs, the assert_attribution_sane signature, both exact error messages, and ordering all already present. All 6 tests pass, so no edits were needed. Cannot independently confirm test run from this layer, but the agent claims the target state was already satisfied."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "gen_attribution_check.mapl",
+        "entry": {
+          "promptLines": [
+            34,
             47
           ],
           "kind": "note",
           "severity": "info",
-          "message": "Rules 1 and 2 implemented exactly as spec'd, error strings match verbatim.",
-          "reasoning": "Agent's code matches message text char-for-char including quoting style, order of checks, and iteration-stops-at-first-violation behavior. No ambiguity here, just confirming correct compile."
+          "message": "Exact error-message strings and file-substitution format are pinned; verify existing code matches byte-for-byte.",
+          "reasoning": "Prompt demands two verbatim error messages, one with the offending file path wrapped in straight double quotes. Since no changes were made, correctness rests entirely on the pre-existing code already producing these exact strings. Worth a human byte-level check that the empty-diff claim holds against lines 41 and 45-47."
         }
       },
       {

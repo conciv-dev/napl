@@ -38,6 +38,8 @@ const synthModule = (files: InlineFile[]): ShowcaseModule => {
     attribution: [],
     attributionYaml: '',
     mapl: [],
+    maplContent: '',
+    maplFile: '',
     journal: [],
     lock: [],
     session: {task: '', files: {[promptName]: promptContent}, events: []},

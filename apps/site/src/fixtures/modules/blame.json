@@ -29,27 +29,27 @@
   "attribution": [
     {
       "promptLines": [
-        1,
-        8
-      ],
-      "file": "blame/src/lib.rs",
-      "lines": [
-        1,
-        6
-      ],
-      "note": "module doc summary"
-    },
-    {
-      "promptLines": [
-        17,
-        41
+        24,
+        33
       ],
       "file": "blame/src/lib.rs",
       "lines": [
         8,
         8
       ],
-      "note": "import from sibling text_diff crate"
+      "note": "import to_lines, parse_hunks, HunkKind from text_diff"
+    },
+    {
+      "promptLines": [
+        45,
+        45
+      ],
+      "file": "blame/src/lib.rs",
+      "lines": [
+        11,
+        11
+      ],
+      "note": "derive Clone, PartialEq, Eq for comparable/cloneable"
     },
     {
       "promptLines": [
@@ -58,10 +58,10 @@
       ],
       "file": "blame/src/lib.rs",
       "lines": [
-        10,
+        12,
         18
       ],
-      "note": "BlameSourceEntry struct fields"
+      "note": "BlameSourceEntry struct with public fields gen/timestamp/module/patch/prompt_diff"
     },
     {
       "promptLines": [
@@ -70,34 +70,70 @@
       ],
       "file": "blame/src/lib.rs",
       "lines": [
-        20,
+        22,
         28
       ],
-      "note": "BlameLine struct fields"
+      "note": "BlameLine struct with line/gen/timestamp/module/text"
     },
     {
       "promptLines": [
         57,
-        63
+        60
       ],
       "file": "blame/src/lib.rs",
       "lines": [
         31,
-        36
+        31
       ],
-      "note": "parse hunks, empty returns unchanged"
+      "note": "apply_patch_to_blame signature"
+    },
+    {
+      "promptLines": [
+        62,
+        63
+      ],
+      "file": "blame/src/lib.rs",
+      "lines": [
+        32,
+        35
+      ],
+      "note": "parse hunks; empty returns input unchanged"
     },
     {
       "promptLines": [
         64,
-        67
+        64
       ],
       "file": "blame/src/lib.rs",
       "lines": [
         37,
+        40
+      ],
+      "note": "init result and old_idx cursor, loop hunks"
+    },
+    {
+      "promptLines": [
+        65,
+        67
+      ],
+      "file": "blame/src/lib.rs",
+      "lines": [
+        41,
         45
       ],
-      "note": "copy untouched old entries before hunk start"
+      "note": "copy untouched entries up to hunk start (saturating)"
+    },
+    {
+      "promptLines": [
+        67,
+        67
+      ],
+      "file": "blame/src/lib.rs",
+      "lines": [
+        47,
+        48
+      ],
+      "note": "iterate hunk lines by kind"
     },
     {
       "promptLines": [
@@ -109,7 +145,7 @@
         49,
         56
       ],
-      "note": "context line pushes blame or gen, advances cursor"
+      "note": "context: push blame[old_idx] or gen past end, advance"
     },
     {
       "promptLines": [
@@ -121,7 +157,7 @@
         57,
         59
       ],
-      "note": "deletion line advances cursor without pushing"
+      "note": "deletion: advance without pushing"
     },
     {
       "promptLines": [
@@ -133,7 +169,7 @@
         60,
         62
       ],
-      "note": "insertion pushes gen, no advance"
+      "note": "insertion: push gen, no advance"
     },
     {
       "promptLines": [
@@ -143,9 +179,21 @@
       "file": "blame/src/lib.rs",
       "lines": [
         67,
-        69
+        71
       ],
-      "note": "push remaining old entries after last hunk"
+      "note": "push remaining entries, return result"
+    },
+    {
+      "promptLines": [
+        76,
+        76
+      ],
+      "file": "blame/src/lib.rs",
+      "lines": [
+        75,
+        75
+      ],
+      "note": "blame_file signature"
     },
     {
       "promptLines": [
@@ -181,19 +229,43 @@
         84,
         84
       ],
-      "note": "fallback gen from last entry or 0"
+      "note": "fallback gen: last entry's gen or 0"
     },
     {
       "promptLines": [
         83,
-        86
+        83
       ],
       "file": "blame/src/lib.rs",
       "lines": [
         86,
-        102
+        90
       ],
-      "note": "build BlameLine per current line with lookup"
+      "note": "to_lines and enumerate 0-based index"
+    },
+    {
+      "promptLines": [
+        84,
+        84
+      ],
+      "file": "blame/src/lib.rs",
+      "lines": [
+        91,
+        92
+      ],
+      "note": "gen = blame[index] else fallback; lookup entry"
+    },
+    {
+      "promptLines": [
+        85,
+        86
+      ],
+      "file": "blame/src/lib.rs",
+      "lines": [
+        93,
+        100
+      ],
+      "note": "build BlameLine, line=index+1, empty strings if none"
     },
     {
       "promptLines": [
@@ -202,22 +274,34 @@
       ],
       "file": "blame/src/lib.rs",
       "lines": [
-        104,
+        105,
         113
       ],
-      "note": "blame_line_at finds line by number or None"
+      "note": "blame_line_at finds line by 1-based number or None"
     },
     {
       "promptLines": [
         93,
-        94
+        93
       ],
       "file": "blame/src/lib.rs",
       "lines": [
         116,
-        129
+        116
       ],
-      "note": "scan lines, skip until first hunk header"
+      "note": "first_prompt_diff_line signature"
+    },
+    {
+      "promptLines": [
+        94,
+        94
+      ],
+      "file": "blame/src/lib.rs",
+      "lines": [
+        121,
+        122
+      ],
+      "note": "iterate lines, strip trailing CR"
     },
     {
       "promptLines": [
@@ -226,10 +310,10 @@
       ],
       "file": "blame/src/lib.rs",
       "lines": [
-        131,
+        124,
         133
       ],
-      "note": "skip header lines themselves"
+      "note": "ignore until first @@ header; skip header lines"
     },
     {
       "promptLines": [
@@ -238,10 +322,10 @@
       ],
       "file": "blame/src/lib.rs",
       "lines": [
-        135,
+        139,
         143
       ],
-      "note": "strip marker char, trim, skip empty"
+      "note": "text after marker char, trimmed; skip empty"
     },
     {
       "promptLines": [
@@ -251,59 +335,58 @@
       "file": "blame/src/lib.rs",
       "lines": [
         145,
+        149
+      ],
+      "note": "capture first added/removed"
+    },
+    {
+      "promptLines": [
+        98,
+        99
+      ],
+      "file": "blame/src/lib.rs",
+      "lines": [
+        151,
         156
       ],
-      "note": "return first added else first removed else empty"
-    },
-    {
-      "promptLines": [
-        94,
-        94
-      ],
-      "file": "blame/src/lib.rs",
-      "lines": [
-        122,
-        122
-      ],
-      "note": "strip trailing carriage return from each line"
-    },
-    {
-      "promptLines": [
-        12,
-        15
-      ],
-      "file": "blame/src/lib.rs",
-      "lines": [
-        1,
-        1
-      ],
-      "note": "generated crate marker comment referencing module location convention"
+      "note": "prefer added, else removed, else empty"
     }
   ],
-  "attributionYaml": "module: blame\ntarget: rust\nentries:\n  - promptLines:\n      - 1\n      - 8\n    file: blame/src/lib.rs\n    lines:\n      - 1\n      - 6\n    note: module doc summary\n  - promptLines:\n      - 17\n      - 41\n    file: blame/src/lib.rs\n    lines:\n      - 8\n      - 8\n    note: import from sibling text_diff crate\n  - promptLines:\n      - 47\n      - 50\n    file: blame/src/lib.rs\n    lines:\n      - 10\n      - 18\n    note: BlameSourceEntry struct fields\n  - promptLines:\n      - 51\n      - 53\n    file: blame/src/lib.rs\n    lines:\n      - 20\n      - 28\n    note: BlameLine struct fields\n  - promptLines:\n      - 57\n      - 63\n    file: blame/src/lib.rs\n    lines:\n      - 31\n      - 36\n    note: parse hunks, empty returns unchanged\n  - promptLines:\n      - 64\n      - 67\n    file: blame/src/lib.rs\n    lines:\n      - 37\n      - 45\n    note: copy untouched old entries before hunk start\n  - promptLines:\n      - 68\n      - 69\n    file: blame/src/lib.rs\n    lines:\n      - 49\n      - 56\n    note: context line pushes blame or gen, advances cursor\n  - promptLines:\n      - 70\n      - 70\n    file: blame/src/lib.rs\n    lines:\n      - 57\n      - 59\n    note: deletion line advances cursor without pushing\n  - promptLines:\n      - 71\n      - 71\n    file: blame/src/lib.rs\n    lines:\n      - 60\n      - 62\n    note: insertion pushes gen, no advance\n  - promptLines:\n      - 72\n      - 72\n    file: blame/src/lib.rs\n    lines:\n      - 67\n      - 69\n    note: push remaining old entries after last hunk\n  - promptLines:\n      - 78\n      - 78\n    file: blame/src/lib.rs\n    lines:\n      - 76\n      - 77\n    note: sort copy of history ascending by gen\n  - promptLines:\n      - 79\n      - 80\n    file: blame/src/lib.rs\n    lines:\n      - 79\n      - 82\n    note: fold patches into blame vector\n  - promptLines:\n      - 81\n      - 82\n    file: blame/src/lib.rs\n    lines:\n      - 84\n      - 84\n    note: fallback gen from last entry or 0\n  - promptLines:\n      - 83\n      - 86\n    file: blame/src/lib.rs\n    lines:\n      - 86\n      - 102\n    note: build BlameLine per current line with lookup\n  - promptLines:\n      - 88\n      - 89\n    file: blame/src/lib.rs\n    lines:\n      - 104\n      - 113\n    note: blame_line_at finds line by number or None\n  - promptLines:\n      - 93\n      - 94\n    file: blame/src/lib.rs\n    lines:\n      - 116\n      - 129\n    note: scan lines, skip until first hunk header\n  - promptLines:\n      - 95\n      - 95\n    file: blame/src/lib.rs\n    lines:\n      - 131\n      - 133\n    note: skip header lines themselves\n  - promptLines:\n      - 96\n      - 97\n    file: blame/src/lib.rs\n    lines:\n      - 135\n      - 143\n    note: strip marker char, trim, skip empty\n  - promptLines:\n      - 98\n      - 99\n    file: blame/src/lib.rs\n    lines:\n      - 145\n      - 156\n    note: return first added else first removed else empty\n  - promptLines:\n      - 94\n      - 94\n    file: blame/src/lib.rs\n    lines:\n      - 122\n      - 122\n    note: strip trailing carriage return from each line\n  - promptLines:\n      - 12\n      - 15\n    file: blame/src/lib.rs\n    lines:\n      - 1\n      - 1\n    note: generated crate marker comment referencing module location convention\n",
+  "attributionYaml": "module: blame\ntarget: rust\nentries:\n  - promptLines:\n      - 24\n      - 33\n    file: blame/src/lib.rs\n    lines:\n      - 8\n      - 8\n    note: import to_lines, parse_hunks, HunkKind from text_diff\n  - promptLines:\n      - 45\n      - 45\n    file: blame/src/lib.rs\n    lines:\n      - 11\n      - 11\n    note: derive Clone, PartialEq, Eq for comparable/cloneable\n  - promptLines:\n      - 47\n      - 50\n    file: blame/src/lib.rs\n    lines:\n      - 12\n      - 18\n    note: BlameSourceEntry struct with public fields gen/timestamp/module/patch/prompt_diff\n  - promptLines:\n      - 51\n      - 53\n    file: blame/src/lib.rs\n    lines:\n      - 22\n      - 28\n    note: BlameLine struct with line/gen/timestamp/module/text\n  - promptLines:\n      - 57\n      - 60\n    file: blame/src/lib.rs\n    lines:\n      - 31\n      - 31\n    note: apply_patch_to_blame signature\n  - promptLines:\n      - 62\n      - 63\n    file: blame/src/lib.rs\n    lines:\n      - 32\n      - 35\n    note: parse hunks; empty returns input unchanged\n  - promptLines:\n      - 64\n      - 64\n    file: blame/src/lib.rs\n    lines:\n      - 37\n      - 40\n    note: init result and old_idx cursor, loop hunks\n  - promptLines:\n      - 65\n      - 67\n    file: blame/src/lib.rs\n    lines:\n      - 41\n      - 45\n    note: copy untouched entries up to hunk start (saturating)\n  - promptLines:\n      - 67\n      - 67\n    file: blame/src/lib.rs\n    lines:\n      - 47\n      - 48\n    note: iterate hunk lines by kind\n  - promptLines:\n      - 68\n      - 69\n    file: blame/src/lib.rs\n    lines:\n      - 49\n      - 56\n    note: \"context: push blame[old_idx] or gen past end, advance\"\n  - promptLines:\n      - 70\n      - 70\n    file: blame/src/lib.rs\n    lines:\n      - 57\n      - 59\n    note: \"deletion: advance without pushing\"\n  - promptLines:\n      - 71\n      - 71\n    file: blame/src/lib.rs\n    lines:\n      - 60\n      - 62\n    note: \"insertion: push gen, no advance\"\n  - promptLines:\n      - 72\n      - 72\n    file: blame/src/lib.rs\n    lines:\n      - 67\n      - 71\n    note: push remaining entries, return result\n  - promptLines:\n      - 76\n      - 76\n    file: blame/src/lib.rs\n    lines:\n      - 75\n      - 75\n    note: blame_file signature\n  - promptLines:\n      - 78\n      - 78\n    file: blame/src/lib.rs\n    lines:\n      - 76\n      - 77\n    note: sort copy of history ascending by gen\n  - promptLines:\n      - 79\n      - 80\n    file: blame/src/lib.rs\n    lines:\n      - 79\n      - 82\n    note: fold patches into blame vector\n  - promptLines:\n      - 81\n      - 82\n    file: blame/src/lib.rs\n    lines:\n      - 84\n      - 84\n    note: \"fallback gen: last entry's gen or 0\"\n  - promptLines:\n      - 83\n      - 83\n    file: blame/src/lib.rs\n    lines:\n      - 86\n      - 90\n    note: to_lines and enumerate 0-based index\n  - promptLines:\n      - 84\n      - 84\n    file: blame/src/lib.rs\n    lines:\n      - 91\n      - 92\n    note: gen = blame[index] else fallback; lookup entry\n  - promptLines:\n      - 85\n      - 86\n    file: blame/src/lib.rs\n    lines:\n      - 93\n      - 100\n    note: build BlameLine, line=index+1, empty strings if none\n  - promptLines:\n      - 88\n      - 89\n    file: blame/src/lib.rs\n    lines:\n      - 105\n      - 113\n    note: blame_line_at finds line by 1-based number or None\n  - promptLines:\n      - 93\n      - 93\n    file: blame/src/lib.rs\n    lines:\n      - 116\n      - 116\n    note: first_prompt_diff_line signature\n  - promptLines:\n      - 94\n      - 94\n    file: blame/src/lib.rs\n    lines:\n      - 121\n      - 122\n    note: iterate lines, strip trailing CR\n  - promptLines:\n      - 95\n      - 95\n    file: blame/src/lib.rs\n    lines:\n      - 124\n      - 133\n    note: ignore until first @@ header; skip header lines\n  - promptLines:\n      - 96\n      - 97\n    file: blame/src/lib.rs\n    lines:\n      - 139\n      - 143\n    note: text after marker char, trimmed; skip empty\n  - promptLines:\n      - 98\n      - 99\n    file: blame/src/lib.rs\n    lines:\n      - 145\n      - 149\n    note: capture first added/removed\n  - promptLines:\n      - 98\n      - 99\n    file: blame/src/lib.rs\n    lines:\n      - 151\n      - 156\n    note: prefer added, else removed, else empty\n",
   "mapl": [
     {
       "promptLines": [
-        64,
-        66
+        1,
+        100
       ],
-      "kind": "assumption",
+      "kind": "no-op",
       "severity": "warning",
-      "message": "hunk_start computed as old_start-1 once, then compared to old_idx each loop iteration (not per prompt's literal 'while old_idx < hunk.old_start - 1' re-evaluated wording).",
-      "reasoning": "Prompt says \"while old_idx < hunk.old_start - 1 (saturating at 0)\". Code precomputes hunk_start = hunk.old_start.saturating_sub(1) once per hunk, then loops while old_idx < hunk_start && old_idx < blame.len(). This is mathematically equivalent to the described condition (hunk.old_start-1 is constant per hunk), just phrased as a precomputed bound instead of recomputing each iteration. No behavior difference, but worth flagging since the prompt's literal phrasing suggested per-iteration subtraction rather than a cached start index.\n",
-      "suggestion": "Precompute hunk_start = hunk.old_start.saturating_sub(1) and loop while old_idx < hunk_start && within bounds."
+      "message": "No changes made — existing blame/ crate already matches the full prompt.",
+      "reasoning": "The changes were \"NO CHANGES\". Per the coding agent, the prompt diff was empty (no behavior change requested) and the existing blame/ member crate already implements the module exactly as specified — the public types, apply_patch_to_blame, blame_file, blame_line_at, and first_prompt_diff_line — with all 16 tests passing. Nothing needed to be edited because the source already satisfied every requirement. "
     },
     {
       "promptLines": [
-        93,
+        64,
+        67
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "old_start - 1 with 'saturating at 0' guards a hunk header reporting old_start 0.",
+      "reasoning": "The copy-up loop condition `old_idx < hunk.old_start - 1` is computed on usize; the parenthetical \"saturating at 0\" is what keeps a hunk with old_start == 0 from underflowing to usize::MAX. This is a subtle but load-bearing detail; worth confirming the implementation actually uses saturating_sub rather than plain subtraction. "
+    },
+    {
+      "promptLines": [
+        96,
         99
       ],
       "kind": "note",
       "severity": "info",
-      "message": "first_prompt_diff_line stops scanning as soon as an added line is found, rather than always scanning to completion.",
-      "reasoning": "The prompt describes finding \"the first added line\" and \"the first removed line\" as if both could require a full scan, then choosing added-over-removed. The implementation breaks out of the loop once first_added is found (early exit), only tracking first_removed opportunistically while still scanning. This produces the same final result (added wins if any exists) since once an added line is found nothing can change the outcome, but it means first_removed could theoretically be found for lines encountered before the first added line only — functionally identical to spec but implemented as an optimization not explicitly spelled out."
+      "message": "Marker-stripping via \"everything after the first character\" assumes each body line has a 1-char marker.",
+      "reasoning": "first_prompt_diff_line takes text as everything after the first character of each post-header line. An empty body line (length 0) has no first character to strip; the spec relies on trimmed-empty lines being skipped afterward, so behavior on a zero-length line depends on the implementation slicing safely rather than panicking. Flagging as a correctness edge to confirm, not a defect."
     }
   ],
+  "maplContent": "module: blame\ntarget: rust\nentries:\n  - promptLines:\n      - 1\n      - 100\n    kind: no-op\n    message: No changes made — existing blame/ crate already matches the full prompt.\n    reasoning: 'The changes were \"NO CHANGES\". Per the coding agent, the prompt diff was empty (no behavior change requested) and the existing blame/ member crate already implements the module exactly as specified — the public types, apply_patch_to_blame, blame_file, blame_line_at, and first_prompt_diff_line — with all 16 tests passing. Nothing needed to be edited because the source already satisfied every requirement.\n'\n  - promptLines:\n      - 64\n      - 67\n    kind: note\n    message: old_start - 1 with 'saturating at 0' guards a hunk header reporting old_start 0.\n    reasoning: 'The copy-up loop condition `old_idx < hunk.old_start - 1` is computed on usize; the parenthetical \"saturating at 0\" is what keeps a hunk with old_start == 0 from underflowing to usize::MAX. This is a subtle but load-bearing detail; worth confirming the implementation actually uses saturating_sub rather than plain subtraction.\n'\n  - promptLines:\n      - 96\n      - 99\n    kind: note\n    message: Marker-stripping via \"everything after the first character\" assumes each body line has a 1-char marker.\n    reasoning: first_prompt_diff_line takes text as everything after the first character of each post-header line. An empty body line (length 0) has no first character to strip; the spec relies on trimmed-empty lines being skipped afterward, so behavior on a zero-length line depends on the implementation slicing safely rather than panicking. Flagging as a correctness edge to confirm, not a defect.\n",
+  "maplFile": "blame.mapl",
   "journal": [
     {
       "gen": 19,
@@ -322,6 +405,13 @@
           "patch": "@@ -0,0 +1,319 @@\n+// GENERATED BY NAPL from blame.napl — edit the prompt, not this file\n+//! Patch-replay line ancestry (\"blame\").\n+//!\n+//! Computes line-level generation ancestry for a generated file by replaying\n+//! the sequence of unified-diff patches recorded across generations against a\n+//! per-line generation vector. Pure: no I/O.\n+\n+use text_diff::{parse_hunks, to_lines, HunkKind};\n+\n+/// One recorded generation touching a file.\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct BlameSourceEntry {\n+    pub gen: i64,\n+    pub timestamp: String,\n+    pub module: String,\n+    pub patch: String,\n+    pub prompt_diff: String,\n+}\n+\n+/// One blamed line of the current content.\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct BlameLine {\n+    pub line: usize,\n+    pub gen: i64,\n+    pub timestamp: String,\n+    pub module: String,\n+    pub text: String,\n+}\n+\n+/// Replay one patch against a per-line generation vector.\n+pub fn apply_patch_to_blame(blame: &[i64], patch: &str, gen: i64) -> Vec<i64> {\n+    let hunks = parse_hunks(patch);\n+    if hunks.is_empty() {\n+        return blame.to_vec();\n+    }\n+\n+    let mut result = Vec::new();\n+    let mut old_idx: usize = 0;\n+\n+    for hunk in &hunks {\n+        let hunk_start = hunk.old_start.saturating_sub(1);\n+        while old_idx < hunk_start && old_idx < blame.len() {\n+            result.push(blame[old_idx]);\n+            old_idx += 1;\n+        }\n+\n+        for line in &hunk.lines {\n+            match line.kind {\n+                HunkKind::Context => {\n+                    if old_idx < blame.len() {\n+                        result.push(blame[old_idx]);\n+                    } else {\n+                        result.push(gen);\n+                    }\n+                    old_idx += 1;\n+                }\n+                HunkKind::Del => {\n+                    old_idx += 1;\n+                }\n+                HunkKind::Ins => {\n+                    result.push(gen);\n+                }\n+            }\n+        }\n+    }\n+\n+    if old_idx < blame.len() {\n+        result.extend_from_slice(&blame[old_idx..]);\n+    }\n+\n+    result\n+}\n+\n+/// Compute line-level blame for a file's current content given its history.\n+pub fn blame_file(history: &[BlameSourceEntry], current_content: &str) -> Vec<BlameLine> {\n+    let mut sorted: Vec<&BlameSourceEntry> = history.iter().collect();\n+    sorted.sort_by_key(|entry| entry.gen);\n+\n+    let mut blame: Vec<i64> = Vec::new();\n+    for entry in &sorted {\n+        blame = apply_patch_to_blame(&blame, &entry.patch, entry.gen);\n+    }\n+\n+    let fallback_gen = sorted.last().map(|entry| entry.gen).unwrap_or(0);\n+\n+    let lines = to_lines(current_content);\n+    lines\n+        .into_iter()\n+        .enumerate()\n+        .map(|(index, text)| {\n+            let gen = blame.get(index).copied().unwrap_or(fallback_gen);\n+            let entry = sorted.iter().find(|entry| entry.gen == gen);\n+            BlameLine {\n+                line: index + 1,\n+                gen,\n+                timestamp: entry.map(|e| e.timestamp.clone()).unwrap_or_default(),\n+                module: entry.map(|e| e.module.clone()).unwrap_or_default(),\n+                text,\n+            }\n+        })\n+        .collect()\n+}\n+\n+/// The single `BlameLine` for a 1-based line number, or `None` if out of range.\n+pub fn blame_line_at(\n+    history: &[BlameSourceEntry],\n+    current_content: &str,\n+    line: usize,\n+) -> Option<BlameLine> {\n+    blame_file(history, current_content)\n+        .into_iter()\n+        .find(|blame_line| blame_line.line == line)\n+}\n+\n+/// The most informative single line of a prompt diff.\n+pub fn first_prompt_diff_line(prompt_diff: &str) -> String {\n+    let mut in_hunk = false;\n+    let mut first_added: Option<String> = None;\n+    let mut first_removed: Option<String> = None;\n+\n+    for raw_line in prompt_diff.lines() {\n+        let line = raw_line.strip_suffix('\\r').unwrap_or(raw_line);\n+\n+        if !in_hunk {\n+            if line.starts_with(\"@@\") {\n+                in_hunk = true;\n+            }\n+            continue;\n+        }\n+\n+        if line.starts_with(\"@@\") {\n+            continue;\n+        }\n+\n+        if line.is_empty() {\n+            continue;\n+        }\n+\n+        let marker = line.chars().next().unwrap();\n+        let text = line[marker.len_utf8()..].trim();\n+        if text.is_empty() {\n+            continue;\n+        }\n+\n+        if marker == '+' && first_added.is_none() {\n+            first_added = Some(text.to_string());\n+        } else if marker == '-' && first_removed.is_none() {\n+            first_removed = Some(text.to_string());\n+        }\n+\n+        if first_added.is_some() {\n+            break;\n+        }\n+    }\n+\n+    first_added.or(first_removed).unwrap_or_default()\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+    use text_diff::unified_diff;\n+\n+    fn entry(gen: i64, timestamp: &str, module: &str, patch: &str, prompt_diff: &str) -> BlameSourceEntry {\n+        BlameSourceEntry {\n+            gen,\n+            timestamp: timestamp.to_string(),\n+            module: module.to_string(),\n+            patch: patch.to_string(),\n+            prompt_diff: prompt_diff.to_string(),\n+        }\n+    }\n+\n+    #[test]\n+    fn apply_patch_to_blame_empty_patch_returns_unchanged() {\n+        let blame = vec![1, 1, 2];\n+        let result = apply_patch_to_blame(&blame, \"\", 3);\n+        assert_eq!(result, blame);\n+    }\n+\n+    #[test]\n+    fn apply_patch_to_blame_pure_insertion_into_empty() {\n+        let patch = unified_diff(\"\", \"a\\nb\\n\");\n+        let result = apply_patch_to_blame(&[], &patch, 1);\n+        assert_eq!(result, vec![1, 1]);\n+    }\n+\n+    #[test]\n+    fn apply_patch_to_blame_context_lines_preserve_gen() {\n+        // gen1 wrote \"a\\nb\\nc\\n\"; gen2 changes the middle line.\n+        let before = \"a\\nb\\nc\\n\";\n+        let after = \"a\\nB\\nc\\n\";\n+        let patch = unified_diff(before, after);\n+        let blame1 = vec![1, 1, 1];\n+        let result = apply_patch_to_blame(&blame1, &patch, 2);\n+        assert_eq!(result, vec![1, 2, 1]);\n+    }\n+\n+    #[test]\n+    fn apply_patch_to_blame_deletion_removes_entry() {\n+        let before = \"a\\nb\\nc\\n\";\n+        let after = \"a\\nc\\n\";\n+        let patch = unified_diff(before, after);\n+        let blame1 = vec![1, 1, 1];\n+        let result = apply_patch_to_blame(&blame1, &patch, 2);\n+        assert_eq!(result, vec![1, 1]);\n+    }\n+\n+    #[test]\n+    fn apply_patch_to_blame_trailing_untouched_lines_preserved() {\n+        let before = \"a\\nb\\nc\\nd\\n\";\n+        let after = \"A\\nb\\nc\\nd\\n\";\n+        let patch = unified_diff(before, after);\n+        let blame1 = vec![1, 1, 1, 1];\n+        let result = apply_patch_to_blame(&blame1, &patch, 2);\n+        assert_eq!(result, vec![2, 1, 1, 1]);\n+    }\n+\n+    #[test]\n+    fn blame_file_empty_history_uses_fallback_zero() {\n+        let lines = blame_file(&[], \"a\\nb\\n\");\n+        assert_eq!(lines.len(), 2);\n+        assert_eq!(lines[0].gen, 0);\n+        assert_eq!(lines[0].timestamp, \"\");\n+        assert_eq!(lines[0].module, \"\");\n+        assert_eq!(lines[0].text, \"a\");\n+        assert_eq!(lines[1].line, 2);\n+    }\n+\n+    #[test]\n+    fn blame_file_single_generation() {\n+        let patch = unified_diff(\"\", \"a\\nb\\n\");\n+        let history = vec![entry(1, \"t1\", \"mod1\", &patch, \"\")];\n+        let lines = blame_file(&history, \"a\\nb\\n\");\n+        assert_eq!(lines.len(), 2);\n+        for line in &lines {\n+            assert_eq!(line.gen, 1);\n+            assert_eq!(line.timestamp, \"t1\");\n+            assert_eq!(line.module, \"mod1\");\n+        }\n+        assert_eq!(lines[0].text, \"a\");\n+        assert_eq!(lines[1].text, \"b\");\n+    }\n+\n+    #[test]\n+    fn blame_file_multiple_generations_out_of_order_input() {\n+        let patch1 = unified_diff(\"\", \"a\\nb\\nc\\n\");\n+        let after_gen2 = \"a\\nB\\nc\\n\";\n+        let patch2 = unified_diff(\"a\\nb\\nc\\n\", after_gen2);\n+\n+        // Provide history out of ascending order to verify sorting.\n+        let history = vec![\n+            entry(2, \"t2\", \"mod2\", &patch2, \"\"),\n+            entry(1, \"t1\", \"mod1\", &patch1, \"\"),\n+        ];\n+\n+        let lines = blame_file(&history, after_gen2);\n+        assert_eq!(lines.len(), 3);\n+        assert_eq!(lines[0].gen, 1);\n+        assert_eq!(lines[0].module, \"mod1\");\n+        assert_eq!(lines[1].gen, 2);\n+        assert_eq!(lines[1].module, \"mod2\");\n+        assert_eq!(lines[2].gen, 1);\n+    }\n+\n+    #[test]\n+    fn blame_line_at_returns_correct_line() {\n+        let patch = unified_diff(\"\", \"a\\nb\\nc\\n\");\n+        let history = vec![entry(1, \"t1\", \"mod1\", &patch, \"\")];\n+        let result = blame_line_at(&history, \"a\\nb\\nc\\n\", 2);\n+        assert!(result.is_some());\n+        let line = result.unwrap();\n+        assert_eq!(line.line, 2);\n+        assert_eq!(line.text, \"b\");\n+    }\n+\n+    #[test]\n+    fn blame_line_at_out_of_range_returns_none() {\n+        let history: Vec<BlameSourceEntry> = vec![];\n+        let result = blame_line_at(&history, \"a\\nb\\n\", 5);\n+        assert!(result.is_none());\n+    }\n+\n+    #[test]\n+    fn first_prompt_diff_line_prefers_added_over_removed() {\n+        let diff = \"--- a\\n+++ b\\n@@ -1,2 +1,2 @@\\n-old line\\n+new line\\n context\\n\";\n+        assert_eq!(first_prompt_diff_line(diff), \"new line\");\n+    }\n+\n+    #[test]\n+    fn first_prompt_diff_line_falls_back_to_removed() {\n+        let diff = \"--- a\\n+++ b\\n@@ -1,2 +1,1 @@\\n-removed line\\n context\\n\";\n+        assert_eq!(first_prompt_diff_line(diff), \"removed line\");\n+    }\n+\n+    #[test]\n+    fn first_prompt_diff_line_no_hunk_returns_empty() {\n+        let diff = \"--- a\\n+++ b\\n\";\n+        assert_eq!(first_prompt_diff_line(diff), \"\");\n+    }\n+\n+    #[test]\n+    fn first_prompt_diff_line_skips_empty_lines_and_header() {\n+        let diff = \"@@ -1,1 +1,2 @@\\n \\n+  \\n+actual content\\n\";\n+        assert_eq!(first_prompt_diff_line(diff), \"actual content\");\n+    }\n+\n+    #[test]\n+    fn first_prompt_diff_line_no_changes_returns_empty() {\n+        let diff = \"@@ -1,1 +1,1 @@\\n context only\\n\";\n+        assert_eq!(first_prompt_diff_line(diff), \"\");\n+    }\n+\n+    #[test]\n+    fn first_prompt_diff_line_strips_trailing_cr() {\n+        let diff = \"@@ -1,1 +1,1 @@\\r\\n+added\\r\\n\";\n+        assert_eq!(first_prompt_diff_line(diff), \"added\");\n+    }\n+}"
         }
       ]
+    },
+    {
+      "gen": 68,
+      "timestamp": "2026-07-24T13:08:44.647Z",
+      "mode": "incremental",
+      "promptHash": "84231fdf78a7aec9af8607958100baacdeaeb82fb08c87cf68fc75e66483de5f",
+      "files": []
     }
   ],
   "lock": [
@@ -371,27 +461,27 @@
         "entries": [
           {
             "promptLines": [
-              1,
-              8
-            ],
-            "file": "blame/src/lib.rs",
-            "lines": [
-              1,
-              6
-            ],
-            "note": "module doc summary"
-          },
-          {
-            "promptLines": [
-              17,
-              41
+              24,
+              33
             ],
             "file": "blame/src/lib.rs",
             "lines": [
               8,
               8
             ],
-            "note": "import from sibling text_diff crate"
+            "note": "import to_lines, parse_hunks, HunkKind from text_diff"
+          },
+          {
+            "promptLines": [
+              45,
+              45
+            ],
+            "file": "blame/src/lib.rs",
+            "lines": [
+              11,
+              11
+            ],
+            "note": "derive Clone, PartialEq, Eq for comparable/cloneable"
           },
           {
             "promptLines": [
@@ -400,10 +490,10 @@
             ],
             "file": "blame/src/lib.rs",
             "lines": [
-              10,
+              12,
               18
             ],
-            "note": "BlameSourceEntry struct fields"
+            "note": "BlameSourceEntry struct with public fields gen/timestamp/module/patch/prompt_diff"
           },
           {
             "promptLines": [
@@ -412,34 +502,70 @@
             ],
             "file": "blame/src/lib.rs",
             "lines": [
-              20,
+              22,
               28
             ],
-            "note": "BlameLine struct fields"
+            "note": "BlameLine struct with line/gen/timestamp/module/text"
           },
           {
             "promptLines": [
               57,
-              63
+              60
             ],
             "file": "blame/src/lib.rs",
             "lines": [
               31,
-              36
+              31
             ],
-            "note": "parse hunks, empty returns unchanged"
+            "note": "apply_patch_to_blame signature"
+          },
+          {
+            "promptLines": [
+              62,
+              63
+            ],
+            "file": "blame/src/lib.rs",
+            "lines": [
+              32,
+              35
+            ],
+            "note": "parse hunks; empty returns input unchanged"
           },
           {
             "promptLines": [
               64,
-              67
+              64
             ],
             "file": "blame/src/lib.rs",
             "lines": [
               37,
+              40
+            ],
+            "note": "init result and old_idx cursor, loop hunks"
+          },
+          {
+            "promptLines": [
+              65,
+              67
+            ],
+            "file": "blame/src/lib.rs",
+            "lines": [
+              41,
               45
             ],
-            "note": "copy untouched old entries before hunk start"
+            "note": "copy untouched entries up to hunk start (saturating)"
+          },
+          {
+            "promptLines": [
+              67,
+              67
+            ],
+            "file": "blame/src/lib.rs",
+            "lines": [
+              47,
+              48
+            ],
+            "note": "iterate hunk lines by kind"
           },
           {
             "promptLines": [
@@ -451,7 +577,7 @@
               49,
               56
             ],
-            "note": "context line pushes blame or gen, advances cursor"
+            "note": "context: push blame[old_idx] or gen past end, advance"
           },
           {
             "promptLines": [
@@ -463,7 +589,7 @@
               57,
               59
             ],
-            "note": "deletion line advances cursor without pushing"
+            "note": "deletion: advance without pushing"
           },
           {
             "promptLines": [
@@ -475,7 +601,7 @@
               60,
               62
             ],
-            "note": "insertion pushes gen, no advance"
+            "note": "insertion: push gen, no advance"
           },
           {
             "promptLines": [
@@ -485,9 +611,21 @@
             "file": "blame/src/lib.rs",
             "lines": [
               67,
-              69
+              71
             ],
-            "note": "push remaining old entries after last hunk"
+            "note": "push remaining entries, return result"
+          },
+          {
+            "promptLines": [
+              76,
+              76
+            ],
+            "file": "blame/src/lib.rs",
+            "lines": [
+              75,
+              75
+            ],
+            "note": "blame_file signature"
           },
           {
             "promptLines": [
@@ -523,19 +661,43 @@
               84,
               84
             ],
-            "note": "fallback gen from last entry or 0"
+            "note": "fallback gen: last entry's gen or 0"
           },
           {
             "promptLines": [
               83,
-              86
+              83
             ],
             "file": "blame/src/lib.rs",
             "lines": [
               86,
-              102
+              90
             ],
-            "note": "build BlameLine per current line with lookup"
+            "note": "to_lines and enumerate 0-based index"
+          },
+          {
+            "promptLines": [
+              84,
+              84
+            ],
+            "file": "blame/src/lib.rs",
+            "lines": [
+              91,
+              92
+            ],
+            "note": "gen = blame[index] else fallback; lookup entry"
+          },
+          {
+            "promptLines": [
+              85,
+              86
+            ],
+            "file": "blame/src/lib.rs",
+            "lines": [
+              93,
+              100
+            ],
+            "note": "build BlameLine, line=index+1, empty strings if none"
           },
           {
             "promptLines": [
@@ -544,22 +706,34 @@
             ],
             "file": "blame/src/lib.rs",
             "lines": [
-              104,
+              105,
               113
             ],
-            "note": "blame_line_at finds line by number or None"
+            "note": "blame_line_at finds line by 1-based number or None"
           },
           {
             "promptLines": [
               93,
-              94
+              93
             ],
             "file": "blame/src/lib.rs",
             "lines": [
               116,
-              129
+              116
             ],
-            "note": "scan lines, skip until first hunk header"
+            "note": "first_prompt_diff_line signature"
+          },
+          {
+            "promptLines": [
+              94,
+              94
+            ],
+            "file": "blame/src/lib.rs",
+            "lines": [
+              121,
+              122
+            ],
+            "note": "iterate lines, strip trailing CR"
           },
           {
             "promptLines": [
@@ -568,10 +742,10 @@
             ],
             "file": "blame/src/lib.rs",
             "lines": [
-              131,
+              124,
               133
             ],
-            "note": "skip header lines themselves"
+            "note": "ignore until first @@ header; skip header lines"
           },
           {
             "promptLines": [
@@ -580,10 +754,10 @@
             ],
             "file": "blame/src/lib.rs",
             "lines": [
-              135,
+              139,
               143
             ],
-            "note": "strip marker char, trim, skip empty"
+            "note": "text after marker char, trimmed; skip empty"
           },
           {
             "promptLines": [
@@ -593,33 +767,21 @@
             "file": "blame/src/lib.rs",
             "lines": [
               145,
+              149
+            ],
+            "note": "capture first added/removed"
+          },
+          {
+            "promptLines": [
+              98,
+              99
+            ],
+            "file": "blame/src/lib.rs",
+            "lines": [
+              151,
               156
             ],
-            "note": "return first added else first removed else empty"
-          },
-          {
-            "promptLines": [
-              94,
-              94
-            ],
-            "file": "blame/src/lib.rs",
-            "lines": [
-              122,
-              122
-            ],
-            "note": "strip trailing carriage return from each line"
-          },
-          {
-            "promptLines": [
-              12,
-              15
-            ],
-            "file": "blame/src/lib.rs",
-            "lines": [
-              1,
-              1
-            ],
-            "note": "generated crate marker comment referencing module location convention"
+            "note": "prefer added, else removed, else empty"
           }
         ]
       },
@@ -628,14 +790,13 @@
         "path": "blame.mapl",
         "entry": {
           "promptLines": [
-            64,
-            66
+            1,
+            100
           ],
-          "kind": "assumption",
+          "kind": "no-op",
           "severity": "warning",
-          "message": "hunk_start computed as old_start-1 once, then compared to old_idx each loop iteration (not per prompt's literal 'while old_idx < hunk.old_start - 1' re-evaluated wording).",
-          "reasoning": "Prompt says \"while old_idx < hunk.old_start - 1 (saturating at 0)\". Code precomputes hunk_start = hunk.old_start.saturating_sub(1) once per hunk, then loops while old_idx < hunk_start && old_idx < blame.len(). This is mathematically equivalent to the described condition (hunk.old_start-1 is constant per hunk), just phrased as a precomputed bound instead of recomputing each iteration. No behavior difference, but worth flagging since the prompt's literal phrasing suggested per-iteration subtraction rather than a cached start index.\n",
-          "suggestion": "Precompute hunk_start = hunk.old_start.saturating_sub(1) and loop while old_idx < hunk_start && within bounds."
+          "message": "No changes made — existing blame/ crate already matches the full prompt.",
+          "reasoning": "The changes were \"NO CHANGES\". Per the coding agent, the prompt diff was empty (no behavior change requested) and the existing blame/ member crate already implements the module exactly as specified — the public types, apply_patch_to_blame, blame_file, blame_line_at, and first_prompt_diff_line — with all 16 tests passing. Nothing needed to be edited because the source already satisfied every requirement. "
         }
       },
       {
@@ -643,13 +804,27 @@
         "path": "blame.mapl",
         "entry": {
           "promptLines": [
-            93,
+            64,
+            67
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "old_start - 1 with 'saturating at 0' guards a hunk header reporting old_start 0.",
+          "reasoning": "The copy-up loop condition `old_idx < hunk.old_start - 1` is computed on usize; the parenthetical \"saturating at 0\" is what keeps a hunk with old_start == 0 from underflowing to usize::MAX. This is a subtle but load-bearing detail; worth confirming the implementation actually uses saturating_sub rather than plain subtraction. "
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "blame.mapl",
+        "entry": {
+          "promptLines": [
+            96,
             99
           ],
           "kind": "note",
           "severity": "info",
-          "message": "first_prompt_diff_line stops scanning as soon as an added line is found, rather than always scanning to completion.",
-          "reasoning": "The prompt describes finding \"the first added line\" and \"the first removed line\" as if both could require a full scan, then choosing added-over-removed. The implementation breaks out of the loop once first_added is found (early exit), only tracking first_removed opportunistically while still scanning. This produces the same final result (added wins if any exists) since once an added line is found nothing can change the outcome, but it means first_removed could theoretically be found for lines encountered before the first added line only — functionally identical to spec but implemented as an optimization not explicitly spelled out."
+          "message": "Marker-stripping via \"everything after the first character\" assumes each body line has a 1-char marker.",
+          "reasoning": "first_prompt_diff_line takes text as everything after the first character of each post-header line. An empty body line (length 0) has no first character to strip; the spec relies on trimmed-empty lines being skipped afterward, so behavior on a zero-length line depends on the implementation slicing safely rather than panicking. Flagging as a correctness edge to confirm, not a defect."
         }
       },
       {

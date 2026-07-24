@@ -35,27 +35,99 @@
   "attribution": [
     {
       "promptLines": [
+        5,
+        6
+      ],
+      "file": "schemas_frontmatter/src/lib.rs",
+      "lines": [
+        5,
+        5
+      ],
+      "note": "brings in serde Deserialize"
+    },
+    {
+      "promptLines": [
         21,
+        21
+      ],
+      "file": "schemas_frontmatter/src/lib.rs",
+      "lines": [
+        11,
+        13
+      ],
+      "note": "PromptTest struct with public name field"
+    },
+    {
+      "promptLines": [
+        22,
+        23
+      ],
+      "file": "schemas_frontmatter/src/lib.rs",
+      "lines": [
+        14,
+        17
+      ],
+      "note": "given/expect Values defaulting to empty mapping"
+    },
+    {
+      "promptLines": [
+        22,
         23
       ],
       "file": "schemas_frontmatter/src/lib.rs",
       "lines": [
         7,
-        18
+        9
       ],
-      "note": "PromptTest struct with default empty mapping for given/expect"
+      "note": "default empty YAML mapping helper"
+    },
+    {
+      "promptLines": [
+        19,
+        19
+      ],
+      "file": "schemas_frontmatter/src/lib.rs",
+      "lines": [
+        11,
+        11
+      ],
+      "note": "derives Deserialize and PartialEq for equality"
     },
     {
       "promptLines": [
         24,
-        32
+        24
       ],
       "file": "schemas_frontmatter/src/lib.rs",
       "lines": [
         20,
-        31
+        22
       ],
-      "note": "Frontmatter struct fields with defaults and crate_name rename"
+      "note": "Frontmatter struct with public module field"
+    },
+    {
+      "promptLines": [
+        24,
+        26
+      ],
+      "file": "schemas_frontmatter/src/lib.rs",
+      "lines": [
+        23,
+        28
+      ],
+      "note": "deps/targets/tests default empty"
+    },
+    {
+      "promptLines": [
+        27,
+        32
+      ],
+      "file": "schemas_frontmatter/src/lib.rs",
+      "lines": [
+        29,
+        30
+      ],
+      "note": "crate_name optional, renamed from crate key, defaults None"
     },
     {
       "promptLines": [
@@ -67,31 +139,7 @@
         33,
         37
       ],
-      "note": "ParsedPrompt struct"
-    },
-    {
-      "promptLines": [
-        38,
-        41
-      ],
-      "file": "schemas_frontmatter/src/lib.rs",
-      "lines": [
-        65,
-        69
-      ],
-      "note": "strip opening --- delimiter"
-    },
-    {
-      "promptLines": [
-        40,
-        43
-      ],
-      "file": "schemas_frontmatter/src/lib.rs",
-      "lines": [
-        71,
-        93
-      ],
-      "note": "find closing --- line, split yaml text and body"
+      "note": "ParsedPrompt with frontmatter and body"
     },
     {
       "promptLines": [
@@ -101,21 +149,81 @@
       "file": "schemas_frontmatter/src/lib.rs",
       "lines": [
         39,
-        63
+        45
       ],
-      "note": "FrontmatterError enum incl MissingFrontmatter, returned not panicked"
+      "note": "error enum returned instead of panic"
     },
     {
       "promptLines": [
-        51,
-        55
+        38,
+        39
+      ],
+      "file": "schemas_frontmatter/src/lib.rs",
+      "lines": [
+        66,
+        69
+      ],
+      "note": "strips opening --- with CRLF or LF"
+    },
+    {
+      "promptLines": [
+        40,
+        41
+      ],
+      "file": "schemas_frontmatter/src/lib.rs",
+      "lines": [
+        72,
+        86
+      ],
+      "note": "scans for closing --- line, splits yaml/body"
+    },
+    {
+      "promptLines": [
+        42,
+        43
+      ],
+      "file": "schemas_frontmatter/src/lib.rs",
+      "lines": [
+        79,
+        85
+      ],
+      "note": "yaml text before, body after consumed newline"
+    },
+    {
+      "promptLines": [
+        45,
+        47
+      ],
+      "file": "schemas_frontmatter/src/lib.rs",
+      "lines": [
+        88,
+        91
+      ],
+      "note": "no closing delimiter is an error"
+    },
+    {
+      "promptLines": [
+        49,
+        52
       ],
       "file": "schemas_frontmatter/src/lib.rs",
       "lines": [
         104,
         105
       ],
-      "note": "parse_frontmatter splits yaml/body, error on missing frontmatter"
+      "note": "parse_frontmatter entry, splits delimiters"
+    },
+    {
+      "promptLines": [
+        54,
+        55
+      ],
+      "file": "schemas_frontmatter/src/lib.rs",
+      "lines": [
+        105,
+        105
+      ],
+      "note": "missing frontmatter propagates error"
     },
     {
       "promptLines": [
@@ -127,7 +235,7 @@
         107,
         117
       ],
-      "note": "empty/null yaml treated as empty mapping"
+      "note": "empty/null YAML treated as empty mapping"
     },
     {
       "promptLines": [
@@ -139,7 +247,7 @@
         119,
         120
       ],
-      "note": "deserialize mapping into Frontmatter with defaults"
+      "note": "deserializes mapping into Frontmatter"
     },
     {
       "promptLines": [
@@ -151,7 +259,7 @@
         122,
         124
       ],
-      "note": "require non-empty module"
+      "note": "rejects empty module"
     },
     {
       "promptLines": [
@@ -163,7 +271,7 @@
         126,
         139
       ],
-      "note": "validate given/expect are mappings for each test"
+      "note": "requires given/expect to be mappings"
     },
     {
       "promptLines": [
@@ -175,7 +283,7 @@
         95,
         102
       ],
-      "note": "strip single leading blank line from body"
+      "note": "strips single leading blank line from body"
     },
     {
       "promptLines": [
@@ -187,93 +295,56 @@
         141,
         141
       ],
-      "note": "apply blank-line stripping to raw body"
+      "note": "applies body cleanup"
     },
     {
       "promptLines": [
-        71,
-        87
+        51,
+        52
       ],
       "file": "schemas_frontmatter/src/lib.rs",
       "lines": [
-        151,
-        175
+        143,
+        143
       ],
-      "note": "test reproducing full frontmatter worked example"
-    },
-    {
-      "promptLines": [
-        88,
-        89
-      ],
-      "file": "schemas_frontmatter/src/lib.rs",
-      "lines": [
-        178,
-        188
-      ],
-      "note": "test minimal frontmatter with defaults"
-    },
-    {
-      "promptLines": [
-        90,
-        91
-      ],
-      "file": "schemas_frontmatter/src/lib.rs",
-      "lines": [
-        218,
-        236
-      ],
-      "note": "tests for missing frontmatter, missing module, empty module rejection"
-    },
-    {
-      "promptLines": [
-        92,
-        93
-      ],
-      "file": "schemas_frontmatter/src/lib.rs",
-      "lines": [
-        266,
-        270
-      ],
-      "note": "test strips single leading blank line"
-    },
-    {
-      "promptLines": [
-        94,
-        96
-      ],
-      "file": "schemas_frontmatter/src/lib.rs",
-      "lines": [
-        191,
-        205
-      ],
-      "note": "test crate key maps to crate_name, defaults to None when absent"
+      "note": "returns ParsedPrompt on success"
     }
   ],
-  "attributionYaml": "module: schemas_frontmatter\ntarget: rust\nentries:\n  - promptLines:\n      - 21\n      - 23\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 7\n      - 18\n    note: PromptTest struct with default empty mapping for given/expect\n  - promptLines:\n      - 24\n      - 32\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 20\n      - 31\n    note: Frontmatter struct fields with defaults and crate_name rename\n  - promptLines:\n      - 33\n      - 34\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 33\n      - 37\n    note: ParsedPrompt struct\n  - promptLines:\n      - 38\n      - 41\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 65\n      - 69\n    note: strip opening --- delimiter\n  - promptLines:\n      - 40\n      - 43\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 71\n      - 93\n    note: find closing --- line, split yaml text and body\n  - promptLines:\n      - 45\n      - 47\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 39\n      - 63\n    note: FrontmatterError enum incl MissingFrontmatter, returned not panicked\n  - promptLines:\n      - 51\n      - 55\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 104\n      - 105\n    note: parse_frontmatter splits yaml/body, error on missing frontmatter\n  - promptLines:\n      - 56\n      - 57\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 107\n      - 117\n    note: empty/null yaml treated as empty mapping\n  - promptLines:\n      - 58\n      - 59\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 119\n      - 120\n    note: deserialize mapping into Frontmatter with defaults\n  - promptLines:\n      - 60\n      - 61\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 122\n      - 124\n    note: require non-empty module\n  - promptLines:\n      - 62\n      - 63\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 126\n      - 139\n    note: validate given/expect are mappings for each test\n  - promptLines:\n      - 64\n      - 67\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 95\n      - 102\n    note: strip single leading blank line from body\n  - promptLines:\n      - 64\n      - 67\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 141\n      - 141\n    note: apply blank-line stripping to raw body\n  - promptLines:\n      - 71\n      - 87\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 151\n      - 175\n    note: test reproducing full frontmatter worked example\n  - promptLines:\n      - 88\n      - 89\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 178\n      - 188\n    note: test minimal frontmatter with defaults\n  - promptLines:\n      - 90\n      - 91\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 218\n      - 236\n    note: tests for missing frontmatter, missing module, empty module rejection\n  - promptLines:\n      - 92\n      - 93\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 266\n      - 270\n    note: test strips single leading blank line\n  - promptLines:\n      - 94\n      - 96\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 191\n      - 205\n    note: test crate key maps to crate_name, defaults to None when absent\n",
+  "attributionYaml": "module: schemas_frontmatter\ntarget: rust\nentries:\n  - promptLines:\n      - 5\n      - 6\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 5\n      - 5\n    note: brings in serde Deserialize\n  - promptLines:\n      - 21\n      - 21\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 11\n      - 13\n    note: PromptTest struct with public name field\n  - promptLines:\n      - 22\n      - 23\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 14\n      - 17\n    note: given/expect Values defaulting to empty mapping\n  - promptLines:\n      - 22\n      - 23\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 7\n      - 9\n    note: default empty YAML mapping helper\n  - promptLines:\n      - 19\n      - 19\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 11\n      - 11\n    note: derives Deserialize and PartialEq for equality\n  - promptLines:\n      - 24\n      - 24\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 20\n      - 22\n    note: Frontmatter struct with public module field\n  - promptLines:\n      - 24\n      - 26\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 23\n      - 28\n    note: deps/targets/tests default empty\n  - promptLines:\n      - 27\n      - 32\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 29\n      - 30\n    note: crate_name optional, renamed from crate key, defaults None\n  - promptLines:\n      - 33\n      - 34\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 33\n      - 37\n    note: ParsedPrompt with frontmatter and body\n  - promptLines:\n      - 45\n      - 47\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 39\n      - 45\n    note: error enum returned instead of panic\n  - promptLines:\n      - 38\n      - 39\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 66\n      - 69\n    note: strips opening --- with CRLF or LF\n  - promptLines:\n      - 40\n      - 41\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 72\n      - 86\n    note: scans for closing --- line, splits yaml/body\n  - promptLines:\n      - 42\n      - 43\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 79\n      - 85\n    note: yaml text before, body after consumed newline\n  - promptLines:\n      - 45\n      - 47\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 88\n      - 91\n    note: no closing delimiter is an error\n  - promptLines:\n      - 49\n      - 52\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 104\n      - 105\n    note: parse_frontmatter entry, splits delimiters\n  - promptLines:\n      - 54\n      - 55\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 105\n      - 105\n    note: missing frontmatter propagates error\n  - promptLines:\n      - 56\n      - 57\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 107\n      - 117\n    note: empty/null YAML treated as empty mapping\n  - promptLines:\n      - 58\n      - 59\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 119\n      - 120\n    note: deserializes mapping into Frontmatter\n  - promptLines:\n      - 60\n      - 61\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 122\n      - 124\n    note: rejects empty module\n  - promptLines:\n      - 62\n      - 63\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 126\n      - 139\n    note: requires given/expect to be mappings\n  - promptLines:\n      - 64\n      - 67\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 95\n      - 102\n    note: strips single leading blank line from body\n  - promptLines:\n      - 64\n      - 67\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 141\n      - 141\n    note: applies body cleanup\n  - promptLines:\n      - 51\n      - 52\n    file: schemas_frontmatter/src/lib.rs\n    lines:\n      - 143\n      - 143\n    note: returns ParsedPrompt on success\n",
   "mapl": [
     {
       "promptLines": [
-        1,
-        97
+        8,
+        15
       ],
-      "kind": "note",
-      "severity": "info",
-      "message": "schemas_frontmatter crate required no source changes — already conformant.",
-      "reasoning": "The agent's diff touched only prompts/src/lib.rs (a test fixture in an unrelated crate, updated to add the crate_name field to its Frontmatter test helper after that field was introduced elsewhere). schemas_frontmatter/src/lib.rs itself was not modified; per the agent's final message it already implemented module, deps/targets/tests defaults, the crate_name optional field, the delimiter split, and the leading-blank-line stripping exactly as specified. No new work was needed to satisfy this prompt.\n"
+      "kind": "no-op",
+      "severity": "warning",
+      "message": "No edits made — module crate already exists and fully realizes the prompt.",
+      "reasoning": "The agent reported \"NO CHANGES\": the schemas_frontmatter crate, its Cargo.toml, and src/lib.rs already exist and implement every requirement (delimiter split, parse_frontmatter, field defaults, crate_name rename/Option default, mapping validation, body cleaning). All 15 tests pass from the workspace root, so the contract was already satisfied by existing source and no new code was needed."
     },
     {
       "promptLines": [
-        60,
-        61
+        64,
+        67
       ],
       "kind": "assumption",
       "severity": "warning",
-      "message": "Missing `module` key surfaces as InvalidYaml, not EmptyModule.",
-      "reasoning": "The prompt states \"a frontmatter block with no module key, or with module set to \\\"\\\", is an error\" without distinguishing error variants for the two cases. The existing implementation treats an absent `module` key as a serde deserialization failure (FrontmatterError::InvalidYaml, since `module` is a required non-Option field) and only raises the dedicated EmptyModule error when the key is present but set to the empty string — confirmed by the rejects_missing_module_key test asserting InvalidYaml and rejects_empty_module_value asserting EmptyModule. This distinction is a reasonable reading but the prompt doesn't spell it out.\n",
-      "suggestion": "\"Requires `module` to be a non-empty string: a frontmatter block with no `module` key is a YAML deserialization error; one with `module` set to `\\\"\\\"` is a dedicated EmptyModule error.\""
+      "message": "Body blank-line stripping wording resolved via the worked example.",
+      "reasoning": "\"whitespace that runs up to and including a newline\" is slightly ambiguous about whether trailing spaces before the newline count and whether only one line is stripped. The behavior was pinned by the worked examples (lines 92-93), where a single leading blank line after the closing delimiter is stripped to yield `Actual body.\\n`. No change was required since existing code already matched."
+    },
+    {
+      "promptLines": [
+        40,
+        43
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "Closing-delimiter trailing line-ending consumption interacts with body stripping.",
+      "reasoning": "The split consumes one trailing line ending after the closing `---`, and then the body-cleaning step may strip a further leading blank line. The two rules compound (one newline eaten by the split, a second blank line potentially removed by cleaning). Existing code already reproduces the worked examples, so this is noted for the author's awareness, not a defect."
     }
   ],
+  "maplContent": "module: schemas_frontmatter\ntarget: rust\nentries:\n  - promptLines:\n      - 8\n      - 15\n    kind: no-op\n    message: No edits made — module crate already exists and fully realizes the prompt.\n    reasoning: 'The agent reported \"NO CHANGES\": the schemas_frontmatter crate, its Cargo.toml, and src/lib.rs already exist and implement every requirement (delimiter split, parse_frontmatter, field defaults, crate_name rename/Option default, mapping validation, body cleaning). All 15 tests pass from the workspace root, so the contract was already satisfied by existing source and no new code was needed.'\n  - promptLines:\n      - 64\n      - 67\n    kind: assumption\n    message: Body blank-line stripping wording resolved via the worked example.\n    reasoning: '\"whitespace that runs up to and including a newline\" is slightly ambiguous about whether trailing spaces before the newline count and whether only one line is stripped. The behavior was pinned by the worked examples (lines 92-93), where a single leading blank line after the closing delimiter is stripped to yield `Actual body.\\n`. No change was required since existing code already matched.'\n  - promptLines:\n      - 40\n      - 43\n    kind: note\n    message: Closing-delimiter trailing line-ending consumption interacts with body stripping.\n    reasoning: The split consumes one trailing line ending after the closing `---`, and then the body-cleaning step may strip a further leading blank line. The two rules compound (one newline eaten by the split, a second blank line potentially removed by cleaning). Existing code already reproduces the worked examples, so this is noted for the author's awareness, not a defect.\n",
+  "maplFile": "schemas_frontmatter.mapl",
   "journal": [
     {
       "gen": 10,
@@ -310,6 +381,13 @@
           "patch": "@@ -26,6 +26,8 @@\n     pub targets: Vec<String>,\n     #[serde(default)]\n     pub tests: Vec<PromptTest>,\n+    #[serde(default, rename = \"crate\")]\n+    pub crate_name: Option<String>,\n }\n \n #[derive(Debug, Clone, PartialEq)]\n@@ -181,10 +183,28 @@\n         assert!(parsed.frontmatter.deps.is_empty());\n         assert!(parsed.frontmatter.targets.is_empty());\n         assert!(parsed.frontmatter.tests.is_empty());\n+        assert_eq!(parsed.frontmatter.crate_name, None);\n         assert_eq!(parsed.body, \"Body here.\\n\");\n     }\n \n     #[test]\n+    fn parses_crate_key_into_crate_name() {\n+        let raw = \"---\\nmodule: alpha\\ncrate: shared\\n---\\nBody.\\n\";\n+        let parsed = parse_frontmatter(raw).expect(\"should parse\");\n+\n+        assert_eq!(parsed.frontmatter.module, \"alpha\");\n+        assert_eq!(parsed.frontmatter.crate_name, Some(\"shared\".to_string()));\n+    }\n+\n+    #[test]\n+    fn crate_name_defaults_to_none_when_absent() {\n+        let raw = \"---\\nmodule: solo\\n---\\nBody here.\\n\";\n+        let parsed = parse_frontmatter(raw).expect(\"should parse\");\n+\n+        assert_eq!(parsed.frontmatter.crate_name, None);\n+    }\n+\n+    #[test]\n     fn test_given_and_expect_default_to_empty_mapping() {\n         let raw = \"---\\nmodule: m\\ntests:\\n  - name: bare test\\n---\\nBody\\n\";\n         let parsed = parse_frontmatter(raw).expect(\"should parse\");"
         }
       ]
+    },
+    {
+      "gen": 63,
+      "timestamp": "2026-07-24T12:58:16.079Z",
+      "mode": "incremental",
+      "promptHash": "c77ea41c79805063546319b709147272a31704fa47af9f1371f4e770d0bc7aad",
+      "files": []
     }
   ],
   "lock": [
@@ -383,27 +461,99 @@
         "entries": [
           {
             "promptLines": [
+              5,
+              6
+            ],
+            "file": "schemas_frontmatter/src/lib.rs",
+            "lines": [
+              5,
+              5
+            ],
+            "note": "brings in serde Deserialize"
+          },
+          {
+            "promptLines": [
               21,
+              21
+            ],
+            "file": "schemas_frontmatter/src/lib.rs",
+            "lines": [
+              11,
+              13
+            ],
+            "note": "PromptTest struct with public name field"
+          },
+          {
+            "promptLines": [
+              22,
+              23
+            ],
+            "file": "schemas_frontmatter/src/lib.rs",
+            "lines": [
+              14,
+              17
+            ],
+            "note": "given/expect Values defaulting to empty mapping"
+          },
+          {
+            "promptLines": [
+              22,
               23
             ],
             "file": "schemas_frontmatter/src/lib.rs",
             "lines": [
               7,
-              18
+              9
             ],
-            "note": "PromptTest struct with default empty mapping for given/expect"
+            "note": "default empty YAML mapping helper"
+          },
+          {
+            "promptLines": [
+              19,
+              19
+            ],
+            "file": "schemas_frontmatter/src/lib.rs",
+            "lines": [
+              11,
+              11
+            ],
+            "note": "derives Deserialize and PartialEq for equality"
           },
           {
             "promptLines": [
               24,
-              32
+              24
             ],
             "file": "schemas_frontmatter/src/lib.rs",
             "lines": [
               20,
-              31
+              22
             ],
-            "note": "Frontmatter struct fields with defaults and crate_name rename"
+            "note": "Frontmatter struct with public module field"
+          },
+          {
+            "promptLines": [
+              24,
+              26
+            ],
+            "file": "schemas_frontmatter/src/lib.rs",
+            "lines": [
+              23,
+              28
+            ],
+            "note": "deps/targets/tests default empty"
+          },
+          {
+            "promptLines": [
+              27,
+              32
+            ],
+            "file": "schemas_frontmatter/src/lib.rs",
+            "lines": [
+              29,
+              30
+            ],
+            "note": "crate_name optional, renamed from crate key, defaults None"
           },
           {
             "promptLines": [
@@ -415,31 +565,7 @@
               33,
               37
             ],
-            "note": "ParsedPrompt struct"
-          },
-          {
-            "promptLines": [
-              38,
-              41
-            ],
-            "file": "schemas_frontmatter/src/lib.rs",
-            "lines": [
-              65,
-              69
-            ],
-            "note": "strip opening --- delimiter"
-          },
-          {
-            "promptLines": [
-              40,
-              43
-            ],
-            "file": "schemas_frontmatter/src/lib.rs",
-            "lines": [
-              71,
-              93
-            ],
-            "note": "find closing --- line, split yaml text and body"
+            "note": "ParsedPrompt with frontmatter and body"
           },
           {
             "promptLines": [
@@ -449,21 +575,81 @@
             "file": "schemas_frontmatter/src/lib.rs",
             "lines": [
               39,
-              63
+              45
             ],
-            "note": "FrontmatterError enum incl MissingFrontmatter, returned not panicked"
+            "note": "error enum returned instead of panic"
           },
           {
             "promptLines": [
-              51,
-              55
+              38,
+              39
+            ],
+            "file": "schemas_frontmatter/src/lib.rs",
+            "lines": [
+              66,
+              69
+            ],
+            "note": "strips opening --- with CRLF or LF"
+          },
+          {
+            "promptLines": [
+              40,
+              41
+            ],
+            "file": "schemas_frontmatter/src/lib.rs",
+            "lines": [
+              72,
+              86
+            ],
+            "note": "scans for closing --- line, splits yaml/body"
+          },
+          {
+            "promptLines": [
+              42,
+              43
+            ],
+            "file": "schemas_frontmatter/src/lib.rs",
+            "lines": [
+              79,
+              85
+            ],
+            "note": "yaml text before, body after consumed newline"
+          },
+          {
+            "promptLines": [
+              45,
+              47
+            ],
+            "file": "schemas_frontmatter/src/lib.rs",
+            "lines": [
+              88,
+              91
+            ],
+            "note": "no closing delimiter is an error"
+          },
+          {
+            "promptLines": [
+              49,
+              52
             ],
             "file": "schemas_frontmatter/src/lib.rs",
             "lines": [
               104,
               105
             ],
-            "note": "parse_frontmatter splits yaml/body, error on missing frontmatter"
+            "note": "parse_frontmatter entry, splits delimiters"
+          },
+          {
+            "promptLines": [
+              54,
+              55
+            ],
+            "file": "schemas_frontmatter/src/lib.rs",
+            "lines": [
+              105,
+              105
+            ],
+            "note": "missing frontmatter propagates error"
           },
           {
             "promptLines": [
@@ -475,7 +661,7 @@
               107,
               117
             ],
-            "note": "empty/null yaml treated as empty mapping"
+            "note": "empty/null YAML treated as empty mapping"
           },
           {
             "promptLines": [
@@ -487,7 +673,7 @@
               119,
               120
             ],
-            "note": "deserialize mapping into Frontmatter with defaults"
+            "note": "deserializes mapping into Frontmatter"
           },
           {
             "promptLines": [
@@ -499,7 +685,7 @@
               122,
               124
             ],
-            "note": "require non-empty module"
+            "note": "rejects empty module"
           },
           {
             "promptLines": [
@@ -511,7 +697,7 @@
               126,
               139
             ],
-            "note": "validate given/expect are mappings for each test"
+            "note": "requires given/expect to be mappings"
           },
           {
             "promptLines": [
@@ -523,7 +709,7 @@
               95,
               102
             ],
-            "note": "strip single leading blank line from body"
+            "note": "strips single leading blank line from body"
           },
           {
             "promptLines": [
@@ -535,67 +721,19 @@
               141,
               141
             ],
-            "note": "apply blank-line stripping to raw body"
+            "note": "applies body cleanup"
           },
           {
             "promptLines": [
-              71,
-              87
+              51,
+              52
             ],
             "file": "schemas_frontmatter/src/lib.rs",
             "lines": [
-              151,
-              175
+              143,
+              143
             ],
-            "note": "test reproducing full frontmatter worked example"
-          },
-          {
-            "promptLines": [
-              88,
-              89
-            ],
-            "file": "schemas_frontmatter/src/lib.rs",
-            "lines": [
-              178,
-              188
-            ],
-            "note": "test minimal frontmatter with defaults"
-          },
-          {
-            "promptLines": [
-              90,
-              91
-            ],
-            "file": "schemas_frontmatter/src/lib.rs",
-            "lines": [
-              218,
-              236
-            ],
-            "note": "tests for missing frontmatter, missing module, empty module rejection"
-          },
-          {
-            "promptLines": [
-              92,
-              93
-            ],
-            "file": "schemas_frontmatter/src/lib.rs",
-            "lines": [
-              266,
-              270
-            ],
-            "note": "test strips single leading blank line"
-          },
-          {
-            "promptLines": [
-              94,
-              96
-            ],
-            "file": "schemas_frontmatter/src/lib.rs",
-            "lines": [
-              191,
-              205
-            ],
-            "note": "test crate key maps to crate_name, defaults to None when absent"
+            "note": "returns ParsedPrompt on success"
           }
         ]
       },
@@ -604,13 +742,13 @@
         "path": "schemas_frontmatter.mapl",
         "entry": {
           "promptLines": [
-            1,
-            97
+            8,
+            15
           ],
-          "kind": "note",
-          "severity": "info",
-          "message": "schemas_frontmatter crate required no source changes — already conformant.",
-          "reasoning": "The agent's diff touched only prompts/src/lib.rs (a test fixture in an unrelated crate, updated to add the crate_name field to its Frontmatter test helper after that field was introduced elsewhere). schemas_frontmatter/src/lib.rs itself was not modified; per the agent's final message it already implemented module, deps/targets/tests defaults, the crate_name optional field, the delimiter split, and the leading-blank-line stripping exactly as specified. No new work was needed to satisfy this prompt.\n"
+          "kind": "no-op",
+          "severity": "warning",
+          "message": "No edits made — module crate already exists and fully realizes the prompt.",
+          "reasoning": "The agent reported \"NO CHANGES\": the schemas_frontmatter crate, its Cargo.toml, and src/lib.rs already exist and implement every requirement (delimiter split, parse_frontmatter, field defaults, crate_name rename/Option default, mapping validation, body cleaning). All 15 tests pass from the workspace root, so the contract was already satisfied by existing source and no new code was needed."
         }
       },
       {
@@ -618,14 +756,27 @@
         "path": "schemas_frontmatter.mapl",
         "entry": {
           "promptLines": [
-            60,
-            61
+            64,
+            67
           ],
           "kind": "assumption",
           "severity": "warning",
-          "message": "Missing `module` key surfaces as InvalidYaml, not EmptyModule.",
-          "reasoning": "The prompt states \"a frontmatter block with no module key, or with module set to \\\"\\\", is an error\" without distinguishing error variants for the two cases. The existing implementation treats an absent `module` key as a serde deserialization failure (FrontmatterError::InvalidYaml, since `module` is a required non-Option field) and only raises the dedicated EmptyModule error when the key is present but set to the empty string — confirmed by the rejects_missing_module_key test asserting InvalidYaml and rejects_empty_module_value asserting EmptyModule. This distinction is a reasonable reading but the prompt doesn't spell it out.\n",
-          "suggestion": "\"Requires `module` to be a non-empty string: a frontmatter block with no `module` key is a YAML deserialization error; one with `module` set to `\\\"\\\"` is a dedicated EmptyModule error.\""
+          "message": "Body blank-line stripping wording resolved via the worked example.",
+          "reasoning": "\"whitespace that runs up to and including a newline\" is slightly ambiguous about whether trailing spaces before the newline count and whether only one line is stripped. The behavior was pinned by the worked examples (lines 92-93), where a single leading blank line after the closing delimiter is stripped to yield `Actual body.\\n`. No change was required since existing code already matched."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "schemas_frontmatter.mapl",
+        "entry": {
+          "promptLines": [
+            40,
+            43
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "Closing-delimiter trailing line-ending consumption interacts with body stripping.",
+          "reasoning": "The split consumes one trailing line ending after the closing `---`, and then the body-cleaning step may strip a further leading blank line. The two rules compound (one newline eaten by the split, a second blank line potentially removed by cleaning). Existing code already reproduces the worked examples, so this is noted for the author's awareness, not a defect."
         }
       },
       {

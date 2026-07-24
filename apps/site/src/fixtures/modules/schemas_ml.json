@@ -29,15 +29,15 @@
   "attribution": [
     {
       "promptLines": [
-        1,
-        6
+        3,
+        4
       ],
       "file": "schemas_ml/src/lib.rs",
       "lines": [
-        1,
+        4,
         4
       ],
-      "note": "module doc, imports serde"
+      "note": "brings in serde Deserialize"
     },
     {
       "promptLines": [
@@ -49,7 +49,7 @@
         3,
         3
       ],
-      "note": "use shared LineRange type"
+      "note": "imports LineRange from sibling crate"
     },
     {
       "promptLines": [
@@ -61,7 +61,31 @@
         6,
         13
       ],
-      "note": "MlKind enum kebab-case variants"
+      "note": "MlKind enum, copy/eq, kebab-case"
+    },
+    {
+      "promptLines": [
+        44,
+        45
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        7,
+        7
+      ],
+      "note": "kebab-case rename gives no-op spelling"
+    },
+    {
+      "promptLines": [
+        44,
+        45
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        12,
+        12
+      ],
+      "note": "NoOp variant"
     },
     {
       "promptLines": [
@@ -70,10 +94,10 @@
       ],
       "file": "schemas_ml/src/lib.rs",
       "lines": [
-        15,
+        19,
         29
       ],
-      "note": "MlEntry fields, defaults for reasoning/suggestion"
+      "note": "MlEntry struct, clone/eq deserialize"
     },
     {
       "promptLines": [
@@ -85,7 +109,31 @@
         21,
         22
       ],
-      "note": "promptLines rename camelCase key"
+      "note": "prompt_lines renamed promptLines, LineRange type"
+    },
+    {
+      "promptLines": [
+        49,
+        49
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        23,
+        23
+      ],
+      "note": "kind field"
+    },
+    {
+      "promptLines": [
+        50,
+        50
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        24,
+        24
+      ],
+      "note": "message field"
     },
     {
       "promptLines": [
@@ -97,7 +145,7 @@
         15,
         17
       ],
-      "note": "default_reasoning fn"
+      "note": "default_reasoning returns empty string"
     },
     {
       "promptLines": [
@@ -109,7 +157,7 @@
         25,
         26
       ],
-      "note": "reasoning default attr"
+      "note": "reasoning defaults to empty"
     },
     {
       "promptLines": [
@@ -121,7 +169,7 @@
         27,
         28
       ],
-      "note": "suggestion default None"
+      "note": "suggestion Option defaults None"
     },
     {
       "promptLines": [
@@ -133,19 +181,55 @@
         31,
         37
       ],
-      "note": "Ml document struct, entries default empty"
+      "note": "Ml document struct"
+    },
+    {
+      "promptLines": [
+        55,
+        55
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        33,
+        33
+      ],
+      "note": "module field"
+    },
+    {
+      "promptLines": [
+        56,
+        56
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        34,
+        34
+      ],
+      "note": "target field"
+    },
+    {
+      "promptLines": [
+        57,
+        57
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        35,
+        36
+      ],
+      "note": "entries default empty vec"
     },
     {
       "promptLines": [
         61,
-        67
+        62
       ],
       "file": "schemas_ml/src/lib.rs",
       "lines": [
         60,
-        76
+        61
       ],
-      "note": "validate_ml deserialize then validate module/target/message"
+      "note": "validate_ml deserializes into Ml"
     },
     {
       "promptLines": [
@@ -157,7 +241,7 @@
         63,
         65
       ],
-      "note": "reject empty module"
+      "note": "module must not be empty"
     },
     {
       "promptLines": [
@@ -169,7 +253,7 @@
         66,
         68
       ],
-      "note": "reject empty target"
+      "note": "target must not be empty"
     },
     {
       "promptLines": [
@@ -181,7 +265,7 @@
         69,
         73
       ],
-      "note": "reject empty entry message"
+      "note": "every entry message not empty"
     },
     {
       "promptLines": [
@@ -190,22 +274,70 @@
       ],
       "file": "schemas_ml/src/lib.rs",
       "lines": [
+        61,
+        61
+      ],
+      "note": "structural invalid maps to parse error"
+    },
+    {
+      "promptLines": [
+        65,
+        65
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
         39,
         58
       ],
-      "note": "MlError enum and error type, deserialization errors surfaced"
+      "note": "MlError type, rejection not panic"
     },
     {
       "promptLines": [
         68,
-        71
+        68
       ],
       "file": "schemas_ml/src/lib.rs",
       "lines": [
         78,
-        93
+        78
       ],
-      "note": "parse_ml_entries non-array empty list else deserialize and validate"
+      "note": "parse_ml_entries signature"
+    },
+    {
+      "promptLines": [
+        69,
+        69
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        79,
+        81
+      ],
+      "note": "non-array returns empty list"
+    },
+    {
+      "promptLines": [
+        70,
+        70
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        83,
+        84
+      ],
+      "note": "deserialize array of entries"
+    },
+    {
+      "promptLines": [
+        70,
+        71
+      ],
+      "file": "schemas_ml/src/lib.rs",
+      "lines": [
+        86,
+        90
+      ],
+      "note": "validate each entry message non-empty"
     },
     {
       "promptLines": [
@@ -217,118 +349,68 @@
         95,
         100
       ],
-      "note": "ml_entries_at_body_line lookup filter"
+      "note": "return entries covering body_line in order"
     },
     {
       "promptLines": [
-        79,
-        81
+        76,
+        77
       ],
       "file": "schemas_ml/src/lib.rs",
       "lines": [
-        266,
-        288
+        98,
+        98
       ],
-      "note": "example lookup test matching prompt example"
-    },
+      "note": "inclusive range coverage filter"
+    }
+  ],
+  "attributionYaml": "module: schemas_ml\ntarget: rust\nentries:\n  - promptLines:\n      - 3\n      - 4\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 4\n      - 4\n    note: brings in serde Deserialize\n  - promptLines:\n      - 19\n      - 27\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 3\n      - 3\n    note: imports LineRange from sibling crate\n  - promptLines:\n      - 42\n      - 45\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 6\n      - 13\n    note: MlKind enum, copy/eq, kebab-case\n  - promptLines:\n      - 44\n      - 45\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 7\n      - 7\n    note: kebab-case rename gives no-op spelling\n  - promptLines:\n      - 44\n      - 45\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 12\n      - 12\n    note: NoOp variant\n  - promptLines:\n      - 46\n      - 52\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 19\n      - 29\n    note: MlEntry struct, clone/eq deserialize\n  - promptLines:\n      - 48\n      - 48\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 21\n      - 22\n    note: prompt_lines renamed promptLines, LineRange type\n  - promptLines:\n      - 49\n      - 49\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 23\n      - 23\n    note: kind field\n  - promptLines:\n      - 50\n      - 50\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 24\n      - 24\n    note: message field\n  - promptLines:\n      - 51\n      - 51\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 15\n      - 17\n    note: default_reasoning returns empty string\n  - promptLines:\n      - 51\n      - 51\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 25\n      - 26\n    note: reasoning defaults to empty\n  - promptLines:\n      - 52\n      - 52\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 27\n      - 28\n    note: suggestion Option defaults None\n  - promptLines:\n      - 53\n      - 57\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 31\n      - 37\n    note: Ml document struct\n  - promptLines:\n      - 55\n      - 55\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 33\n      - 33\n    note: module field\n  - promptLines:\n      - 56\n      - 56\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 34\n      - 34\n    note: target field\n  - promptLines:\n      - 57\n      - 57\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 35\n      - 36\n    note: entries default empty vec\n  - promptLines:\n      - 61\n      - 62\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 60\n      - 61\n    note: validate_ml deserializes into Ml\n  - promptLines:\n      - 62\n      - 63\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 63\n      - 65\n    note: module must not be empty\n  - promptLines:\n      - 62\n      - 63\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 66\n      - 68\n    note: target must not be empty\n  - promptLines:\n      - 63\n      - 63\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 69\n      - 73\n    note: every entry message not empty\n  - promptLines:\n      - 64\n      - 65\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 61\n      - 61\n    note: structural invalid maps to parse error\n  - promptLines:\n      - 65\n      - 65\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 39\n      - 58\n    note: MlError type, rejection not panic\n  - promptLines:\n      - 68\n      - 68\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 78\n      - 78\n    note: parse_ml_entries signature\n  - promptLines:\n      - 69\n      - 69\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 79\n      - 81\n    note: non-array returns empty list\n  - promptLines:\n      - 70\n      - 70\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 83\n      - 84\n    note: deserialize array of entries\n  - promptLines:\n      - 70\n      - 71\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 86\n      - 90\n    note: validate each entry message non-empty\n  - promptLines:\n      - 75\n      - 77\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 95\n      - 100\n    note: return entries covering body_line in order\n  - promptLines:\n      - 76\n      - 77\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 98\n      - 98\n    note: inclusive range coverage filter\n",
+  "mapl": [
     {
       "promptLines": [
-        42,
-        45
+        10,
+        15
       ],
-      "file": "schemas_ml/src/lib.rs",
-      "lines": [
-        108,
-        130
-      ],
-      "note": "tests for kind kebab-case spellings and unknown kind error"
-    },
-    {
-      "promptLines": [
-        51,
-        52
-      ],
-      "file": "schemas_ml/src/lib.rs",
-      "lines": [
-        133,
-        160
-      ],
-      "note": "tests for entry defaults and explicit reasoning/suggestion"
-    },
-    {
-      "promptLines": [
-        64,
-        66
-      ],
-      "file": "schemas_ml/src/lib.rs",
-      "lines": [
-        162,
-        170
-      ],
-      "note": "test promptLines string is deserialize error"
+      "kind": "no-op",
+      "severity": "warning",
+      "message": "No changes — module already exists and realizes target behavior.",
+      "reasoning": "Changes were \"NO CHANGES\". Coding agent reports schemas_ml crate already present with all 18 tests green and prompt diff empty, so existing source already satisfies every requirement (types, validators, lookup, sibling path dependency). Nothing to author. This no-op is required because the compile produced no source edits."
     },
     {
       "promptLines": [
         61,
-        67
+        61
       ],
-      "file": "schemas_ml/src/lib.rs",
-      "lines": [
-        172,
-        233
-      ],
-      "note": "validate_ml tests for valid doc, defaults, empty fields, unknown kind, string promptLines"
+      "kind": "assumption",
+      "severity": "warning",
+      "message": "Error type for validate_ml left as `_`; concrete Err type unspecified.",
+      "reasoning": "Signature written `Result<Ml, _>` — the error type is a placeholder. Prompt says rejection is \"an error, not a panic\" but never names the type (custom enum vs serde_json::Error vs String). Existing code picks some concrete type; that choice was not dictated by the prompt.",
+      "suggestion": "State the intended error type, e.g. \"returns Result<Ml, MlError>\" or \"Result<Ml, serde_json::Error>\", so validation and deserialization failures share a defined type."
     },
     {
       "promptLines": [
         68,
-        71
-      ],
-      "file": "schemas_ml/src/lib.rs",
-      "lines": [
-        236,
-        264
-      ],
-      "note": "parse_ml_entries tests non-array, valid array, empty message, malformed list"
-    },
-    {
-      "promptLines": [
-        75,
-        81
-      ],
-      "file": "schemas_ml/src/lib.rs",
-      "lines": [
-        278,
-        295
-      ],
-      "note": "lookup tests covering/uncovered lines"
-    }
-  ],
-  "attributionYaml": "module: schemas_ml\ntarget: rust\nentries:\n  - promptLines:\n      - 1\n      - 6\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 1\n      - 4\n    note: module doc, imports serde\n  - promptLines:\n      - 19\n      - 27\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 3\n      - 3\n    note: use shared LineRange type\n  - promptLines:\n      - 42\n      - 45\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 6\n      - 13\n    note: MlKind enum kebab-case variants\n  - promptLines:\n      - 46\n      - 52\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 15\n      - 29\n    note: MlEntry fields, defaults for reasoning/suggestion\n  - promptLines:\n      - 48\n      - 48\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 21\n      - 22\n    note: promptLines rename camelCase key\n  - promptLines:\n      - 51\n      - 51\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 15\n      - 17\n    note: default_reasoning fn\n  - promptLines:\n      - 51\n      - 51\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 25\n      - 26\n    note: reasoning default attr\n  - promptLines:\n      - 52\n      - 52\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 27\n      - 28\n    note: suggestion default None\n  - promptLines:\n      - 53\n      - 57\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 31\n      - 37\n    note: Ml document struct, entries default empty\n  - promptLines:\n      - 61\n      - 67\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 60\n      - 76\n    note: validate_ml deserialize then validate module/target/message\n  - promptLines:\n      - 62\n      - 63\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 63\n      - 65\n    note: reject empty module\n  - promptLines:\n      - 62\n      - 63\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 66\n      - 68\n    note: reject empty target\n  - promptLines:\n      - 63\n      - 63\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 69\n      - 73\n    note: reject empty entry message\n  - promptLines:\n      - 64\n      - 65\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 39\n      - 58\n    note: MlError enum and error type, deserialization errors surfaced\n  - promptLines:\n      - 68\n      - 71\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 78\n      - 93\n    note: parse_ml_entries non-array empty list else deserialize and validate\n  - promptLines:\n      - 75\n      - 77\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 95\n      - 100\n    note: ml_entries_at_body_line lookup filter\n  - promptLines:\n      - 79\n      - 81\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 266\n      - 288\n    note: example lookup test matching prompt example\n  - promptLines:\n      - 42\n      - 45\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 108\n      - 130\n    note: tests for kind kebab-case spellings and unknown kind error\n  - promptLines:\n      - 51\n      - 52\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 133\n      - 160\n    note: tests for entry defaults and explicit reasoning/suggestion\n  - promptLines:\n      - 64\n      - 66\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 162\n      - 170\n    note: test promptLines string is deserialize error\n  - promptLines:\n      - 61\n      - 67\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 172\n      - 233\n    note: validate_ml tests for valid doc, defaults, empty fields, unknown kind, string promptLines\n  - promptLines:\n      - 68\n      - 71\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 236\n      - 264\n    note: parse_ml_entries tests non-array, valid array, empty message, malformed list\n  - promptLines:\n      - 75\n      - 81\n    file: schemas_ml/src/lib.rs\n    lines:\n      - 278\n      - 295\n    note: lookup tests covering/uncovered lines\n",
-  "mapl": [
-    {
-      "promptLines": [
-        59,
-        71
-      ],
-      "kind": "note",
-      "severity": "info",
-      "message": "Rejection paths match spec exactly — bad kind or promptLines-as-string errors, not panics.",
-      "reasoning": "validate_ml and parse_ml_entries both use serde_json::from_value and map errors to MlError::Parse, satisfying \"rejection is error not panic\" and structural-invalid cases. Tests confirm behavior. No gaps found.",
-      "suggestion": ""
-    },
-    {
-      "promptLines": [
-        17,
-        36
+        68
       ],
       "kind": "assumption",
       "severity": "warning",
-      "message": "Assumed schemas_line_range sibling crate already exists with matching API.",
-      "reasoning": "Code depends on schemas_line_range::LineRange via path dep, per spec. Couldn't verify sibling crate's actual contents in this review, just that lib.rs uses it correctly per described API (new, start, end, Deserialize). Assumed prior generation of that module was correct/consistent.",
-      "suggestion": ""
+      "message": "Error type for parse_ml_entries also `_`; unspecified.",
+      "reasoning": "Same placeholder `Result<Vec<MlEntry>, _>`. Whether this shares validate_ml's error type or uses its own is not stated; existing code resolved it.",
+      "suggestion": "Name the error type and whether it is shared with validate_ml."
+    },
+    {
+      "promptLines": [
+        42,
+        42
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "MlKind must be copy but MlEntry only cloneable — intentional asymmetry.",
+      "reasoning": "Prompt asks MlKind to be copy (line 42) while MlEntry is only \"cloneable\" (line 46) since it holds String/Option<String>. Consistent and correct; noted for the author's awareness that the derive sets differ by design."
     }
   ],
+  "maplContent": "module: schemas_ml\ntarget: rust\nentries:\n  - promptLines:\n      - 10\n      - 15\n    kind: no-op\n    message: No changes — module already exists and realizes target behavior.\n    reasoning: Changes were \"NO CHANGES\". Coding agent reports schemas_ml crate already present with all 18 tests green and prompt diff empty, so existing source already satisfies every requirement (types, validators, lookup, sibling path dependency). Nothing to author. This no-op is required because the compile produced no source edits.\n  - promptLines:\n      - 61\n      - 61\n    kind: assumption\n    message: Error type for validate_ml left as `_`; concrete Err type unspecified.\n    reasoning: Signature written `Result<Ml, _>` — the error type is a placeholder. Prompt says rejection is \"an error, not a panic\" but never names the type (custom enum vs serde_json::Error vs String). Existing code picks some concrete type; that choice was not dictated by the prompt.\n    suggestion: State the intended error type, e.g. \"returns Result<Ml, MlError>\" or \"Result<Ml, serde_json::Error>\", so validation and deserialization failures share a defined type.\n  - promptLines:\n      - 68\n      - 68\n    kind: assumption\n    message: Error type for parse_ml_entries also `_`; unspecified.\n    reasoning: Same placeholder `Result<Vec<MlEntry>, _>`. Whether this shares validate_ml's error type or uses its own is not stated; existing code resolved it.\n    suggestion: Name the error type and whether it is shared with validate_ml.\n  - promptLines:\n      - 42\n      - 42\n    kind: note\n    message: MlKind must be copy but MlEntry only cloneable — intentional asymmetry.\n    reasoning: Prompt asks MlKind to be copy (line 42) while MlEntry is only \"cloneable\" (line 46) since it holds String/Option<String>. Consistent and correct; noted for the author's awareness that the derive sets differ by design.\n",
+  "maplFile": "schemas_ml.mapl",
   "journal": [
     {
       "gen": 17,
@@ -347,6 +429,13 @@
           "patch": "@@ -0,0 +1,295 @@\n+// GENERATED BY NAPL from schemas_ml.napl — edit the prompt, not this file\n+\n+use schemas_line_range::LineRange;\n+use serde::Deserialize;\n+\n+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]\n+#[serde(rename_all = \"kebab-case\")]\n+pub enum MlKind {\n+    Ambiguity,\n+    Assumption,\n+    Note,\n+    NoOp,\n+}\n+\n+fn default_reasoning() -> String {\n+    String::new()\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]\n+pub struct MlEntry {\n+    #[serde(rename = \"promptLines\")]\n+    pub prompt_lines: LineRange,\n+    pub kind: MlKind,\n+    pub message: String,\n+    #[serde(default = \"default_reasoning\")]\n+    pub reasoning: String,\n+    #[serde(default)]\n+    pub suggestion: Option<String>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]\n+pub struct Ml {\n+    pub module: String,\n+    pub target: String,\n+    #[serde(default)]\n+    pub entries: Vec<MlEntry>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub enum MlError {\n+    Parse(String),\n+    EmptyModule,\n+    EmptyTarget,\n+    EmptyMessage,\n+}\n+\n+impl std::fmt::Display for MlError {\n+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n+        match self {\n+            MlError::Parse(msg) => write!(f, \"failed to parse ml document: {msg}\"),\n+            MlError::EmptyModule => write!(f, \"module must not be empty\"),\n+            MlError::EmptyTarget => write!(f, \"target must not be empty\"),\n+            MlError::EmptyMessage => write!(f, \"entry message must not be empty\"),\n+        }\n+    }\n+}\n+\n+impl std::error::Error for MlError {}\n+\n+pub fn validate_ml(value: serde_json::Value) -> Result<Ml, MlError> {\n+    let ml: Ml = serde_json::from_value(value).map_err(|e| MlError::Parse(e.to_string()))?;\n+\n+    if ml.module.is_empty() {\n+        return Err(MlError::EmptyModule);\n+    }\n+    if ml.target.is_empty() {\n+        return Err(MlError::EmptyTarget);\n+    }\n+    for entry in &ml.entries {\n+        if entry.message.is_empty() {\n+            return Err(MlError::EmptyMessage);\n+        }\n+    }\n+\n+    Ok(ml)\n+}\n+\n+pub fn parse_ml_entries(value: serde_json::Value) -> Result<Vec<MlEntry>, MlError> {\n+    if !value.is_array() {\n+        return Ok(Vec::new());\n+    }\n+\n+    let entries: Vec<MlEntry> =\n+        serde_json::from_value(value).map_err(|e| MlError::Parse(e.to_string()))?;\n+\n+    for entry in &entries {\n+        if entry.message.is_empty() {\n+            return Err(MlError::EmptyMessage);\n+        }\n+    }\n+\n+    Ok(entries)\n+}\n+\n+pub fn ml_entries_at_body_line(ml: &Ml, body_line: u32) -> Vec<&MlEntry> {\n+    ml.entries\n+        .iter()\n+        .filter(|entry| entry.prompt_lines.start <= body_line && body_line <= entry.prompt_lines.end)\n+        .collect()\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+    use serde_json::json;\n+\n+    #[test]\n+    fn kind_kebab_case_spellings() {\n+        assert_eq!(\n+            serde_json::from_value::<MlKind>(json!(\"ambiguity\")).unwrap(),\n+            MlKind::Ambiguity\n+        );\n+        assert_eq!(\n+            serde_json::from_value::<MlKind>(json!(\"assumption\")).unwrap(),\n+            MlKind::Assumption\n+        );\n+        assert_eq!(\n+            serde_json::from_value::<MlKind>(json!(\"note\")).unwrap(),\n+            MlKind::Note\n+        );\n+        assert_eq!(\n+            serde_json::from_value::<MlKind>(json!(\"no-op\")).unwrap(),\n+            MlKind::NoOp\n+        );\n+    }\n+\n+    #[test]\n+    fn unknown_kind_is_error() {\n+        assert!(serde_json::from_value::<MlKind>(json!(\"bogus\")).is_err());\n+    }\n+\n+    #[test]\n+    fn entry_defaults_reasoning_and_suggestion() {\n+        let entry: MlEntry = serde_json::from_value(json!({\n+            \"promptLines\": 18,\n+            \"kind\": \"note\",\n+            \"message\": \"hello\"\n+        }))\n+        .unwrap();\n+        assert_eq!(entry.prompt_lines, LineRange::new(18, 18));\n+        assert_eq!(entry.kind, MlKind::Note);\n+        assert_eq!(entry.message, \"hello\");\n+        assert_eq!(entry.reasoning, \"\");\n+        assert_eq!(entry.suggestion, None);\n+    }\n+\n+    #[test]\n+    fn entry_with_reasoning_and_suggestion() {\n+        let entry: MlEntry = serde_json::from_value(json!({\n+            \"promptLines\": [3, 5],\n+            \"kind\": \"assumption\",\n+            \"message\": \"m\",\n+            \"reasoning\": \"r\",\n+            \"suggestion\": \"s\"\n+        }))\n+        .unwrap();\n+        assert_eq!(entry.prompt_lines, LineRange::new(3, 5));\n+        assert_eq!(entry.reasoning, \"r\");\n+        assert_eq!(entry.suggestion, Some(\"s\".to_string()));\n+    }\n+\n+    #[test]\n+    fn prompt_lines_string_is_deserialize_error() {\n+        let result: Result<MlEntry, _> = serde_json::from_value(json!({\n+            \"promptLines\": \"1-2\",\n+            \"kind\": \"note\",\n+            \"message\": \"m\"\n+        }));\n+        assert!(result.is_err());\n+    }\n+\n+    #[test]\n+    fn validate_ml_accepts_valid_document() {\n+        let ml = validate_ml(json!({\n+            \"module\": \"m\",\n+            \"target\": \"t\",\n+            \"entries\": [\n+                {\"promptLines\": [1, 2], \"kind\": \"ambiguity\", \"message\": \"a\"}\n+            ]\n+        }))\n+        .unwrap();\n+        assert_eq!(ml.module, \"m\");\n+        assert_eq!(ml.target, \"t\");\n+        assert_eq!(ml.entries.len(), 1);\n+    }\n+\n+    #[test]\n+    fn validate_ml_defaults_missing_entries_to_empty() {\n+        let ml = validate_ml(json!({\"module\": \"m\", \"target\": \"t\"})).unwrap();\n+        assert!(ml.entries.is_empty());\n+    }\n+\n+    #[test]\n+    fn validate_ml_rejects_empty_module() {\n+        let result = validate_ml(json!({\"module\": \"\", \"target\": \"t\"}));\n+        assert_eq!(result.unwrap_err(), MlError::EmptyModule);\n+    }\n+\n+    #[test]\n+    fn validate_ml_rejects_empty_target() {\n+        let result = validate_ml(json!({\"module\": \"m\", \"target\": \"\"}));\n+        assert_eq!(result.unwrap_err(), MlError::EmptyTarget);\n+    }\n+\n+    #[test]\n+    fn validate_ml_rejects_empty_entry_message() {\n+        let result = validate_ml(json!({\n+            \"module\": \"m\",\n+            \"target\": \"t\",\n+            \"entries\": [{\"promptLines\": 1, \"kind\": \"note\", \"message\": \"\"}]\n+        }));\n+        assert_eq!(result.unwrap_err(), MlError::EmptyMessage);\n+    }\n+\n+    #[test]\n+    fn validate_ml_rejects_unknown_kind() {\n+        let result = validate_ml(json!({\n+            \"module\": \"m\",\n+            \"target\": \"t\",\n+            \"entries\": [{\"promptLines\": 1, \"kind\": \"bogus\", \"message\": \"m\"}]\n+        }));\n+        assert!(matches!(result.unwrap_err(), MlError::Parse(_)));\n+    }\n+\n+    #[test]\n+    fn validate_ml_rejects_string_prompt_lines() {\n+        let result = validate_ml(json!({\n+            \"module\": \"m\",\n+            \"target\": \"t\",\n+            \"entries\": [{\"promptLines\": \"1-2\", \"kind\": \"note\", \"message\": \"m\"}]\n+        }));\n+        assert!(matches!(result.unwrap_err(), MlError::Parse(_)));\n+    }\n+\n+    #[test]\n+    fn parse_ml_entries_returns_empty_for_non_array() {\n+        assert_eq!(parse_ml_entries(json!({\"not\": \"an array\"})).unwrap(), vec![]);\n+        assert_eq!(parse_ml_entries(json!(\"string\")).unwrap(), vec![]);\n+        assert_eq!(parse_ml_entries(json!(42)).unwrap(), vec![]);\n+    }\n+\n+    #[test]\n+    fn parse_ml_entries_parses_valid_array() {\n+        let entries = parse_ml_entries(json!([\n+            {\"promptLines\": [1, 2], \"kind\": \"note\", \"message\": \"a\"},\n+            {\"promptLines\": 5, \"kind\": \"no-op\", \"message\": \"b\"}\n+        ]))\n+        .unwrap();\n+        assert_eq!(entries.len(), 2);\n+        assert_eq!(entries[0].message, \"a\");\n+        assert_eq!(entries[1].kind, MlKind::NoOp);\n+    }\n+\n+    #[test]\n+    fn parse_ml_entries_rejects_empty_message() {\n+        let result = parse_ml_entries(json!([{\"promptLines\": 1, \"kind\": \"note\", \"message\": \"\"}]));\n+        assert_eq!(result.unwrap_err(), MlError::EmptyMessage);\n+    }\n+\n+    #[test]\n+    fn parse_ml_entries_rejects_malformed_list() {\n+        let result = parse_ml_entries(json!([{\"promptLines\": 1, \"kind\": \"bogus\", \"message\": \"m\"}]));\n+        assert!(matches!(result.unwrap_err(), MlError::Parse(_)));\n+    }\n+\n+    fn sample_ml() -> Ml {\n+        validate_ml(json!({\n+            \"module\": \"m\",\n+            \"target\": \"t\",\n+            \"entries\": [\n+                {\"promptLines\": [1, 2], \"kind\": \"note\", \"message\": \"a\"},\n+                {\"promptLines\": [5, 7], \"kind\": \"note\", \"message\": \"b\"}\n+            ]\n+        }))\n+        .unwrap()\n+    }\n+\n+    #[test]\n+    fn lookup_finds_covering_entries_in_order() {\n+        let ml = sample_ml();\n+        let at1 = ml_entries_at_body_line(&ml, 1);\n+        assert_eq!(at1.len(), 1);\n+        assert_eq!(at1[0].message, \"a\");\n+\n+        let at6 = ml_entries_at_body_line(&ml, 6);\n+        assert_eq!(at6.len(), 1);\n+        assert_eq!(at6[0].message, \"b\");\n+    }\n+\n+    #[test]\n+    fn lookup_returns_empty_for_uncovered_line() {\n+        let ml = sample_ml();\n+        assert!(ml_entries_at_body_line(&ml, 4).is_empty());\n+    }\n+}"
         }
       ]
+    },
+    {
+      "gen": 67,
+      "timestamp": "2026-07-24T13:06:09.978Z",
+      "mode": "incremental",
+      "promptHash": "7e21ddf6dac1e77e2090f64da1d16de2c1972d221b10d7d7ef2fe2f61c7d832f",
+      "files": []
     }
   ],
   "lock": [
@@ -396,15 +485,15 @@
         "entries": [
           {
             "promptLines": [
-              1,
-              6
+              3,
+              4
             ],
             "file": "schemas_ml/src/lib.rs",
             "lines": [
-              1,
+              4,
               4
             ],
-            "note": "module doc, imports serde"
+            "note": "brings in serde Deserialize"
           },
           {
             "promptLines": [
@@ -416,7 +505,7 @@
               3,
               3
             ],
-            "note": "use shared LineRange type"
+            "note": "imports LineRange from sibling crate"
           },
           {
             "promptLines": [
@@ -428,7 +517,31 @@
               6,
               13
             ],
-            "note": "MlKind enum kebab-case variants"
+            "note": "MlKind enum, copy/eq, kebab-case"
+          },
+          {
+            "promptLines": [
+              44,
+              45
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              7,
+              7
+            ],
+            "note": "kebab-case rename gives no-op spelling"
+          },
+          {
+            "promptLines": [
+              44,
+              45
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              12,
+              12
+            ],
+            "note": "NoOp variant"
           },
           {
             "promptLines": [
@@ -437,10 +550,10 @@
             ],
             "file": "schemas_ml/src/lib.rs",
             "lines": [
-              15,
+              19,
               29
             ],
-            "note": "MlEntry fields, defaults for reasoning/suggestion"
+            "note": "MlEntry struct, clone/eq deserialize"
           },
           {
             "promptLines": [
@@ -452,7 +565,31 @@
               21,
               22
             ],
-            "note": "promptLines rename camelCase key"
+            "note": "prompt_lines renamed promptLines, LineRange type"
+          },
+          {
+            "promptLines": [
+              49,
+              49
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              23,
+              23
+            ],
+            "note": "kind field"
+          },
+          {
+            "promptLines": [
+              50,
+              50
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              24,
+              24
+            ],
+            "note": "message field"
           },
           {
             "promptLines": [
@@ -464,7 +601,7 @@
               15,
               17
             ],
-            "note": "default_reasoning fn"
+            "note": "default_reasoning returns empty string"
           },
           {
             "promptLines": [
@@ -476,7 +613,7 @@
               25,
               26
             ],
-            "note": "reasoning default attr"
+            "note": "reasoning defaults to empty"
           },
           {
             "promptLines": [
@@ -488,7 +625,7 @@
               27,
               28
             ],
-            "note": "suggestion default None"
+            "note": "suggestion Option defaults None"
           },
           {
             "promptLines": [
@@ -500,19 +637,55 @@
               31,
               37
             ],
-            "note": "Ml document struct, entries default empty"
+            "note": "Ml document struct"
+          },
+          {
+            "promptLines": [
+              55,
+              55
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              33,
+              33
+            ],
+            "note": "module field"
+          },
+          {
+            "promptLines": [
+              56,
+              56
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              34,
+              34
+            ],
+            "note": "target field"
+          },
+          {
+            "promptLines": [
+              57,
+              57
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              35,
+              36
+            ],
+            "note": "entries default empty vec"
           },
           {
             "promptLines": [
               61,
-              67
+              62
             ],
             "file": "schemas_ml/src/lib.rs",
             "lines": [
               60,
-              76
+              61
             ],
-            "note": "validate_ml deserialize then validate module/target/message"
+            "note": "validate_ml deserializes into Ml"
           },
           {
             "promptLines": [
@@ -524,7 +697,7 @@
               63,
               65
             ],
-            "note": "reject empty module"
+            "note": "module must not be empty"
           },
           {
             "promptLines": [
@@ -536,7 +709,7 @@
               66,
               68
             ],
-            "note": "reject empty target"
+            "note": "target must not be empty"
           },
           {
             "promptLines": [
@@ -548,7 +721,7 @@
               69,
               73
             ],
-            "note": "reject empty entry message"
+            "note": "every entry message not empty"
           },
           {
             "promptLines": [
@@ -557,22 +730,70 @@
             ],
             "file": "schemas_ml/src/lib.rs",
             "lines": [
+              61,
+              61
+            ],
+            "note": "structural invalid maps to parse error"
+          },
+          {
+            "promptLines": [
+              65,
+              65
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
               39,
               58
             ],
-            "note": "MlError enum and error type, deserialization errors surfaced"
+            "note": "MlError type, rejection not panic"
           },
           {
             "promptLines": [
               68,
-              71
+              68
             ],
             "file": "schemas_ml/src/lib.rs",
             "lines": [
               78,
-              93
+              78
             ],
-            "note": "parse_ml_entries non-array empty list else deserialize and validate"
+            "note": "parse_ml_entries signature"
+          },
+          {
+            "promptLines": [
+              69,
+              69
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              79,
+              81
+            ],
+            "note": "non-array returns empty list"
+          },
+          {
+            "promptLines": [
+              70,
+              70
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              83,
+              84
+            ],
+            "note": "deserialize array of entries"
+          },
+          {
+            "promptLines": [
+              70,
+              71
+            ],
+            "file": "schemas_ml/src/lib.rs",
+            "lines": [
+              86,
+              90
+            ],
+            "note": "validate each entry message non-empty"
           },
           {
             "promptLines": [
@@ -584,91 +805,19 @@
               95,
               100
             ],
-            "note": "ml_entries_at_body_line lookup filter"
+            "note": "return entries covering body_line in order"
           },
           {
             "promptLines": [
-              79,
-              81
+              76,
+              77
             ],
             "file": "schemas_ml/src/lib.rs",
             "lines": [
-              266,
-              288
+              98,
+              98
             ],
-            "note": "example lookup test matching prompt example"
-          },
-          {
-            "promptLines": [
-              42,
-              45
-            ],
-            "file": "schemas_ml/src/lib.rs",
-            "lines": [
-              108,
-              130
-            ],
-            "note": "tests for kind kebab-case spellings and unknown kind error"
-          },
-          {
-            "promptLines": [
-              51,
-              52
-            ],
-            "file": "schemas_ml/src/lib.rs",
-            "lines": [
-              133,
-              160
-            ],
-            "note": "tests for entry defaults and explicit reasoning/suggestion"
-          },
-          {
-            "promptLines": [
-              64,
-              66
-            ],
-            "file": "schemas_ml/src/lib.rs",
-            "lines": [
-              162,
-              170
-            ],
-            "note": "test promptLines string is deserialize error"
-          },
-          {
-            "promptLines": [
-              61,
-              67
-            ],
-            "file": "schemas_ml/src/lib.rs",
-            "lines": [
-              172,
-              233
-            ],
-            "note": "validate_ml tests for valid doc, defaults, empty fields, unknown kind, string promptLines"
-          },
-          {
-            "promptLines": [
-              68,
-              71
-            ],
-            "file": "schemas_ml/src/lib.rs",
-            "lines": [
-              236,
-              264
-            ],
-            "note": "parse_ml_entries tests non-array, valid array, empty message, malformed list"
-          },
-          {
-            "promptLines": [
-              75,
-              81
-            ],
-            "file": "schemas_ml/src/lib.rs",
-            "lines": [
-              278,
-              295
-            ],
-            "note": "lookup tests covering/uncovered lines"
+            "note": "inclusive range coverage filter"
           }
         ]
       },
@@ -677,14 +826,13 @@
         "path": "schemas_ml.mapl",
         "entry": {
           "promptLines": [
-            59,
-            71
+            10,
+            15
           ],
-          "kind": "note",
-          "severity": "info",
-          "message": "Rejection paths match spec exactly — bad kind or promptLines-as-string errors, not panics.",
-          "reasoning": "validate_ml and parse_ml_entries both use serde_json::from_value and map errors to MlError::Parse, satisfying \"rejection is error not panic\" and structural-invalid cases. Tests confirm behavior. No gaps found.",
-          "suggestion": ""
+          "kind": "no-op",
+          "severity": "warning",
+          "message": "No changes — module already exists and realizes target behavior.",
+          "reasoning": "Changes were \"NO CHANGES\". Coding agent reports schemas_ml crate already present with all 18 tests green and prompt diff empty, so existing source already satisfies every requirement (types, validators, lookup, sibling path dependency). Nothing to author. This no-op is required because the compile produced no source edits."
         }
       },
       {
@@ -692,14 +840,43 @@
         "path": "schemas_ml.mapl",
         "entry": {
           "promptLines": [
-            17,
-            36
+            61,
+            61
           ],
           "kind": "assumption",
           "severity": "warning",
-          "message": "Assumed schemas_line_range sibling crate already exists with matching API.",
-          "reasoning": "Code depends on schemas_line_range::LineRange via path dep, per spec. Couldn't verify sibling crate's actual contents in this review, just that lib.rs uses it correctly per described API (new, start, end, Deserialize). Assumed prior generation of that module was correct/consistent.",
-          "suggestion": ""
+          "message": "Error type for validate_ml left as `_`; concrete Err type unspecified.",
+          "reasoning": "Signature written `Result<Ml, _>` — the error type is a placeholder. Prompt says rejection is \"an error, not a panic\" but never names the type (custom enum vs serde_json::Error vs String). Existing code picks some concrete type; that choice was not dictated by the prompt.",
+          "suggestion": "State the intended error type, e.g. \"returns Result<Ml, MlError>\" or \"Result<Ml, serde_json::Error>\", so validation and deserialization failures share a defined type."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "schemas_ml.mapl",
+        "entry": {
+          "promptLines": [
+            68,
+            68
+          ],
+          "kind": "assumption",
+          "severity": "warning",
+          "message": "Error type for parse_ml_entries also `_`; unspecified.",
+          "reasoning": "Same placeholder `Result<Vec<MlEntry>, _>`. Whether this shares validate_ml's error type or uses its own is not stated; existing code resolved it.",
+          "suggestion": "Name the error type and whether it is shared with validate_ml."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "schemas_ml.mapl",
+        "entry": {
+          "promptLines": [
+            42,
+            42
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "MlKind must be copy but MlEntry only cloneable — intentional asymmetry.",
+          "reasoning": "Prompt asks MlKind to be copy (line 42) while MlEntry is only \"cloneable\" (line 46) since it holds String/Option<String>. Consistent and correct; noted for the author's awareness that the derive sets differ by design."
         }
       },
       {

@@ -34,22 +34,34 @@
       ],
       "file": "targets/src/lib.rs",
       "lines": [
-        3,
+        4,
         8
       ],
-      "note": "TestRunCommand struct with command/args, derives Eq/Clone"
+      "note": "TestRunCommand struct with command/args, Clone+Eq"
     },
     {
       "promptLines": [
         22,
-        24
+        22
       ],
       "file": "targets/src/lib.rs",
       "lines": [
-        13,
+        12,
+        13
+      ],
+      "note": "TargetAdapter struct definition"
+    },
+    {
+      "promptLines": [
+        23,
+        23
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        14,
         14
       ],
-      "note": "TargetAdapter name field"
+      "note": "name &'static str field"
     },
     {
       "promptLines": [
@@ -61,7 +73,7 @@
         15,
         15
       ],
-      "note": "idiom_guidance field"
+      "note": "idiom_guidance String field"
     },
     {
       "promptLines": [
@@ -73,7 +85,7 @@
         16,
         16
       ],
-      "note": "agent_tools field"
+      "note": "agent_tools Vec<String> field"
     },
     {
       "promptLines": [
@@ -157,7 +169,7 @@
         23,
         23
       ],
-      "note": "workspace_layout field"
+      "note": "workspace_layout bool field"
     },
     {
       "promptLines": [
@@ -166,46 +178,10 @@
       ],
       "file": "targets/src/lib.rs",
       "lines": [
-        26,
-        33
+        30,
+        32
       ],
-      "note": "test_command method ignoring target_dir"
-    },
-    {
-      "promptLines": [
-        44,
-        45
-      ],
-      "file": "targets/src/lib.rs",
-      "lines": [
-        118,
-        121
-      ],
-      "note": "list_targets returns registry order"
-    },
-    {
-      "promptLines": [
-        46,
-        48
-      ],
-      "file": "targets/src/lib.rs",
-      "lines": [
-        123,
-        127
-      ],
-      "note": "starter_targets returns subset"
-    },
-    {
-      "promptLines": [
-        49,
-        53
-      ],
-      "file": "targets/src/lib.rs",
-      "lines": [
-        129,
-        141
-      ],
-      "note": "get_adapter lookup with formatted error"
+      "note": "test_command method returns cloned test_run, ignores dir"
     },
     {
       "promptLines": [
@@ -221,6 +197,90 @@
     },
     {
       "promptLines": [
+        57,
+        58
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        64,
+        68
+      ],
+      "note": "test label and TestRunCommand npx vitest run"
+    },
+    {
+      "promptLines": [
+        58,
+        59
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        45,
+        52
+      ],
+      "note": "agent tools including Read/npm/npx/node"
+    },
+    {
+      "promptLines": [
+        60,
+        60
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        53,
+        60
+      ],
+      "note": "excluded JS dirs"
+    },
+    {
+      "promptLines": [
+        61,
+        61
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        61,
+        61
+      ],
+      "note": "excluded files package-lock/AGENTS/CLAUDE"
+    },
+    {
+      "promptLines": [
+        61,
+        62
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        63,
+        63
+      ],
+      "note": "excluded suffixes tsbuildinfo/d.ts"
+    },
+    {
+      "promptLines": [
+        62,
+        63
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        62,
+        62
+      ],
+      "note": "empty exclude_root_files"
+    },
+    {
+      "promptLines": [
+        62,
+        63
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        69,
+        69
+      ],
+      "note": "workspace_layout false"
+    },
+    {
+      "promptLines": [
         64,
         66
       ],
@@ -229,7 +289,19 @@
         73,
         83
       ],
-      "note": "react adapter derived from typescript with vite.config.js exclude"
+      "note": "react adapter derived from typescript"
+    },
+    {
+      "promptLines": [
+        65,
+        65
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        80,
+        81
+      ],
+      "note": "react adds vite.config.js to exclude_files"
     },
     {
       "promptLines": [
@@ -241,34 +313,178 @@
         85,
         112
       ],
-      "note": "rust adapter definition with workspace layout and idiom guidance"
+      "note": "rust adapter definition"
     },
     {
       "promptLines": [
-        114,
-        116
+        67,
+        68
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        105,
+        109
+      ],
+      "note": "cargo test label and TestRunCommand"
+    },
+    {
+      "promptLines": [
+        68,
+        69
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        93,
+        100
+      ],
+      "note": "rust agent tools Read/cargo/rustc/rustfmt, no npx"
+    },
+    {
+      "promptLines": [
+        70,
+        71
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        101,
+        102
+      ],
+      "note": "excludes target dir and Cargo.lock"
+    },
+    {
+      "promptLines": [
+        71,
+        73
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        103,
+        103
+      ],
+      "note": "exclude_root_files Cargo.toml"
+    },
+    {
+      "promptLines": [
+        71,
+        71
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        110,
+        110
+      ],
+      "note": "workspace_layout true"
+    },
+    {
+      "promptLines": [
+        73,
+        75
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        88,
+        92
+      ],
+      "note": "idiom_guidance mentions Cargo WORKSPACE"
+    },
+    {
+      "promptLines": [
+        44,
+        45
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        119,
+        121
+      ],
+      "note": "list_targets returns names in registry order"
+    },
+    {
+      "promptLines": [
+        44,
+        45
       ],
       "file": "targets/src/lib.rs",
       "lines": [
         114,
         116
       ],
-      "note": "registry function listing all three adapters"
+      "note": "registry vector order"
+    },
+    {
+      "promptLines": [
+        46,
+        48
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        125,
+        127
+      ],
+      "note": "starter_targets typescript+react"
+    },
+    {
+      "promptLines": [
+        49,
+        53
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        130,
+        141
+      ],
+      "note": "get_adapter lookup with unknown-target error"
     },
     {
       "promptLines": [
         79,
-        87
+        82
       ],
       "file": "targets/src/lib.rs",
       "lines": [
         145,
-        155
+        149
       ],
-      "note": "workspace_manifest_toml rendering deterministic TOML"
+      "note": "workspace_manifest_toml header, resolver, members open"
+    },
+    {
+      "promptLines": [
+        82,
+        85
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        150,
+        152
+      ],
+      "note": "each member quoted on own line"
+    },
+    {
+      "promptLines": [
+        86,
+        87
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        153,
+        154
+      ],
+      "note": "closing bracket, empty array case"
+    },
+    {
+      "promptLines": [
+        35,
+        36
+      ],
+      "file": "targets/src/lib.rs",
+      "lines": [
+        35,
+        37
+      ],
+      "note": "strings helper converts &str slice to Vec<String>"
     }
   ],
-  "attributionYaml": "module: targets\ntarget: rust\nentries:\n  - promptLines:\n      - 19\n      - 21\n    file: targets/src/lib.rs\n    lines:\n      - 3\n      - 8\n    note: TestRunCommand struct with command/args, derives Eq/Clone\n  - promptLines:\n      - 22\n      - 24\n    file: targets/src/lib.rs\n    lines:\n      - 13\n      - 14\n    note: TargetAdapter name field\n  - promptLines:\n      - 24\n      - 24\n    file: targets/src/lib.rs\n    lines:\n      - 15\n      - 15\n    note: idiom_guidance field\n  - promptLines:\n      - 25\n      - 25\n    file: targets/src/lib.rs\n    lines:\n      - 16\n      - 16\n    note: agent_tools field\n  - promptLines:\n      - 26\n      - 27\n    file: targets/src/lib.rs\n    lines:\n      - 17\n      - 17\n    note: attribution_exclude_dirs field\n  - promptLines:\n      - 28\n      - 28\n    file: targets/src/lib.rs\n    lines:\n      - 18\n      - 18\n    note: attribution_exclude_files field\n  - promptLines:\n      - 29\n      - 31\n    file: targets/src/lib.rs\n    lines:\n      - 19\n      - 19\n    note: attribution_exclude_root_files field\n  - promptLines:\n      - 32\n      - 32\n    file: targets/src/lib.rs\n    lines:\n      - 20\n      - 20\n    note: attribution_exclude_suffixes field\n  - promptLines:\n      - 33\n      - 33\n    file: targets/src/lib.rs\n    lines:\n      - 21\n      - 21\n    note: test_command_label field\n  - promptLines:\n      - 34\n      - 34\n    file: targets/src/lib.rs\n    lines:\n      - 22\n      - 22\n    note: test_run field\n  - promptLines:\n      - 35\n      - 36\n    file: targets/src/lib.rs\n    lines:\n      - 23\n      - 23\n    note: workspace_layout field\n  - promptLines:\n      - 38\n      - 40\n    file: targets/src/lib.rs\n    lines:\n      - 26\n      - 33\n    note: test_command method ignoring target_dir\n  - promptLines:\n      - 44\n      - 45\n    file: targets/src/lib.rs\n    lines:\n      - 118\n      - 121\n    note: list_targets returns registry order\n  - promptLines:\n      - 46\n      - 48\n    file: targets/src/lib.rs\n    lines:\n      - 123\n      - 127\n    note: starter_targets returns subset\n  - promptLines:\n      - 49\n      - 53\n    file: targets/src/lib.rs\n    lines:\n      - 129\n      - 141\n    note: get_adapter lookup with formatted error\n  - promptLines:\n      - 57\n      - 63\n    file: targets/src/lib.rs\n    lines:\n      - 39\n      - 71\n    note: typescript adapter definition\n  - promptLines:\n      - 64\n      - 66\n    file: targets/src/lib.rs\n    lines:\n      - 73\n      - 83\n    note: react adapter derived from typescript with vite.config.js exclude\n  - promptLines:\n      - 67\n      - 75\n    file: targets/src/lib.rs\n    lines:\n      - 85\n      - 112\n    note: rust adapter definition with workspace layout and idiom guidance\n  - promptLines:\n      - 114\n      - 116\n    file: targets/src/lib.rs\n    lines:\n      - 114\n      - 116\n    note: registry function listing all three adapters\n  - promptLines:\n      - 79\n      - 87\n    file: targets/src/lib.rs\n    lines:\n      - 145\n      - 155\n    note: workspace_manifest_toml rendering deterministic TOML\n",
+  "attributionYaml": "module: targets\ntarget: rust\nentries:\n  - promptLines:\n      - 19\n      - 21\n    file: targets/src/lib.rs\n    lines:\n      - 4\n      - 8\n    note: TestRunCommand struct with command/args, Clone+Eq\n  - promptLines:\n      - 22\n      - 22\n    file: targets/src/lib.rs\n    lines:\n      - 12\n      - 13\n    note: TargetAdapter struct definition\n  - promptLines:\n      - 23\n      - 23\n    file: targets/src/lib.rs\n    lines:\n      - 14\n      - 14\n    note: name &'static str field\n  - promptLines:\n      - 24\n      - 24\n    file: targets/src/lib.rs\n    lines:\n      - 15\n      - 15\n    note: idiom_guidance String field\n  - promptLines:\n      - 25\n      - 25\n    file: targets/src/lib.rs\n    lines:\n      - 16\n      - 16\n    note: agent_tools Vec<String> field\n  - promptLines:\n      - 26\n      - 27\n    file: targets/src/lib.rs\n    lines:\n      - 17\n      - 17\n    note: attribution_exclude_dirs field\n  - promptLines:\n      - 28\n      - 28\n    file: targets/src/lib.rs\n    lines:\n      - 18\n      - 18\n    note: attribution_exclude_files field\n  - promptLines:\n      - 29\n      - 31\n    file: targets/src/lib.rs\n    lines:\n      - 19\n      - 19\n    note: attribution_exclude_root_files field\n  - promptLines:\n      - 32\n      - 32\n    file: targets/src/lib.rs\n    lines:\n      - 20\n      - 20\n    note: attribution_exclude_suffixes field\n  - promptLines:\n      - 33\n      - 33\n    file: targets/src/lib.rs\n    lines:\n      - 21\n      - 21\n    note: test_command_label field\n  - promptLines:\n      - 34\n      - 34\n    file: targets/src/lib.rs\n    lines:\n      - 22\n      - 22\n    note: test_run field\n  - promptLines:\n      - 35\n      - 36\n    file: targets/src/lib.rs\n    lines:\n      - 23\n      - 23\n    note: workspace_layout bool field\n  - promptLines:\n      - 38\n      - 40\n    file: targets/src/lib.rs\n    lines:\n      - 30\n      - 32\n    note: test_command method returns cloned test_run, ignores dir\n  - promptLines:\n      - 57\n      - 63\n    file: targets/src/lib.rs\n    lines:\n      - 39\n      - 71\n    note: typescript adapter definition\n  - promptLines:\n      - 57\n      - 58\n    file: targets/src/lib.rs\n    lines:\n      - 64\n      - 68\n    note: test label and TestRunCommand npx vitest run\n  - promptLines:\n      - 58\n      - 59\n    file: targets/src/lib.rs\n    lines:\n      - 45\n      - 52\n    note: agent tools including Read/npm/npx/node\n  - promptLines:\n      - 60\n      - 60\n    file: targets/src/lib.rs\n    lines:\n      - 53\n      - 60\n    note: excluded JS dirs\n  - promptLines:\n      - 61\n      - 61\n    file: targets/src/lib.rs\n    lines:\n      - 61\n      - 61\n    note: excluded files package-lock/AGENTS/CLAUDE\n  - promptLines:\n      - 61\n      - 62\n    file: targets/src/lib.rs\n    lines:\n      - 63\n      - 63\n    note: excluded suffixes tsbuildinfo/d.ts\n  - promptLines:\n      - 62\n      - 63\n    file: targets/src/lib.rs\n    lines:\n      - 62\n      - 62\n    note: empty exclude_root_files\n  - promptLines:\n      - 62\n      - 63\n    file: targets/src/lib.rs\n    lines:\n      - 69\n      - 69\n    note: workspace_layout false\n  - promptLines:\n      - 64\n      - 66\n    file: targets/src/lib.rs\n    lines:\n      - 73\n      - 83\n    note: react adapter derived from typescript\n  - promptLines:\n      - 65\n      - 65\n    file: targets/src/lib.rs\n    lines:\n      - 80\n      - 81\n    note: react adds vite.config.js to exclude_files\n  - promptLines:\n      - 67\n      - 75\n    file: targets/src/lib.rs\n    lines:\n      - 85\n      - 112\n    note: rust adapter definition\n  - promptLines:\n      - 67\n      - 68\n    file: targets/src/lib.rs\n    lines:\n      - 105\n      - 109\n    note: cargo test label and TestRunCommand\n  - promptLines:\n      - 68\n      - 69\n    file: targets/src/lib.rs\n    lines:\n      - 93\n      - 100\n    note: rust agent tools Read/cargo/rustc/rustfmt, no npx\n  - promptLines:\n      - 70\n      - 71\n    file: targets/src/lib.rs\n    lines:\n      - 101\n      - 102\n    note: excludes target dir and Cargo.lock\n  - promptLines:\n      - 71\n      - 73\n    file: targets/src/lib.rs\n    lines:\n      - 103\n      - 103\n    note: exclude_root_files Cargo.toml\n  - promptLines:\n      - 71\n      - 71\n    file: targets/src/lib.rs\n    lines:\n      - 110\n      - 110\n    note: workspace_layout true\n  - promptLines:\n      - 73\n      - 75\n    file: targets/src/lib.rs\n    lines:\n      - 88\n      - 92\n    note: idiom_guidance mentions Cargo WORKSPACE\n  - promptLines:\n      - 44\n      - 45\n    file: targets/src/lib.rs\n    lines:\n      - 119\n      - 121\n    note: list_targets returns names in registry order\n  - promptLines:\n      - 44\n      - 45\n    file: targets/src/lib.rs\n    lines:\n      - 114\n      - 116\n    note: registry vector order\n  - promptLines:\n      - 46\n      - 48\n    file: targets/src/lib.rs\n    lines:\n      - 125\n      - 127\n    note: starter_targets typescript+react\n  - promptLines:\n      - 49\n      - 53\n    file: targets/src/lib.rs\n    lines:\n      - 130\n      - 141\n    note: get_adapter lookup with unknown-target error\n  - promptLines:\n      - 79\n      - 82\n    file: targets/src/lib.rs\n    lines:\n      - 145\n      - 149\n    note: workspace_manifest_toml header, resolver, members open\n  - promptLines:\n      - 82\n      - 85\n    file: targets/src/lib.rs\n    lines:\n      - 150\n      - 152\n    note: each member quoted on own line\n  - promptLines:\n      - 86\n      - 87\n    file: targets/src/lib.rs\n    lines:\n      - 153\n      - 154\n    note: closing bracket, empty array case\n  - promptLines:\n      - 35\n      - 36\n    file: targets/src/lib.rs\n    lines:\n      - 35\n      - 37\n    note: strings helper converts &str slice to Vec<String>\n",
   "mapl": [
     {
       "promptLines": [
@@ -277,10 +493,43 @@
       ],
       "kind": "no-op",
       "severity": "warning",
-      "message": "Existing crate already matches full spec; no diff needed.",
-      "reasoning": "Coding agent found targets/ crate already implements types, registry, adapters, and workspace_manifest_toml per prompt, with 11 passing tests. Nothing ambiguous forced a guess — requirement already satisfied by existing code."
+      "message": "No changes made — agent reports existing source already matches the prompt exactly.",
+      "reasoning": "The prompt diff was empty and the coding agent found the targets crate already implements every requirement (data types, registry, three adapters, workspace manifest renderer); it reports all 11 tests pass. Nothing to edit. This is unverified by the machine layer — the claim rests entirely on the agent's assertion that current code satisfies the spec."
+    },
+    {
+      "promptLines": [
+        58,
+        61
+      ],
+      "kind": "ambiguity",
+      "severity": "error",
+      "message": "\"the usual npm/npx/node/file tools\" and \"the usual JS dirs\" are underspecified.",
+      "reasoning": "Phrases like \"the usual npm/npx/node/file tools\" (agent_tools) and \"the usual JS dirs\" leave the exact tool and directory lists to the implementer. Line 60 gives a concrete dir list in parens, but the tool list beyond `Read` is left to convention. Since no changes were made, whatever the existing code lists was accepted as-is and not validated against intent.",
+      "suggestion": "Enumerate the exact agent_tools and excluded dirs explicitly rather than \"the usual …\", or reference a named canonical list."
+    },
+    {
+      "promptLines": [
+        38,
+        40
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "test_command takes target_dir but is documented as ignoring it.",
+      "reasoning": "The method signature accepts `target_dir` yet the prompt states the directory argument is accepted but not consulted (command is fixed per target). This is intentional per the spec but is an unusual API shape worth confirming — an accepted-but-unused parameter invites future confusion about whether it should influence the result."
+    },
+    {
+      "promptLines": [
+        68,
+        69
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "rust agent_tools use scoped Bash forms (Bash(cargo:*)) while other tool names are bare.",
+      "reasoning": "The rust adapter lists `Bash(cargo:*)` and excludes `Bash(npx:*)`, mixing scoped Bash permission syntax with bare tool names like `Read` used elsewhere. No change was made, so the existing representation was accepted; worth confirming the two notations are handled consistently in the registry data."
     }
   ],
+  "maplContent": "module: targets\ntarget: rust\nentries:\n  - promptLines:\n      - 1\n      - 88\n    kind: no-op\n    message: No changes made — agent reports existing source already matches the prompt exactly.\n    reasoning: The prompt diff was empty and the coding agent found the targets crate already implements every requirement (data types, registry, three adapters, workspace manifest renderer); it reports all 11 tests pass. Nothing to edit. This is unverified by the machine layer — the claim rests entirely on the agent's assertion that current code satisfies the spec.\n  - promptLines:\n      - 58\n      - 61\n    kind: ambiguity\n    message: '\"the usual npm/npx/node/file tools\" and \"the usual JS dirs\" are underspecified.'\n    reasoning: Phrases like \"the usual npm/npx/node/file tools\" (agent_tools) and \"the usual JS dirs\" leave the exact tool and directory lists to the implementer. Line 60 gives a concrete dir list in parens, but the tool list beyond `Read` is left to convention. Since no changes were made, whatever the existing code lists was accepted as-is and not validated against intent.\n    suggestion: Enumerate the exact agent_tools and excluded dirs explicitly rather than \"the usual …\", or reference a named canonical list.\n  - promptLines:\n      - 38\n      - 40\n    kind: note\n    message: test_command takes target_dir but is documented as ignoring it.\n    reasoning: The method signature accepts `target_dir` yet the prompt states the directory argument is accepted but not consulted (command is fixed per target). This is intentional per the spec but is an unusual API shape worth confirming — an accepted-but-unused parameter invites future confusion about whether it should influence the result.\n  - promptLines:\n      - 68\n      - 69\n    kind: note\n    message: rust agent_tools use scoped Bash forms (Bash(cargo:*)) while other tool names are bare.\n    reasoning: The rust adapter lists `Bash(cargo:*)` and excludes `Bash(npx:*)`, mixing scoped Bash permission syntax with bare tool names like `Read` used elsewhere. No change was made, so the existing representation was accepted; worth confirming the two notations are handled consistently in the registry data.\n",
+  "maplFile": "targets.mapl",
   "journal": [
     {
       "gen": 13,
@@ -303,6 +552,13 @@
     {
       "gen": 49,
       "timestamp": "2026-07-24T12:33:31.418Z",
+      "mode": "incremental",
+      "promptHash": "ee1c036d337878f247a878e50bac1f1e2b03efe38054bb967363aee21cbb194e",
+      "files": []
+    },
+    {
+      "gen": 58,
+      "timestamp": "2026-07-24T12:49:37.312Z",
       "mode": "incremental",
       "promptHash": "ee1c036d337878f247a878e50bac1f1e2b03efe38054bb967363aee21cbb194e",
       "files": []
@@ -360,22 +616,34 @@
             ],
             "file": "targets/src/lib.rs",
             "lines": [
-              3,
+              4,
               8
             ],
-            "note": "TestRunCommand struct with command/args, derives Eq/Clone"
+            "note": "TestRunCommand struct with command/args, Clone+Eq"
           },
           {
             "promptLines": [
               22,
-              24
+              22
             ],
             "file": "targets/src/lib.rs",
             "lines": [
-              13,
+              12,
+              13
+            ],
+            "note": "TargetAdapter struct definition"
+          },
+          {
+            "promptLines": [
+              23,
+              23
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              14,
               14
             ],
-            "note": "TargetAdapter name field"
+            "note": "name &'static str field"
           },
           {
             "promptLines": [
@@ -387,7 +655,7 @@
               15,
               15
             ],
-            "note": "idiom_guidance field"
+            "note": "idiom_guidance String field"
           },
           {
             "promptLines": [
@@ -399,7 +667,7 @@
               16,
               16
             ],
-            "note": "agent_tools field"
+            "note": "agent_tools Vec<String> field"
           },
           {
             "promptLines": [
@@ -483,7 +751,7 @@
               23,
               23
             ],
-            "note": "workspace_layout field"
+            "note": "workspace_layout bool field"
           },
           {
             "promptLines": [
@@ -492,46 +760,10 @@
             ],
             "file": "targets/src/lib.rs",
             "lines": [
-              26,
-              33
+              30,
+              32
             ],
-            "note": "test_command method ignoring target_dir"
-          },
-          {
-            "promptLines": [
-              44,
-              45
-            ],
-            "file": "targets/src/lib.rs",
-            "lines": [
-              118,
-              121
-            ],
-            "note": "list_targets returns registry order"
-          },
-          {
-            "promptLines": [
-              46,
-              48
-            ],
-            "file": "targets/src/lib.rs",
-            "lines": [
-              123,
-              127
-            ],
-            "note": "starter_targets returns subset"
-          },
-          {
-            "promptLines": [
-              49,
-              53
-            ],
-            "file": "targets/src/lib.rs",
-            "lines": [
-              129,
-              141
-            ],
-            "note": "get_adapter lookup with formatted error"
+            "note": "test_command method returns cloned test_run, ignores dir"
           },
           {
             "promptLines": [
@@ -547,6 +779,90 @@
           },
           {
             "promptLines": [
+              57,
+              58
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              64,
+              68
+            ],
+            "note": "test label and TestRunCommand npx vitest run"
+          },
+          {
+            "promptLines": [
+              58,
+              59
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              45,
+              52
+            ],
+            "note": "agent tools including Read/npm/npx/node"
+          },
+          {
+            "promptLines": [
+              60,
+              60
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              53,
+              60
+            ],
+            "note": "excluded JS dirs"
+          },
+          {
+            "promptLines": [
+              61,
+              61
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              61,
+              61
+            ],
+            "note": "excluded files package-lock/AGENTS/CLAUDE"
+          },
+          {
+            "promptLines": [
+              61,
+              62
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              63,
+              63
+            ],
+            "note": "excluded suffixes tsbuildinfo/d.ts"
+          },
+          {
+            "promptLines": [
+              62,
+              63
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              62,
+              62
+            ],
+            "note": "empty exclude_root_files"
+          },
+          {
+            "promptLines": [
+              62,
+              63
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              69,
+              69
+            ],
+            "note": "workspace_layout false"
+          },
+          {
+            "promptLines": [
               64,
               66
             ],
@@ -555,7 +871,19 @@
               73,
               83
             ],
-            "note": "react adapter derived from typescript with vite.config.js exclude"
+            "note": "react adapter derived from typescript"
+          },
+          {
+            "promptLines": [
+              65,
+              65
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              80,
+              81
+            ],
+            "note": "react adds vite.config.js to exclude_files"
           },
           {
             "promptLines": [
@@ -567,31 +895,175 @@
               85,
               112
             ],
-            "note": "rust adapter definition with workspace layout and idiom guidance"
+            "note": "rust adapter definition"
           },
           {
             "promptLines": [
-              114,
-              116
+              67,
+              68
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              105,
+              109
+            ],
+            "note": "cargo test label and TestRunCommand"
+          },
+          {
+            "promptLines": [
+              68,
+              69
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              93,
+              100
+            ],
+            "note": "rust agent tools Read/cargo/rustc/rustfmt, no npx"
+          },
+          {
+            "promptLines": [
+              70,
+              71
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              101,
+              102
+            ],
+            "note": "excludes target dir and Cargo.lock"
+          },
+          {
+            "promptLines": [
+              71,
+              73
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              103,
+              103
+            ],
+            "note": "exclude_root_files Cargo.toml"
+          },
+          {
+            "promptLines": [
+              71,
+              71
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              110,
+              110
+            ],
+            "note": "workspace_layout true"
+          },
+          {
+            "promptLines": [
+              73,
+              75
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              88,
+              92
+            ],
+            "note": "idiom_guidance mentions Cargo WORKSPACE"
+          },
+          {
+            "promptLines": [
+              44,
+              45
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              119,
+              121
+            ],
+            "note": "list_targets returns names in registry order"
+          },
+          {
+            "promptLines": [
+              44,
+              45
             ],
             "file": "targets/src/lib.rs",
             "lines": [
               114,
               116
             ],
-            "note": "registry function listing all three adapters"
+            "note": "registry vector order"
+          },
+          {
+            "promptLines": [
+              46,
+              48
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              125,
+              127
+            ],
+            "note": "starter_targets typescript+react"
+          },
+          {
+            "promptLines": [
+              49,
+              53
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              130,
+              141
+            ],
+            "note": "get_adapter lookup with unknown-target error"
           },
           {
             "promptLines": [
               79,
-              87
+              82
             ],
             "file": "targets/src/lib.rs",
             "lines": [
               145,
-              155
+              149
             ],
-            "note": "workspace_manifest_toml rendering deterministic TOML"
+            "note": "workspace_manifest_toml header, resolver, members open"
+          },
+          {
+            "promptLines": [
+              82,
+              85
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              150,
+              152
+            ],
+            "note": "each member quoted on own line"
+          },
+          {
+            "promptLines": [
+              86,
+              87
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              153,
+              154
+            ],
+            "note": "closing bracket, empty array case"
+          },
+          {
+            "promptLines": [
+              35,
+              36
+            ],
+            "file": "targets/src/lib.rs",
+            "lines": [
+              35,
+              37
+            ],
+            "note": "strings helper converts &str slice to Vec<String>"
           }
         ]
       },
@@ -605,8 +1077,51 @@
           ],
           "kind": "no-op",
           "severity": "warning",
-          "message": "Existing crate already matches full spec; no diff needed.",
-          "reasoning": "Coding agent found targets/ crate already implements types, registry, adapters, and workspace_manifest_toml per prompt, with 11 passing tests. Nothing ambiguous forced a guess — requirement already satisfied by existing code."
+          "message": "No changes made — agent reports existing source already matches the prompt exactly.",
+          "reasoning": "The prompt diff was empty and the coding agent found the targets crate already implements every requirement (data types, registry, three adapters, workspace manifest renderer); it reports all 11 tests pass. Nothing to edit. This is unverified by the machine layer — the claim rests entirely on the agent's assertion that current code satisfies the spec."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "targets.mapl",
+        "entry": {
+          "promptLines": [
+            58,
+            61
+          ],
+          "kind": "ambiguity",
+          "severity": "error",
+          "message": "\"the usual npm/npx/node/file tools\" and \"the usual JS dirs\" are underspecified.",
+          "reasoning": "Phrases like \"the usual npm/npx/node/file tools\" (agent_tools) and \"the usual JS dirs\" leave the exact tool and directory lists to the implementer. Line 60 gives a concrete dir list in parens, but the tool list beyond `Read` is left to convention. Since no changes were made, whatever the existing code lists was accepted as-is and not validated against intent.",
+          "suggestion": "Enumerate the exact agent_tools and excluded dirs explicitly rather than \"the usual …\", or reference a named canonical list."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "targets.mapl",
+        "entry": {
+          "promptLines": [
+            38,
+            40
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "test_command takes target_dir but is documented as ignoring it.",
+          "reasoning": "The method signature accepts `target_dir` yet the prompt states the directory argument is accepted but not consulted (command is fixed per target). This is intentional per the spec but is an unusual API shape worth confirming — an accepted-but-unused parameter invites future confusion about whether it should influence the result."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "targets.mapl",
+        "entry": {
+          "promptLines": [
+            68,
+            69
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "rust agent_tools use scoped Bash forms (Bash(cargo:*)) while other tool names are bare.",
+          "reasoning": "The rust adapter lists `Bash(cargo:*)` and excludes `Bash(npx:*)`, mixing scoped Bash permission syntax with bare tool names like `Read` used elsewhere. No change was made, so the existing representation was accepted; worth confirming the two notations are handled consistently in the registry data."
         }
       },
       {

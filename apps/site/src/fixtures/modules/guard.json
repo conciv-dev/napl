@@ -37,7 +37,7 @@
         3,
         3
       ],
-      "note": "serde_json import for settings parsing/printing"
+      "note": "imports serde_json for parsing and pretty-printing"
     },
     {
       "promptLines": [
@@ -49,7 +49,7 @@
         5,
         5
       ],
-      "note": "GUARD_DOC pinned constant string"
+      "note": "GUARD_DOC constant with trailing newline"
     },
     {
       "promptLines": [
@@ -61,7 +61,7 @@
         7,
         7
       ],
-      "note": "GUARD_FILE_NAMES array"
+      "note": "GUARD_FILE_NAMES array [AGENTS.md, CLAUDE.md]"
     },
     {
       "promptLines": [
@@ -73,7 +73,7 @@
         9,
         9
       ],
-      "note": "PRE_COMMIT_HOOK pinned sh script string"
+      "note": "PRE_COMMIT_HOOK sh script with tabs and trailing newline"
     },
     {
       "promptLines": [
@@ -85,7 +85,7 @@
         11,
         11
       ],
-      "note": "PRE_COMMIT_HOOK_LINE constant"
+      "note": "PRE_COMMIT_HOOK_LINE single line"
     },
     {
       "promptLines": [
@@ -109,7 +109,7 @@
         15,
         21
       ],
-      "note": "SettingsMergeAction enum with four variants, derives Eq/Copy"
+      "note": "SettingsMergeAction enum with four variants, Copy/Eq"
     },
     {
       "promptLines": [
@@ -121,11 +121,11 @@
         23,
         28
       ],
-      "note": "SettingsMergeResult struct fields, derives Eq"
+      "note": "SettingsMergeResult struct with action/content/added, Eq"
     },
     {
       "promptLines": [
-        46,
+        44,
         58
       ],
       "file": "guard/src/lib.rs",
@@ -133,19 +133,31 @@
         30,
         42
       ],
-      "note": "claude_settings_snippet builds and pretty-prints JSON with trailing newline"
+      "note": "claude_settings_snippet builds pretty JSON with trailing newline"
     },
     {
       "promptLines": [
         72,
-        76
+        73
       ],
       "file": "guard/src/lib.rs",
       "lines": [
         44,
+        44
+      ],
+      "note": "merge_claude_settings signature"
+    },
+    {
+      "promptLines": [
+        75,
+        76
+      ],
+      "file": "guard/src/lib.rs",
+      "lines": [
+        45,
         54
       ],
-      "note": "no existing content -> Create action with full deny list"
+      "note": "no existing content returns Create with snippet and full rule list"
     },
     {
       "promptLines": [
@@ -154,10 +166,10 @@
       ],
       "file": "guard/src/lib.rs",
       "lines": [
-        56,
+        62,
         70
       ],
-      "note": "parse failure or non-object root -> Manual"
+      "note": "parse JSON; Manual if not parse or root not object"
     },
     {
       "promptLines": [
@@ -169,7 +181,7 @@
         72,
         76
       ],
-      "note": "read permissions value, default empty object, else Manual"
+      "note": "read permissions: absent empty, object use, else Manual"
     },
     {
       "promptLines": [
@@ -181,19 +193,43 @@
         78,
         82
       ],
-      "note": "read deny value, default empty array, else Manual"
+      "note": "read deny: absent empty, array use, else Manual"
     },
     {
       "promptLines": [
         83,
-        88
+        84
       ],
       "file": "guard/src/lib.rs",
       "lines": [
         84,
-        112
+        91
       ],
-      "note": "append missing deny rules, Unchanged if none added, else Update with merged content"
+      "note": "append missing deny rules and record added"
+    },
+    {
+      "promptLines": [
+        84,
+        85
+      ],
+      "file": "guard/src/lib.rs",
+      "lines": [
+        93,
+        99
+      ],
+      "note": "nothing added returns Unchanged"
+    },
+    {
+      "promptLines": [
+        85,
+        88
+      ],
+      "file": "guard/src/lib.rs",
+      "lines": [
+        101,
+        111
+      ],
+      "note": "put arrays back, pretty-print, return Update with content and added"
     },
     {
       "promptLines": [
@@ -203,157 +239,26 @@
       "file": "guard/src/lib.rs",
       "lines": [
         67,
-        102
+        74
       ],
-      "note": "preserve unrelated keys and existing permission entries via clone/insert"
-    },
-    {
-      "promptLines": [
-        95,
-        95
-      ],
-      "file": "guard/src/lib.rs",
-      "lines": [
-        118,
-        153
-      ],
-      "note": "test asserting snippet matches pinned string"
-    },
-    {
-      "promptLines": [
-        96,
-        97
-      ],
-      "file": "guard/src/lib.rs",
-      "lines": [
-        157,
-        162
-      ],
-      "note": "test for Create action from None"
-    },
-    {
-      "promptLines": [
-        98,
-        99
-      ],
-      "file": "guard/src/lib.rs",
-      "lines": [
-        165,
-        170
-      ],
-      "note": "test for Unchanged when snippet already present"
-    },
-    {
-      "promptLines": [
-        100,
-        102
-      ],
-      "file": "guard/src/lib.rs",
-      "lines": [
-        173,
-        183
-      ],
-      "note": "test preserving unrelated keys and allow list on merge"
-    },
-    {
-      "promptLines": [
-        103,
-        104
-      ],
-      "file": "guard/src/lib.rs",
-      "lines": [
-        186,
-        209
-      ],
-      "note": "tests for Manual on invalid json / non-object root / non-object permissions / non-array deny"
-    },
-    {
-      "promptLines": [
-        20,
-        24
-      ],
-      "file": "guard/src/lib.rs",
-      "lines": [
-        121,
-        126
-      ],
-      "note": "test pinning GUARD_DOC"
-    },
-    {
-      "promptLines": [
-        25,
-        26
-      ],
-      "file": "guard/src/lib.rs",
-      "lines": [
-        129,
-        131
-      ],
-      "note": "test pinning GUARD_FILE_NAMES"
-    },
-    {
-      "promptLines": [
-        27,
-        38
-      ],
-      "file": "guard/src/lib.rs",
-      "lines": [
-        134,
-        139
-      ],
-      "note": "test pinning PRE_COMMIT_HOOK"
-    },
-    {
-      "promptLines": [
-        39,
-        40
-      ],
-      "file": "guard/src/lib.rs",
-      "lines": [
-        142,
-        144
-      ],
-      "note": "test pinning PRE_COMMIT_HOOK_LINE"
-    },
-    {
-      "promptLines": [
-        41,
-        42
-      ],
-      "file": "guard/src/lib.rs",
-      "lines": [
-        147,
-        149
-      ],
-      "note": "test pinning NAPL_DENY_RULES"
-    },
-    {
-      "promptLines": [
-        79,
-        80
-      ],
-      "file": "guard/src/lib.rs",
-      "lines": [
-        212,
-        219
-      ],
-      "note": "test missing permissions treated as empty object, preserves other keys"
+      "note": "preserves unrelated top-level keys and existing permission entries via clone"
     }
   ],
-  "attributionYaml": "module: guard\ntarget: rust\nentries:\n  - promptLines:\n      - 5\n      - 6\n    file: guard/src/lib.rs\n    lines:\n      - 3\n      - 3\n    note: serde_json import for settings parsing/printing\n  - promptLines:\n      - 20\n      - 24\n    file: guard/src/lib.rs\n    lines:\n      - 5\n      - 5\n    note: GUARD_DOC pinned constant string\n  - promptLines:\n      - 25\n      - 26\n    file: guard/src/lib.rs\n    lines:\n      - 7\n      - 7\n    note: GUARD_FILE_NAMES array\n  - promptLines:\n      - 27\n      - 38\n    file: guard/src/lib.rs\n    lines:\n      - 9\n      - 9\n    note: PRE_COMMIT_HOOK pinned sh script string\n  - promptLines:\n      - 39\n      - 40\n    file: guard/src/lib.rs\n    lines:\n      - 11\n      - 11\n    note: PRE_COMMIT_HOOK_LINE constant\n  - promptLines:\n      - 41\n      - 42\n    file: guard/src/lib.rs\n    lines:\n      - 13\n      - 13\n    note: NAPL_DENY_RULES one-element list\n  - promptLines:\n      - 62\n      - 65\n    file: guard/src/lib.rs\n    lines:\n      - 15\n      - 21\n    note: SettingsMergeAction enum with four variants, derives Eq/Copy\n  - promptLines:\n      - 67\n      - 70\n    file: guard/src/lib.rs\n    lines:\n      - 23\n      - 28\n    note: SettingsMergeResult struct fields, derives Eq\n  - promptLines:\n      - 46\n      - 58\n    file: guard/src/lib.rs\n    lines:\n      - 30\n      - 42\n    note: claude_settings_snippet builds and pretty-prints JSON with trailing newline\n  - promptLines:\n      - 72\n      - 76\n    file: guard/src/lib.rs\n    lines:\n      - 44\n      - 54\n    note: no existing content -> Create action with full deny list\n  - promptLines:\n      - 77\n      - 78\n    file: guard/src/lib.rs\n    lines:\n      - 56\n      - 70\n    note: parse failure or non-object root -> Manual\n  - promptLines:\n      - 79\n      - 80\n    file: guard/src/lib.rs\n    lines:\n      - 72\n      - 76\n    note: read permissions value, default empty object, else Manual\n  - promptLines:\n      - 81\n      - 82\n    file: guard/src/lib.rs\n    lines:\n      - 78\n      - 82\n    note: read deny value, default empty array, else Manual\n  - promptLines:\n      - 83\n      - 88\n    file: guard/src/lib.rs\n    lines:\n      - 84\n      - 112\n    note: append missing deny rules, Unchanged if none added, else Update with merged content\n  - promptLines:\n      - 90\n      - 91\n    file: guard/src/lib.rs\n    lines:\n      - 67\n      - 102\n    note: preserve unrelated keys and existing permission entries via clone/insert\n  - promptLines:\n      - 95\n      - 95\n    file: guard/src/lib.rs\n    lines:\n      - 118\n      - 153\n    note: test asserting snippet matches pinned string\n  - promptLines:\n      - 96\n      - 97\n    file: guard/src/lib.rs\n    lines:\n      - 157\n      - 162\n    note: test for Create action from None\n  - promptLines:\n      - 98\n      - 99\n    file: guard/src/lib.rs\n    lines:\n      - 165\n      - 170\n    note: test for Unchanged when snippet already present\n  - promptLines:\n      - 100\n      - 102\n    file: guard/src/lib.rs\n    lines:\n      - 173\n      - 183\n    note: test preserving unrelated keys and allow list on merge\n  - promptLines:\n      - 103\n      - 104\n    file: guard/src/lib.rs\n    lines:\n      - 186\n      - 209\n    note: tests for Manual on invalid json / non-object root / non-object permissions / non-array deny\n  - promptLines:\n      - 20\n      - 24\n    file: guard/src/lib.rs\n    lines:\n      - 121\n      - 126\n    note: test pinning GUARD_DOC\n  - promptLines:\n      - 25\n      - 26\n    file: guard/src/lib.rs\n    lines:\n      - 129\n      - 131\n    note: test pinning GUARD_FILE_NAMES\n  - promptLines:\n      - 27\n      - 38\n    file: guard/src/lib.rs\n    lines:\n      - 134\n      - 139\n    note: test pinning PRE_COMMIT_HOOK\n  - promptLines:\n      - 39\n      - 40\n    file: guard/src/lib.rs\n    lines:\n      - 142\n      - 144\n    note: test pinning PRE_COMMIT_HOOK_LINE\n  - promptLines:\n      - 41\n      - 42\n    file: guard/src/lib.rs\n    lines:\n      - 147\n      - 149\n    note: test pinning NAPL_DENY_RULES\n  - promptLines:\n      - 79\n      - 80\n    file: guard/src/lib.rs\n    lines:\n      - 212\n      - 219\n    note: test missing permissions treated as empty object, preserves other keys\n",
+  "attributionYaml": "module: guard\ntarget: rust\nentries:\n  - promptLines:\n      - 5\n      - 6\n    file: guard/src/lib.rs\n    lines:\n      - 3\n      - 3\n    note: imports serde_json for parsing and pretty-printing\n  - promptLines:\n      - 20\n      - 24\n    file: guard/src/lib.rs\n    lines:\n      - 5\n      - 5\n    note: GUARD_DOC constant with trailing newline\n  - promptLines:\n      - 25\n      - 26\n    file: guard/src/lib.rs\n    lines:\n      - 7\n      - 7\n    note: GUARD_FILE_NAMES array [AGENTS.md, CLAUDE.md]\n  - promptLines:\n      - 27\n      - 38\n    file: guard/src/lib.rs\n    lines:\n      - 9\n      - 9\n    note: PRE_COMMIT_HOOK sh script with tabs and trailing newline\n  - promptLines:\n      - 39\n      - 40\n    file: guard/src/lib.rs\n    lines:\n      - 11\n      - 11\n    note: PRE_COMMIT_HOOK_LINE single line\n  - promptLines:\n      - 41\n      - 42\n    file: guard/src/lib.rs\n    lines:\n      - 13\n      - 13\n    note: NAPL_DENY_RULES one-element list\n  - promptLines:\n      - 62\n      - 65\n    file: guard/src/lib.rs\n    lines:\n      - 15\n      - 21\n    note: SettingsMergeAction enum with four variants, Copy/Eq\n  - promptLines:\n      - 67\n      - 70\n    file: guard/src/lib.rs\n    lines:\n      - 23\n      - 28\n    note: SettingsMergeResult struct with action/content/added, Eq\n  - promptLines:\n      - 44\n      - 58\n    file: guard/src/lib.rs\n    lines:\n      - 30\n      - 42\n    note: claude_settings_snippet builds pretty JSON with trailing newline\n  - promptLines:\n      - 72\n      - 73\n    file: guard/src/lib.rs\n    lines:\n      - 44\n      - 44\n    note: merge_claude_settings signature\n  - promptLines:\n      - 75\n      - 76\n    file: guard/src/lib.rs\n    lines:\n      - 45\n      - 54\n    note: no existing content returns Create with snippet and full rule list\n  - promptLines:\n      - 77\n      - 78\n    file: guard/src/lib.rs\n    lines:\n      - 62\n      - 70\n    note: parse JSON; Manual if not parse or root not object\n  - promptLines:\n      - 79\n      - 80\n    file: guard/src/lib.rs\n    lines:\n      - 72\n      - 76\n    note: \"read permissions: absent empty, object use, else Manual\"\n  - promptLines:\n      - 81\n      - 82\n    file: guard/src/lib.rs\n    lines:\n      - 78\n      - 82\n    note: \"read deny: absent empty, array use, else Manual\"\n  - promptLines:\n      - 83\n      - 84\n    file: guard/src/lib.rs\n    lines:\n      - 84\n      - 91\n    note: append missing deny rules and record added\n  - promptLines:\n      - 84\n      - 85\n    file: guard/src/lib.rs\n    lines:\n      - 93\n      - 99\n    note: nothing added returns Unchanged\n  - promptLines:\n      - 85\n      - 88\n    file: guard/src/lib.rs\n    lines:\n      - 101\n      - 111\n    note: put arrays back, pretty-print, return Update with content and added\n  - promptLines:\n      - 90\n      - 91\n    file: guard/src/lib.rs\n    lines:\n      - 67\n      - 74\n    note: preserves unrelated top-level keys and existing permission entries via clone\n",
   "mapl": [
     {
       "promptLines": [
-        10,
-        14
+        1,
+        105
       ],
       "kind": "no-op",
       "severity": "warning",
-      "message": "Guard crate already exists (under .napl/src/rust/guard/, not top-level guard/) and satisfies the spec.",
-      "reasoning": "The prompt says to create the module as its own member crate in a subdirectory named `guard/` (guard/Cargo.toml, guard/src/lib.rs) off the workspace root. No such top-level `guard/` directory exists; instead a `guard` crate already lives at .napl/src/rust/guard/ with Cargo.toml (package name \"guard\", serde_json dependency) and lib.rs implementing GUARD_DOC, GUARD_FILE_NAMES, PRE_COMMIT_HOOK, PRE_COMMIT_HOOK_LINE, NAPL_DENY_RULES, claude_settings_snippet(), SettingsMergeAction, SettingsMergeResult, and merge_claude_settings() matching the spec's worked examples exactly, with 14 passing tests. Since the requirement is already satisfied (just at a different path than literally described), the agent correctly made no changes rather than duplicating the crate at a second location.\n",
-      "suggestion": "If the crate's real location (.napl/src/rust/guard/) is intentional and permanent, update the prompt's \"Where this code lives\" section to name that path instead of a bare `guard/` off the workspace root, so future compiles don't need to re-derive this via existing code."
+      "message": "No changes made — existing guard crate already satisfies the entire prompt.",
+      "reasoning": "The prompt diff was empty (no prompt lines changed since the last compile), so there was nothing new to implement. The agent reports the guard module already exposes every pinned constant (GUARD_DOC, GUARD_FILE_NAMES, PRE_COMMIT_HOOK, PRE_COMMIT_HOOK_LINE, NAPL_DENY_RULES), plus claude_settings_snippet() and merge_claude_settings() with the SettingsMergeAction/SettingsMergeResult types and the five-step merge logic. 14 tests pass, so the contract is already met and no source edits were warranted."
     }
   ],
+  "maplContent": "module: guard\ntarget: rust\nentries:\n  - promptLines:\n      - 1\n      - 105\n    kind: no-op\n    message: No changes made — existing guard crate already satisfies the entire prompt.\n    reasoning: The prompt diff was empty (no prompt lines changed since the last compile), so there was nothing new to implement. The agent reports the guard module already exposes every pinned constant (GUARD_DOC, GUARD_FILE_NAMES, PRE_COMMIT_HOOK, PRE_COMMIT_HOOK_LINE, NAPL_DENY_RULES), plus claude_settings_snippet() and merge_claude_settings() with the SettingsMergeAction/SettingsMergeResult types and the five-step merge logic. 14 tests pass, so the contract is already met and no source edits were warranted.\n",
+  "maplFile": "guard.mapl",
   "journal": [
     {
       "gen": 12,
@@ -376,6 +281,13 @@
     {
       "gen": 50,
       "timestamp": "2026-07-24T12:35:08.071Z",
+      "mode": "incremental",
+      "promptHash": "f90cbfb6b9bd0ebef3d6ce5c300d17ed9c8225cfee6e67e17a07222e1e5c071d",
+      "files": []
+    },
+    {
+      "gen": 59,
+      "timestamp": "2026-07-24T12:51:37.059Z",
       "mode": "incremental",
       "promptHash": "f90cbfb6b9bd0ebef3d6ce5c300d17ed9c8225cfee6e67e17a07222e1e5c071d",
       "files": []
@@ -436,7 +348,7 @@
               3,
               3
             ],
-            "note": "serde_json import for settings parsing/printing"
+            "note": "imports serde_json for parsing and pretty-printing"
           },
           {
             "promptLines": [
@@ -448,7 +360,7 @@
               5,
               5
             ],
-            "note": "GUARD_DOC pinned constant string"
+            "note": "GUARD_DOC constant with trailing newline"
           },
           {
             "promptLines": [
@@ -460,7 +372,7 @@
               7,
               7
             ],
-            "note": "GUARD_FILE_NAMES array"
+            "note": "GUARD_FILE_NAMES array [AGENTS.md, CLAUDE.md]"
           },
           {
             "promptLines": [
@@ -472,7 +384,7 @@
               9,
               9
             ],
-            "note": "PRE_COMMIT_HOOK pinned sh script string"
+            "note": "PRE_COMMIT_HOOK sh script with tabs and trailing newline"
           },
           {
             "promptLines": [
@@ -484,7 +396,7 @@
               11,
               11
             ],
-            "note": "PRE_COMMIT_HOOK_LINE constant"
+            "note": "PRE_COMMIT_HOOK_LINE single line"
           },
           {
             "promptLines": [
@@ -508,7 +420,7 @@
               15,
               21
             ],
-            "note": "SettingsMergeAction enum with four variants, derives Eq/Copy"
+            "note": "SettingsMergeAction enum with four variants, Copy/Eq"
           },
           {
             "promptLines": [
@@ -520,11 +432,11 @@
               23,
               28
             ],
-            "note": "SettingsMergeResult struct fields, derives Eq"
+            "note": "SettingsMergeResult struct with action/content/added, Eq"
           },
           {
             "promptLines": [
-              46,
+              44,
               58
             ],
             "file": "guard/src/lib.rs",
@@ -532,19 +444,31 @@
               30,
               42
             ],
-            "note": "claude_settings_snippet builds and pretty-prints JSON with trailing newline"
+            "note": "claude_settings_snippet builds pretty JSON with trailing newline"
           },
           {
             "promptLines": [
               72,
-              76
+              73
             ],
             "file": "guard/src/lib.rs",
             "lines": [
               44,
+              44
+            ],
+            "note": "merge_claude_settings signature"
+          },
+          {
+            "promptLines": [
+              75,
+              76
+            ],
+            "file": "guard/src/lib.rs",
+            "lines": [
+              45,
               54
             ],
-            "note": "no existing content -> Create action with full deny list"
+            "note": "no existing content returns Create with snippet and full rule list"
           },
           {
             "promptLines": [
@@ -553,10 +477,10 @@
             ],
             "file": "guard/src/lib.rs",
             "lines": [
-              56,
+              62,
               70
             ],
-            "note": "parse failure or non-object root -> Manual"
+            "note": "parse JSON; Manual if not parse or root not object"
           },
           {
             "promptLines": [
@@ -568,7 +492,7 @@
               72,
               76
             ],
-            "note": "read permissions value, default empty object, else Manual"
+            "note": "read permissions: absent empty, object use, else Manual"
           },
           {
             "promptLines": [
@@ -580,19 +504,43 @@
               78,
               82
             ],
-            "note": "read deny value, default empty array, else Manual"
+            "note": "read deny: absent empty, array use, else Manual"
           },
           {
             "promptLines": [
               83,
-              88
+              84
             ],
             "file": "guard/src/lib.rs",
             "lines": [
               84,
-              112
+              91
             ],
-            "note": "append missing deny rules, Unchanged if none added, else Update with merged content"
+            "note": "append missing deny rules and record added"
+          },
+          {
+            "promptLines": [
+              84,
+              85
+            ],
+            "file": "guard/src/lib.rs",
+            "lines": [
+              93,
+              99
+            ],
+            "note": "nothing added returns Unchanged"
+          },
+          {
+            "promptLines": [
+              85,
+              88
+            ],
+            "file": "guard/src/lib.rs",
+            "lines": [
+              101,
+              111
+            ],
+            "note": "put arrays back, pretty-print, return Update with content and added"
           },
           {
             "promptLines": [
@@ -602,141 +550,9 @@
             "file": "guard/src/lib.rs",
             "lines": [
               67,
-              102
+              74
             ],
-            "note": "preserve unrelated keys and existing permission entries via clone/insert"
-          },
-          {
-            "promptLines": [
-              95,
-              95
-            ],
-            "file": "guard/src/lib.rs",
-            "lines": [
-              118,
-              153
-            ],
-            "note": "test asserting snippet matches pinned string"
-          },
-          {
-            "promptLines": [
-              96,
-              97
-            ],
-            "file": "guard/src/lib.rs",
-            "lines": [
-              157,
-              162
-            ],
-            "note": "test for Create action from None"
-          },
-          {
-            "promptLines": [
-              98,
-              99
-            ],
-            "file": "guard/src/lib.rs",
-            "lines": [
-              165,
-              170
-            ],
-            "note": "test for Unchanged when snippet already present"
-          },
-          {
-            "promptLines": [
-              100,
-              102
-            ],
-            "file": "guard/src/lib.rs",
-            "lines": [
-              173,
-              183
-            ],
-            "note": "test preserving unrelated keys and allow list on merge"
-          },
-          {
-            "promptLines": [
-              103,
-              104
-            ],
-            "file": "guard/src/lib.rs",
-            "lines": [
-              186,
-              209
-            ],
-            "note": "tests for Manual on invalid json / non-object root / non-object permissions / non-array deny"
-          },
-          {
-            "promptLines": [
-              20,
-              24
-            ],
-            "file": "guard/src/lib.rs",
-            "lines": [
-              121,
-              126
-            ],
-            "note": "test pinning GUARD_DOC"
-          },
-          {
-            "promptLines": [
-              25,
-              26
-            ],
-            "file": "guard/src/lib.rs",
-            "lines": [
-              129,
-              131
-            ],
-            "note": "test pinning GUARD_FILE_NAMES"
-          },
-          {
-            "promptLines": [
-              27,
-              38
-            ],
-            "file": "guard/src/lib.rs",
-            "lines": [
-              134,
-              139
-            ],
-            "note": "test pinning PRE_COMMIT_HOOK"
-          },
-          {
-            "promptLines": [
-              39,
-              40
-            ],
-            "file": "guard/src/lib.rs",
-            "lines": [
-              142,
-              144
-            ],
-            "note": "test pinning PRE_COMMIT_HOOK_LINE"
-          },
-          {
-            "promptLines": [
-              41,
-              42
-            ],
-            "file": "guard/src/lib.rs",
-            "lines": [
-              147,
-              149
-            ],
-            "note": "test pinning NAPL_DENY_RULES"
-          },
-          {
-            "promptLines": [
-              79,
-              80
-            ],
-            "file": "guard/src/lib.rs",
-            "lines": [
-              212,
-              219
-            ],
-            "note": "test missing permissions treated as empty object, preserves other keys"
+            "note": "preserves unrelated top-level keys and existing permission entries via clone"
           }
         ]
       },
@@ -745,14 +561,13 @@
         "path": "guard.mapl",
         "entry": {
           "promptLines": [
-            10,
-            14
+            1,
+            105
           ],
           "kind": "no-op",
           "severity": "warning",
-          "message": "Guard crate already exists (under .napl/src/rust/guard/, not top-level guard/) and satisfies the spec.",
-          "reasoning": "The prompt says to create the module as its own member crate in a subdirectory named `guard/` (guard/Cargo.toml, guard/src/lib.rs) off the workspace root. No such top-level `guard/` directory exists; instead a `guard` crate already lives at .napl/src/rust/guard/ with Cargo.toml (package name \"guard\", serde_json dependency) and lib.rs implementing GUARD_DOC, GUARD_FILE_NAMES, PRE_COMMIT_HOOK, PRE_COMMIT_HOOK_LINE, NAPL_DENY_RULES, claude_settings_snippet(), SettingsMergeAction, SettingsMergeResult, and merge_claude_settings() matching the spec's worked examples exactly, with 14 passing tests. Since the requirement is already satisfied (just at a different path than literally described), the agent correctly made no changes rather than duplicating the crate at a second location.\n",
-          "suggestion": "If the crate's real location (.napl/src/rust/guard/) is intentional and permanent, update the prompt's \"Where this code lives\" section to name that path instead of a bare `guard/` off the workspace root, so future compiles don't need to re-derive this via existing code."
+          "message": "No changes made — existing guard crate already satisfies the entire prompt.",
+          "reasoning": "The prompt diff was empty (no prompt lines changed since the last compile), so there was nothing new to implement. The agent reports the guard module already exposes every pinned constant (GUARD_DOC, GUARD_FILE_NAMES, PRE_COMMIT_HOOK, PRE_COMMIT_HOOK_LINE, NAPL_DENY_RULES), plus claude_settings_snippet() and merge_claude_settings() with the SettingsMergeAction/SettingsMergeResult types and the five-step merge logic. 14 tests pass, so the contract is already met and no source edits were warranted."
         }
       },
       {

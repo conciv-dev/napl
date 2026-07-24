@@ -30,26 +30,62 @@
     {
       "promptLines": [
         19,
+        20
+      ],
+      "file": "schemas_line_range/src/lib.rs",
+      "lines": [
+        8,
+        11
+      ],
+      "note": "public LineRange struct with u32 start/end fields"
+    },
+    {
+      "promptLines": [
+        21,
         22
       ],
       "file": "schemas_line_range/src/lib.rs",
       "lines": [
-        6,
+        7,
+        7
+      ],
+      "note": "derives Clone, Copy, PartialEq, Eq for equality/copying"
+    },
+    {
+      "promptLines": [
+        21,
+        21
+      ],
+      "file": "schemas_line_range/src/lib.rs",
+      "lines": [
+        13,
         17
       ],
-      "note": "LineRange struct with start/end fields, new(), derive equality/copy"
+      "note": "new(start, end) constructor"
     },
     {
       "promptLines": [
         26,
-        28
+        27
       ],
       "file": "schemas_line_range/src/lib.rs",
       "lines": [
         111,
         118
       ],
-      "note": "Deserialize impl entry point"
+      "note": "Deserialize impl delegating to deserialize_any"
+    },
+    {
+      "promptLines": [
+        26,
+        27
+      ],
+      "file": "schemas_line_range/src/lib.rs",
+      "lines": [
+        43,
+        45
+      ],
+      "note": "visitor expecting message describing accepted shapes"
     },
     {
       "promptLines": [
@@ -61,7 +97,7 @@
         47,
         53
       ],
-      "note": "bare u64 number becomes n..=n"
+      "note": "bare unsigned number becomes n..=n"
     },
     {
       "promptLines": [
@@ -77,12 +113,24 @@
     },
     {
       "promptLines": [
+        29,
+        29
+      ],
+      "file": "schemas_line_range/src/lib.rs",
+      "lines": [
+        55,
+        65
+      ],
+      "note": "signed number path, rejects negatives"
+    },
+    {
+      "promptLines": [
         30,
         30
       ],
       "file": "schemas_line_range/src/lib.rs",
       "lines": [
-        93,
+        92,
         97
       ],
       "note": "one-element array becomes n..=n"
@@ -102,14 +150,14 @@
     {
       "promptLines": [
         33,
-        40
+        34
       ],
       "file": "schemas_line_range/src/lib.rs",
       "lines": [
         19,
         36
       ],
-      "note": "number_to_line validates integer and >=1, accepts whole floats"
+      "note": "number_to_line enforces integer >= 1"
     },
     {
       "promptLines": [
@@ -118,10 +166,10 @@
       ],
       "file": "schemas_line_range/src/lib.rs",
       "lines": [
-        21,
+        20,
         23
       ],
-      "note": "reject zero (u64 branch)"
+      "note": "rejects 0 via as_u64 lower bound"
     },
     {
       "promptLines": [
@@ -133,31 +181,31 @@
         29,
         31
       ],
-      "note": "reject zero (float branch)"
-    },
-    {
-      "promptLines": [
-        36,
-        37
-      ],
-      "file": "schemas_line_range/src/lib.rs",
-      "lines": [
-        59,
-        65
-      ],
-      "note": "reject negative i64 (covers 0 boundary via visit_u64)"
+      "note": "rejects sub-1 float values"
     },
     {
       "promptLines": [
         38,
-        40
+        39
       ],
       "file": "schemas_line_range/src/lib.rs",
       "lines": [
         25,
+        28
+      ],
+      "note": "rejects nonzero fractional part"
+    },
+    {
+      "promptLines": [
+        39,
+        40
+      ],
+      "file": "schemas_line_range/src/lib.rs",
+      "lines": [
+        32,
         32
       ],
-      "note": "reject nonzero fractional part, accept whole-valued float"
+      "note": "zero-fraction float accepted as integer"
     },
     {
       "promptLines": [
@@ -166,10 +214,10 @@
       ],
       "file": "schemas_line_range/src/lib.rs",
       "lines": [
-        92,
+        104,
         107
       ],
-      "note": "reject arrays with !=1,2 elements"
+      "note": "rejects arrays with not exactly 1 or 2 elements"
     },
     {
       "promptLines": [
@@ -178,82 +226,37 @@
       ],
       "file": "schemas_line_range/src/lib.rs",
       "lines": [
-        83,
+        82,
         90
       ],
-      "note": "reject non-number elements in array"
-    },
-    {
-      "promptLines": [
-        43,
-        44
-      ],
-      "file": "schemas_line_range/src/lib.rs",
-      "lines": [
-        116,
-        116
-      ],
-      "note": "deserialize_any lets visitor reject strings/bools/objects via missing visit_* overrides"
-    },
-    {
-      "promptLines": [
-        46,
-        48
-      ],
-      "file": "schemas_line_range/src/lib.rs",
-      "lines": [
-        19,
-        36
-      ],
-      "note": "errors returned via Result, not panics"
-    },
-    {
-      "promptLines": [
-        26,
-        48
-      ],
-      "file": "schemas_line_range/src/lib.rs",
-      "lines": [
-        128,
-        208
-      ],
-      "note": "unit tests covering accepted/rejected input shapes"
+      "note": "rejects non-number array elements"
     }
   ],
-  "attributionYaml": "module: schemas_line_range\ntarget: rust\nentries:\n  - promptLines:\n      - 19\n      - 22\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 6\n      - 17\n    note: LineRange struct with start/end fields, new(), derive equality/copy\n  - promptLines:\n      - 26\n      - 28\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 111\n      - 118\n    note: Deserialize impl entry point\n  - promptLines:\n      - 29\n      - 29\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 47\n      - 53\n    note: bare u64 number becomes n..=n\n  - promptLines:\n      - 29\n      - 29\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 67\n      - 75\n    note: bare float number becomes n..=n\n  - promptLines:\n      - 30\n      - 30\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 93\n      - 97\n    note: one-element array becomes n..=n\n  - promptLines:\n      - 31\n      - 31\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 98\n      - 103\n    note: two-element array becomes start..=end\n  - promptLines:\n      - 33\n      - 40\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 19\n      - 36\n    note: number_to_line validates integer and >=1, accepts whole floats\n  - promptLines:\n      - 36\n      - 37\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 21\n      - 23\n    note: reject zero (u64 branch)\n  - promptLines:\n      - 36\n      - 37\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 29\n      - 31\n    note: reject zero (float branch)\n  - promptLines:\n      - 36\n      - 37\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 59\n      - 65\n    note: reject negative i64 (covers 0 boundary via visit_u64)\n  - promptLines:\n      - 38\n      - 40\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 25\n      - 32\n    note: reject nonzero fractional part, accept whole-valued float\n  - promptLines:\n      - 41\n      - 42\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 92\n      - 107\n    note: reject arrays with !=1,2 elements\n  - promptLines:\n      - 43\n      - 44\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 83\n      - 90\n    note: reject non-number elements in array\n  - promptLines:\n      - 43\n      - 44\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 116\n      - 116\n    note: deserialize_any lets visitor reject strings/bools/objects via missing visit_* overrides\n  - promptLines:\n      - 46\n      - 48\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 19\n      - 36\n    note: errors returned via Result, not panics\n  - promptLines:\n      - 26\n      - 48\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 128\n      - 208\n    note: unit tests covering accepted/rejected input shapes\n",
+  "attributionYaml": "module: schemas_line_range\ntarget: rust\nentries:\n  - promptLines:\n      - 19\n      - 20\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 8\n      - 11\n    note: public LineRange struct with u32 start/end fields\n  - promptLines:\n      - 21\n      - 22\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 7\n      - 7\n    note: derives Clone, Copy, PartialEq, Eq for equality/copying\n  - promptLines:\n      - 21\n      - 21\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 13\n      - 17\n    note: new(start, end) constructor\n  - promptLines:\n      - 26\n      - 27\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 111\n      - 118\n    note: Deserialize impl delegating to deserialize_any\n  - promptLines:\n      - 26\n      - 27\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 43\n      - 45\n    note: visitor expecting message describing accepted shapes\n  - promptLines:\n      - 29\n      - 29\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 47\n      - 53\n    note: bare unsigned number becomes n..=n\n  - promptLines:\n      - 29\n      - 29\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 67\n      - 75\n    note: bare float number becomes n..=n\n  - promptLines:\n      - 29\n      - 29\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 55\n      - 65\n    note: signed number path, rejects negatives\n  - promptLines:\n      - 30\n      - 30\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 92\n      - 97\n    note: one-element array becomes n..=n\n  - promptLines:\n      - 31\n      - 31\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 98\n      - 103\n    note: two-element array becomes start..=end\n  - promptLines:\n      - 33\n      - 34\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 19\n      - 36\n    note: number_to_line enforces integer >= 1\n  - promptLines:\n      - 36\n      - 37\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 20\n      - 23\n    note: rejects 0 via as_u64 lower bound\n  - promptLines:\n      - 36\n      - 37\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 29\n      - 31\n    note: rejects sub-1 float values\n  - promptLines:\n      - 38\n      - 39\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 25\n      - 28\n    note: rejects nonzero fractional part\n  - promptLines:\n      - 39\n      - 40\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 32\n      - 32\n    note: zero-fraction float accepted as integer\n  - promptLines:\n      - 41\n      - 42\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 104\n      - 107\n    note: rejects arrays with not exactly 1 or 2 elements\n  - promptLines:\n      - 43\n      - 44\n    file: schemas_line_range/src/lib.rs\n    lines:\n      - 82\n      - 90\n    note: rejects non-number array elements\n",
   "mapl": [
     {
       "promptLines": [
-        10,
+        8,
+        15
+      ],
+      "kind": "no-op",
+      "severity": "warning",
+      "message": "No files created — agent reports the crate already exists and fully satisfies the prompt.",
+      "reasoning": "The prompt directs creating a new member crate (schemas_line_range/Cargo.toml and src/lib.rs) with the LineRange type and lenient deserializer. The agent made NO CHANGES, stating the existing source already realizes the target and that 15/15 tests pass. So every requirement — the type, constructor, equality/copy, and the three-shape deserializer with strict integer≥1 validation — was already present. Nothing was produced because there was nothing to change; assuming the agent's claim of a passing `cargo test` is accurate, the module was already complete."
+    },
+    {
+      "promptLines": [
+        15,
         15
       ],
       "kind": "note",
       "severity": "info",
-      "message": "Root Cargo.toml left untouched, relying on it already globbing workspace members.",
-      "reasoning": "Prompt says root manifest is \"owned by the toolchain — leave it alone\" while also requiring a new member crate under schemas_line_range/. If the root manifest's `[workspace] members` list is explicit rather than a glob, adding this crate without touching the root would prevent `cargo test` from the workspace root from finding it. Agent proceeded without modifying the root and reported all tests green, so presumably the root already used a glob pattern (e.g. `members = [\"*\"]`) — but this wasn't verified against the prompt text itself, it's an assumption about the pre-existing workspace layout.\n",
-      "suggestion": "Note explicitly whether the root manifest already globs workspace members, so the agent doesn't need to infer it."
-    },
-    {
-      "promptLines": [
-        33,
-        44
-      ],
-      "kind": "assumption",
-      "severity": "warning",
-      "message": "Values above u32::MAX and non-finite floats (NaN/Infinity) rejected, though prompt doesn't mention them.",
-      "reasoning": "Prompt only specifies rejection rules for zero, negative, fractional, wrong-arity-array, and wrong-type inputs. It says nothing about integers too large to fit in u32 or about NaN/ Infinity floats. Agent chose to reject both (out-of-range error for overflow, \"invalid number\" error for non-finite floats) as a natural extension of \"integer that is at least 1,\" but this is an unstated assumption with no corresponding test. "
-    },
-    {
-      "promptLines": [
-        26,
-        44
-      ],
-      "kind": "note",
-      "severity": "info",
-      "message": "No ambiguity found in core deserialization spec — all listed shapes/rejections implemented and tested 1:1.",
-      "reasoning": "Bare number, one-element array, two-element array, zero rejection (bare and in array), fractional rejection (bare and in array), whole-valued float acceptance, 3+/0-element array rejection, and wrong-type rejection (string/bool/object) are each implemented and covered by a dedicated test matching the prompt's examples exactly."
+      "message": "Completion hinges on unverified claim that `cargo test` passes at workspace root.",
+      "reasoning": "The prompt requires `cargo test` to pass from the workspace root before finishing. The agent asserts 15/15 tests pass but this compile record cannot independently confirm the test run happened against the required root. If the pre-existing code was assumed correct without an actual test invocation, the finish condition may be unmet. Worth surfacing since the entire \"no changes needed\" conclusion rests on this."
     }
   ],
+  "maplContent": "module: schemas_line_range\ntarget: rust\nentries:\n  - promptLines:\n      - 8\n      - 15\n    kind: no-op\n    message: No files created — agent reports the crate already exists and fully satisfies the prompt.\n    reasoning: The prompt directs creating a new member crate (schemas_line_range/Cargo.toml and src/lib.rs) with the LineRange type and lenient deserializer. The agent made NO CHANGES, stating the existing source already realizes the target and that 15/15 tests pass. So every requirement — the type, constructor, equality/copy, and the three-shape deserializer with strict integer≥1 validation — was already present. Nothing was produced because there was nothing to change; assuming the agent's claim of a passing `cargo test` is accurate, the module was already complete.\n  - promptLines:\n      - 15\n      - 15\n    kind: note\n    message: Completion hinges on unverified claim that `cargo test` passes at workspace root.\n    reasoning: The prompt requires `cargo test` to pass from the workspace root before finishing. The agent asserts 15/15 tests pass but this compile record cannot independently confirm the test run happened against the required root. If the pre-existing code was assumed correct without an actual test invocation, the finish condition may be unmet. Worth surfacing since the entire \"no changes needed\" conclusion rests on this.\n",
+  "maplFile": "schemas_line_range.mapl",
   "journal": [
     {
       "gen": 8,
@@ -272,6 +275,13 @@
           "patch": "@@ -0,0 +1,208 @@\n+// GENERATED BY NAPL from schemas_line_range.napl — edit the prompt, not this file\n+\n+use serde::de::{self, Deserialize, Deserializer, Visitor};\n+use std::fmt;\n+\n+/// A 1-based inclusive line range.\n+#[derive(Debug, Clone, Copy, PartialEq, Eq)]\n+pub struct LineRange {\n+    pub start: u32,\n+    pub end: u32,\n+}\n+\n+impl LineRange {\n+    pub fn new(start: u32, end: u32) -> Self {\n+        LineRange { start, end }\n+    }\n+}\n+\n+fn number_to_line(n: serde_json::Number) -> Result<u32, String> {\n+    if let Some(i) = n.as_u64() {\n+        if i < 1 {\n+            return Err(format!(\"line number must be at least 1, got {i}\"));\n+        }\n+        u32::try_from(i).map_err(|_| format!(\"line number out of range: {i}\"))\n+    } else if let Some(f) = n.as_f64() {\n+        if f.fract() != 0.0 {\n+            return Err(format!(\"line number must be an integer, got {f}\"));\n+        }\n+        if f < 1.0 {\n+            return Err(format!(\"line number must be at least 1, got {f}\"));\n+        }\n+        Ok(f as u32)\n+    } else {\n+        Err(format!(\"line number must be an integer, got {n}\"))\n+    }\n+}\n+\n+struct LineRangeVisitor;\n+\n+impl<'de> Visitor<'de> for LineRangeVisitor {\n+    type Value = LineRange;\n+\n+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {\n+        formatter.write_str(\"a line number, or a 1- or 2-element array of line numbers\")\n+    }\n+\n+    fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>\n+    where\n+        E: de::Error,\n+    {\n+        let n = number_to_line(serde_json::Number::from(v)).map_err(de::Error::custom)?;\n+        Ok(LineRange::new(n, n))\n+    }\n+\n+    fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>\n+    where\n+        E: de::Error,\n+    {\n+        if v < 0 {\n+            return Err(de::Error::custom(format!(\n+                \"line number must be at least 1, got {v}\"\n+            )));\n+        }\n+        self.visit_u64(v as u64)\n+    }\n+\n+    fn visit_f64<E>(self, v: f64) -> Result<Self::Value, E>\n+    where\n+        E: de::Error,\n+    {\n+        let n = serde_json::Number::from_f64(v)\n+            .ok_or_else(|| de::Error::custom(format!(\"invalid number: {v}\")))?;\n+        let n = number_to_line(n).map_err(de::Error::custom)?;\n+        Ok(LineRange::new(n, n))\n+    }\n+\n+    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>\n+    where\n+        A: de::SeqAccess<'de>,\n+    {\n+        let mut values: Vec<serde_json::Number> = Vec::new();\n+        while let Some(v) = seq.next_element::<serde_json::Value>()? {\n+            match v {\n+                serde_json::Value::Number(n) => values.push(n),\n+                other => {\n+                    return Err(de::Error::custom(format!(\n+                        \"expected a number in line range array, got {other}\"\n+                    )))\n+                }\n+            }\n+        }\n+        match values.len() {\n+            1 => {\n+                let n = number_to_line(values.into_iter().next().unwrap())\n+                    .map_err(de::Error::custom)?;\n+                Ok(LineRange::new(n, n))\n+            }\n+            2 => {\n+                let mut it = values.into_iter();\n+                let start = number_to_line(it.next().unwrap()).map_err(de::Error::custom)?;\n+                let end = number_to_line(it.next().unwrap()).map_err(de::Error::custom)?;\n+                Ok(LineRange::new(start, end))\n+            }\n+            n => Err(de::Error::custom(format!(\n+                \"line range array must have 1 or 2 elements, got {n}\"\n+            ))),\n+        }\n+    }\n+}\n+\n+impl<'de> Deserialize<'de> for LineRange {\n+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>\n+    where\n+        D: Deserializer<'de>,\n+    {\n+        deserializer.deserialize_any(LineRangeVisitor)\n+    }\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    fn parse(json: &str) -> Result<LineRange, serde_json::Error> {\n+        serde_json::from_str(json)\n+    }\n+\n+    #[test]\n+    fn new_constructor_and_equality() {\n+        let a = LineRange::new(1, 3);\n+        let b = LineRange::new(1, 3);\n+        assert_eq!(a, b);\n+        assert_eq!(a.start, 1);\n+        assert_eq!(a.end, 3);\n+        let c = a;\n+        assert_eq!(a, c);\n+    }\n+\n+    #[test]\n+    fn bare_number_becomes_single_line_range() {\n+        assert_eq!(parse(\"5\").unwrap(), LineRange::new(5, 5));\n+    }\n+\n+    #[test]\n+    fn one_element_array_becomes_single_line_range() {\n+        assert_eq!(parse(\"[5]\").unwrap(), LineRange::new(5, 5));\n+    }\n+\n+    #[test]\n+    fn two_element_array_becomes_range() {\n+        assert_eq!(parse(\"[2, 7]\").unwrap(), LineRange::new(2, 7));\n+    }\n+\n+    #[test]\n+    fn bare_zero_is_rejected() {\n+        assert!(parse(\"0\").is_err());\n+    }\n+\n+    #[test]\n+    fn zero_in_array_is_rejected() {\n+        assert!(parse(\"[0, 2]\").is_err());\n+    }\n+\n+    #[test]\n+    fn fractional_bare_number_is_rejected() {\n+        assert!(parse(\"1.5\").is_err());\n+    }\n+\n+    #[test]\n+    fn fractional_number_in_array_is_rejected() {\n+        assert!(parse(\"[1.5, 2]\").is_err());\n+    }\n+\n+    #[test]\n+    fn whole_valued_float_is_accepted() {\n+        assert_eq!(parse(\"2.0\").unwrap(), LineRange::new(2, 2));\n+    }\n+\n+    #[test]\n+    fn three_element_array_is_rejected() {\n+        assert!(parse(\"[1, 2, 3]\").is_err());\n+    }\n+\n+    #[test]\n+    fn empty_array_is_rejected() {\n+        assert!(parse(\"[]\").is_err());\n+    }\n+\n+    #[test]\n+    fn string_is_rejected() {\n+        assert!(parse(\"\\\"nope\\\"\").is_err());\n+    }\n+\n+    #[test]\n+    fn boolean_is_rejected() {\n+        assert!(parse(\"true\").is_err());\n+    }\n+\n+    #[test]\n+    fn object_is_rejected() {\n+        assert!(parse(\"{\\\"start\\\": 1, \\\"end\\\": 2}\").is_err());\n+    }\n+\n+    #[test]\n+    fn negative_number_is_rejected() {\n+        assert!(parse(\"-1\").is_err());\n+    }\n+}"
         }
       ]
+    },
+    {
+      "gen": 60,
+      "timestamp": "2026-07-24T12:53:16.159Z",
+      "mode": "incremental",
+      "promptHash": "b64ad0a0e88a52c81bf16816622897c86e0e7f491113ae444b0dfe2cce55312f",
+      "files": []
     }
   ],
   "lock": [
@@ -322,26 +332,62 @@
           {
             "promptLines": [
               19,
+              20
+            ],
+            "file": "schemas_line_range/src/lib.rs",
+            "lines": [
+              8,
+              11
+            ],
+            "note": "public LineRange struct with u32 start/end fields"
+          },
+          {
+            "promptLines": [
+              21,
               22
             ],
             "file": "schemas_line_range/src/lib.rs",
             "lines": [
-              6,
+              7,
+              7
+            ],
+            "note": "derives Clone, Copy, PartialEq, Eq for equality/copying"
+          },
+          {
+            "promptLines": [
+              21,
+              21
+            ],
+            "file": "schemas_line_range/src/lib.rs",
+            "lines": [
+              13,
               17
             ],
-            "note": "LineRange struct with start/end fields, new(), derive equality/copy"
+            "note": "new(start, end) constructor"
           },
           {
             "promptLines": [
               26,
-              28
+              27
             ],
             "file": "schemas_line_range/src/lib.rs",
             "lines": [
               111,
               118
             ],
-            "note": "Deserialize impl entry point"
+            "note": "Deserialize impl delegating to deserialize_any"
+          },
+          {
+            "promptLines": [
+              26,
+              27
+            ],
+            "file": "schemas_line_range/src/lib.rs",
+            "lines": [
+              43,
+              45
+            ],
+            "note": "visitor expecting message describing accepted shapes"
           },
           {
             "promptLines": [
@@ -353,7 +399,7 @@
               47,
               53
             ],
-            "note": "bare u64 number becomes n..=n"
+            "note": "bare unsigned number becomes n..=n"
           },
           {
             "promptLines": [
@@ -369,12 +415,24 @@
           },
           {
             "promptLines": [
+              29,
+              29
+            ],
+            "file": "schemas_line_range/src/lib.rs",
+            "lines": [
+              55,
+              65
+            ],
+            "note": "signed number path, rejects negatives"
+          },
+          {
+            "promptLines": [
               30,
               30
             ],
             "file": "schemas_line_range/src/lib.rs",
             "lines": [
-              93,
+              92,
               97
             ],
             "note": "one-element array becomes n..=n"
@@ -394,14 +452,14 @@
           {
             "promptLines": [
               33,
-              40
+              34
             ],
             "file": "schemas_line_range/src/lib.rs",
             "lines": [
               19,
               36
             ],
-            "note": "number_to_line validates integer and >=1, accepts whole floats"
+            "note": "number_to_line enforces integer >= 1"
           },
           {
             "promptLines": [
@@ -410,10 +468,10 @@
             ],
             "file": "schemas_line_range/src/lib.rs",
             "lines": [
-              21,
+              20,
               23
             ],
-            "note": "reject zero (u64 branch)"
+            "note": "rejects 0 via as_u64 lower bound"
           },
           {
             "promptLines": [
@@ -425,31 +483,31 @@
               29,
               31
             ],
-            "note": "reject zero (float branch)"
-          },
-          {
-            "promptLines": [
-              36,
-              37
-            ],
-            "file": "schemas_line_range/src/lib.rs",
-            "lines": [
-              59,
-              65
-            ],
-            "note": "reject negative i64 (covers 0 boundary via visit_u64)"
+            "note": "rejects sub-1 float values"
           },
           {
             "promptLines": [
               38,
-              40
+              39
             ],
             "file": "schemas_line_range/src/lib.rs",
             "lines": [
               25,
+              28
+            ],
+            "note": "rejects nonzero fractional part"
+          },
+          {
+            "promptLines": [
+              39,
+              40
+            ],
+            "file": "schemas_line_range/src/lib.rs",
+            "lines": [
+              32,
               32
             ],
-            "note": "reject nonzero fractional part, accept whole-valued float"
+            "note": "zero-fraction float accepted as integer"
           },
           {
             "promptLines": [
@@ -458,10 +516,10 @@
             ],
             "file": "schemas_line_range/src/lib.rs",
             "lines": [
-              92,
+              104,
               107
             ],
-            "note": "reject arrays with !=1,2 elements"
+            "note": "rejects arrays with not exactly 1 or 2 elements"
           },
           {
             "promptLines": [
@@ -470,46 +528,10 @@
             ],
             "file": "schemas_line_range/src/lib.rs",
             "lines": [
-              83,
+              82,
               90
             ],
-            "note": "reject non-number elements in array"
-          },
-          {
-            "promptLines": [
-              43,
-              44
-            ],
-            "file": "schemas_line_range/src/lib.rs",
-            "lines": [
-              116,
-              116
-            ],
-            "note": "deserialize_any lets visitor reject strings/bools/objects via missing visit_* overrides"
-          },
-          {
-            "promptLines": [
-              46,
-              48
-            ],
-            "file": "schemas_line_range/src/lib.rs",
-            "lines": [
-              19,
-              36
-            ],
-            "note": "errors returned via Result, not panics"
-          },
-          {
-            "promptLines": [
-              26,
-              48
-            ],
-            "file": "schemas_line_range/src/lib.rs",
-            "lines": [
-              128,
-              208
-            ],
-            "note": "unit tests covering accepted/rejected input shapes"
+            "note": "rejects non-number array elements"
           }
         ]
       },
@@ -518,42 +540,27 @@
         "path": "schemas_line_range.mapl",
         "entry": {
           "promptLines": [
-            10,
+            8,
+            15
+          ],
+          "kind": "no-op",
+          "severity": "warning",
+          "message": "No files created — agent reports the crate already exists and fully satisfies the prompt.",
+          "reasoning": "The prompt directs creating a new member crate (schemas_line_range/Cargo.toml and src/lib.rs) with the LineRange type and lenient deserializer. The agent made NO CHANGES, stating the existing source already realizes the target and that 15/15 tests pass. So every requirement — the type, constructor, equality/copy, and the three-shape deserializer with strict integer≥1 validation — was already present. Nothing was produced because there was nothing to change; assuming the agent's claim of a passing `cargo test` is accurate, the module was already complete."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "schemas_line_range.mapl",
+        "entry": {
+          "promptLines": [
+            15,
             15
           ],
           "kind": "note",
           "severity": "info",
-          "message": "Root Cargo.toml left untouched, relying on it already globbing workspace members.",
-          "reasoning": "Prompt says root manifest is \"owned by the toolchain — leave it alone\" while also requiring a new member crate under schemas_line_range/. If the root manifest's `[workspace] members` list is explicit rather than a glob, adding this crate without touching the root would prevent `cargo test` from the workspace root from finding it. Agent proceeded without modifying the root and reported all tests green, so presumably the root already used a glob pattern (e.g. `members = [\"*\"]`) — but this wasn't verified against the prompt text itself, it's an assumption about the pre-existing workspace layout.\n",
-          "suggestion": "Note explicitly whether the root manifest already globs workspace members, so the agent doesn't need to infer it."
-        }
-      },
-      {
-        "type": "mapl-entry",
-        "path": "schemas_line_range.mapl",
-        "entry": {
-          "promptLines": [
-            33,
-            44
-          ],
-          "kind": "assumption",
-          "severity": "warning",
-          "message": "Values above u32::MAX and non-finite floats (NaN/Infinity) rejected, though prompt doesn't mention them.",
-          "reasoning": "Prompt only specifies rejection rules for zero, negative, fractional, wrong-arity-array, and wrong-type inputs. It says nothing about integers too large to fit in u32 or about NaN/ Infinity floats. Agent chose to reject both (out-of-range error for overflow, \"invalid number\" error for non-finite floats) as a natural extension of \"integer that is at least 1,\" but this is an unstated assumption with no corresponding test. "
-        }
-      },
-      {
-        "type": "mapl-entry",
-        "path": "schemas_line_range.mapl",
-        "entry": {
-          "promptLines": [
-            26,
-            44
-          ],
-          "kind": "note",
-          "severity": "info",
-          "message": "No ambiguity found in core deserialization spec — all listed shapes/rejections implemented and tested 1:1.",
-          "reasoning": "Bare number, one-element array, two-element array, zero rejection (bare and in array), fractional rejection (bare and in array), whole-valued float acceptance, 3+/0-element array rejection, and wrong-type rejection (string/bool/object) are each implemented and covered by a dedicated test matching the prompt's examples exactly."
+          "message": "Completion hinges on unverified claim that `cargo test` passes at workspace root.",
+          "reasoning": "The prompt requires `cargo test` to pass from the workspace root before finishing. The agent asserts 15/15 tests pass but this compile record cannot independently confirm the test run happened against the required root. If the pre-existing code was assumed correct without an actual test invocation, the finish condition may be unmet. Worth surfacing since the entire \"no changes needed\" conclusion rests on this."
         }
       },
       {

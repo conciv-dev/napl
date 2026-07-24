@@ -5,8 +5,7 @@ description: The .napl format, frontmatter fields, emoji aliases, the .mapl repl
 
 A prompt is a `.napl` file: YAML frontmatter for machine-facing metadata, markdown prose as the contract handed to the coding agent.
 
-```napl title="auth/session.napl"
----
+<NaplExample filename="auth/session.napl" code={`---
 module: auth/session
 deps: [auth/tokens]
 targets: [typescript]
@@ -18,9 +17,9 @@ tests:
 Manage user sessions. Sessions expire after 30 minutes of inactivity.
 Refreshing a session extends it. An expired token is rejected with
 SESSION_EXPIRED, never silently renewed.
-```
+`} />
 
-The prompt tab is editable against the CLI's own validator — misspell a field or break the YAML and the squiggle appears as you type. The code tab shows what this prompt generated; hover a sentence to light up its lines.
+This prompt is live — edit it and the CLI's own validator runs as you type: misspell a field or break the YAML and the squiggle appears. To watch a prompt generate real code and trace each sentence to the lines it produced, open the [self-host showcase](/selfhost).
 
 ## Frontmatter fields
 

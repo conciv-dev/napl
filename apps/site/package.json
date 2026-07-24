@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",
+    "@fontsource-variable/geist-mono": "^5.3.0",
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
     "@napl/editor": "workspace:*",
     "@napl/grammar": "workspace:*",

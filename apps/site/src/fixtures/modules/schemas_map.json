@@ -29,15 +29,15 @@
   "attribution": [
     {
       "promptLines": [
-        1,
+        7,
         7
       ],
       "file": "schemas_map/src/lib.rs",
       "lines": [
-        1,
+        3,
         4
       ],
-      "note": "module header, imports serde/serde_json"
+      "note": "imports serde and ordered map"
     },
     {
       "promptLines": [
@@ -49,11 +49,11 @@
         3,
         3
       ],
-      "note": "import OrderedMap from schemas_ordered_map sibling crate"
+      "note": "uses OrderedMap from sibling crate"
     },
     {
       "promptLines": [
-        41,
+        44,
         50
       ],
       "file": "schemas_map/src/lib.rs",
@@ -73,7 +73,7 @@
         12,
         13
       ],
-      "note": "promptHashAtGen field, omit if None, default None"
+      "note": "promptHashAtGen rename, default, skip when None"
     },
     {
       "promptLines": [
@@ -85,7 +85,7 @@
         14,
         15
       ],
-      "note": "files field defaulting to empty"
+      "note": "files default empty"
     },
     {
       "promptLines": [
@@ -97,7 +97,7 @@
         16,
         17
       ],
-      "note": "unattributed field, omit if None"
+      "note": "unattributed skip when None, default None"
     },
     {
       "promptLines": [
@@ -133,7 +133,7 @@
         23,
         24
       ],
-      "note": "prompt_hash field renamed promptHash"
+      "note": "prompt_hash renamed promptHash"
     },
     {
       "promptLines": [
@@ -145,7 +145,7 @@
         25,
         26
       ],
-      "note": "declared_targets field renamed declaredTargets, default empty"
+      "note": "declared_targets renamed, default empty"
     },
     {
       "promptLines": [
@@ -157,7 +157,7 @@
         27,
         28
       ],
-      "note": "targets OrderedMap field default empty"
+      "note": "targets ordered map default empty"
     },
     {
       "promptLines": [
@@ -170,6 +170,18 @@
         37
       ],
       "note": "FileRecord struct"
+    },
+    {
+      "promptLines": [
+        60,
+        60
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        35,
+        36
+      ],
+      "note": "prompts default empty"
     },
     {
       "promptLines": [
@@ -193,7 +205,7 @@
         6,
         8
       ],
-      "note": "default_version helper returning 2"
+      "note": "default_version returns 2"
     },
     {
       "promptLines": [
@@ -205,19 +217,31 @@
         41,
         42
       ],
-      "note": "version field defaults via default_version"
+      "note": "version defaults to 2"
     },
     {
       "promptLines": [
         63,
-        64
+        63
       ],
       "file": "schemas_map/src/lib.rs",
       "lines": [
         43,
+        44
+      ],
+      "note": "prompts default empty"
+    },
+    {
+      "promptLines": [
+        64,
+        64
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        45,
         46
       ],
-      "note": "prompts and files OrderedMap fields default empty"
+      "note": "files default empty"
     },
     {
       "promptLines": [
@@ -253,7 +277,7 @@
         61,
         69
       ],
-      "note": "AttributionInput plain struct"
+      "note": "AttributionInput struct"
     },
     {
       "promptLines": [
@@ -265,7 +289,7 @@
         71,
         79
       ],
-      "note": "UnattributedInput plain struct"
+      "note": "UnattributedInput struct"
     },
     {
       "promptLines": [
@@ -277,7 +301,7 @@
         81,
         87
       ],
-      "note": "empty_map constructor"
+      "note": "empty_map builds version 2 empty"
     },
     {
       "promptLines": [
@@ -289,7 +313,19 @@
         89,
         95
       ],
-      "note": "parse_map deserializes JSON and validates version"
+      "note": "parse_map deserialize and version check"
+    },
+    {
+      "promptLines": [
+        81,
+        81
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        91,
+        93
+      ],
+      "note": "unsupported map version error"
     },
     {
       "promptLines": [
@@ -301,7 +337,7 @@
         97,
         101
       ],
-      "note": "map_to_json pretty-prints with trailing newline"
+      "note": "map_to_json pretty print plus newline"
     },
     {
       "promptLines": [
@@ -313,7 +349,7 @@
         103,
         109
       ],
-      "note": "prompts_for_module filters by module, insertion order"
+      "note": "prompts_for_module filters by module"
     },
     {
       "promptLines": [
@@ -325,7 +361,7 @@
         111,
         113
       ],
-      "note": "has_module checks any matching prompt"
+      "note": "has_module any match"
     },
     {
       "promptLines": [
@@ -337,7 +373,7 @@
         115,
         128
       ],
-      "note": "declared_targets_for_module dedup union first-seen order"
+      "note": "declared_targets_for_module dedup first-seen"
     },
     {
       "promptLines": [
@@ -349,7 +385,7 @@
         130,
         151
       ],
-      "note": "files_for_module dedup by (target, file_path)"
+      "note": "files_for_module dedup by target+path"
     },
     {
       "promptLines": [
@@ -361,7 +397,55 @@
         153,
         175
       ],
-      "note": "is_prompt_gen_stale staleness logic"
+      "note": "is_prompt_gen_stale all cases"
+    },
+    {
+      "promptLines": [
+        99,
+        99
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        159,
+        164
+      ],
+      "note": "force or absent record stale"
+    },
+    {
+      "promptLines": [
+        100,
+        100
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        165,
+        167
+      ],
+      "note": "missing target sub-record stale"
+    },
+    {
+      "promptLines": [
+        101,
+        101
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        168,
+        170
+      ],
+      "note": "unattributed true stale"
+    },
+    {
+      "promptLines": [
+        101,
+        102
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        171,
+        174
+      ],
+      "note": "hash absent or differs stale"
     },
     {
       "promptLines": [
@@ -373,7 +457,7 @@
         177,
         185
       ],
-      "note": "detach_file helper removes prompt from file record"
+      "note": "detach_file removes rel, drops empty entry"
     },
     {
       "promptLines": [
@@ -385,19 +469,43 @@
         187,
         247
       ],
-      "note": "record_attribution mutation helper"
+      "note": "record_attribution full body"
     },
     {
       "promptLines": [
         110,
-        113
+        111
       ],
       "file": "schemas_map/src/lib.rs",
       "lines": [
         188,
+        192
+      ],
+      "note": "existing targets clone"
+    },
+    {
+      "promptLines": [
+        111,
+        112
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        194,
+        197
+      ],
+      "note": "prior_files of target"
+    },
+    {
+      "promptLines": [
+        112,
+        113
+      ],
+      "file": "schemas_map/src/lib.rs",
+      "lines": [
+        199,
         205
       ],
-      "note": "compute existing_targets, prior_files, detach stale files"
+      "note": "detach prior files not in new set"
     },
     {
       "promptLines": [
@@ -409,7 +517,7 @@
         207,
         214
       ],
-      "note": "set target sub-record with prompt_hash_at_gen/files/unattributed None"
+      "note": "set target sub-record"
     },
     {
       "promptLines": [
@@ -421,7 +529,7 @@
         216,
         224
       ],
-      "note": "store prompt record under rel"
+      "note": "store prompt record"
     },
     {
       "promptLines": [
@@ -433,7 +541,7 @@
         226,
         246
       ],
-      "note": "ensure FileRecord per new file, append prompt if absent"
+      "note": "ensure FileRecord per file, append rel once"
     },
     {
       "promptLines": [
@@ -445,7 +553,7 @@
         249,
         283
       ],
-      "note": "record_unattributed mutation helper"
+      "note": "record_unattributed full body"
     },
     {
       "promptLines": [
@@ -457,7 +565,7 @@
         256,
         263
       ],
-      "note": "detach every prior file of target sub-record"
+      "note": "detach every prior file"
     },
     {
       "promptLines": [
@@ -469,55 +577,57 @@
         265,
         272
       ],
-      "note": "set sub-record unattributed=Some(true), prompt_hash_at_gen=None"
+      "note": "sub-record unattributed true"
     },
     {
       "promptLines": [
         128,
-        129
+        128
       ],
       "file": "schemas_map/src/lib.rs",
       "lines": [
         274,
         282
       ],
-      "note": "store prompt record, no FileRecord created"
+      "note": "store prompt record"
     }
   ],
-  "attributionYaml": "module: schemas_map\ntarget: rust\nentries:\n  - promptLines:\n      - 1\n      - 7\n    file: schemas_map/src/lib.rs\n    lines:\n      - 1\n      - 4\n    note: module header, imports serde/serde_json\n  - promptLines:\n      - 24\n      - 28\n    file: schemas_map/src/lib.rs\n    lines:\n      - 3\n      - 3\n    note: import OrderedMap from schemas_ordered_map sibling crate\n  - promptLines:\n      - 41\n      - 50\n    file: schemas_map/src/lib.rs\n    lines:\n      - 10\n      - 18\n    note: PromptTargetRecord struct with serde attrs\n  - promptLines:\n      - 46\n      - 47\n    file: schemas_map/src/lib.rs\n    lines:\n      - 12\n      - 13\n    note: promptHashAtGen field, omit if None, default None\n  - promptLines:\n      - 48\n      - 48\n    file: schemas_map/src/lib.rs\n    lines:\n      - 14\n      - 15\n    note: files field defaulting to empty\n  - promptLines:\n      - 49\n      - 50\n    file: schemas_map/src/lib.rs\n    lines:\n      - 16\n      - 17\n    note: unattributed field, omit if None\n  - promptLines:\n      - 51\n      - 56\n    file: schemas_map/src/lib.rs\n    lines:\n      - 20\n      - 29\n    note: PromptRecord struct\n  - promptLines:\n      - 52\n      - 52\n    file: schemas_map/src/lib.rs\n    lines:\n      - 22\n      - 22\n    note: module field\n  - promptLines:\n      - 53\n      - 53\n    file: schemas_map/src/lib.rs\n    lines:\n      - 23\n      - 24\n    note: prompt_hash field renamed promptHash\n  - promptLines:\n      - 54\n      - 55\n    file: schemas_map/src/lib.rs\n    lines:\n      - 25\n      - 26\n    note: declared_targets field renamed declaredTargets, default empty\n  - promptLines:\n      - 56\n      - 56\n    file: schemas_map/src/lib.rs\n    lines:\n      - 27\n      - 28\n    note: targets OrderedMap field default empty\n  - promptLines:\n      - 57\n      - 60\n    file: schemas_map/src/lib.rs\n    lines:\n      - 31\n      - 37\n    note: FileRecord struct\n  - promptLines:\n      - 61\n      - 64\n    file: schemas_map/src/lib.rs\n    lines:\n      - 39\n      - 47\n    note: NaplMap struct\n  - promptLines:\n      - 62\n      - 62\n    file: schemas_map/src/lib.rs\n    lines:\n      - 6\n      - 8\n    note: default_version helper returning 2\n  - promptLines:\n      - 62\n      - 62\n    file: schemas_map/src/lib.rs\n    lines:\n      - 41\n      - 42\n    note: version field defaults via default_version\n  - promptLines:\n      - 63\n      - 64\n    file: schemas_map/src/lib.rs\n    lines:\n      - 43\n      - 46\n    note: prompts and files OrderedMap fields default empty\n  - promptLines:\n      - 68\n      - 68\n    file: schemas_map/src/lib.rs\n    lines:\n      - 49\n      - 53\n    note: ModuleFile plain struct\n  - promptLines:\n      - 69\n      - 69\n    file: schemas_map/src/lib.rs\n    lines:\n      - 55\n      - 59\n    note: FileInput plain struct\n  - promptLines:\n      - 70\n      - 72\n    file: schemas_map/src/lib.rs\n    lines:\n      - 61\n      - 69\n    note: AttributionInput plain struct\n  - promptLines:\n      - 73\n      - 75\n    file: schemas_map/src/lib.rs\n    lines:\n      - 71\n      - 79\n    note: UnattributedInput plain struct\n  - promptLines:\n      - 79\n      - 79\n    file: schemas_map/src/lib.rs\n    lines:\n      - 81\n      - 87\n    note: empty_map constructor\n  - promptLines:\n      - 80\n      - 82\n    file: schemas_map/src/lib.rs\n    lines:\n      - 89\n      - 95\n    note: parse_map deserializes JSON and validates version\n  - promptLines:\n      - 83\n      - 84\n    file: schemas_map/src/lib.rs\n    lines:\n      - 97\n      - 101\n    note: map_to_json pretty-prints with trailing newline\n  - promptLines:\n      - 88\n      - 89\n    file: schemas_map/src/lib.rs\n    lines:\n      - 103\n      - 109\n    note: prompts_for_module filters by module, insertion order\n  - promptLines:\n      - 90\n      - 90\n    file: schemas_map/src/lib.rs\n    lines:\n      - 111\n      - 113\n    note: has_module checks any matching prompt\n  - promptLines:\n      - 91\n      - 93\n    file: schemas_map/src/lib.rs\n    lines:\n      - 115\n      - 128\n    note: declared_targets_for_module dedup union first-seen order\n  - promptLines:\n      - 94\n      - 97\n    file: schemas_map/src/lib.rs\n    lines:\n      - 130\n      - 151\n    note: files_for_module dedup by (target, file_path)\n  - promptLines:\n      - 98\n      - 102\n    file: schemas_map/src/lib.rs\n    lines:\n      - 153\n      - 175\n    note: is_prompt_gen_stale staleness logic\n  - promptLines:\n      - 131\n      - 135\n    file: schemas_map/src/lib.rs\n    lines:\n      - 177\n      - 185\n    note: detach_file helper removes prompt from file record\n  - promptLines:\n      - 108\n      - 121\n    file: schemas_map/src/lib.rs\n    lines:\n      - 187\n      - 247\n    note: record_attribution mutation helper\n  - promptLines:\n      - 110\n      - 113\n    file: schemas_map/src/lib.rs\n    lines:\n      - 188\n      - 205\n    note: compute existing_targets, prior_files, detach stale files\n  - promptLines:\n      - 114\n      - 116\n    file: schemas_map/src/lib.rs\n    lines:\n      - 207\n      - 214\n    note: set target sub-record with prompt_hash_at_gen/files/unattributed None\n  - promptLines:\n      - 116\n      - 117\n    file: schemas_map/src/lib.rs\n    lines:\n      - 216\n      - 224\n    note: store prompt record under rel\n  - promptLines:\n      - 118\n      - 121\n    file: schemas_map/src/lib.rs\n    lines:\n      - 226\n      - 246\n    note: ensure FileRecord per new file, append prompt if absent\n  - promptLines:\n      - 123\n      - 129\n    file: schemas_map/src/lib.rs\n    lines:\n      - 249\n      - 283\n    note: record_unattributed mutation helper\n  - promptLines:\n      - 125\n      - 126\n    file: schemas_map/src/lib.rs\n    lines:\n      - 256\n      - 263\n    note: detach every prior file of target sub-record\n  - promptLines:\n      - 127\n      - 128\n    file: schemas_map/src/lib.rs\n    lines:\n      - 265\n      - 272\n    note: set sub-record unattributed=Some(true), prompt_hash_at_gen=None\n  - promptLines:\n      - 128\n      - 129\n    file: schemas_map/src/lib.rs\n    lines:\n      - 274\n      - 282\n    note: store prompt record, no FileRecord created\n",
+  "attributionYaml": "module: schemas_map\ntarget: rust\nentries:\n  - promptLines:\n      - 7\n      - 7\n    file: schemas_map/src/lib.rs\n    lines:\n      - 3\n      - 4\n    note: imports serde and ordered map\n  - promptLines:\n      - 24\n      - 28\n    file: schemas_map/src/lib.rs\n    lines:\n      - 3\n      - 3\n    note: uses OrderedMap from sibling crate\n  - promptLines:\n      - 44\n      - 50\n    file: schemas_map/src/lib.rs\n    lines:\n      - 10\n      - 18\n    note: PromptTargetRecord struct with serde attrs\n  - promptLines:\n      - 46\n      - 47\n    file: schemas_map/src/lib.rs\n    lines:\n      - 12\n      - 13\n    note: promptHashAtGen rename, default, skip when None\n  - promptLines:\n      - 48\n      - 48\n    file: schemas_map/src/lib.rs\n    lines:\n      - 14\n      - 15\n    note: files default empty\n  - promptLines:\n      - 49\n      - 50\n    file: schemas_map/src/lib.rs\n    lines:\n      - 16\n      - 17\n    note: unattributed skip when None, default None\n  - promptLines:\n      - 51\n      - 56\n    file: schemas_map/src/lib.rs\n    lines:\n      - 20\n      - 29\n    note: PromptRecord struct\n  - promptLines:\n      - 52\n      - 52\n    file: schemas_map/src/lib.rs\n    lines:\n      - 22\n      - 22\n    note: module field\n  - promptLines:\n      - 53\n      - 53\n    file: schemas_map/src/lib.rs\n    lines:\n      - 23\n      - 24\n    note: prompt_hash renamed promptHash\n  - promptLines:\n      - 54\n      - 55\n    file: schemas_map/src/lib.rs\n    lines:\n      - 25\n      - 26\n    note: declared_targets renamed, default empty\n  - promptLines:\n      - 56\n      - 56\n    file: schemas_map/src/lib.rs\n    lines:\n      - 27\n      - 28\n    note: targets ordered map default empty\n  - promptLines:\n      - 57\n      - 60\n    file: schemas_map/src/lib.rs\n    lines:\n      - 31\n      - 37\n    note: FileRecord struct\n  - promptLines:\n      - 60\n      - 60\n    file: schemas_map/src/lib.rs\n    lines:\n      - 35\n      - 36\n    note: prompts default empty\n  - promptLines:\n      - 61\n      - 64\n    file: schemas_map/src/lib.rs\n    lines:\n      - 39\n      - 47\n    note: NaplMap struct\n  - promptLines:\n      - 62\n      - 62\n    file: schemas_map/src/lib.rs\n    lines:\n      - 6\n      - 8\n    note: default_version returns 2\n  - promptLines:\n      - 62\n      - 62\n    file: schemas_map/src/lib.rs\n    lines:\n      - 41\n      - 42\n    note: version defaults to 2\n  - promptLines:\n      - 63\n      - 63\n    file: schemas_map/src/lib.rs\n    lines:\n      - 43\n      - 44\n    note: prompts default empty\n  - promptLines:\n      - 64\n      - 64\n    file: schemas_map/src/lib.rs\n    lines:\n      - 45\n      - 46\n    note: files default empty\n  - promptLines:\n      - 68\n      - 68\n    file: schemas_map/src/lib.rs\n    lines:\n      - 49\n      - 53\n    note: ModuleFile plain struct\n  - promptLines:\n      - 69\n      - 69\n    file: schemas_map/src/lib.rs\n    lines:\n      - 55\n      - 59\n    note: FileInput plain struct\n  - promptLines:\n      - 70\n      - 72\n    file: schemas_map/src/lib.rs\n    lines:\n      - 61\n      - 69\n    note: AttributionInput struct\n  - promptLines:\n      - 73\n      - 75\n    file: schemas_map/src/lib.rs\n    lines:\n      - 71\n      - 79\n    note: UnattributedInput struct\n  - promptLines:\n      - 79\n      - 79\n    file: schemas_map/src/lib.rs\n    lines:\n      - 81\n      - 87\n    note: empty_map builds version 2 empty\n  - promptLines:\n      - 80\n      - 82\n    file: schemas_map/src/lib.rs\n    lines:\n      - 89\n      - 95\n    note: parse_map deserialize and version check\n  - promptLines:\n      - 81\n      - 81\n    file: schemas_map/src/lib.rs\n    lines:\n      - 91\n      - 93\n    note: unsupported map version error\n  - promptLines:\n      - 83\n      - 84\n    file: schemas_map/src/lib.rs\n    lines:\n      - 97\n      - 101\n    note: map_to_json pretty print plus newline\n  - promptLines:\n      - 88\n      - 89\n    file: schemas_map/src/lib.rs\n    lines:\n      - 103\n      - 109\n    note: prompts_for_module filters by module\n  - promptLines:\n      - 90\n      - 90\n    file: schemas_map/src/lib.rs\n    lines:\n      - 111\n      - 113\n    note: has_module any match\n  - promptLines:\n      - 91\n      - 93\n    file: schemas_map/src/lib.rs\n    lines:\n      - 115\n      - 128\n    note: declared_targets_for_module dedup first-seen\n  - promptLines:\n      - 94\n      - 97\n    file: schemas_map/src/lib.rs\n    lines:\n      - 130\n      - 151\n    note: files_for_module dedup by target+path\n  - promptLines:\n      - 98\n      - 102\n    file: schemas_map/src/lib.rs\n    lines:\n      - 153\n      - 175\n    note: is_prompt_gen_stale all cases\n  - promptLines:\n      - 99\n      - 99\n    file: schemas_map/src/lib.rs\n    lines:\n      - 159\n      - 164\n    note: force or absent record stale\n  - promptLines:\n      - 100\n      - 100\n    file: schemas_map/src/lib.rs\n    lines:\n      - 165\n      - 167\n    note: missing target sub-record stale\n  - promptLines:\n      - 101\n      - 101\n    file: schemas_map/src/lib.rs\n    lines:\n      - 168\n      - 170\n    note: unattributed true stale\n  - promptLines:\n      - 101\n      - 102\n    file: schemas_map/src/lib.rs\n    lines:\n      - 171\n      - 174\n    note: hash absent or differs stale\n  - promptLines:\n      - 131\n      - 135\n    file: schemas_map/src/lib.rs\n    lines:\n      - 177\n      - 185\n    note: detach_file removes rel, drops empty entry\n  - promptLines:\n      - 108\n      - 121\n    file: schemas_map/src/lib.rs\n    lines:\n      - 187\n      - 247\n    note: record_attribution full body\n  - promptLines:\n      - 110\n      - 111\n    file: schemas_map/src/lib.rs\n    lines:\n      - 188\n      - 192\n    note: existing targets clone\n  - promptLines:\n      - 111\n      - 112\n    file: schemas_map/src/lib.rs\n    lines:\n      - 194\n      - 197\n    note: prior_files of target\n  - promptLines:\n      - 112\n      - 113\n    file: schemas_map/src/lib.rs\n    lines:\n      - 199\n      - 205\n    note: detach prior files not in new set\n  - promptLines:\n      - 114\n      - 116\n    file: schemas_map/src/lib.rs\n    lines:\n      - 207\n      - 214\n    note: set target sub-record\n  - promptLines:\n      - 116\n      - 117\n    file: schemas_map/src/lib.rs\n    lines:\n      - 216\n      - 224\n    note: store prompt record\n  - promptLines:\n      - 118\n      - 121\n    file: schemas_map/src/lib.rs\n    lines:\n      - 226\n      - 246\n    note: ensure FileRecord per file, append rel once\n  - promptLines:\n      - 123\n      - 129\n    file: schemas_map/src/lib.rs\n    lines:\n      - 249\n      - 283\n    note: record_unattributed full body\n  - promptLines:\n      - 125\n      - 126\n    file: schemas_map/src/lib.rs\n    lines:\n      - 256\n      - 263\n    note: detach every prior file\n  - promptLines:\n      - 127\n      - 128\n    file: schemas_map/src/lib.rs\n    lines:\n      - 265\n      - 272\n    note: sub-record unattributed true\n  - promptLines:\n      - 128\n      - 128\n    file: schemas_map/src/lib.rs\n    lines:\n      - 274\n      - 282\n    note: store prompt record\n",
   "mapl": [
     {
       "promptLines": [
-        11,
-        16
+        1,
+        142
       ],
-      "kind": "note",
-      "severity": "info",
-      "message": "Agent scoped work correctly to schemas_map/, root Cargo.toml untouched.",
-      "reasoning": "Prompt required leaving workspace root manifest alone and touching nothing outside schemas_map/. Verified only schemas_map/Cargo.toml and schemas_map/src/lib.rs were created; root manifest was not modified. No ambiguity, just confirming correct scope discipline."
-    },
-    {
-      "promptLines": [
-        118,
-        121
-      ],
-      "kind": "assumption",
+      "kind": "no-op",
       "severity": "warning",
-      "message": "FileRecord fields overwritten unconditionally on every attribution, even for pre-existing files.",
-      "reasoning": "Spec says \"ensure a FileRecord under its path with target=input.target, hash=that file's hash, and a prompts list that includes input.rel.\" It doesn't explicitly say whether target/hash on an already-existing FileRecord (e.g. shared across prompts under a different target) should be overwritten or left alone if it already matches a different owner. Agent chose to always overwrite target and hash on the existing record while only appending to prompts if absent, which is a reasonable reading of \"ensure\" but not the only one (an alternate reading only fills in missing records and never touches existing target/hash of a shared file record). Not tested by the shipped test suite for a cross-target conflict case.",
-      "suggestion": "Clarify whether target/hash should be overwritten when a FileRecord for the given path already exists under a different attribution."
+      "message": "Module already matched the prompt; agent made no changes.",
+      "reasoning": "The changes were \"NO CHANGES\". Agent reports the schemas_map crate already exists and conforms to the current prompt — all 15 tests pass and `cargo test -p schemas_map` is green. The prompt describes an existing module state rather than requesting a delta, so nothing needed editing. This is expected when the prompt is re-compiled against source that already satisfies it."
     },
     {
       "promptLines": [
-        94,
-        97
+        80,
+        82
+      ],
+      "kind": "ambiguity",
+      "severity": "error",
+      "message": "parse_map return error type left as `_`; concrete error type unspecified.",
+      "reasoning": "Signature is `Result<NaplMap, _>`. Prompt distinguishes two failure modes (\"unsupported map version\" validation error vs. corrupt-JSON deserialization error) but never names the error type unifying them. Existing code already picked one (no change needed here), but the prompt itself does not pin the type — a re-implementer would have to guess (e.g. a custom enum, Box<dyn Error>, serde_json::Error, String).",
+      "suggestion": "Specify the error type explicitly, e.g. \"returns Result<NaplMap, ParseMapError> where ParseMapError has variants for unsupported-version and JSON-decode failures.\""
+    },
+    {
+      "promptLines": [
+        98,
+        102
       ],
       "kind": "note",
       "severity": "info",
-      "message": "files_for_module dedup logic matches spec exactly (dedup by target+path, first-seen order), verified by test.",
-      "reasoning": "No ambiguity found; implementation and accompanying test (files_for_module_dedupes_by_target_and_path) directly mirror the prompt's requirement."
+      "message": "is_prompt_gen_stale takes Option<&PromptRecord> rather than (map, rel).",
+      "reasoning": "Unlike the other query helpers which take `map` and a key, this helper takes a pre-resolved `Option<&PromptRecord>`. Not contradictory, but the asymmetry with siblings is worth surfacing; caller must do the lookup. Existing code matches this signature, so no change was required."
     }
   ],
+  "maplContent": "module: schemas_map\ntarget: rust\nentries:\n  - promptLines:\n      - 1\n      - 142\n    kind: no-op\n    message: Module already matched the prompt; agent made no changes.\n    reasoning: The changes were \"NO CHANGES\". Agent reports the schemas_map crate already exists and conforms to the current prompt — all 15 tests pass and `cargo test -p schemas_map` is green. The prompt describes an existing module state rather than requesting a delta, so nothing needed editing. This is expected when the prompt is re-compiled against source that already satisfies it.\n  - promptLines:\n      - 80\n      - 82\n    kind: ambiguity\n    message: parse_map return error type left as `_`; concrete error type unspecified.\n    reasoning: Signature is `Result<NaplMap, _>`. Prompt distinguishes two failure modes (\"unsupported map version\" validation error vs. corrupt-JSON deserialization error) but never names the error type unifying them. Existing code already picked one (no change needed here), but the prompt itself does not pin the type — a re-implementer would have to guess (e.g. a custom enum, Box<dyn Error>, serde_json::Error, String).\n    suggestion: Specify the error type explicitly, e.g. \"returns Result<NaplMap, ParseMapError> where ParseMapError has variants for unsupported-version and JSON-decode failures.\"\n  - promptLines:\n      - 98\n      - 102\n    kind: note\n    message: is_prompt_gen_stale takes Option<&PromptRecord> rather than (map, rel).\n    reasoning: Unlike the other query helpers which take `map` and a key, this helper takes a pre-resolved `Option<&PromptRecord>`. Not contradictory, but the asymmetry with siblings is worth surfacing; caller must do the lookup. Existing code matches this signature, so no change was required.\n",
+  "maplFile": "schemas_map.mapl",
   "journal": [
     {
       "gen": 18,
@@ -536,6 +646,13 @@
           "patch": "@@ -0,0 +1,690 @@\n+// GENERATED BY NAPL from schemas_map.napl — edit the prompt, not this file\n+\n+use schemas_ordered_map::OrderedMap;\n+use serde::{Deserialize, Serialize};\n+\n+fn default_version() -> u32 {\n+    2\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\n+pub struct PromptTargetRecord {\n+    #[serde(rename = \"promptHashAtGen\", default, skip_serializing_if = \"Option::is_none\")]\n+    pub prompt_hash_at_gen: Option<String>,\n+    #[serde(default)]\n+    pub files: Vec<String>,\n+    #[serde(default, skip_serializing_if = \"Option::is_none\")]\n+    pub unattributed: Option<bool>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\n+pub struct PromptRecord {\n+    pub module: String,\n+    #[serde(rename = \"promptHash\")]\n+    pub prompt_hash: String,\n+    #[serde(rename = \"declaredTargets\", default)]\n+    pub declared_targets: Vec<String>,\n+    #[serde(default)]\n+    pub targets: OrderedMap<PromptTargetRecord>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\n+pub struct FileRecord {\n+    pub target: String,\n+    pub hash: String,\n+    #[serde(default)]\n+    pub prompts: Vec<String>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]\n+pub struct NaplMap {\n+    #[serde(default = \"default_version\")]\n+    pub version: u32,\n+    #[serde(default)]\n+    pub prompts: OrderedMap<PromptRecord>,\n+    #[serde(default)]\n+    pub files: OrderedMap<FileRecord>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct ModuleFile {\n+    pub target: String,\n+    pub file_path: String,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct FileInput {\n+    pub file_path: String,\n+    pub hash: String,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct AttributionInput {\n+    pub rel: String,\n+    pub module: String,\n+    pub prompt_hash: String,\n+    pub target: String,\n+    pub declared_targets: Vec<String>,\n+    pub files: Vec<FileInput>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct UnattributedInput {\n+    pub rel: String,\n+    pub module: String,\n+    pub prompt_hash: String,\n+    pub target: String,\n+    pub declared_targets: Vec<String>,\n+    pub files: Vec<String>,\n+}\n+\n+pub fn empty_map() -> NaplMap {\n+    NaplMap {\n+        version: 2,\n+        prompts: OrderedMap::new(),\n+        files: OrderedMap::new(),\n+    }\n+}\n+\n+pub fn parse_map(raw: &str) -> Result<NaplMap, String> {\n+    let map: NaplMap = serde_json::from_str(raw).map_err(|e| e.to_string())?;\n+    if map.version != 2 {\n+        return Err(\"unsupported map version\".to_string());\n+    }\n+    Ok(map)\n+}\n+\n+pub fn map_to_json(map: &NaplMap) -> String {\n+    let mut json = serde_json::to_string_pretty(map).expect(\"NaplMap always serializes\");\n+    json.push('\\n');\n+    json\n+}\n+\n+pub fn prompts_for_module(map: &NaplMap, module: &str) -> Vec<String> {\n+    map.prompts\n+        .iter()\n+        .filter(|(_, record)| record.module == module)\n+        .map(|(rel, _)| rel.clone())\n+        .collect()\n+}\n+\n+pub fn has_module(map: &NaplMap, module: &str) -> bool {\n+    map.prompts.iter().any(|(_, record)| record.module == module)\n+}\n+\n+pub fn declared_targets_for_module(map: &NaplMap, module: &str) -> Vec<String> {\n+    let mut seen = Vec::new();\n+    for (_, record) in map.prompts.iter() {\n+        if record.module != module {\n+            continue;\n+        }\n+        for target in &record.declared_targets {\n+            if !seen.contains(target) {\n+                seen.push(target.clone());\n+            }\n+        }\n+    }\n+    seen\n+}\n+\n+pub fn files_for_module(map: &NaplMap, module: &str) -> Vec<ModuleFile> {\n+    let mut result: Vec<ModuleFile> = Vec::new();\n+    for (_, record) in map.prompts.iter() {\n+        if record.module != module {\n+            continue;\n+        }\n+        for (target, target_record) in record.targets.iter() {\n+            for file_path in &target_record.files {\n+                let already = result\n+                    .iter()\n+                    .any(|mf| &mf.target == target && &mf.file_path == file_path);\n+                if !already {\n+                    result.push(ModuleFile {\n+                        target: target.clone(),\n+                        file_path: file_path.clone(),\n+                    });\n+                }\n+            }\n+        }\n+    }\n+    result\n+}\n+\n+pub fn is_prompt_gen_stale(\n+    record: Option<&PromptRecord>,\n+    target: &str,\n+    prompt_hash: &str,\n+    force: bool,\n+) -> bool {\n+    if force {\n+        return true;\n+    }\n+    let Some(record) = record else {\n+        return true;\n+    };\n+    let Some(target_record) = record.targets.get(target) else {\n+        return true;\n+    };\n+    if target_record.unattributed == Some(true) {\n+        return true;\n+    }\n+    match &target_record.prompt_hash_at_gen {\n+        Some(hash) => hash != prompt_hash,\n+        None => true,\n+    }\n+}\n+\n+fn detach_file(map: &mut NaplMap, rel: &str, file_path: &str) {\n+    let Some(file_record) = map.files.get_mut(file_path) else {\n+        return;\n+    };\n+    file_record.prompts.retain(|p| p != rel);\n+    if file_record.prompts.is_empty() {\n+        map.files.remove(file_path);\n+    }\n+}\n+\n+pub fn record_attribution(map: &mut NaplMap, input: &AttributionInput) {\n+    let mut targets = map\n+        .prompts\n+        .get(&input.rel)\n+        .map(|record| record.targets.clone())\n+        .unwrap_or_default();\n+\n+    let prior_files: Vec<String> = targets\n+        .get(&input.target)\n+        .map(|target_record| target_record.files.clone())\n+        .unwrap_or_default();\n+\n+    let new_file_paths: Vec<String> = input.files.iter().map(|f| f.file_path.clone()).collect();\n+\n+    for prior_file in &prior_files {\n+        if !new_file_paths.contains(prior_file) {\n+            detach_file(map, &input.rel, prior_file);\n+        }\n+    }\n+\n+    targets.insert(\n+        input.target.clone(),\n+        PromptTargetRecord {\n+            prompt_hash_at_gen: Some(input.prompt_hash.clone()),\n+            files: new_file_paths.clone(),\n+            unattributed: None,\n+        },\n+    );\n+\n+    map.prompts.insert(\n+        input.rel.clone(),\n+        PromptRecord {\n+            module: input.module.clone(),\n+            prompt_hash: input.prompt_hash.clone(),\n+            declared_targets: input.declared_targets.clone(),\n+            targets,\n+        },\n+    );\n+\n+    for file in &input.files {\n+        match map.files.get_mut(&file.file_path) {\n+            Some(existing) => {\n+                existing.target = input.target.clone();\n+                existing.hash = file.hash.clone();\n+                if !existing.prompts.iter().any(|p| p == &input.rel) {\n+                    existing.prompts.push(input.rel.clone());\n+                }\n+            }\n+            None => {\n+                map.files.insert(\n+                    file.file_path.clone(),\n+                    FileRecord {\n+                        target: input.target.clone(),\n+                        hash: file.hash.clone(),\n+                        prompts: vec![input.rel.clone()],\n+                    },\n+                );\n+            }\n+        }\n+    }\n+}\n+\n+pub fn record_unattributed(map: &mut NaplMap, input: &UnattributedInput) {\n+    let mut targets = map\n+        .prompts\n+        .get(&input.rel)\n+        .map(|record| record.targets.clone())\n+        .unwrap_or_default();\n+\n+    let prior_files: Vec<String> = targets\n+        .get(&input.target)\n+        .map(|target_record| target_record.files.clone())\n+        .unwrap_or_default();\n+\n+    for prior_file in &prior_files {\n+        detach_file(map, &input.rel, prior_file);\n+    }\n+\n+    targets.insert(\n+        input.target.clone(),\n+        PromptTargetRecord {\n+            prompt_hash_at_gen: None,\n+            files: input.files.clone(),\n+            unattributed: Some(true),\n+        },\n+    );\n+\n+    map.prompts.insert(\n+        input.rel.clone(),\n+        PromptRecord {\n+            module: input.module.clone(),\n+            prompt_hash: input.prompt_hash.clone(),\n+            declared_targets: input.declared_targets.clone(),\n+            targets,\n+        },\n+    );\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn empty_map_has_version_2_and_no_entries() {\n+        let map = empty_map();\n+        assert_eq!(map.version, 2);\n+        assert!(map.prompts.is_empty());\n+        assert!(map.files.is_empty());\n+    }\n+\n+    #[test]\n+    fn map_round_trips_through_json() {\n+        let mut map = empty_map();\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![\"rust\".to_string()],\n+                files: vec![FileInput {\n+                    file_path: \"src/a.rs\".to_string(),\n+                    hash: \"fh1\".to_string(),\n+                }],\n+            },\n+        );\n+\n+        let json = map_to_json(&map);\n+        assert!(json.ends_with('\\n'));\n+        let reparsed = parse_map(&json).unwrap();\n+        assert_eq!(reparsed, map);\n+    }\n+\n+    #[test]\n+    fn parse_map_rejects_unsupported_version() {\n+        let raw = r#\"{\"version\": 3, \"prompts\": {}, \"files\": {}}\"#;\n+        let err = parse_map(raw).unwrap_err();\n+        assert_eq!(err, \"unsupported map version\");\n+    }\n+\n+    #[test]\n+    fn parse_map_rejects_corrupt_json() {\n+        let raw = \"{not json\";\n+        assert!(parse_map(raw).is_err());\n+    }\n+\n+    #[test]\n+    fn parse_map_defaults_absent_fields() {\n+        let raw = r#\"{\"version\": 2}\"#;\n+        let map = parse_map(raw).unwrap();\n+        assert!(map.prompts.is_empty());\n+        assert!(map.files.is_empty());\n+    }\n+\n+    #[test]\n+    fn prompt_target_record_omits_none_fields_in_json() {\n+        let record = PromptTargetRecord {\n+            prompt_hash_at_gen: None,\n+            files: vec![\"a.rs\".to_string()],\n+            unattributed: None,\n+        };\n+        let json = serde_json::to_string(&record).unwrap();\n+        assert_eq!(json, r#\"{\"files\":[\"a.rs\"]}\"#);\n+    }\n+\n+    #[test]\n+    fn prompts_for_module_returns_matching_keys_in_order() {\n+        let mut map = empty_map();\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m1\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![],\n+            },\n+        );\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"b.napl\".to_string(),\n+                module: \"m2\".to_string(),\n+                prompt_hash: \"h2\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![],\n+            },\n+        );\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"c.napl\".to_string(),\n+                module: \"m1\".to_string(),\n+                prompt_hash: \"h3\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![],\n+            },\n+        );\n+\n+        assert_eq!(\n+            prompts_for_module(&map, \"m1\"),\n+            vec![\"a.napl\".to_string(), \"c.napl\".to_string()]\n+        );\n+        assert_eq!(has_module(&map, \"m1\"), true);\n+        assert_eq!(has_module(&map, \"nope\"), false);\n+    }\n+\n+    #[test]\n+    fn declared_targets_for_module_deduplicates_in_first_seen_order() {\n+        let mut map = empty_map();\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![\"rust\".to_string(), \"ts\".to_string()],\n+                files: vec![],\n+            },\n+        );\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"b.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h2\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![\"ts\".to_string(), \"go\".to_string()],\n+                files: vec![],\n+            },\n+        );\n+\n+        assert_eq!(\n+            declared_targets_for_module(&map, \"m\"),\n+            vec![\"rust\".to_string(), \"ts\".to_string(), \"go\".to_string()]\n+        );\n+    }\n+\n+    #[test]\n+    fn files_for_module_dedupes_by_target_and_path() {\n+        let mut map = empty_map();\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![\n+                    FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() },\n+                    FileInput { file_path: \"src/b.rs\".to_string(), hash: \"f2\".to_string() },\n+                ],\n+            },\n+        );\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"b.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h2\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() }],\n+            },\n+        );\n+\n+        let files = files_for_module(&map, \"m\");\n+        assert_eq!(\n+            files,\n+            vec![\n+                ModuleFile { target: \"rust\".to_string(), file_path: \"src/a.rs\".to_string() },\n+                ModuleFile { target: \"rust\".to_string(), file_path: \"src/b.rs\".to_string() },\n+            ]\n+        );\n+    }\n+\n+    #[test]\n+    fn is_prompt_gen_stale_covers_all_cases() {\n+        assert!(is_prompt_gen_stale(None, \"rust\", \"h1\", true));\n+        assert!(is_prompt_gen_stale(None, \"rust\", \"h1\", false));\n+\n+        let mut targets = OrderedMap::new();\n+        targets.insert(\n+            \"rust\".to_string(),\n+            PromptTargetRecord {\n+                prompt_hash_at_gen: Some(\"h1\".to_string()),\n+                files: vec![\"a.rs\".to_string()],\n+                unattributed: None,\n+            },\n+        );\n+        let record = PromptRecord {\n+            module: \"m\".to_string(),\n+            prompt_hash: \"h1\".to_string(),\n+            declared_targets: vec![],\n+            targets,\n+        };\n+\n+        assert!(!is_prompt_gen_stale(Some(&record), \"rust\", \"h1\", false));\n+        assert!(is_prompt_gen_stale(Some(&record), \"rust\", \"h2\", false));\n+        assert!(is_prompt_gen_stale(Some(&record), \"ts\", \"h1\", false));\n+\n+        let mut targets2 = OrderedMap::new();\n+        targets2.insert(\n+            \"rust\".to_string(),\n+            PromptTargetRecord {\n+                prompt_hash_at_gen: None,\n+                files: vec![\"a.rs\".to_string()],\n+                unattributed: Some(true),\n+            },\n+        );\n+        let record2 = PromptRecord {\n+            module: \"m\".to_string(),\n+            prompt_hash: \"h1\".to_string(),\n+            declared_targets: vec![],\n+            targets: targets2,\n+        };\n+        assert!(is_prompt_gen_stale(Some(&record2), \"rust\", \"h1\", false));\n+    }\n+\n+    #[test]\n+    fn record_attribution_detaches_orphaned_prior_files() {\n+        let mut map = empty_map();\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![\n+                    FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() },\n+                    FileInput { file_path: \"src/b.rs\".to_string(), hash: \"f2\".to_string() },\n+                ],\n+            },\n+        );\n+        assert!(map.files.contains_key(\"src/a.rs\"));\n+        assert!(map.files.contains_key(\"src/b.rs\"));\n+\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h2\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1b\".to_string() }],\n+            },\n+        );\n+\n+        assert!(map.files.contains_key(\"src/a.rs\"));\n+        assert!(!map.files.contains_key(\"src/b.rs\"));\n+        let record = map.prompts.get(\"a.napl\").unwrap();\n+        let target_record = record.targets.get(\"rust\").unwrap();\n+        assert_eq!(target_record.prompt_hash_at_gen, Some(\"h2\".to_string()));\n+        assert_eq!(target_record.files, vec![\"src/a.rs\".to_string()]);\n+    }\n+\n+    #[test]\n+    fn record_attribution_keeps_shared_file_prompts_list() {\n+        let mut map = empty_map();\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![FileInput { file_path: \"src/shared.rs\".to_string(), hash: \"f1\".to_string() }],\n+            },\n+        );\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"b.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h2\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![FileInput { file_path: \"src/shared.rs\".to_string(), hash: \"f1\".to_string() }],\n+            },\n+        );\n+\n+        let file_record = map.files.get(\"src/shared.rs\").unwrap();\n+        assert_eq!(\n+            file_record.prompts,\n+            vec![\"a.napl\".to_string(), \"b.napl\".to_string()]\n+        );\n+    }\n+\n+    #[test]\n+    fn record_attribution_keeps_other_targets_for_same_prompt() {\n+        let mut map = empty_map();\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() }],\n+            },\n+        );\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"ts\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![FileInput { file_path: \"src/a.ts\".to_string(), hash: \"f2\".to_string() }],\n+            },\n+        );\n+\n+        let record = map.prompts.get(\"a.napl\").unwrap();\n+        assert!(record.targets.contains_key(\"rust\"));\n+        assert!(record.targets.contains_key(\"ts\"));\n+    }\n+\n+    #[test]\n+    fn record_unattributed_detaches_all_prior_files_and_creates_no_file_records() {\n+        let mut map = empty_map();\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() }],\n+            },\n+        );\n+        assert!(map.files.contains_key(\"src/a.rs\"));\n+\n+        record_unattributed(\n+            &mut map,\n+            &UnattributedInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h2\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![\"src/a.rs\".to_string(), \"src/orphan.rs\".to_string()],\n+            },\n+        );\n+\n+        assert!(!map.files.contains_key(\"src/a.rs\"));\n+        assert!(!map.files.contains_key(\"src/orphan.rs\"));\n+\n+        let record = map.prompts.get(\"a.napl\").unwrap();\n+        let target_record = record.targets.get(\"rust\").unwrap();\n+        assert_eq!(target_record.unattributed, Some(true));\n+        assert_eq!(target_record.prompt_hash_at_gen, None);\n+        assert_eq!(\n+            target_record.files,\n+            vec![\"src/a.rs\".to_string(), \"src/orphan.rs\".to_string()]\n+        );\n+    }\n+\n+    #[test]\n+    fn record_attribution_after_unattributed_overwrites_and_clears_flag() {\n+        let mut map = empty_map();\n+        record_unattributed(\n+            &mut map,\n+            &UnattributedInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h1\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![\"src/a.rs\".to_string()],\n+            },\n+        );\n+\n+        record_attribution(\n+            &mut map,\n+            &AttributionInput {\n+                rel: \"a.napl\".to_string(),\n+                module: \"m\".to_string(),\n+                prompt_hash: \"h2\".to_string(),\n+                target: \"rust\".to_string(),\n+                declared_targets: vec![],\n+                files: vec![FileInput { file_path: \"src/a.rs\".to_string(), hash: \"f1\".to_string() }],\n+            },\n+        );\n+\n+        let record = map.prompts.get(\"a.napl\").unwrap();\n+        let target_record = record.targets.get(\"rust\").unwrap();\n+        assert_eq!(target_record.unattributed, None);\n+        assert_eq!(target_record.prompt_hash_at_gen, Some(\"h2\".to_string()));\n+        assert!(map.files.contains_key(\"src/a.rs\"));\n+    }\n+}"
         }
       ]
+    },
+    {
+      "gen": 66,
+      "timestamp": "2026-07-24T13:04:23.204Z",
+      "mode": "incremental",
+      "promptHash": "fa144f25203c81777b06913519ce5d3e026a33dd2e48c5ab68dc6f178c0b978f",
+      "files": []
     }
   ],
   "lock": [
@@ -585,15 +702,15 @@
         "entries": [
           {
             "promptLines": [
-              1,
+              7,
               7
             ],
             "file": "schemas_map/src/lib.rs",
             "lines": [
-              1,
+              3,
               4
             ],
-            "note": "module header, imports serde/serde_json"
+            "note": "imports serde and ordered map"
           },
           {
             "promptLines": [
@@ -605,11 +722,11 @@
               3,
               3
             ],
-            "note": "import OrderedMap from schemas_ordered_map sibling crate"
+            "note": "uses OrderedMap from sibling crate"
           },
           {
             "promptLines": [
-              41,
+              44,
               50
             ],
             "file": "schemas_map/src/lib.rs",
@@ -629,7 +746,7 @@
               12,
               13
             ],
-            "note": "promptHashAtGen field, omit if None, default None"
+            "note": "promptHashAtGen rename, default, skip when None"
           },
           {
             "promptLines": [
@@ -641,7 +758,7 @@
               14,
               15
             ],
-            "note": "files field defaulting to empty"
+            "note": "files default empty"
           },
           {
             "promptLines": [
@@ -653,7 +770,7 @@
               16,
               17
             ],
-            "note": "unattributed field, omit if None"
+            "note": "unattributed skip when None, default None"
           },
           {
             "promptLines": [
@@ -689,7 +806,7 @@
               23,
               24
             ],
-            "note": "prompt_hash field renamed promptHash"
+            "note": "prompt_hash renamed promptHash"
           },
           {
             "promptLines": [
@@ -701,7 +818,7 @@
               25,
               26
             ],
-            "note": "declared_targets field renamed declaredTargets, default empty"
+            "note": "declared_targets renamed, default empty"
           },
           {
             "promptLines": [
@@ -713,7 +830,7 @@
               27,
               28
             ],
-            "note": "targets OrderedMap field default empty"
+            "note": "targets ordered map default empty"
           },
           {
             "promptLines": [
@@ -726,6 +843,18 @@
               37
             ],
             "note": "FileRecord struct"
+          },
+          {
+            "promptLines": [
+              60,
+              60
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              35,
+              36
+            ],
+            "note": "prompts default empty"
           },
           {
             "promptLines": [
@@ -749,7 +878,7 @@
               6,
               8
             ],
-            "note": "default_version helper returning 2"
+            "note": "default_version returns 2"
           },
           {
             "promptLines": [
@@ -761,19 +890,31 @@
               41,
               42
             ],
-            "note": "version field defaults via default_version"
+            "note": "version defaults to 2"
           },
           {
             "promptLines": [
               63,
-              64
+              63
             ],
             "file": "schemas_map/src/lib.rs",
             "lines": [
               43,
+              44
+            ],
+            "note": "prompts default empty"
+          },
+          {
+            "promptLines": [
+              64,
+              64
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              45,
               46
             ],
-            "note": "prompts and files OrderedMap fields default empty"
+            "note": "files default empty"
           },
           {
             "promptLines": [
@@ -809,7 +950,7 @@
               61,
               69
             ],
-            "note": "AttributionInput plain struct"
+            "note": "AttributionInput struct"
           },
           {
             "promptLines": [
@@ -821,7 +962,7 @@
               71,
               79
             ],
-            "note": "UnattributedInput plain struct"
+            "note": "UnattributedInput struct"
           },
           {
             "promptLines": [
@@ -833,7 +974,7 @@
               81,
               87
             ],
-            "note": "empty_map constructor"
+            "note": "empty_map builds version 2 empty"
           },
           {
             "promptLines": [
@@ -845,7 +986,19 @@
               89,
               95
             ],
-            "note": "parse_map deserializes JSON and validates version"
+            "note": "parse_map deserialize and version check"
+          },
+          {
+            "promptLines": [
+              81,
+              81
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              91,
+              93
+            ],
+            "note": "unsupported map version error"
           },
           {
             "promptLines": [
@@ -857,7 +1010,7 @@
               97,
               101
             ],
-            "note": "map_to_json pretty-prints with trailing newline"
+            "note": "map_to_json pretty print plus newline"
           },
           {
             "promptLines": [
@@ -869,7 +1022,7 @@
               103,
               109
             ],
-            "note": "prompts_for_module filters by module, insertion order"
+            "note": "prompts_for_module filters by module"
           },
           {
             "promptLines": [
@@ -881,7 +1034,7 @@
               111,
               113
             ],
-            "note": "has_module checks any matching prompt"
+            "note": "has_module any match"
           },
           {
             "promptLines": [
@@ -893,7 +1046,7 @@
               115,
               128
             ],
-            "note": "declared_targets_for_module dedup union first-seen order"
+            "note": "declared_targets_for_module dedup first-seen"
           },
           {
             "promptLines": [
@@ -905,7 +1058,7 @@
               130,
               151
             ],
-            "note": "files_for_module dedup by (target, file_path)"
+            "note": "files_for_module dedup by target+path"
           },
           {
             "promptLines": [
@@ -917,7 +1070,55 @@
               153,
               175
             ],
-            "note": "is_prompt_gen_stale staleness logic"
+            "note": "is_prompt_gen_stale all cases"
+          },
+          {
+            "promptLines": [
+              99,
+              99
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              159,
+              164
+            ],
+            "note": "force or absent record stale"
+          },
+          {
+            "promptLines": [
+              100,
+              100
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              165,
+              167
+            ],
+            "note": "missing target sub-record stale"
+          },
+          {
+            "promptLines": [
+              101,
+              101
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              168,
+              170
+            ],
+            "note": "unattributed true stale"
+          },
+          {
+            "promptLines": [
+              101,
+              102
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              171,
+              174
+            ],
+            "note": "hash absent or differs stale"
           },
           {
             "promptLines": [
@@ -929,7 +1130,7 @@
               177,
               185
             ],
-            "note": "detach_file helper removes prompt from file record"
+            "note": "detach_file removes rel, drops empty entry"
           },
           {
             "promptLines": [
@@ -941,19 +1142,43 @@
               187,
               247
             ],
-            "note": "record_attribution mutation helper"
+            "note": "record_attribution full body"
           },
           {
             "promptLines": [
               110,
-              113
+              111
             ],
             "file": "schemas_map/src/lib.rs",
             "lines": [
               188,
+              192
+            ],
+            "note": "existing targets clone"
+          },
+          {
+            "promptLines": [
+              111,
+              112
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              194,
+              197
+            ],
+            "note": "prior_files of target"
+          },
+          {
+            "promptLines": [
+              112,
+              113
+            ],
+            "file": "schemas_map/src/lib.rs",
+            "lines": [
+              199,
               205
             ],
-            "note": "compute existing_targets, prior_files, detach stale files"
+            "note": "detach prior files not in new set"
           },
           {
             "promptLines": [
@@ -965,7 +1190,7 @@
               207,
               214
             ],
-            "note": "set target sub-record with prompt_hash_at_gen/files/unattributed None"
+            "note": "set target sub-record"
           },
           {
             "promptLines": [
@@ -977,7 +1202,7 @@
               216,
               224
             ],
-            "note": "store prompt record under rel"
+            "note": "store prompt record"
           },
           {
             "promptLines": [
@@ -989,7 +1214,7 @@
               226,
               246
             ],
-            "note": "ensure FileRecord per new file, append prompt if absent"
+            "note": "ensure FileRecord per file, append rel once"
           },
           {
             "promptLines": [
@@ -1001,7 +1226,7 @@
               249,
               283
             ],
-            "note": "record_unattributed mutation helper"
+            "note": "record_unattributed full body"
           },
           {
             "promptLines": [
@@ -1013,7 +1238,7 @@
               256,
               263
             ],
-            "note": "detach every prior file of target sub-record"
+            "note": "detach every prior file"
           },
           {
             "promptLines": [
@@ -1025,19 +1250,19 @@
               265,
               272
             ],
-            "note": "set sub-record unattributed=Some(true), prompt_hash_at_gen=None"
+            "note": "sub-record unattributed true"
           },
           {
             "promptLines": [
               128,
-              129
+              128
             ],
             "file": "schemas_map/src/lib.rs",
             "lines": [
               274,
               282
             ],
-            "note": "store prompt record, no FileRecord created"
+            "note": "store prompt record"
           }
         ]
       },
@@ -1046,28 +1271,13 @@
         "path": "schemas_map.mapl",
         "entry": {
           "promptLines": [
-            11,
-            16
+            1,
+            142
           ],
-          "kind": "note",
-          "severity": "info",
-          "message": "Agent scoped work correctly to schemas_map/, root Cargo.toml untouched.",
-          "reasoning": "Prompt required leaving workspace root manifest alone and touching nothing outside schemas_map/. Verified only schemas_map/Cargo.toml and schemas_map/src/lib.rs were created; root manifest was not modified. No ambiguity, just confirming correct scope discipline."
-        }
-      },
-      {
-        "type": "mapl-entry",
-        "path": "schemas_map.mapl",
-        "entry": {
-          "promptLines": [
-            118,
-            121
-          ],
-          "kind": "assumption",
+          "kind": "no-op",
           "severity": "warning",
-          "message": "FileRecord fields overwritten unconditionally on every attribution, even for pre-existing files.",
-          "reasoning": "Spec says \"ensure a FileRecord under its path with target=input.target, hash=that file's hash, and a prompts list that includes input.rel.\" It doesn't explicitly say whether target/hash on an already-existing FileRecord (e.g. shared across prompts under a different target) should be overwritten or left alone if it already matches a different owner. Agent chose to always overwrite target and hash on the existing record while only appending to prompts if absent, which is a reasonable reading of \"ensure\" but not the only one (an alternate reading only fills in missing records and never touches existing target/hash of a shared file record). Not tested by the shipped test suite for a cross-target conflict case.",
-          "suggestion": "Clarify whether target/hash should be overwritten when a FileRecord for the given path already exists under a different attribution."
+          "message": "Module already matched the prompt; agent made no changes.",
+          "reasoning": "The changes were \"NO CHANGES\". Agent reports the schemas_map crate already exists and conforms to the current prompt — all 15 tests pass and `cargo test -p schemas_map` is green. The prompt describes an existing module state rather than requesting a delta, so nothing needed editing. This is expected when the prompt is re-compiled against source that already satisfies it."
         }
       },
       {
@@ -1075,13 +1285,28 @@
         "path": "schemas_map.mapl",
         "entry": {
           "promptLines": [
-            94,
-            97
+            80,
+            82
+          ],
+          "kind": "ambiguity",
+          "severity": "error",
+          "message": "parse_map return error type left as `_`; concrete error type unspecified.",
+          "reasoning": "Signature is `Result<NaplMap, _>`. Prompt distinguishes two failure modes (\"unsupported map version\" validation error vs. corrupt-JSON deserialization error) but never names the error type unifying them. Existing code already picked one (no change needed here), but the prompt itself does not pin the type — a re-implementer would have to guess (e.g. a custom enum, Box<dyn Error>, serde_json::Error, String).",
+          "suggestion": "Specify the error type explicitly, e.g. \"returns Result<NaplMap, ParseMapError> where ParseMapError has variants for unsupported-version and JSON-decode failures.\""
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "schemas_map.mapl",
+        "entry": {
+          "promptLines": [
+            98,
+            102
           ],
           "kind": "note",
           "severity": "info",
-          "message": "files_for_module dedup logic matches spec exactly (dedup by target+path, first-seen order), verified by test.",
-          "reasoning": "No ambiguity found; implementation and accompanying test (files_for_module_dedupes_by_target_and_path) directly mirror the prompt's requirement."
+          "message": "is_prompt_gen_stale takes Option<&PromptRecord> rather than (map, rel).",
+          "reasoning": "Unlike the other query helpers which take `map` and a key, this helper takes a pre-resolved `Option<&PromptRecord>`. Not contradictory, but the asymmetry with siblings is worth surfacing; caller must do the lookup. Existing code matches this signature, so no change was required."
         }
       },
       {

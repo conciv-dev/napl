@@ -29,159 +29,15 @@
   "attribution": [
     {
       "promptLines": [
-        39,
-        39
+        1,
+        8
       ],
       "file": "reconcile_derive/src/lib.rs",
       "lines": [
-        15,
-        17
+        1,
+        3
       ],
-      "note": "editable_drifted signature and body"
-    },
-    {
-      "promptLines": [
-        41,
-        45
-      ],
-      "file": "reconcile_derive/src/lib.rs",
-      "lines": [
-        9,
-        11
-      ],
-      "note": "editability predicate: Edited + current is_some"
-    },
-    {
-      "promptLines": [
-        41,
-        47
-      ],
-      "file": "reconcile_derive/src/lib.rs",
-      "lines": [
-        15,
-        17
-      ],
-      "note": "filter drifted files preserving order"
-    },
-    {
-      "promptLines": [
-        46,
-        47
-      ],
-      "file": "reconcile_derive/src/lib.rs",
-      "lines": [
-        62,
-        76
-      ],
-      "note": "test: editable_drifted keeps edited-with-current in order"
-    },
-    {
-      "promptLines": [
-        43,
-        45
-      ],
-      "file": "reconcile_derive/src/lib.rs",
-      "lines": [
-        78,
-        83
-      ],
-      "note": "test: empty when none qualify"
-    },
-    {
-      "promptLines": [
-        49,
-        49
-      ],
-      "file": "reconcile_derive/src/lib.rs",
-      "lines": [
-        20,
-        20
-      ],
-      "note": "build_reconcile_files signature"
-    },
-    {
-      "promptLines": [
-        51,
-        52
-      ],
-      "file": "reconcile_derive/src/lib.rs",
-      "lines": [
-        21,
-        23
-      ],
-      "note": "reuses editable_drifted for same eligibility/order"
-    },
-    {
-      "promptLines": [
-        54,
-        54
-      ],
-      "file": "reconcile_derive/src/lib.rs",
-      "lines": [
-        24,
-        24
-      ],
-      "note": "file field copied verbatim"
-    },
-    {
-      "promptLines": [
-        55,
-        58
-      ],
-      "file": "reconcile_derive/src/lib.rs",
-      "lines": [
-        25,
-        28
-      ],
-      "note": "diff: recorded diff or fallback unified_diff of current"
-    },
-    {
-      "promptLines": [
-        60,
-        62
-      ],
-      "file": "reconcile_derive/src/lib.rs",
-      "lines": [
-        86,
-        94
-      ],
-      "note": "test: recorded diff used verbatim"
-    },
-    {
-      "promptLines": [
-        62,
-        63
-      ],
-      "file": "reconcile_derive/src/lib.rs",
-      "lines": [
-        96,
-        104
-      ],
-      "note": "test: computed diff when missing"
-    },
-    {
-      "promptLines": [
-        63,
-        65
-      ],
-      "file": "reconcile_derive/src/lib.rs",
-      "lines": [
-        107,
-        111
-      ],
-      "note": "test: skips missing/contentless files, empty vector"
-    },
-    {
-      "promptLines": [
-        51,
-        52
-      ],
-      "file": "reconcile_derive/src/lib.rs",
-      "lines": [
-        113,
-        127
-      ],
-      "note": "test: build_reconcile_files preserves order"
+      "note": "module doc describing pure reconcile derivation core"
     },
     {
       "promptLines": [
@@ -193,7 +49,7 @@
         5,
         5
       ],
-      "note": "import drift's DriftReason and DriftedFile"
+      "note": "import DriftReason and DriftedFile from drift crate"
     },
     {
       "promptLines": [
@@ -205,7 +61,7 @@
         6,
         6
       ],
-      "note": "import prompts' ReconcileFile"
+      "note": "import ReconcileFile from prompts crate"
     },
     {
       "promptLines": [
@@ -217,45 +73,107 @@
         7,
         7
       ],
-      "note": "import text_diff's unified_diff"
+      "note": "import unified_diff from text_diff crate"
     },
     {
       "promptLines": [
-        1,
-        8
+        42,
+        45
       ],
       "file": "reconcile_derive/src/lib.rs",
       "lines": [
-        1,
-        3
+        9,
+        11
       ],
-      "note": "module doc: pure derivation core description"
-    }
-  ],
-  "attributionYaml": "module: reconcile_derive\ntarget: rust\nentries:\n  - promptLines:\n      - 39\n      - 39\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 15\n      - 17\n    note: editable_drifted signature and body\n  - promptLines:\n      - 41\n      - 45\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 9\n      - 11\n    note: \"editability predicate: Edited + current is_some\"\n  - promptLines:\n      - 41\n      - 47\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 15\n      - 17\n    note: filter drifted files preserving order\n  - promptLines:\n      - 46\n      - 47\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 62\n      - 76\n    note: \"test: editable_drifted keeps edited-with-current in order\"\n  - promptLines:\n      - 43\n      - 45\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 78\n      - 83\n    note: \"test: empty when none qualify\"\n  - promptLines:\n      - 49\n      - 49\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 20\n      - 20\n    note: build_reconcile_files signature\n  - promptLines:\n      - 51\n      - 52\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 21\n      - 23\n    note: reuses editable_drifted for same eligibility/order\n  - promptLines:\n      - 54\n      - 54\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 24\n      - 24\n    note: file field copied verbatim\n  - promptLines:\n      - 55\n      - 58\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 25\n      - 28\n    note: \"diff: recorded diff or fallback unified_diff of current\"\n  - promptLines:\n      - 60\n      - 62\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 86\n      - 94\n    note: \"test: recorded diff used verbatim\"\n  - promptLines:\n      - 62\n      - 63\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 96\n      - 104\n    note: \"test: computed diff when missing\"\n  - promptLines:\n      - 63\n      - 65\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 107\n      - 111\n    note: \"test: skips missing/contentless files, empty vector\"\n  - promptLines:\n      - 51\n      - 52\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 113\n      - 127\n    note: \"test: build_reconcile_files preserves order\"\n  - promptLines:\n      - 25\n      - 30\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 5\n      - 5\n    note: import drift's DriftReason and DriftedFile\n  - promptLines:\n      - 31\n      - 32\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 6\n      - 6\n    note: import prompts' ReconcileFile\n  - promptLines:\n      - 33\n      - 34\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 7\n      - 7\n    note: import text_diff's unified_diff\n  - promptLines:\n      - 1\n      - 8\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 1\n      - 3\n    note: \"module doc: pure derivation core description\"\n",
-  "mapl": [
-    {
-      "promptLines": [
-        27,
-        30
-      ],
-      "kind": "assumption",
-      "severity": "warning",
-      "message": "DriftedFile has more fields than the prompt lists",
-      "reasoning": "Prompt only mentions file, reason, current, diff fields on DriftedFile. Agent's test helpers reference additional fields (expected_hash, actual_hash, baseline) presumably required by the real `drift` crate struct. Assumed these exist and default to None for test fixtures rather than being told the full field list.",
-      "suggestion": "List all public fields of DriftedFile, not just the ones this module uses."
+      "note": "editability rule: Edited reason and current is Some"
     },
     {
       "promptLines": [
-        12,
+        39,
+        43
+      ],
+      "file": "reconcile_derive/src/lib.rs",
+      "lines": [
+        15,
         17
+      ],
+      "note": "editable_drifted filters editable files preserving order"
+    },
+    {
+      "promptLines": [
+        49,
+        52
+      ],
+      "file": "reconcile_derive/src/lib.rs",
+      "lines": [
+        20,
+        22
+      ],
+      "note": "build_reconcile_files maps over editable drifted files"
+    },
+    {
+      "promptLines": [
+        54,
+        54
+      ],
+      "file": "reconcile_derive/src/lib.rs",
+      "lines": [
+        24,
+        24
+      ],
+      "note": "file field is drifted file's file"
+    },
+    {
+      "promptLines": [
+        55,
+        58
+      ],
+      "file": "reconcile_derive/src/lib.rs",
+      "lines": [
+        25,
+        28
+      ],
+      "note": "diff uses recorded diff or computes unified_diff from current"
+    },
+    {
+      "promptLines": [
+        59,
+        65
+      ],
+      "file": "reconcile_derive/src/lib.rs",
+      "lines": [
+        29,
+        31
+      ],
+      "note": "collect resulting ReconcileFile vector"
+    }
+  ],
+  "attributionYaml": "module: reconcile_derive\ntarget: rust\nentries:\n  - promptLines:\n      - 1\n      - 8\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 1\n      - 3\n    note: module doc describing pure reconcile derivation core\n  - promptLines:\n      - 25\n      - 30\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 5\n      - 5\n    note: import DriftReason and DriftedFile from drift crate\n  - promptLines:\n      - 31\n      - 32\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 6\n      - 6\n    note: import ReconcileFile from prompts crate\n  - promptLines:\n      - 33\n      - 34\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 7\n      - 7\n    note: import unified_diff from text_diff crate\n  - promptLines:\n      - 42\n      - 45\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 9\n      - 11\n    note: \"editability rule: Edited reason and current is Some\"\n  - promptLines:\n      - 39\n      - 43\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 15\n      - 17\n    note: editable_drifted filters editable files preserving order\n  - promptLines:\n      - 49\n      - 52\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 20\n      - 22\n    note: build_reconcile_files maps over editable drifted files\n  - promptLines:\n      - 54\n      - 54\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 24\n      - 24\n    note: file field is drifted file's file\n  - promptLines:\n      - 55\n      - 58\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 25\n      - 28\n    note: diff uses recorded diff or computes unified_diff from current\n  - promptLines:\n      - 59\n      - 65\n    file: reconcile_derive/src/lib.rs\n    lines:\n      - 29\n      - 31\n    note: collect resulting ReconcileFile vector\n",
+  "mapl": [
+    {
+      "promptLines": [
+        1,
+        66
+      ],
+      "kind": "no-op",
+      "severity": "warning",
+      "message": "No changes made — existing reconcile_derive crate already matches the spec exactly.",
+      "reasoning": "The coding agent reported NO CHANGES. Per its final message the crate already exists as a workspace member (reconcile_derive/Cargo.toml + src/lib.rs) with path dependencies on drift, prompts, and text_diff, and both editable_drifted and build_reconcile_files already implement the specified editability rule, ordering, and diff-selection behavior. All 6 existing tests pass, so no source edits were needed to satisfy the contract."
+    },
+    {
+      "promptLines": [
+        56,
+        58
       ],
       "kind": "note",
       "severity": "info",
-      "message": "Cargo.toml contents not shown in change log",
-      "reasoning": "Prompt requires reconcile_derive/Cargo.toml with path deps on drift, prompts, text_diff, and passing `cargo test` from workspace root. Only lib.rs changes were listed; Cargo.toml creation is implied by the agent's final message claiming path deps were added and tests pass, but not verifiable from the given diff."
+      "message": "The `None`-current fallback to `unified_diff(\"\", \"\")` is unreachable by construction.",
+      "reasoning": "The spec both restricts build_reconcile_files to editable files (which always have `current: Some`) and then describes fallback behavior for a `None` current, noting parenthetically that this never happens. This defensive branch is dead code given the editability rule; it is harmless but cannot be exercised by any valid input, so no test can meaningfully cover it.",
+      "suggestion": "Clarify whether the `None`-current handling is intended purely as a defensive default (document it as unreachable) or drop it, since editable files are guaranteed to have `Some` current."
     }
   ],
+  "maplContent": "module: reconcile_derive\ntarget: rust\nentries:\n  - promptLines:\n      - 1\n      - 66\n    kind: no-op\n    message: No changes made — existing reconcile_derive crate already matches the spec exactly.\n    reasoning: The coding agent reported NO CHANGES. Per its final message the crate already exists as a workspace member (reconcile_derive/Cargo.toml + src/lib.rs) with path dependencies on drift, prompts, and text_diff, and both editable_drifted and build_reconcile_files already implement the specified editability rule, ordering, and diff-selection behavior. All 6 existing tests pass, so no source edits were needed to satisfy the contract.\n  - promptLines:\n      - 56\n      - 58\n    kind: note\n    message: The `None`-current fallback to `unified_diff(\"\", \"\")` is unreachable by construction.\n    reasoning: \"The spec both restricts build_reconcile_files to editable files (which always have `current: Some`) and then describes fallback behavior for a `None` current, noting parenthetically that this never happens. This defensive branch is dead code given the editability rule; it is harmless but cannot be exercised by any valid input, so no test can meaningfully cover it.\"\n    suggestion: Clarify whether the `None`-current handling is intended purely as a defensive default (document it as unreachable) or drop it, since editable files are guaranteed to have `Some` current.\n",
+  "maplFile": "reconcile_derive.mapl",
   "journal": [
     {
       "gen": 34,
@@ -274,6 +192,13 @@
           "patch": "@@ -0,0 +1,128 @@\n+//! Pure derivation core for the reconcile command: given already-detected\n+//! drifted files, decides which are eligible to fold back into the prompt and\n+//! builds the per-file inputs the reconcile task needs.\n+\n+use drift::{DriftReason, DriftedFile};\n+use prompts::ReconcileFile;\n+use text_diff::unified_diff;\n+\n+fn is_editable(file: &DriftedFile) -> bool {\n+    matches!(file.reason, DriftReason::Edited) && file.current.is_some()\n+}\n+\n+/// Return the drifted files that can be folded back into the prompt: edited\n+/// files whose current content is available, in their original order.\n+pub fn editable_drifted(files: &[DriftedFile]) -> Vec<&DriftedFile> {\n+    files.iter().filter(|f| is_editable(f)).collect()\n+}\n+\n+/// Build the reconcile inputs for each editable drifted file, in order.\n+pub fn build_reconcile_files(files: &[DriftedFile]) -> Vec<ReconcileFile> {\n+    editable_drifted(files)\n+        .into_iter()\n+        .map(|f| ReconcileFile {\n+            file: f.file.clone(),\n+            diff: f\n+                .diff\n+                .clone()\n+                .unwrap_or_else(|| unified_diff(\"\", f.current.as_deref().unwrap_or(\"\"))),\n+        })\n+        .collect()\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    fn edited(file: &str, current: Option<&str>, diff: Option<&str>) -> DriftedFile {\n+        DriftedFile {\n+            file: file.to_string(),\n+            reason: DriftReason::Edited,\n+            expected_hash: None,\n+            actual_hash: None,\n+            baseline: None,\n+            current: current.map(str::to_string),\n+            diff: diff.map(str::to_string),\n+        }\n+    }\n+\n+    fn missing(file: &str) -> DriftedFile {\n+        DriftedFile {\n+            file: file.to_string(),\n+            reason: DriftReason::Missing,\n+            expected_hash: None,\n+            actual_hash: None,\n+            baseline: None,\n+            current: None,\n+            diff: None,\n+        }\n+    }\n+\n+    #[test]\n+    fn editable_drifted_keeps_edited_with_current_in_order() {\n+        let files = vec![\n+            edited(\"a.ts\", Some(\"a content\"), None),\n+            missing(\"b.ts\"),\n+            edited(\"c.ts\", None, None),\n+            edited(\"d.ts\", Some(\"d content\"), None),\n+        ];\n+\n+        let result = editable_drifted(&files);\n+\n+        assert_eq!(\n+            result.iter().map(|f| f.file.as_str()).collect::<Vec<_>>(),\n+            vec![\"a.ts\", \"d.ts\"]\n+        );\n+    }\n+\n+    #[test]\n+    fn editable_drifted_empty_when_none_qualify() {\n+        let files = vec![missing(\"a.ts\"), edited(\"b.ts\", None, None)];\n+\n+        assert!(editable_drifted(&files).is_empty());\n+    }\n+\n+    #[test]\n+    fn build_reconcile_files_uses_recorded_diff_verbatim() {\n+        let files = vec![edited(\"a.ts\", Some(\"a content\"), Some(\"PRERECORDED DIFF\"))];\n+\n+        let result = build_reconcile_files(&files);\n+\n+        assert_eq!(result.len(), 1);\n+        assert_eq!(result[0].file, \"a.ts\");\n+        assert_eq!(result[0].diff, \"PRERECORDED DIFF\");\n+    }\n+\n+    #[test]\n+    fn build_reconcile_files_computes_diff_when_missing() {\n+        let files = vec![edited(\"a.ts\", Some(\"new content\"), None)];\n+\n+        let result = build_reconcile_files(&files);\n+\n+        assert_eq!(result.len(), 1);\n+        assert_eq!(result[0].diff, unified_diff(\"\", \"new content\"));\n+    }\n+\n+    #[test]\n+    fn build_reconcile_files_skips_missing_and_contentless_files() {\n+        let files = vec![missing(\"a.ts\"), edited(\"b.ts\", None, None)];\n+\n+        assert!(build_reconcile_files(&files).is_empty());\n+    }\n+\n+    #[test]\n+    fn build_reconcile_files_preserves_order() {\n+        let files = vec![\n+            edited(\"a.ts\", Some(\"a\"), Some(\"diff a\")),\n+            missing(\"skip.ts\"),\n+            edited(\"b.ts\", Some(\"b\"), Some(\"diff b\")),\n+        ];\n+\n+        let result = build_reconcile_files(&files);\n+\n+        assert_eq!(\n+            result.iter().map(|f| f.file.as_str()).collect::<Vec<_>>(),\n+            vec![\"a.ts\", \"b.ts\"]\n+        );\n+    }\n+}"
         }
       ]
+    },
+    {
+      "gen": 86,
+      "timestamp": "2026-07-24T13:39:24.556Z",
+      "mode": "incremental",
+      "promptHash": "704b6537cd1d5c203cd89337f18a28682ece8b7bc8d21c3a70afb4bf04415d43",
+      "files": []
     }
   ],
   "lock": [
@@ -323,159 +248,15 @@
         "entries": [
           {
             "promptLines": [
-              39,
-              39
+              1,
+              8
             ],
             "file": "reconcile_derive/src/lib.rs",
             "lines": [
-              15,
-              17
+              1,
+              3
             ],
-            "note": "editable_drifted signature and body"
-          },
-          {
-            "promptLines": [
-              41,
-              45
-            ],
-            "file": "reconcile_derive/src/lib.rs",
-            "lines": [
-              9,
-              11
-            ],
-            "note": "editability predicate: Edited + current is_some"
-          },
-          {
-            "promptLines": [
-              41,
-              47
-            ],
-            "file": "reconcile_derive/src/lib.rs",
-            "lines": [
-              15,
-              17
-            ],
-            "note": "filter drifted files preserving order"
-          },
-          {
-            "promptLines": [
-              46,
-              47
-            ],
-            "file": "reconcile_derive/src/lib.rs",
-            "lines": [
-              62,
-              76
-            ],
-            "note": "test: editable_drifted keeps edited-with-current in order"
-          },
-          {
-            "promptLines": [
-              43,
-              45
-            ],
-            "file": "reconcile_derive/src/lib.rs",
-            "lines": [
-              78,
-              83
-            ],
-            "note": "test: empty when none qualify"
-          },
-          {
-            "promptLines": [
-              49,
-              49
-            ],
-            "file": "reconcile_derive/src/lib.rs",
-            "lines": [
-              20,
-              20
-            ],
-            "note": "build_reconcile_files signature"
-          },
-          {
-            "promptLines": [
-              51,
-              52
-            ],
-            "file": "reconcile_derive/src/lib.rs",
-            "lines": [
-              21,
-              23
-            ],
-            "note": "reuses editable_drifted for same eligibility/order"
-          },
-          {
-            "promptLines": [
-              54,
-              54
-            ],
-            "file": "reconcile_derive/src/lib.rs",
-            "lines": [
-              24,
-              24
-            ],
-            "note": "file field copied verbatim"
-          },
-          {
-            "promptLines": [
-              55,
-              58
-            ],
-            "file": "reconcile_derive/src/lib.rs",
-            "lines": [
-              25,
-              28
-            ],
-            "note": "diff: recorded diff or fallback unified_diff of current"
-          },
-          {
-            "promptLines": [
-              60,
-              62
-            ],
-            "file": "reconcile_derive/src/lib.rs",
-            "lines": [
-              86,
-              94
-            ],
-            "note": "test: recorded diff used verbatim"
-          },
-          {
-            "promptLines": [
-              62,
-              63
-            ],
-            "file": "reconcile_derive/src/lib.rs",
-            "lines": [
-              96,
-              104
-            ],
-            "note": "test: computed diff when missing"
-          },
-          {
-            "promptLines": [
-              63,
-              65
-            ],
-            "file": "reconcile_derive/src/lib.rs",
-            "lines": [
-              107,
-              111
-            ],
-            "note": "test: skips missing/contentless files, empty vector"
-          },
-          {
-            "promptLines": [
-              51,
-              52
-            ],
-            "file": "reconcile_derive/src/lib.rs",
-            "lines": [
-              113,
-              127
-            ],
-            "note": "test: build_reconcile_files preserves order"
+            "note": "module doc describing pure reconcile derivation core"
           },
           {
             "promptLines": [
@@ -487,7 +268,7 @@
               5,
               5
             ],
-            "note": "import drift's DriftReason and DriftedFile"
+            "note": "import DriftReason and DriftedFile from drift crate"
           },
           {
             "promptLines": [
@@ -499,7 +280,7 @@
               6,
               6
             ],
-            "note": "import prompts' ReconcileFile"
+            "note": "import ReconcileFile from prompts crate"
           },
           {
             "promptLines": [
@@ -511,19 +292,79 @@
               7,
               7
             ],
-            "note": "import text_diff's unified_diff"
+            "note": "import unified_diff from text_diff crate"
           },
           {
             "promptLines": [
-              1,
-              8
+              42,
+              45
             ],
             "file": "reconcile_derive/src/lib.rs",
             "lines": [
-              1,
-              3
+              9,
+              11
             ],
-            "note": "module doc: pure derivation core description"
+            "note": "editability rule: Edited reason and current is Some"
+          },
+          {
+            "promptLines": [
+              39,
+              43
+            ],
+            "file": "reconcile_derive/src/lib.rs",
+            "lines": [
+              15,
+              17
+            ],
+            "note": "editable_drifted filters editable files preserving order"
+          },
+          {
+            "promptLines": [
+              49,
+              52
+            ],
+            "file": "reconcile_derive/src/lib.rs",
+            "lines": [
+              20,
+              22
+            ],
+            "note": "build_reconcile_files maps over editable drifted files"
+          },
+          {
+            "promptLines": [
+              54,
+              54
+            ],
+            "file": "reconcile_derive/src/lib.rs",
+            "lines": [
+              24,
+              24
+            ],
+            "note": "file field is drifted file's file"
+          },
+          {
+            "promptLines": [
+              55,
+              58
+            ],
+            "file": "reconcile_derive/src/lib.rs",
+            "lines": [
+              25,
+              28
+            ],
+            "note": "diff uses recorded diff or computes unified_diff from current"
+          },
+          {
+            "promptLines": [
+              59,
+              65
+            ],
+            "file": "reconcile_derive/src/lib.rs",
+            "lines": [
+              29,
+              31
+            ],
+            "note": "collect resulting ReconcileFile vector"
           }
         ]
       },
@@ -532,14 +373,13 @@
         "path": "reconcile_derive.mapl",
         "entry": {
           "promptLines": [
-            27,
-            30
+            1,
+            66
           ],
-          "kind": "assumption",
+          "kind": "no-op",
           "severity": "warning",
-          "message": "DriftedFile has more fields than the prompt lists",
-          "reasoning": "Prompt only mentions file, reason, current, diff fields on DriftedFile. Agent's test helpers reference additional fields (expected_hash, actual_hash, baseline) presumably required by the real `drift` crate struct. Assumed these exist and default to None for test fixtures rather than being told the full field list.",
-          "suggestion": "List all public fields of DriftedFile, not just the ones this module uses."
+          "message": "No changes made — existing reconcile_derive crate already matches the spec exactly.",
+          "reasoning": "The coding agent reported NO CHANGES. Per its final message the crate already exists as a workspace member (reconcile_derive/Cargo.toml + src/lib.rs) with path dependencies on drift, prompts, and text_diff, and both editable_drifted and build_reconcile_files already implement the specified editability rule, ordering, and diff-selection behavior. All 6 existing tests pass, so no source edits were needed to satisfy the contract."
         }
       },
       {
@@ -547,13 +387,14 @@
         "path": "reconcile_derive.mapl",
         "entry": {
           "promptLines": [
-            12,
-            17
+            56,
+            58
           ],
           "kind": "note",
           "severity": "info",
-          "message": "Cargo.toml contents not shown in change log",
-          "reasoning": "Prompt requires reconcile_derive/Cargo.toml with path deps on drift, prompts, text_diff, and passing `cargo test` from workspace root. Only lib.rs changes were listed; Cargo.toml creation is implied by the agent's final message claiming path deps were added and tests pass, but not verifiable from the given diff."
+          "message": "The `None`-current fallback to `unified_diff(\"\", \"\")` is unreachable by construction.",
+          "reasoning": "The spec both restricts build_reconcile_files to editable files (which always have `current: Some`) and then describes fallback behavior for a `None` current, noting parenthetically that this never happens. This defensive branch is dead code given the editability rule; it is harmless but cannot be exercised by any valid input, so no test can meaningfully cover it.",
+          "suggestion": "Clarify whether the `None`-current handling is intended purely as a defensive default (document it as unreachable) or drop it, since editable files are guaranteed to have `Some` current."
         }
       },
       {

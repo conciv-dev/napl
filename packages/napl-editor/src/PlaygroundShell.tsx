@@ -70,7 +70,7 @@ export const PlaygroundShell = ({
   const isPrompt = (current?.language ?? 'napl') === 'napl';
 
   return (
-    <div className="napl-playground" data-testid="napl-playground">
+    <div className="napl-playground dark" data-testid="napl-playground">
       <div className="napl-playground__chrome">
         <div className="napl-playground__dots" aria-hidden="true">
           <span />

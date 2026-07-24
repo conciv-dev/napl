@@ -313,6 +313,8 @@ const buildModule = async (source, promptFile, moduleName, targets, promptConten
     attribution,
     attributionYaml: attributionText ?? '',
     mapl: maplEntries,
+    maplContent: maplText ?? '',
+    maplFile: `${moduleName}.mapl`,
     journal,
     lock: fileRecords
       .filter((file) => file.hash)

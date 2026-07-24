@@ -29,6 +29,30 @@
   "attribution": [
     {
       "promptLines": [
+        24,
+        26
+      ],
+      "file": "incremental/src/lib.rs",
+      "lines": [
+        222,
+        222
+      ],
+      "note": "uses LineRange from schemas_line_range"
+    },
+    {
+      "promptLines": [
+        27,
+        31
+      ],
+      "file": "incremental/src/lib.rs",
+      "lines": [
+        3,
+        3
+      ],
+      "note": "imports AttributionEntry"
+    },
+    {
+      "promptLines": [
         35,
         37
       ],
@@ -37,7 +61,19 @@
         15,
         20
       ],
-      "note": "BodyLineDiff struct definition"
+      "note": "BodyLineDiff struct with three public fields"
+    },
+    {
+      "promptLines": [
+        39,
+        40
+      ],
+      "file": "incremental/src/lib.rs",
+      "lines": [
+        155,
+        158
+      ],
+      "note": "diff_body_lines entry point"
     },
     {
       "promptLines": [
@@ -49,19 +85,55 @@
         22,
         26
       ],
-      "note": "split lines on \\n, strip trailing \\r"
+      "note": "split on \\n and strip trailing \\r"
     },
     {
       "promptLines": [
         44,
-        50
+        48
       ],
       "file": "incremental/src/lib.rs",
       "lines": [
         28,
+        42
+      ],
+      "note": "LCS table computation"
+    },
+    {
+      "promptLines": [
+        44,
+        48
+      ],
+      "file": "incremental/src/lib.rs",
+      "lines": [
+        44,
         88
       ],
-      "note": "LCS table and op building with delete-preference on ties"
+      "note": "backtrack into equal/delete/insert ops"
+    },
+    {
+      "promptLines": [
+        8,
+        13
+      ],
+      "file": "incremental/src/lib.rs",
+      "lines": [
+        9,
+        13
+      ],
+      "note": "DiffOp enum: equal, delete, insert"
+    },
+    {
+      "promptLines": [
+        49,
+        50
+      ],
+      "file": "incremental/src/lib.rs",
+      "lines": [
+        59,
+        64
+      ],
+      "note": "tie prefers deletion (>=)"
     },
     {
       "promptLines": [
@@ -94,10 +166,22 @@
       ],
       "file": "incremental/src/lib.rs",
       "lines": [
+        6,
+        6
+      ],
+      "note": "context width constant 3"
+    },
+    {
+      "promptLines": [
+        53,
+        55
+      ],
+      "file": "incremental/src/lib.rs",
+      "lines": [
         90,
         110
       ],
-      "note": "hunk grouping with 3-line context"
+      "note": "group ops into hunks within context"
     },
     {
       "promptLines": [
@@ -106,10 +190,10 @@
       ],
       "file": "incremental/src/lib.rs",
       "lines": [
-        112,
+        113,
         149
       ],
-      "note": "hunk header rendering with old/new start+count"
+      "note": "compute hunk start/count and header"
     },
     {
       "promptLines": [
@@ -118,34 +202,22 @@
       ],
       "file": "incremental/src/lib.rs",
       "lines": [
-        130,
+        119,
         152
       ],
-      "note": "per-op line rendering, joined with newline"
+      "note": "prefix lines per op and join"
     },
     {
       "promptLines": [
-        39,
-        41
-      ],
-      "file": "incremental/src/lib.rs",
-      "lines": [
-        155,
-        187
-      ],
-      "note": "diff_body_lines entry point assembling BodyLineDiff"
-    },
-    {
-      "promptLines": [
-        63,
+        62,
         66
       ],
       "file": "incremental/src/lib.rs",
       "lines": [
-        250,
-        260
+        175,
+        187
       ],
-      "note": "test for greet sentence unified diff example"
+      "note": "join hunks, no trailing newline"
     },
     {
       "promptLines": [
@@ -157,92 +229,58 @@
         189,
         203
       ],
-      "note": "select_intersecting_entries implementation"
+      "note": "select entries whose prompt range intersects changed lines"
     },
     {
       "promptLines": [
         77,
-        81
+        79
       ],
       "file": "incremental/src/lib.rs",
       "lines": [
         205,
-        217
+        213
       ],
-      "note": "incremental_unlock_list implementation"
+      "note": "seed owned files, add target-joined entry files"
     },
     {
       "promptLines": [
-        24,
-        26
+        80,
+        81
       ],
       "file": "incremental/src/lib.rs",
       "lines": [
-        222,
-        222
+        214,
+        216
       ],
-      "note": "uses schemas_line_range::LineRange"
-    },
-    {
-      "promptLines": [
-        27,
-        31
-      ],
-      "file": "incremental/src/lib.rs",
-      "lines": [
-        3,
-        3
-      ],
-      "note": "uses schemas_attribution::AttributionEntry"
-    },
-    {
-      "promptLines": [
-        27,
-        31
-      ],
-      "file": "incremental/src/lib.rs",
-      "lines": [
-        224,
-        231
-      ],
-      "note": "test helper building AttributionEntry"
+      "note": "sort and dedup"
     }
   ],
-  "attributionYaml": "module: incremental\ntarget: rust\nentries:\n  - promptLines:\n      - 35\n      - 37\n    file: incremental/src/lib.rs\n    lines:\n      - 15\n      - 20\n    note: BodyLineDiff struct definition\n  - promptLines:\n      - 42\n      - 43\n    file: incremental/src/lib.rs\n    lines:\n      - 22\n      - 26\n    note: split lines on \\n, strip trailing \\r\n  - promptLines:\n      - 44\n      - 50\n    file: incremental/src/lib.rs\n    lines:\n      - 28\n      - 88\n    note: LCS table and op building with delete-preference on ties\n  - promptLines:\n      - 51\n      - 51\n    file: incremental/src/lib.rs\n    lines:\n      - 160\n      - 166\n    note: changed_old_lines from deletions\n  - promptLines:\n      - 52\n      - 52\n    file: incremental/src/lib.rs\n    lines:\n      - 167\n      - 173\n    note: changed_new_lines from insertions\n  - promptLines:\n      - 53\n      - 55\n    file: incremental/src/lib.rs\n    lines:\n      - 90\n      - 110\n    note: hunk grouping with 3-line context\n  - promptLines:\n      - 56\n      - 59\n    file: incremental/src/lib.rs\n    lines:\n      - 112\n      - 149\n    note: hunk header rendering with old/new start+count\n  - promptLines:\n      - 60\n      - 62\n    file: incremental/src/lib.rs\n    lines:\n      - 130\n      - 152\n    note: per-op line rendering, joined with newline\n  - promptLines:\n      - 39\n      - 41\n    file: incremental/src/lib.rs\n    lines:\n      - 155\n      - 187\n    note: diff_body_lines entry point assembling BodyLineDiff\n  - promptLines:\n      - 63\n      - 66\n    file: incremental/src/lib.rs\n    lines:\n      - 250\n      - 260\n    note: test for greet sentence unified diff example\n  - promptLines:\n      - 70\n      - 73\n    file: incremental/src/lib.rs\n    lines:\n      - 189\n      - 203\n    note: select_intersecting_entries implementation\n  - promptLines:\n      - 77\n      - 81\n    file: incremental/src/lib.rs\n    lines:\n      - 205\n      - 217\n    note: incremental_unlock_list implementation\n  - promptLines:\n      - 24\n      - 26\n    file: incremental/src/lib.rs\n    lines:\n      - 222\n      - 222\n    note: uses schemas_line_range::LineRange\n  - promptLines:\n      - 27\n      - 31\n    file: incremental/src/lib.rs\n    lines:\n      - 3\n      - 3\n    note: uses schemas_attribution::AttributionEntry\n  - promptLines:\n      - 27\n      - 31\n    file: incremental/src/lib.rs\n    lines:\n      - 224\n      - 231\n    note: test helper building AttributionEntry\n",
+  "attributionYaml": "module: incremental\ntarget: rust\nentries:\n  - promptLines:\n      - 24\n      - 26\n    file: incremental/src/lib.rs\n    lines:\n      - 222\n      - 222\n    note: uses LineRange from schemas_line_range\n  - promptLines:\n      - 27\n      - 31\n    file: incremental/src/lib.rs\n    lines:\n      - 3\n      - 3\n    note: imports AttributionEntry\n  - promptLines:\n      - 35\n      - 37\n    file: incremental/src/lib.rs\n    lines:\n      - 15\n      - 20\n    note: BodyLineDiff struct with three public fields\n  - promptLines:\n      - 39\n      - 40\n    file: incremental/src/lib.rs\n    lines:\n      - 155\n      - 158\n    note: diff_body_lines entry point\n  - promptLines:\n      - 42\n      - 43\n    file: incremental/src/lib.rs\n    lines:\n      - 22\n      - 26\n    note: split on \\n and strip trailing \\r\n  - promptLines:\n      - 44\n      - 48\n    file: incremental/src/lib.rs\n    lines:\n      - 28\n      - 42\n    note: LCS table computation\n  - promptLines:\n      - 44\n      - 48\n    file: incremental/src/lib.rs\n    lines:\n      - 44\n      - 88\n    note: backtrack into equal/delete/insert ops\n  - promptLines:\n      - 8\n      - 13\n    file: incremental/src/lib.rs\n    lines:\n      - 9\n      - 13\n    note: \"DiffOp enum: equal, delete, insert\"\n  - promptLines:\n      - 49\n      - 50\n    file: incremental/src/lib.rs\n    lines:\n      - 59\n      - 64\n    note: tie prefers deletion (>=)\n  - promptLines:\n      - 51\n      - 51\n    file: incremental/src/lib.rs\n    lines:\n      - 160\n      - 166\n    note: changed_old_lines from deletions\n  - promptLines:\n      - 52\n      - 52\n    file: incremental/src/lib.rs\n    lines:\n      - 167\n      - 173\n    note: changed_new_lines from insertions\n  - promptLines:\n      - 53\n      - 55\n    file: incremental/src/lib.rs\n    lines:\n      - 6\n      - 6\n    note: context width constant 3\n  - promptLines:\n      - 53\n      - 55\n    file: incremental/src/lib.rs\n    lines:\n      - 90\n      - 110\n    note: group ops into hunks within context\n  - promptLines:\n      - 56\n      - 59\n    file: incremental/src/lib.rs\n    lines:\n      - 113\n      - 149\n    note: compute hunk start/count and header\n  - promptLines:\n      - 60\n      - 62\n    file: incremental/src/lib.rs\n    lines:\n      - 119\n      - 152\n    note: prefix lines per op and join\n  - promptLines:\n      - 62\n      - 66\n    file: incremental/src/lib.rs\n    lines:\n      - 175\n      - 187\n    note: join hunks, no trailing newline\n  - promptLines:\n      - 70\n      - 73\n    file: incremental/src/lib.rs\n    lines:\n      - 189\n      - 203\n    note: select entries whose prompt range intersects changed lines\n  - promptLines:\n      - 77\n      - 79\n    file: incremental/src/lib.rs\n    lines:\n      - 205\n      - 213\n    note: seed owned files, add target-joined entry files\n  - promptLines:\n      - 80\n      - 81\n    file: incremental/src/lib.rs\n    lines:\n      - 214\n      - 216\n    note: sort and dedup\n",
   "mapl": [
     {
       "promptLines": [
-        21,
-        22
+        1,
+        82
       ],
-      "kind": "ambiguity",
-      "severity": "error",
-      "message": "\"do not... depend on any hand-written crate\" is oddly worded and its scope is unclear.",
-      "reasoning": "The instruction to add path deps on the two sibling crates and not reimplement their logic makes sense, but the trailing clause \"or depend on any hand-written crate\" reads as an odd, out-of-place insertion — it's unclear what \"hand-written\" is meant to contrast with (generated vs. authored code?), and whether it bans any crates.io dependency beyond the two named siblings, or something else entirely. The agent treated it as reinforcing \"use only the two generated sibling crates, plus std\" and added no other dependencies, which satisfies the plain reading but the phrase itself is worth the author's attention.\n",
-      "suggestion": "Depend only on these two sibling crates (plus the standard library) — do not add any other crate dependency."
+      "kind": "no-op",
+      "severity": "warning",
+      "message": "No changes — prompt unchanged since prior compile, existing code already satisfies it.",
+      "reasoning": "Agent reported \"Empty prompt diff, code already matches prompt. All 11 tests pass.\" This is an incremental regeneration where the prompt body did not differ from the previously compiled version, so the existing `incremental/` crate (BodyLineDiff, diff_body_lines, select_intersecting_entries, incremental_unlock_list) already implements every requirement and its test suite passes. No edits were warranted."
     },
     {
       "promptLines": [
         53,
-        55
-      ],
-      "kind": "assumption",
-      "severity": "warning",
-      "message": "\"within 3 of a change\" was interpreted as operation-index distance, not line-number distance.",
-      "reasoning": "The hunk-grouping rule says a hunk covers every operation within 3 of a change, and hunks merge/split based on run width, but it doesn't explicitly state whether \"within 3\" is measured in diff-operation index or in body line number (these usually coincide for equal runs but could diverge with runs of consecutive inserts/deletes). The agent implemented it as operation-index distance (`idx.saturating_sub(CONTEXT)` / `idx + CONTEXT` over the ops array, merging when `lo <= last_hi + 1`), which matches the worked examples in the tests (6-line gap merges, wider gaps split) but is one of a few defensible readings.\n",
-      "suggestion": "Clarify: within 3 diff-operations (not source line numbers) of a changed (deletion/insertion) operation."
-    },
-    {
-      "promptLines": [
-        48,
-        50
+        62
       ],
       "kind": "note",
       "severity": "info",
-      "message": "Delete/insert tie-break implemented via LCS-table comparison, not explicitly spelled out in prompt.",
-      "reasoning": "The prompt states that on a free choice, deletion is preferred over insertion, without specifying the mechanism. The agent implemented this by choosing Delete whenever `table[i+1][j] >= table[i][j+1]` (ties go to delete), which the `prefers_deletion_on_free_choice` test confirms produces the intended result. Purely a note on the implementation choice, no ambiguity in the required behavior itself."
+      "message": "Unified-diff hunk-grouping rules were not exercised by new work but carry latent ambiguity.",
+      "reasoning": "The spec for grouping operations into hunks (\"a hunk covers every operation within 3 of a change; a purely-equal run wider than the context splits hunks\") is prose that admits more than one boundary interpretation at hunk edges and around adjacent changes. Since no changes were made, the existing implementation's interpretation stands unverified against any new intent — worth confirming against the passing tests if hunk boundaries matter."
     }
   ],
+  "maplContent": "module: incremental\ntarget: rust\nentries:\n  - promptLines:\n      - 1\n      - 82\n    kind: no-op\n    message: No changes — prompt unchanged since prior compile, existing code already satisfies it.\n    reasoning: Agent reported \"Empty prompt diff, code already matches prompt. All 11 tests pass.\" This is an incremental regeneration where the prompt body did not differ from the previously compiled version, so the existing `incremental/` crate (BodyLineDiff, diff_body_lines, select_intersecting_entries, incremental_unlock_list) already implements every requirement and its test suite passes. No edits were warranted.\n  - promptLines:\n      - 53\n      - 62\n    kind: note\n    message: Unified-diff hunk-grouping rules were not exercised by new work but carry latent ambiguity.\n    reasoning: The spec for grouping operations into hunks (\"a hunk covers every operation within 3 of a change; a purely-equal run wider than the context splits hunks\") is prose that admits more than one boundary interpretation at hunk edges and around adjacent changes. Since no changes were made, the existing implementation's interpretation stands unverified against any new intent — worth confirming against the passing tests if hunk boundaries matter.\n",
+  "maplFile": "incremental.mapl",
   "journal": [
     {
       "gen": 22,
@@ -261,6 +299,13 @@
           "patch": "@@ -0,0 +1,352 @@\n+// GENERATED BY NAPL from incremental.napl — edit the prompt, not this file\n+\n+use schemas_attribution::AttributionEntry;\n+use std::collections::BTreeSet;\n+\n+const CONTEXT: usize = 3;\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+enum DiffOp {\n+    Equal { old_line: usize, new_line: usize, text: String },\n+    Delete { old_line: usize, text: String },\n+    Insert { new_line: usize, text: String },\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct BodyLineDiff {\n+    pub unified: String,\n+    pub changed_old_lines: Vec<usize>,\n+    pub changed_new_lines: Vec<usize>,\n+}\n+\n+fn split_lines(body: &str) -> Vec<String> {\n+    body.split('\\n')\n+        .map(|line| line.strip_suffix('\\r').unwrap_or(line).to_string())\n+        .collect()\n+}\n+\n+fn lcs_table(old: &[String], new: &[String]) -> Vec<Vec<u32>> {\n+    let n = old.len();\n+    let m = new.len();\n+    let mut table = vec![vec![0u32; m + 1]; n + 1];\n+    for i in (0..n).rev() {\n+        for j in (0..m).rev() {\n+            table[i][j] = if old[i] == new[j] {\n+                table[i + 1][j + 1] + 1\n+            } else {\n+                table[i + 1][j].max(table[i][j + 1])\n+            };\n+        }\n+    }\n+    table\n+}\n+\n+fn build_ops(old: &[String], new: &[String]) -> Vec<DiffOp> {\n+    let table = lcs_table(old, new);\n+    let mut ops = Vec::new();\n+    let (mut i, mut j) = (0usize, 0usize);\n+    let n = old.len();\n+    let m = new.len();\n+    while i < n && j < m {\n+        if old[i] == new[j] {\n+            ops.push(DiffOp::Equal {\n+                old_line: i + 1,\n+                new_line: j + 1,\n+                text: old[i].clone(),\n+            });\n+            i += 1;\n+            j += 1;\n+        } else if table[i + 1][j] >= table[i][j + 1] {\n+            ops.push(DiffOp::Delete {\n+                old_line: i + 1,\n+                text: old[i].clone(),\n+            });\n+            i += 1;\n+        } else {\n+            ops.push(DiffOp::Insert {\n+                new_line: j + 1,\n+                text: new[j].clone(),\n+            });\n+            j += 1;\n+        }\n+    }\n+    while i < n {\n+        ops.push(DiffOp::Delete {\n+            old_line: i + 1,\n+            text: old[i].clone(),\n+        });\n+        i += 1;\n+    }\n+    while j < m {\n+        ops.push(DiffOp::Insert {\n+            new_line: j + 1,\n+            text: new[j].clone(),\n+        });\n+        j += 1;\n+    }\n+    ops\n+}\n+\n+fn merged_hunk_ranges(ops: &[DiffOp]) -> Vec<(usize, usize)> {\n+    let change_indices: Vec<usize> = ops\n+        .iter()\n+        .enumerate()\n+        .filter(|(_, op)| !matches!(op, DiffOp::Equal { .. }))\n+        .map(|(idx, _)| idx)\n+        .collect();\n+\n+    let mut ranges: Vec<(usize, usize)> = Vec::new();\n+    for &idx in &change_indices {\n+        let lo = idx.saturating_sub(CONTEXT);\n+        let hi = (idx + CONTEXT).min(ops.len() - 1);\n+        match ranges.last_mut() {\n+            Some((_, last_hi)) if lo <= *last_hi + 1 => {\n+                *last_hi = (*last_hi).max(hi);\n+            }\n+            _ => ranges.push((lo, hi)),\n+        }\n+    }\n+    ranges\n+}\n+\n+fn render_hunk(ops: &[DiffOp]) -> String {\n+    let mut old_start = 0usize;\n+    let mut old_count = 0usize;\n+    let mut new_start = 0usize;\n+    let mut new_count = 0usize;\n+    let mut lines: Vec<String> = Vec::new();\n+\n+    for op in ops {\n+        match op {\n+            DiffOp::Equal { old_line, new_line, text } => {\n+                if old_start == 0 {\n+                    old_start = *old_line;\n+                }\n+                if new_start == 0 {\n+                    new_start = *new_line;\n+                }\n+                old_count += 1;\n+                new_count += 1;\n+                lines.push(format!(\" {text}\"));\n+            }\n+            DiffOp::Delete { old_line, text } => {\n+                if old_start == 0 {\n+                    old_start = *old_line;\n+                }\n+                old_count += 1;\n+                lines.push(format!(\"-{text}\"));\n+            }\n+            DiffOp::Insert { new_line, text } => {\n+                if new_start == 0 {\n+                    new_start = *new_line;\n+                }\n+                new_count += 1;\n+                lines.push(format!(\"+{text}\"));\n+            }\n+        }\n+    }\n+\n+    let header = format!(\"@@ -{old_start},{old_count} +{new_start},{new_count} @@\");\n+    let mut hunk = vec![header];\n+    hunk.extend(lines);\n+    hunk.join(\"\\n\")\n+}\n+\n+pub fn diff_body_lines(old_body: &str, new_body: &str) -> BodyLineDiff {\n+    let old_lines = split_lines(old_body);\n+    let new_lines = split_lines(new_body);\n+    let ops = build_ops(&old_lines, &new_lines);\n+\n+    let changed_old_lines: Vec<usize> = ops\n+        .iter()\n+        .filter_map(|op| match op {\n+            DiffOp::Delete { old_line, .. } => Some(*old_line),\n+            _ => None,\n+        })\n+        .collect();\n+    let changed_new_lines: Vec<usize> = ops\n+        .iter()\n+        .filter_map(|op| match op {\n+            DiffOp::Insert { new_line, .. } => Some(*new_line),\n+            _ => None,\n+        })\n+        .collect();\n+\n+    let ranges = merged_hunk_ranges(&ops);\n+    let hunks: Vec<String> = ranges\n+        .iter()\n+        .map(|(lo, hi)| render_hunk(&ops[*lo..=*hi]))\n+        .collect();\n+    let unified = hunks.join(\"\\n\");\n+\n+    BodyLineDiff {\n+        unified,\n+        changed_old_lines,\n+        changed_new_lines,\n+    }\n+}\n+\n+pub fn select_intersecting_entries(\n+    entries: &[AttributionEntry],\n+    changed_old_lines: &[usize],\n+) -> Vec<AttributionEntry> {\n+    let changed: BTreeSet<usize> = changed_old_lines.iter().copied().collect();\n+    entries\n+        .iter()\n+        .filter(|entry| {\n+            let start = entry.prompt_lines.start as usize;\n+            let end = entry.prompt_lines.end as usize;\n+            (start..=end).any(|line| changed.contains(&line))\n+        })\n+        .cloned()\n+        .collect()\n+}\n+\n+pub fn incremental_unlock_list(\n+    owned_files: &[String],\n+    intersecting_entries: &[AttributionEntry],\n+    target_rel_to_root: &str,\n+) -> Vec<String> {\n+    let mut files: Vec<String> = owned_files.to_vec();\n+    for entry in intersecting_entries {\n+        files.push(format!(\"{target_rel_to_root}/{}\", entry.file));\n+    }\n+    files.sort();\n+    files.dedup();\n+    files\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+    use schemas_line_range::LineRange;\n+\n+    fn entry(prompt_start: u32, prompt_end: u32, file: &str) -> AttributionEntry {\n+        AttributionEntry {\n+            prompt_lines: LineRange::new(prompt_start, prompt_end),\n+            file: file.to_string(),\n+            lines: LineRange::new(1, 1),\n+            note: String::new(),\n+        }\n+    }\n+\n+    #[test]\n+    fn splits_lines_and_strips_cr() {\n+        let diff = diff_body_lines(\"a\\r\\nb\\r\\n\", \"a\\r\\nb\\r\\n\");\n+        assert!(diff.changed_old_lines.is_empty());\n+        assert!(diff.changed_new_lines.is_empty());\n+        assert_eq!(diff.unified, \"\");\n+    }\n+\n+    #[test]\n+    fn identical_bodies_produce_no_changes() {\n+        let diff = diff_body_lines(\"Greet a person by name.\", \"Greet a person by name.\");\n+        assert_eq!(diff.changed_old_lines, Vec::<usize>::new());\n+        assert_eq!(diff.changed_new_lines, Vec::<usize>::new());\n+        assert_eq!(diff.unified, \"\");\n+    }\n+\n+    #[test]\n+    fn single_line_change_reports_delete_and_insert() {\n+        let diff = diff_body_lines(\n+            \"Greet a person by name.\",\n+            \"Greet a person by name, loudly.\",\n+        );\n+        assert_eq!(diff.changed_old_lines, vec![1]);\n+        assert_eq!(diff.changed_new_lines, vec![1]);\n+        assert!(diff.unified.contains(\"-Greet a person by name.\"));\n+        assert!(diff.unified.contains(\"+Greet a person by name, loudly.\"));\n+        assert!(diff.unified.starts_with(\"@@ -1,1 +1,1 @@\"));\n+    }\n+\n+    #[test]\n+    fn context_lines_are_included_in_hunk() {\n+        let old = \"one\\ntwo\\nthree\\nfour\\nfive\";\n+        let new = \"one\\ntwo\\nCHANGED\\nfour\\nfive\";\n+        let diff = diff_body_lines(old, new);\n+        assert_eq!(diff.changed_old_lines, vec![3]);\n+        assert_eq!(diff.changed_new_lines, vec![3]);\n+        assert_eq!(\n+            diff.unified,\n+            \"@@ -1,5 +1,5 @@\\n one\\n two\\n-three\\n+CHANGED\\n four\\n five\"\n+        );\n+    }\n+\n+    #[test]\n+    fn distant_changes_split_into_separate_hunks() {\n+        let old_lines: Vec<String> = (1..=20).map(|n| format!(\"line{n}\")).collect();\n+        let mut new_lines = old_lines.clone();\n+        new_lines[0] = \"CHANGED1\".to_string();\n+        new_lines[19] = \"CHANGED20\".to_string();\n+        let old_body = old_lines.join(\"\\n\");\n+        let new_body = new_lines.join(\"\\n\");\n+        let diff = diff_body_lines(&old_body, &new_body);\n+        let hunk_count = diff.unified.matches(\"@@\").count() / 2;\n+        assert_eq!(hunk_count, 2);\n+    }\n+\n+    #[test]\n+    fn adjacent_changes_merge_into_one_hunk() {\n+        // gap of exactly 6 equal lines between two single-line changes merges.\n+        let old_lines: Vec<String> = (1..=8).map(|n| format!(\"line{n}\")).collect();\n+        let mut new_lines = old_lines.clone();\n+        new_lines[0] = \"CHANGED1\".to_string();\n+        new_lines[7] = \"CHANGED8\".to_string();\n+        let old_body = old_lines.join(\"\\n\");\n+        let new_body = new_lines.join(\"\\n\");\n+        let diff = diff_body_lines(&old_body, &new_body);\n+        let hunk_count = diff.unified.matches(\"@@\").count() / 2;\n+        assert_eq!(hunk_count, 1);\n+    }\n+\n+    #[test]\n+    fn prefers_deletion_on_free_choice() {\n+        // \"a\" -> \"a\" then old has extra \"x\" vs new has extra \"y\": tie means delete first.\n+        let diff = diff_body_lines(\"a\\nx\", \"a\\ny\");\n+        assert_eq!(diff.changed_old_lines, vec![2]);\n+        assert_eq!(diff.changed_new_lines, vec![2]);\n+    }\n+\n+    #[test]\n+    fn select_intersecting_entries_keeps_only_overlapping_ranges() {\n+        let entries = vec![\n+            entry(1, 2, \"a.rs\"),\n+            entry(3, 3, \"b.rs\"),\n+            entry(5, 6, \"c.rs\"),\n+        ];\n+        let selected = select_intersecting_entries(&entries, &[3, 7]);\n+        assert_eq!(selected.len(), 1);\n+        assert_eq!(selected[0].file, \"b.rs\");\n+    }\n+\n+    #[test]\n+    fn select_intersecting_entries_preserves_order() {\n+        let entries = vec![entry(5, 5, \"z.rs\"), entry(1, 1, \"a.rs\")];\n+        let selected = select_intersecting_entries(&entries, &[1, 5]);\n+        assert_eq!(selected.len(), 2);\n+        assert_eq!(selected[0].file, \"z.rs\");\n+        assert_eq!(selected[1].file, \"a.rs\");\n+    }\n+\n+    #[test]\n+    fn unlock_list_merges_owned_and_intersecting_sorted_deduped() {\n+        let owned = vec![\"b.rs\".to_string(), \"a.rs\".to_string()];\n+        let entries = vec![entry(1, 1, \"a.rs\"), entry(2, 2, \"c.rs\")];\n+        let unlock = incremental_unlock_list(&owned, &entries, \"target/rust\");\n+        assert_eq!(\n+            unlock,\n+            vec![\n+                \"a.rs\".to_string(),\n+                \"b.rs\".to_string(),\n+                \"target/rust/a.rs\".to_string(),\n+                \"target/rust/c.rs\".to_string(),\n+            ]\n+        );\n+    }\n+\n+    #[test]\n+    fn unlock_list_is_empty_when_no_input() {\n+        let unlock = incremental_unlock_list(&[], &[], \"target/rust\");\n+        assert!(unlock.is_empty());\n+    }\n+}"
         }
       ]
+    },
+    {
+      "gen": 71,
+      "timestamp": "2026-07-24T13:14:54.365Z",
+      "mode": "incremental",
+      "promptHash": "daea8da01dc83d87a8a5435727784058ba5f2b6e9501a2532d74acd072d6ed7d",
+      "files": []
     }
   ],
   "lock": [
@@ -310,6 +355,30 @@
         "entries": [
           {
             "promptLines": [
+              24,
+              26
+            ],
+            "file": "incremental/src/lib.rs",
+            "lines": [
+              222,
+              222
+            ],
+            "note": "uses LineRange from schemas_line_range"
+          },
+          {
+            "promptLines": [
+              27,
+              31
+            ],
+            "file": "incremental/src/lib.rs",
+            "lines": [
+              3,
+              3
+            ],
+            "note": "imports AttributionEntry"
+          },
+          {
+            "promptLines": [
               35,
               37
             ],
@@ -318,7 +387,19 @@
               15,
               20
             ],
-            "note": "BodyLineDiff struct definition"
+            "note": "BodyLineDiff struct with three public fields"
+          },
+          {
+            "promptLines": [
+              39,
+              40
+            ],
+            "file": "incremental/src/lib.rs",
+            "lines": [
+              155,
+              158
+            ],
+            "note": "diff_body_lines entry point"
           },
           {
             "promptLines": [
@@ -330,19 +411,55 @@
               22,
               26
             ],
-            "note": "split lines on \\n, strip trailing \\r"
+            "note": "split on \\n and strip trailing \\r"
           },
           {
             "promptLines": [
               44,
-              50
+              48
             ],
             "file": "incremental/src/lib.rs",
             "lines": [
               28,
+              42
+            ],
+            "note": "LCS table computation"
+          },
+          {
+            "promptLines": [
+              44,
+              48
+            ],
+            "file": "incremental/src/lib.rs",
+            "lines": [
+              44,
               88
             ],
-            "note": "LCS table and op building with delete-preference on ties"
+            "note": "backtrack into equal/delete/insert ops"
+          },
+          {
+            "promptLines": [
+              8,
+              13
+            ],
+            "file": "incremental/src/lib.rs",
+            "lines": [
+              9,
+              13
+            ],
+            "note": "DiffOp enum: equal, delete, insert"
+          },
+          {
+            "promptLines": [
+              49,
+              50
+            ],
+            "file": "incremental/src/lib.rs",
+            "lines": [
+              59,
+              64
+            ],
+            "note": "tie prefers deletion (>=)"
           },
           {
             "promptLines": [
@@ -375,10 +492,22 @@
             ],
             "file": "incremental/src/lib.rs",
             "lines": [
+              6,
+              6
+            ],
+            "note": "context width constant 3"
+          },
+          {
+            "promptLines": [
+              53,
+              55
+            ],
+            "file": "incremental/src/lib.rs",
+            "lines": [
               90,
               110
             ],
-            "note": "hunk grouping with 3-line context"
+            "note": "group ops into hunks within context"
           },
           {
             "promptLines": [
@@ -387,10 +516,10 @@
             ],
             "file": "incremental/src/lib.rs",
             "lines": [
-              112,
+              113,
               149
             ],
-            "note": "hunk header rendering with old/new start+count"
+            "note": "compute hunk start/count and header"
           },
           {
             "promptLines": [
@@ -399,34 +528,22 @@
             ],
             "file": "incremental/src/lib.rs",
             "lines": [
-              130,
+              119,
               152
             ],
-            "note": "per-op line rendering, joined with newline"
+            "note": "prefix lines per op and join"
           },
           {
             "promptLines": [
-              39,
-              41
-            ],
-            "file": "incremental/src/lib.rs",
-            "lines": [
-              155,
-              187
-            ],
-            "note": "diff_body_lines entry point assembling BodyLineDiff"
-          },
-          {
-            "promptLines": [
-              63,
+              62,
               66
             ],
             "file": "incremental/src/lib.rs",
             "lines": [
-              250,
-              260
+              175,
+              187
             ],
-            "note": "test for greet sentence unified diff example"
+            "note": "join hunks, no trailing newline"
           },
           {
             "promptLines": [
@@ -438,55 +555,31 @@
               189,
               203
             ],
-            "note": "select_intersecting_entries implementation"
+            "note": "select entries whose prompt range intersects changed lines"
           },
           {
             "promptLines": [
               77,
-              81
+              79
             ],
             "file": "incremental/src/lib.rs",
             "lines": [
               205,
-              217
+              213
             ],
-            "note": "incremental_unlock_list implementation"
+            "note": "seed owned files, add target-joined entry files"
           },
           {
             "promptLines": [
-              24,
-              26
+              80,
+              81
             ],
             "file": "incremental/src/lib.rs",
             "lines": [
-              222,
-              222
+              214,
+              216
             ],
-            "note": "uses schemas_line_range::LineRange"
-          },
-          {
-            "promptLines": [
-              27,
-              31
-            ],
-            "file": "incremental/src/lib.rs",
-            "lines": [
-              3,
-              3
-            ],
-            "note": "uses schemas_attribution::AttributionEntry"
-          },
-          {
-            "promptLines": [
-              27,
-              31
-            ],
-            "file": "incremental/src/lib.rs",
-            "lines": [
-              224,
-              231
-            ],
-            "note": "test helper building AttributionEntry"
+            "note": "sort and dedup"
           }
         ]
       },
@@ -495,14 +588,13 @@
         "path": "incremental.mapl",
         "entry": {
           "promptLines": [
-            21,
-            22
+            1,
+            82
           ],
-          "kind": "ambiguity",
-          "severity": "error",
-          "message": "\"do not... depend on any hand-written crate\" is oddly worded and its scope is unclear.",
-          "reasoning": "The instruction to add path deps on the two sibling crates and not reimplement their logic makes sense, but the trailing clause \"or depend on any hand-written crate\" reads as an odd, out-of-place insertion — it's unclear what \"hand-written\" is meant to contrast with (generated vs. authored code?), and whether it bans any crates.io dependency beyond the two named siblings, or something else entirely. The agent treated it as reinforcing \"use only the two generated sibling crates, plus std\" and added no other dependencies, which satisfies the plain reading but the phrase itself is worth the author's attention.\n",
-          "suggestion": "Depend only on these two sibling crates (plus the standard library) — do not add any other crate dependency."
+          "kind": "no-op",
+          "severity": "warning",
+          "message": "No changes — prompt unchanged since prior compile, existing code already satisfies it.",
+          "reasoning": "Agent reported \"Empty prompt diff, code already matches prompt. All 11 tests pass.\" This is an incremental regeneration where the prompt body did not differ from the previously compiled version, so the existing `incremental/` crate (BodyLineDiff, diff_body_lines, select_intersecting_entries, incremental_unlock_list) already implements every requirement and its test suite passes. No edits were warranted."
         }
       },
       {
@@ -511,27 +603,12 @@
         "entry": {
           "promptLines": [
             53,
-            55
-          ],
-          "kind": "assumption",
-          "severity": "warning",
-          "message": "\"within 3 of a change\" was interpreted as operation-index distance, not line-number distance.",
-          "reasoning": "The hunk-grouping rule says a hunk covers every operation within 3 of a change, and hunks merge/split based on run width, but it doesn't explicitly state whether \"within 3\" is measured in diff-operation index or in body line number (these usually coincide for equal runs but could diverge with runs of consecutive inserts/deletes). The agent implemented it as operation-index distance (`idx.saturating_sub(CONTEXT)` / `idx + CONTEXT` over the ops array, merging when `lo <= last_hi + 1`), which matches the worked examples in the tests (6-line gap merges, wider gaps split) but is one of a few defensible readings.\n",
-          "suggestion": "Clarify: within 3 diff-operations (not source line numbers) of a changed (deletion/insertion) operation."
-        }
-      },
-      {
-        "type": "mapl-entry",
-        "path": "incremental.mapl",
-        "entry": {
-          "promptLines": [
-            48,
-            50
+            62
           ],
           "kind": "note",
           "severity": "info",
-          "message": "Delete/insert tie-break implemented via LCS-table comparison, not explicitly spelled out in prompt.",
-          "reasoning": "The prompt states that on a free choice, deletion is preferred over insertion, without specifying the mechanism. The agent implemented this by choosing Delete whenever `table[i+1][j] >= table[i][j+1]` (ties go to delete), which the `prefers_deletion_on_free_choice` test confirms produces the intended result. Purely a note on the implementation choice, no ambiguity in the required behavior itself."
+          "message": "Unified-diff hunk-grouping rules were not exercised by new work but carry latent ambiguity.",
+          "reasoning": "The spec for grouping operations into hunks (\"a hunk covers every operation within 3 of a change; a purely-equal run wider than the context splits hunks\") is prose that admits more than one boundary interpretation at hunk edges and around adjacent changes. Since no changes were made, the existing implementation's interpretation stands unverified against any new intent — worth confirming against the passing tests if hunk boundaries matter."
         }
       },
       {

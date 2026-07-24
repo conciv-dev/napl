@@ -29,18 +29,6 @@
   "attribution": [
     {
       "promptLines": [
-        23,
-        26
-      ],
-      "file": "gen_prompt_diff/src/lib.rs",
-      "lines": [
-        1,
-        1
-      ],
-      "note": "import diff_body_lines from incremental sibling crate"
-    },
-    {
-      "promptLines": [
         31,
         31
       ],
@@ -49,7 +37,19 @@
         3,
         3
       ],
-      "note": "function signature for compute_prompt_diff"
+      "note": "compute_prompt_diff signature: Option<&str> prior, &str body → String"
+    },
+    {
+      "promptLines": [
+        23,
+        24
+      ],
+      "file": "gen_prompt_diff/src/lib.rs",
+      "lines": [
+        1,
+        1
+      ],
+      "note": "imports diff_body_lines from incremental sibling crate"
     },
     {
       "promptLines": [
@@ -61,7 +61,7 @@
         5,
         5
       ],
-      "note": "prior differs from body -> return unified diff"
+      "note": "Some(prior) and prior != body → return diff_body_lines(prior, body).unified"
     },
     {
       "promptLines": [
@@ -73,7 +73,7 @@
         6,
         6
       ],
-      "note": "no prior or unchanged body -> empty string"
+      "note": "None or unchanged body → empty string"
     },
     {
       "promptLines": [
@@ -85,7 +85,7 @@
         15,
         17
       ],
-      "note": "test: (None, body) -> empty"
+      "note": "test: (None, body) → empty"
     },
     {
       "promptLines": [
@@ -94,10 +94,10 @@
       ],
       "file": "gen_prompt_diff/src/lib.rs",
       "lines": [
-        19,
+        20,
         22
       ],
-      "note": "test: (Some(body), body) -> empty (unchanged)"
+      "note": "test: (Some(body), body) unchanged → empty"
     },
     {
       "promptLines": [
@@ -106,25 +106,37 @@
       ],
       "file": "gen_prompt_diff/src/lib.rs",
       "lines": [
-        24,
+        25,
         30
       ],
-      "note": "test: changed body returns diff_body_lines unified diff"
+      "note": "test: changed body → unified diff"
     }
   ],
-  "attributionYaml": "module: gen_prompt_diff\ntarget: rust\nentries:\n  - promptLines:\n      - 23\n      - 26\n    file: gen_prompt_diff/src/lib.rs\n    lines:\n      - 1\n      - 1\n    note: import diff_body_lines from incremental sibling crate\n  - promptLines:\n      - 31\n      - 31\n    file: gen_prompt_diff/src/lib.rs\n    lines:\n      - 3\n      - 3\n    note: function signature for compute_prompt_diff\n  - promptLines:\n      - 36\n      - 38\n    file: gen_prompt_diff/src/lib.rs\n    lines:\n      - 5\n      - 5\n    note: prior differs from body -> return unified diff\n  - promptLines:\n      - 39\n      - 40\n    file: gen_prompt_diff/src/lib.rs\n    lines:\n      - 6\n      - 6\n    note: no prior or unchanged body -> empty string\n  - promptLines:\n      - 42\n      - 42\n    file: gen_prompt_diff/src/lib.rs\n    lines:\n      - 15\n      - 17\n    note: \"test: (None, body) -> empty\"\n  - promptLines:\n      - 42\n      - 42\n    file: gen_prompt_diff/src/lib.rs\n    lines:\n      - 19\n      - 22\n    note: \"test: (Some(body), body) -> empty (unchanged)\"\n  - promptLines:\n      - 43\n      - 43\n    file: gen_prompt_diff/src/lib.rs\n    lines:\n      - 24\n      - 30\n    note: \"test: changed body returns diff_body_lines unified diff\"\n",
+  "attributionYaml": "module: gen_prompt_diff\ntarget: rust\nentries:\n  - promptLines:\n      - 31\n      - 31\n    file: gen_prompt_diff/src/lib.rs\n    lines:\n      - 3\n      - 3\n    note: \"compute_prompt_diff signature: Option<&str> prior, &str body → String\"\n  - promptLines:\n      - 23\n      - 24\n    file: gen_prompt_diff/src/lib.rs\n    lines:\n      - 1\n      - 1\n    note: imports diff_body_lines from incremental sibling crate\n  - promptLines:\n      - 36\n      - 38\n    file: gen_prompt_diff/src/lib.rs\n    lines:\n      - 5\n      - 5\n    note: Some(prior) and prior != body → return diff_body_lines(prior, body).unified\n  - promptLines:\n      - 39\n      - 40\n    file: gen_prompt_diff/src/lib.rs\n    lines:\n      - 6\n      - 6\n    note: None or unchanged body → empty string\n  - promptLines:\n      - 42\n      - 42\n    file: gen_prompt_diff/src/lib.rs\n    lines:\n      - 15\n      - 17\n    note: \"test: (None, body) → empty\"\n  - promptLines:\n      - 42\n      - 42\n    file: gen_prompt_diff/src/lib.rs\n    lines:\n      - 20\n      - 22\n    note: \"test: (Some(body), body) unchanged → empty\"\n  - promptLines:\n      - 43\n      - 43\n    file: gen_prompt_diff/src/lib.rs\n    lines:\n      - 25\n      - 30\n    note: \"test: changed body → unified diff\"\n",
   "mapl": [
     {
       "promptLines": [
-        36,
-        40
+        31,
+        43
+      ],
+      "kind": "no-op",
+      "severity": "warning",
+      "message": "No changes — existing lib.rs already implements compute_prompt_diff exactly as specified.",
+      "reasoning": "The agent reported NO CHANGES, stating the current src/lib.rs already matches the target: an Option<&str> match returning diff_body_lines(prior, body).unified when prior differs from body, and an empty string when prior_body is None or prior equals body. It also reported all 3 tests pass. The specified behavior (including the three examples in lines 42-43) was already satisfied, so no edits were required."
+    },
+    {
+      "promptLines": [
+        14,
+        15
       ],
       "kind": "note",
       "severity": "info",
-      "message": "Match logic straightforward, mirrors spec exactly.",
-      "reasoning": "Code use match with guard `Some(prior) if prior != body => ... , _ => empty`. Covers all 3 cases stated (None; Some equal; Some differ) correctly, no gaps found."
+      "message": "Agent claims tests pass but final message does not show verification output.",
+      "reasoning": "The prompt requires `cargo test` to pass from the workspace root before finishing. The agent asserts 'All 3 tests pass,' but no command output or evidence was included in the changes record. Since nothing was modified, prior passing state is plausible, but the pass claim is unverified in what was surfaced."
     }
   ],
+  "maplContent": "module: gen_prompt_diff\ntarget: rust\nentries:\n  - promptLines:\n      - 31\n      - 43\n    kind: no-op\n    message: No changes — existing lib.rs already implements compute_prompt_diff exactly as specified.\n    reasoning: \"The agent reported NO CHANGES, stating the current src/lib.rs already matches the target: an Option<&str> match returning diff_body_lines(prior, body).unified when prior differs from body, and an empty string when prior_body is None or prior equals body. It also reported all 3 tests pass. The specified behavior (including the three examples in lines 42-43) was already satisfied, so no edits were required.\"\n  - promptLines:\n      - 14\n      - 15\n    kind: note\n    message: Agent claims tests pass but final message does not show verification output.\n    reasoning: The prompt requires `cargo test` to pass from the workspace root before finishing. The agent asserts 'All 3 tests pass,' but no command output or evidence was included in the changes record. Since nothing was modified, prior passing state is plausible, but the pass claim is unverified in what was surfaced.\n",
+  "maplFile": "gen_prompt_diff.mapl",
   "journal": [
     {
       "gen": 36,
@@ -143,6 +155,13 @@
           "patch": "@@ -0,0 +1,31 @@\n+use incremental::diff_body_lines;\n+\n+pub fn compute_prompt_diff(prior_body: Option<&str>, body: &str) -> String {\n+    match prior_body {\n+        Some(prior) if prior != body => diff_body_lines(prior, body).unified,\n+        _ => String::new(),\n+    }\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn no_prior_body_returns_empty() {\n+        assert_eq!(compute_prompt_diff(None, \"body\"), \"\");\n+    }\n+\n+    #[test]\n+    fn unchanged_body_returns_empty() {\n+        assert_eq!(compute_prompt_diff(Some(\"body\"), \"body\"), \"\");\n+    }\n+\n+    #[test]\n+    fn changed_body_returns_unified_diff() {\n+        let result = compute_prompt_diff(Some(\"old line\"), \"new line\");\n+        let expected = diff_body_lines(\"old line\", \"new line\").unified;\n+        assert_eq!(result, expected);\n+        assert!(!result.is_empty());\n+    }\n+}"
         }
       ]
+    },
+    {
+      "gen": 84,
+      "timestamp": "2026-07-24T13:36:13.571Z",
+      "mode": "incremental",
+      "promptHash": "f1eadaec8f24352623f38a565a0b746f2ffad044b2f2ce04c37d9308c6d87811",
+      "files": []
     }
   ],
   "lock": [
@@ -192,18 +211,6 @@
         "entries": [
           {
             "promptLines": [
-              23,
-              26
-            ],
-            "file": "gen_prompt_diff/src/lib.rs",
-            "lines": [
-              1,
-              1
-            ],
-            "note": "import diff_body_lines from incremental sibling crate"
-          },
-          {
-            "promptLines": [
               31,
               31
             ],
@@ -212,7 +219,19 @@
               3,
               3
             ],
-            "note": "function signature for compute_prompt_diff"
+            "note": "compute_prompt_diff signature: Option<&str> prior, &str body → String"
+          },
+          {
+            "promptLines": [
+              23,
+              24
+            ],
+            "file": "gen_prompt_diff/src/lib.rs",
+            "lines": [
+              1,
+              1
+            ],
+            "note": "imports diff_body_lines from incremental sibling crate"
           },
           {
             "promptLines": [
@@ -224,7 +243,7 @@
               5,
               5
             ],
-            "note": "prior differs from body -> return unified diff"
+            "note": "Some(prior) and prior != body → return diff_body_lines(prior, body).unified"
           },
           {
             "promptLines": [
@@ -236,7 +255,7 @@
               6,
               6
             ],
-            "note": "no prior or unchanged body -> empty string"
+            "note": "None or unchanged body → empty string"
           },
           {
             "promptLines": [
@@ -248,7 +267,7 @@
               15,
               17
             ],
-            "note": "test: (None, body) -> empty"
+            "note": "test: (None, body) → empty"
           },
           {
             "promptLines": [
@@ -257,10 +276,10 @@
             ],
             "file": "gen_prompt_diff/src/lib.rs",
             "lines": [
-              19,
+              20,
               22
             ],
-            "note": "test: (Some(body), body) -> empty (unchanged)"
+            "note": "test: (Some(body), body) unchanged → empty"
           },
           {
             "promptLines": [
@@ -269,10 +288,10 @@
             ],
             "file": "gen_prompt_diff/src/lib.rs",
             "lines": [
-              24,
+              25,
               30
             ],
-            "note": "test: changed body returns diff_body_lines unified diff"
+            "note": "test: changed body → unified diff"
           }
         ]
       },
@@ -281,13 +300,27 @@
         "path": "gen_prompt_diff.mapl",
         "entry": {
           "promptLines": [
-            36,
-            40
+            31,
+            43
+          ],
+          "kind": "no-op",
+          "severity": "warning",
+          "message": "No changes — existing lib.rs already implements compute_prompt_diff exactly as specified.",
+          "reasoning": "The agent reported NO CHANGES, stating the current src/lib.rs already matches the target: an Option<&str> match returning diff_body_lines(prior, body).unified when prior differs from body, and an empty string when prior_body is None or prior equals body. It also reported all 3 tests pass. The specified behavior (including the three examples in lines 42-43) was already satisfied, so no edits were required."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "gen_prompt_diff.mapl",
+        "entry": {
+          "promptLines": [
+            14,
+            15
           ],
           "kind": "note",
           "severity": "info",
-          "message": "Match logic straightforward, mirrors spec exactly.",
-          "reasoning": "Code use match with guard `Some(prior) if prior != body => ... , _ => empty`. Covers all 3 cases stated (None; Some equal; Some differ) correctly, no gaps found."
+          "message": "Agent claims tests pass but final message does not show verification output.",
+          "reasoning": "The prompt requires `cargo test` to pass from the workspace root before finishing. The agent asserts 'All 3 tests pass,' but no command output or evidence was included in the changes record. Since nothing was modified, prior passing state is plausible, but the pass claim is unverified in what was surfaced."
         }
       },
       {

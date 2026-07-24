@@ -6,7 +6,19 @@ import {
   type ReactElement,
   type ReactNode,
 } from 'react'
+import {DynamicCodeBlock} from 'fumadocs-ui/components/dynamic-codeblock'
 import type {InlineFile, NaplExampleImplProps} from './napl-example-impl'
+
+const shikiLangForFilename = (name: string): string => {
+  const lower = name.toLowerCase()
+  if (lower.endsWith('.ts') || lower.endsWith('.tsx')) return 'typescript'
+  if (lower.endsWith('.js') || lower.endsWith('.jsx') || lower.endsWith('.mjs') || lower.endsWith('.cjs'))
+    return 'javascript'
+  if (lower.endsWith('.json')) return 'json'
+  if (lower.endsWith('.toml')) return 'toml'
+  if (lower.endsWith('.rs')) return 'rust'
+  return 'yaml'
+}
 
 export interface NaplExampleProps {
   module?: string
@@ -70,16 +82,17 @@ export function NaplExample(props: NaplExampleProps): ReactElement {
           showGen={props.showGen ?? false}
         />
       ) : (
-        <div className="napl-example napl-example--static">
-          {filename ? <div className="napl-example__label">{filename}</div> : null}
-          {fallbackSource ? (
-            <pre className="napl-example__pre">
-              <code>{fallbackSource}</code>
-            </pre>
-          ) : (
+        fallbackSource ? (
+          <DynamicCodeBlock
+            lang={shikiLangForFilename(filename ?? inlineFiles?.[0]?.name ?? 'example.napl')}
+            code={fallbackSource}
+            codeblock={{title: filename ?? inlineFiles?.[0]?.name, className: 'napl-example__fallback my-0'}}
+          />
+        ) : (
+          <div className="napl-example napl-example--static">
             <div className="napl-example__placeholder">Loading example…</div>
-          )}
-        </div>
+          </div>
+        )
       )}
     </div>
   )

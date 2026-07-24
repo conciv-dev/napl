@@ -29,7 +29,7 @@
   "attribution": [
     {
       "promptLines": [
-        19,
+        17,
         19
       ],
       "file": "parse_output/src/lib.rs",
@@ -37,43 +37,19 @@
         6,
         11
       ],
-      "note": "extract_yaml returns YAML content of text"
+      "note": "extract_yaml returns YAML content from text"
     },
     {
       "promptLines": [
-        21,
-        21
+        28,
+        30
       ],
       "file": "parse_output/src/lib.rs",
       "lines": [
-        23,
-        28
+        7,
+        10
       ],
-      "note": "find first line starting with three backticks"
-    },
-    {
-      "promptLines": [
-        22,
-        24
-      ],
-      "file": "parse_output/src/lib.rs",
-      "lines": [
-        14,
-        17
-      ],
-      "note": "skip fence opening line incl info string up to newline"
-    },
-    {
-      "promptLines": [
-        24,
-        25
-      ],
-      "file": "parse_output/src/lib.rs",
-      "lines": [
-        18,
-        20
-      ],
-      "note": "content spans to next triple-backtick occurrence"
+      "note": "falls back to whole text trimmed when no fenced block"
     },
     {
       "promptLines": [
@@ -85,11 +61,11 @@
         8,
         8
       ],
-      "note": "trim surrounding whitespace of fenced content"
+      "note": "trims surrounding whitespace of fence content"
     },
     {
       "promptLines": [
-        28,
+        29,
         30
       ],
       "file": "parse_output/src/lib.rs",
@@ -97,58 +73,106 @@
         9,
         9
       ],
-      "note": "fallback to trimmed whole text when no complete fence found"
+      "note": "returns whole text trimmed on no fence"
     },
     {
       "promptLines": [
-        28,
-        30
+        21,
+        25
       ],
       "file": "parse_output/src/lib.rs",
       "lines": [
         13,
         21
       ],
-      "note": "find_fenced_block returns None for missing/incomplete fence via ? operator"
+      "note": "locates fenced block content between fences"
     },
     {
       "promptLines": [
-        34,
-        36
+        23,
+        24
       ],
       "file": "parse_output/src/lib.rs",
       "lines": [
-        35,
-        38
+        15,
+        17
       ],
-      "note": "test yaml-info-string fence extraction"
+      "note": "discards opening fence line up to its newline"
     },
     {
       "promptLines": [
-        37,
-        38
+        24,
+        25
       ],
       "file": "parse_output/src/lib.rs",
       "lines": [
-        41,
-        44
+        18,
+        20
       ],
-      "note": "test bare fence extraction"
+      "note": "content up to next triple backticks"
     },
     {
       "promptLines": [
-        39,
-        40
+        28,
+        29
       ],
       "file": "parse_output/src/lib.rs",
       "lines": [
-        47,
-        50
+        16,
+        16
       ],
-      "note": "test plain text trimmed with no fence"
+      "note": "no newline after fence returns None"
+    },
+    {
+      "promptLines": [
+        28,
+        29
+      ],
+      "file": "parse_output/src/lib.rs",
+      "lines": [
+        19,
+        19
+      ],
+      "note": "no closing backticks returns None"
+    },
+    {
+      "promptLines": [
+        21,
+        21
+      ],
+      "file": "parse_output/src/lib.rs",
+      "lines": [
+        23,
+        28
+      ],
+      "note": "finds first line beginning with three backticks"
+    },
+    {
+      "promptLines": [
+        21,
+        21
+      ],
+      "file": "parse_output/src/lib.rs",
+      "lines": [
+        24,
+        26
+      ],
+      "note": "handles fence at start of text"
+    },
+    {
+      "promptLines": [
+        21,
+        21
+      ],
+      "file": "parse_output/src/lib.rs",
+      "lines": [
+        27,
+        27
+      ],
+      "note": "handles fence after a newline mid-text"
     }
   ],
-  "attributionYaml": "module: parse_output\ntarget: rust\nentries:\n  - promptLines:\n      - 19\n      - 19\n    file: parse_output/src/lib.rs\n    lines:\n      - 6\n      - 11\n    note: extract_yaml returns YAML content of text\n  - promptLines:\n      - 21\n      - 21\n    file: parse_output/src/lib.rs\n    lines:\n      - 23\n      - 28\n    note: find first line starting with three backticks\n  - promptLines:\n      - 22\n      - 24\n    file: parse_output/src/lib.rs\n    lines:\n      - 14\n      - 17\n    note: skip fence opening line incl info string up to newline\n  - promptLines:\n      - 24\n      - 25\n    file: parse_output/src/lib.rs\n    lines:\n      - 18\n      - 20\n    note: content spans to next triple-backtick occurrence\n  - promptLines:\n      - 26\n      - 26\n    file: parse_output/src/lib.rs\n    lines:\n      - 8\n      - 8\n    note: trim surrounding whitespace of fenced content\n  - promptLines:\n      - 28\n      - 30\n    file: parse_output/src/lib.rs\n    lines:\n      - 9\n      - 9\n    note: fallback to trimmed whole text when no complete fence found\n  - promptLines:\n      - 28\n      - 30\n    file: parse_output/src/lib.rs\n    lines:\n      - 13\n      - 21\n    note: find_fenced_block returns None for missing/incomplete fence via ? operator\n  - promptLines:\n      - 34\n      - 36\n    file: parse_output/src/lib.rs\n    lines:\n      - 35\n      - 38\n    note: test yaml-info-string fence extraction\n  - promptLines:\n      - 37\n      - 38\n    file: parse_output/src/lib.rs\n    lines:\n      - 41\n      - 44\n    note: test bare fence extraction\n  - promptLines:\n      - 39\n      - 40\n    file: parse_output/src/lib.rs\n    lines:\n      - 47\n      - 50\n    note: test plain text trimmed with no fence\n",
+  "attributionYaml": "module: parse_output\ntarget: rust\nentries:\n  - promptLines:\n      - 17\n      - 19\n    file: parse_output/src/lib.rs\n    lines:\n      - 6\n      - 11\n    note: extract_yaml returns YAML content from text\n  - promptLines:\n      - 28\n      - 30\n    file: parse_output/src/lib.rs\n    lines:\n      - 7\n      - 10\n    note: falls back to whole text trimmed when no fenced block\n  - promptLines:\n      - 26\n      - 26\n    file: parse_output/src/lib.rs\n    lines:\n      - 8\n      - 8\n    note: trims surrounding whitespace of fence content\n  - promptLines:\n      - 29\n      - 30\n    file: parse_output/src/lib.rs\n    lines:\n      - 9\n      - 9\n    note: returns whole text trimmed on no fence\n  - promptLines:\n      - 21\n      - 25\n    file: parse_output/src/lib.rs\n    lines:\n      - 13\n      - 21\n    note: locates fenced block content between fences\n  - promptLines:\n      - 23\n      - 24\n    file: parse_output/src/lib.rs\n    lines:\n      - 15\n      - 17\n    note: discards opening fence line up to its newline\n  - promptLines:\n      - 24\n      - 25\n    file: parse_output/src/lib.rs\n    lines:\n      - 18\n      - 20\n    note: content up to next triple backticks\n  - promptLines:\n      - 28\n      - 29\n    file: parse_output/src/lib.rs\n    lines:\n      - 16\n      - 16\n    note: no newline after fence returns None\n  - promptLines:\n      - 28\n      - 29\n    file: parse_output/src/lib.rs\n    lines:\n      - 19\n      - 19\n    note: no closing backticks returns None\n  - promptLines:\n      - 21\n      - 21\n    file: parse_output/src/lib.rs\n    lines:\n      - 23\n      - 28\n    note: finds first line beginning with three backticks\n  - promptLines:\n      - 21\n      - 21\n    file: parse_output/src/lib.rs\n    lines:\n      - 24\n      - 26\n    note: handles fence at start of text\n  - promptLines:\n      - 21\n      - 21\n    file: parse_output/src/lib.rs\n    lines:\n      - 27\n      - 27\n    note: handles fence after a newline mid-text\n",
   "mapl": [
     {
       "promptLines": [
@@ -157,20 +181,33 @@
       ],
       "kind": "no-op",
       "severity": "warning",
-      "message": "Crate already exists matching spec exactly.",
-      "reasoning": "parse_output/ crate (Cargo.toml + src/lib.rs) already present, no workspace manifest added, body_lines crate untouched. Agent verified via diff — nothing to change."
+      "message": "No changes — parse_output crate already exists and matches the prompt.",
+      "reasoning": "Changes were \"NO CHANGES\". The prompt instructs creating a new parse_output/ library crate (Cargo.toml + src/lib.rs) implementing extract_yaml. The coding agent reported the current code already satisfies the prompt body and that 10 tests pass, so nothing was edited. This is plausible if a prior compile already produced the crate; the requirement was pre-satisfied rather than un-actionable. No evidence of the existing crate's contents is shown in the diff, so the match rests entirely on the agent's assertion."
     },
     {
       "promptLines": [
-        17,
-        30
+        41,
+        41
       ],
-      "kind": "no-op",
+      "kind": "ambiguity",
+      "severity": "error",
+      "message": "Stray `</content>` line looks like an accidental insertion, not a requirement.",
+      "reasoning": "Line 41 is a lone `</content>` closing tag with no matching opening tag anywhere in the prompt body. It reads like leftover markup that leaked in from a wrapping format rather than an intentional instruction. It should be ignored as prompt content, but its presence is surprising and worth confirming it was not meant to delimit something.",
+      "suggestion": "Remove the stray `</content>` line from the prompt body."
+    },
+    {
+      "promptLines": [
+        23,
+        24
+      ],
+      "kind": "assumption",
       "severity": "warning",
-      "message": "extract_yaml behavior already matches spec, tests pass 10/10.",
-      "reasoning": "Existing implementation already handles fence detection, info-string stripping, missing-fence fallback, and trim rules per spec. Agent ran cargo test from parse_output/ and confirmed all 10 pass, so no code change was needed."
+      "message": "Info-string 'other characters' on the opening fence are discarded up to newline.",
+      "reasoning": "The prompt says the opening fence line may carry an info string (yaml/yml/nothing) \"and possibly other characters\", and that everything on that line up to and including the newline is discarded. Assumed this means the entire opening line is dropped regardless of what follows the info string, with no validation that the info string is one of the named values. Since no code was changed, this reflects the existing implementation's behavior taken as correct."
     }
   ],
+  "maplContent": "module: parse_output\ntarget: rust\nentries:\n  - promptLines:\n      - 9\n      - 15\n    kind: no-op\n    message: No changes — parse_output crate already exists and matches the prompt.\n    reasoning: Changes were \"NO CHANGES\". The prompt instructs creating a new parse_output/ library crate (Cargo.toml + src/lib.rs) implementing extract_yaml. The coding agent reported the current code already satisfies the prompt body and that 10 tests pass, so nothing was edited. This is plausible if a prior compile already produced the crate; the requirement was pre-satisfied rather than un-actionable. No evidence of the existing crate's contents is shown in the diff, so the match rests entirely on the agent's assertion.\n  - promptLines:\n      - 41\n      - 41\n    kind: ambiguity\n    message: Stray `</content>` line looks like an accidental insertion, not a requirement.\n    reasoning: Line 41 is a lone `</content>` closing tag with no matching opening tag anywhere in the prompt body. It reads like leftover markup that leaked in from a wrapping format rather than an intentional instruction. It should be ignored as prompt content, but its presence is surprising and worth confirming it was not meant to delimit something.\n    suggestion: Remove the stray `</content>` line from the prompt body.\n  - promptLines:\n      - 23\n      - 24\n    kind: assumption\n    message: Info-string 'other characters' on the opening fence are discarded up to newline.\n    reasoning: The prompt says the opening fence line may carry an info string (yaml/yml/nothing) \"and possibly other characters\", and that everything on that line up to and including the newline is discarded. Assumed this means the entire opening line is dropped regardless of what follows the info string, with no validation that the info string is one of the named values. Since no code was changed, this reflects the existing implementation's behavior taken as correct.\n",
+  "maplFile": "parse_output.mapl",
   "journal": [
     {
       "gen": 4,
@@ -193,6 +230,13 @@
     {
       "gen": 43,
       "timestamp": "2026-07-24T12:25:47.048Z",
+      "mode": "incremental",
+      "promptHash": "5f61ddd58df5a9c4e3e795e4f32b4465f89afb5aed39439934fa70bd36f25242",
+      "files": []
+    },
+    {
+      "gen": 52,
+      "timestamp": "2026-07-24T12:38:34.310Z",
       "mode": "incremental",
       "promptHash": "5f61ddd58df5a9c4e3e795e4f32b4465f89afb5aed39439934fa70bd36f25242",
       "files": []
@@ -245,7 +289,7 @@
         "entries": [
           {
             "promptLines": [
-              19,
+              17,
               19
             ],
             "file": "parse_output/src/lib.rs",
@@ -253,43 +297,19 @@
               6,
               11
             ],
-            "note": "extract_yaml returns YAML content of text"
+            "note": "extract_yaml returns YAML content from text"
           },
           {
             "promptLines": [
-              21,
-              21
+              28,
+              30
             ],
             "file": "parse_output/src/lib.rs",
             "lines": [
-              23,
-              28
+              7,
+              10
             ],
-            "note": "find first line starting with three backticks"
-          },
-          {
-            "promptLines": [
-              22,
-              24
-            ],
-            "file": "parse_output/src/lib.rs",
-            "lines": [
-              14,
-              17
-            ],
-            "note": "skip fence opening line incl info string up to newline"
-          },
-          {
-            "promptLines": [
-              24,
-              25
-            ],
-            "file": "parse_output/src/lib.rs",
-            "lines": [
-              18,
-              20
-            ],
-            "note": "content spans to next triple-backtick occurrence"
+            "note": "falls back to whole text trimmed when no fenced block"
           },
           {
             "promptLines": [
@@ -301,11 +321,11 @@
               8,
               8
             ],
-            "note": "trim surrounding whitespace of fenced content"
+            "note": "trims surrounding whitespace of fence content"
           },
           {
             "promptLines": [
-              28,
+              29,
               30
             ],
             "file": "parse_output/src/lib.rs",
@@ -313,55 +333,103 @@
               9,
               9
             ],
-            "note": "fallback to trimmed whole text when no complete fence found"
+            "note": "returns whole text trimmed on no fence"
           },
           {
             "promptLines": [
-              28,
-              30
+              21,
+              25
             ],
             "file": "parse_output/src/lib.rs",
             "lines": [
               13,
               21
             ],
-            "note": "find_fenced_block returns None for missing/incomplete fence via ? operator"
+            "note": "locates fenced block content between fences"
           },
           {
             "promptLines": [
-              34,
-              36
+              23,
+              24
             ],
             "file": "parse_output/src/lib.rs",
             "lines": [
-              35,
-              38
+              15,
+              17
             ],
-            "note": "test yaml-info-string fence extraction"
+            "note": "discards opening fence line up to its newline"
           },
           {
             "promptLines": [
-              37,
-              38
+              24,
+              25
             ],
             "file": "parse_output/src/lib.rs",
             "lines": [
-              41,
-              44
+              18,
+              20
             ],
-            "note": "test bare fence extraction"
+            "note": "content up to next triple backticks"
           },
           {
             "promptLines": [
-              39,
-              40
+              28,
+              29
             ],
             "file": "parse_output/src/lib.rs",
             "lines": [
-              47,
-              50
+              16,
+              16
             ],
-            "note": "test plain text trimmed with no fence"
+            "note": "no newline after fence returns None"
+          },
+          {
+            "promptLines": [
+              28,
+              29
+            ],
+            "file": "parse_output/src/lib.rs",
+            "lines": [
+              19,
+              19
+            ],
+            "note": "no closing backticks returns None"
+          },
+          {
+            "promptLines": [
+              21,
+              21
+            ],
+            "file": "parse_output/src/lib.rs",
+            "lines": [
+              23,
+              28
+            ],
+            "note": "finds first line beginning with three backticks"
+          },
+          {
+            "promptLines": [
+              21,
+              21
+            ],
+            "file": "parse_output/src/lib.rs",
+            "lines": [
+              24,
+              26
+            ],
+            "note": "handles fence at start of text"
+          },
+          {
+            "promptLines": [
+              21,
+              21
+            ],
+            "file": "parse_output/src/lib.rs",
+            "lines": [
+              27,
+              27
+            ],
+            "note": "handles fence after a newline mid-text"
           }
         ]
       },
@@ -375,8 +443,8 @@
           ],
           "kind": "no-op",
           "severity": "warning",
-          "message": "Crate already exists matching spec exactly.",
-          "reasoning": "parse_output/ crate (Cargo.toml + src/lib.rs) already present, no workspace manifest added, body_lines crate untouched. Agent verified via diff — nothing to change."
+          "message": "No changes — parse_output crate already exists and matches the prompt.",
+          "reasoning": "Changes were \"NO CHANGES\". The prompt instructs creating a new parse_output/ library crate (Cargo.toml + src/lib.rs) implementing extract_yaml. The coding agent reported the current code already satisfies the prompt body and that 10 tests pass, so nothing was edited. This is plausible if a prior compile already produced the crate; the requirement was pre-satisfied rather than un-actionable. No evidence of the existing crate's contents is shown in the diff, so the match rests entirely on the agent's assertion."
         }
       },
       {
@@ -384,13 +452,28 @@
         "path": "parse_output.mapl",
         "entry": {
           "promptLines": [
-            17,
-            30
+            41,
+            41
           ],
-          "kind": "no-op",
+          "kind": "ambiguity",
+          "severity": "error",
+          "message": "Stray `</content>` line looks like an accidental insertion, not a requirement.",
+          "reasoning": "Line 41 is a lone `</content>` closing tag with no matching opening tag anywhere in the prompt body. It reads like leftover markup that leaked in from a wrapping format rather than an intentional instruction. It should be ignored as prompt content, but its presence is surprising and worth confirming it was not meant to delimit something.",
+          "suggestion": "Remove the stray `</content>` line from the prompt body."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "parse_output.mapl",
+        "entry": {
+          "promptLines": [
+            23,
+            24
+          ],
+          "kind": "assumption",
           "severity": "warning",
-          "message": "extract_yaml behavior already matches spec, tests pass 10/10.",
-          "reasoning": "Existing implementation already handles fence detection, info-string stripping, missing-fence fallback, and trim rules per spec. Agent ran cargo test from parse_output/ and confirmed all 10 pass, so no code change was needed."
+          "message": "Info-string 'other characters' on the opening fence are discarded up to newline.",
+          "reasoning": "The prompt says the opening fence line may carry an info string (yaml/yml/nothing) \"and possibly other characters\", and that everything on that line up to and including the newline is discarded. Assumed this means the entire opening line is dropped regardless of what follows the info string, with no validation that the info string is one of the named values. Since no code was changed, this reflects the existing implementation's behavior taken as correct."
         }
       },
       {

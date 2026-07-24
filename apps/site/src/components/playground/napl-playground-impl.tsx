@@ -1,5 +1,6 @@
 import {
   createReplayEngine,
+  languageForFilename,
   PlaygroundShell,
   type EditorDiagnostic,
   type HighlightRange,
@@ -47,9 +48,6 @@ export function NaplPlaygroundClient({
   activeFileRef.current = activeFile
   const promptRef = useRef(prompt)
   promptRef.current = prompt
-
-  const {resolvedTheme} = useTheme()
-  const theme = resolvedTheme === 'light' ? 'light' : 'dark'
 
   const engineRef = useRef<ReplayEngine | null>(null)
   if (!engineRef.current) {
@@ -106,12 +104,11 @@ export function NaplPlaygroundClient({
         const excerptFile = module.files.find((file) => file.path === chosen.file)
         return {
           kind: 'card',
-          heading: 'Produces',
           excerpt: excerptFile
-            ? {code: excerptFromContent(excerptFile.content, chosen.lines), caption: chosen.note}
+            ? {code: excerptFromContent(excerptFile.content, chosen.lines), caption: chosen.note, language: languageForFilename(chosen.file)}
             : undefined,
           meta: `${chosen.file} · lines ${chosen.lines[0]}–${chosen.lines[1]}`,
-          jump: {label: 'Open generated tab ↵', onJump: () => setActiveFile(chosen.file)},
+          jump: {label: `Go to ${chosen.file}:${chosen.lines[0]} ↵`, onJump: () => setActiveFile(chosen.file)},
         }
       }
       const active = activeFileRef.current
@@ -130,8 +127,8 @@ export function NaplPlaygroundClient({
         kind: 'card',
         heading: 'Comes from the prompt',
         quote: chosen.sentence || undefined,
-        meta: `Prompt · lines ${chosen.promptLines[0]}–${chosen.promptLines[1]} · ${chosen.note}`,
-        jump: {label: 'Open prompt tab ↵', onJump: () => setActiveFile(module.prompt.file)},
+        meta: `${module.prompt.file} · lines ${chosen.promptLines[0]}–${chosen.promptLines[1]} · ${chosen.note}`,
+        jump: {label: `Go to ${module.prompt.file}:${chosen.promptDocLines[0]} ↵`, onJump: () => setActiveFile(module.prompt.file)},
       }
     },
     [wasmReady, module.attributionYaml, module.prompt.file, module.promptAtGen, module.files],
@@ -159,11 +156,26 @@ export function NaplPlaygroundClient({
         editedPaths.has(file.path) && replaying ? state?.files[file.path] ?? '' : file.content,
       readOnly: true,
     }))
+    const machine: PlaygroundFile[] =
+      module.maplContent.trim().length > 0
+        ? [{name: module.maplFile, language: 'mapl', content: module.maplContent, readOnly: true}]
+        : []
     return [
       {name: module.prompt.file, language: 'napl' as const, content: prompt, readOnly},
       ...generated,
+      ...machine,
     ]
-  }, [module.files, module.prompt.file, prompt, state, editedPaths, replaying, readOnly])
+  }, [
+    module.files,
+    module.prompt.file,
+    module.maplFile,
+    module.maplContent,
+    prompt,
+    state,
+    editedPaths,
+    replaying,
+    readOnly,
+  ])
 
   const activeHighlight =
     activeFile === module.prompt.file ? promptHighlight : genHighlight[activeFile] ?? []
@@ -227,7 +239,7 @@ export function NaplPlaygroundClient({
         title={`${module.module}.napl`}
         files={files}
         activeFile={activeFile}
-        theme={theme}
+        theme="dark"
         highlightRanges={activeHighlight}
         onActiveFileChange={setActiveFile}
         onFileChange={(name, content) => {

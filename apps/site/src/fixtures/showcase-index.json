@@ -5,9 +5,9 @@
     "dir": "core",
     "promptFile": "body_lines.napl",
     "fileCount": 2,
-    "attributionCount": 10,
-    "maplCount": 2,
-    "genCount": 3,
+    "attributionCount": 15,
+    "maplCount": 1,
+    "genCount": 4,
     "summary": "Body lines"
   },
   {
@@ -16,9 +16,9 @@
     "dir": "core",
     "promptFile": "extensions.napl",
     "fileCount": 2,
-    "attributionCount": 21,
-    "maplCount": 1,
-    "genCount": 2,
+    "attributionCount": 12,
+    "maplCount": 2,
+    "genCount": 3,
     "summary": "Prompt and machine file extensions"
   },
   {
@@ -38,9 +38,9 @@
     "dir": "core",
     "promptFile": "parse_output.napl",
     "fileCount": 2,
-    "attributionCount": 10,
-    "maplCount": 2,
-    "genCount": 2,
+    "attributionCount": 12,
+    "maplCount": 3,
+    "genCount": 3,
     "summary": "Extracting YAML from an agent response"
   },
   {
@@ -49,9 +49,9 @@
     "dir": "core",
     "promptFile": "text_diff.napl",
     "fileCount": 2,
-    "attributionCount": 15,
+    "attributionCount": 34,
     "maplCount": 2,
-    "genCount": 2,
+    "genCount": 3,
     "summary": "Line-oriented text diffing"
   },
   {
@@ -60,9 +60,9 @@
     "dir": "schemas",
     "promptFile": "schemas_ordered_map.napl",
     "fileCount": 2,
-    "attributionCount": 20,
+    "attributionCount": 26,
     "maplCount": 2,
-    "genCount": 1,
+    "genCount": 2,
     "summary": "An insertion-order-preserving string-keyed map"
   },
   {
@@ -71,9 +71,9 @@
     "dir": "schemas",
     "promptFile": "schemas_line_range.napl",
     "fileCount": 2,
-    "attributionCount": 16,
-    "maplCount": 3,
-    "genCount": 1,
+    "attributionCount": 17,
+    "maplCount": 2,
+    "genCount": 2,
     "summary": "A 1-based inclusive line range"
   },
   {
@@ -82,9 +82,9 @@
     "dir": "schemas",
     "promptFile": "schemas_ir.napl",
     "fileCount": 2,
-    "attributionCount": 18,
+    "attributionCount": 26,
     "maplCount": 3,
-    "genCount": 1,
+    "genCount": 2,
     "summary": "The intermediate-representation (IR) schema"
   },
   {
@@ -93,9 +93,9 @@
     "dir": "schemas",
     "promptFile": "schemas_frontmatter.napl",
     "fileCount": 3,
-    "attributionCount": 18,
-    "maplCount": 2,
-    "genCount": 2,
+    "attributionCount": 23,
+    "maplCount": 3,
+    "genCount": 3,
     "summary": "Prompt frontmatter parsing"
   },
   {
@@ -104,9 +104,9 @@
     "dir": "core",
     "promptFile": "drift.napl",
     "fileCount": 2,
-    "attributionCount": 18,
-    "maplCount": 2,
-    "genCount": 2,
+    "attributionCount": 32,
+    "maplCount": 3,
+    "genCount": 3,
     "summary": "Drift model and the guided drift report"
   },
   {
@@ -115,9 +115,9 @@
     "dir": "core",
     "promptFile": "guard.napl",
     "fileCount": 2,
-    "attributionCount": 26,
+    "attributionCount": 18,
     "maplCount": 1,
-    "genCount": 2,
+    "genCount": 3,
     "summary": "Guard-rail content and Claude settings merge"
   },
   {
@@ -126,9 +126,9 @@
     "dir": "core",
     "promptFile": "targets.napl",
     "fileCount": 2,
-    "attributionCount": 20,
-    "maplCount": 1,
-    "genCount": 2,
+    "attributionCount": 38,
+    "maplCount": 4,
+    "genCount": 3,
     "summary": "Target adapters"
   },
   {
@@ -137,9 +137,9 @@
     "dir": "core",
     "promptFile": "scanner.napl",
     "fileCount": 2,
-    "attributionCount": 29,
+    "attributionCount": 49,
     "maplCount": 2,
-    "genCount": 2,
+    "genCount": 3,
     "summary": "Prompt span scanner"
   },
   {
@@ -148,9 +148,9 @@
     "dir": "schemas",
     "promptFile": "schemas_lock.napl",
     "fileCount": 2,
-    "attributionCount": 28,
-    "maplCount": 2,
-    "genCount": 1,
+    "attributionCount": 29,
+    "maplCount": 4,
+    "genCount": 2,
     "summary": "The lock document: model / backend / agent / prompt-alias configuration"
   },
   {
@@ -159,9 +159,9 @@
     "dir": "schemas",
     "promptFile": "schemas_attribution.napl",
     "fileCount": 2,
-    "attributionCount": 19,
-    "maplCount": 1,
-    "genCount": 1,
+    "attributionCount": 25,
+    "maplCount": 4,
+    "genCount": 2,
     "summary": "The attribution schema: prompt-line to file-line mappings"
   },
   {
@@ -170,9 +170,9 @@
     "dir": "schemas",
     "promptFile": "schemas_ml.napl",
     "fileCount": 2,
-    "attributionCount": 23,
-    "maplCount": 2,
-    "genCount": 1,
+    "attributionCount": 28,
+    "maplCount": 4,
+    "genCount": 2,
     "summary": "The machine-layer (mapl) schema: model annotations keyed to prompt lines"
   },
   {
@@ -181,9 +181,9 @@
     "dir": "schemas",
     "promptFile": "schemas_map.napl",
     "fileCount": 2,
-    "attributionCount": 38,
+    "attributionCount": 47,
     "maplCount": 3,
-    "genCount": 1,
+    "genCount": 2,
     "summary": "The NAPL map v2 schema and its pure query/mutation helpers"
   },
   {
@@ -192,9 +192,9 @@
     "dir": "core",
     "promptFile": "blame.napl",
     "fileCount": 2,
-    "attributionCount": 21,
-    "maplCount": 2,
-    "genCount": 1,
+    "attributionCount": 27,
+    "maplCount": 3,
+    "genCount": 2,
     "summary": "Patch-replay line ancestry (\"blame\")"
   },
   {
@@ -203,9 +203,9 @@
     "dir": "core",
     "promptFile": "reverse.napl",
     "fileCount": 2,
-    "attributionCount": 16,
-    "maplCount": 2,
-    "genCount": 1,
+    "attributionCount": 23,
+    "maplCount": 3,
+    "genCount": 2,
     "summary": "Reverse navigation: from generated code back to the prompt sentence"
   },
   {
@@ -214,9 +214,9 @@
     "dir": "schemas",
     "promptFile": "schemas_journal.napl",
     "fileCount": 2,
-    "attributionCount": 15,
-    "maplCount": 2,
-    "genCount": 3,
+    "attributionCount": 29,
+    "maplCount": 3,
+    "genCount": 4,
     "summary": "The generation journal: an append-only JSONL history"
   },
   {
@@ -225,9 +225,9 @@
     "dir": "core",
     "promptFile": "incremental.napl",
     "fileCount": 2,
-    "attributionCount": 15,
-    "maplCount": 3,
-    "genCount": 1,
+    "attributionCount": 19,
+    "maplCount": 2,
+    "genCount": 2,
     "summary": "Incremental regeneration: body-line diffing and the unlock list"
   },
   {
@@ -236,9 +236,9 @@
     "dir": "core",
     "promptFile": "yaml.napl",
     "fileCount": 2,
-    "attributionCount": 30,
-    "maplCount": 3,
-    "genCount": 1,
+    "attributionCount": 39,
+    "maplCount": 2,
+    "genCount": 2,
     "summary": "A focused YAML emitter matching `eemeli/yaml` block style"
   },
   {
@@ -247,9 +247,9 @@
     "dir": "core",
     "promptFile": "prompts.napl",
     "fileCount": 2,
-    "attributionCount": 56,
-    "maplCount": 3,
-    "genCount": 1,
+    "attributionCount": 45,
+    "maplCount": 1,
+    "genCount": 2,
     "summary": "Coding-agent task and derivation-prompt builders"
   },
   {
@@ -258,9 +258,9 @@
     "dir": "cli",
     "promptFile": "clock_fmt.napl",
     "fileCount": 2,
-    "attributionCount": 9,
-    "maplCount": 3,
-    "genCount": 1,
+    "attributionCount": 10,
+    "maplCount": 2,
+    "genCount": 2,
     "summary": "Formatting a Unix timestamp as ISO-8601 UTC"
   },
   {
@@ -269,9 +269,9 @@
     "dir": "cli",
     "promptFile": "paths_core.napl",
     "fileCount": 2,
-    "attributionCount": 18,
+    "attributionCount": 25,
     "maplCount": 2,
-    "genCount": 1,
+    "genCount": 2,
     "summary": "Path algebra for the `.napl` project layout"
   },
   {
@@ -280,9 +280,9 @@
     "dir": "cli",
     "promptFile": "statusclass_render.napl",
     "fileCount": 2,
-    "attributionCount": 13,
-    "maplCount": 1,
-    "genCount": 1,
+    "attributionCount": 20,
+    "maplCount": 2,
+    "genCount": 2,
     "summary": "Rendering a prompt's status line"
   },
   {
@@ -291,9 +291,9 @@
     "dir": "cli",
     "promptFile": "driftdetect_replay.napl",
     "fileCount": 2,
-    "attributionCount": 13,
-    "maplCount": 3,
-    "genCount": 1,
+    "attributionCount": 11,
+    "maplCount": 2,
+    "genCount": 2,
     "summary": "Reconstructing a generated file from its journal patches"
   },
   {
@@ -302,9 +302,9 @@
     "dir": "cli",
     "promptFile": "snapshot_diff.napl",
     "fileCount": 2,
-    "attributionCount": 6,
-    "maplCount": 1,
-    "genCount": 1,
+    "attributionCount": 8,
+    "maplCount": 3,
+    "genCount": 2,
     "summary": "Diffing two directory snapshots"
   },
   {
@@ -313,9 +313,9 @@
     "dir": "cli",
     "promptFile": "snapshot_filter.napl",
     "fileCount": 2,
-    "attributionCount": 12,
-    "maplCount": 0,
-    "genCount": 1,
+    "attributionCount": 21,
+    "maplCount": 3,
+    "genCount": 2,
     "summary": "The snapshot exclusion filter"
   },
   {
@@ -324,9 +324,9 @@
     "dir": "cli",
     "promptFile": "blame_render.napl",
     "fileCount": 2,
-    "attributionCount": 18,
-    "maplCount": 1,
-    "genCount": 2,
+    "attributionCount": 26,
+    "maplCount": 3,
+    "genCount": 3,
     "summary": "Rendering `napl blame` output"
   },
   {
@@ -335,9 +335,9 @@
     "dir": "cli",
     "promptFile": "watch_filter.napl",
     "fileCount": 2,
-    "attributionCount": 14,
-    "maplCount": 2,
-    "genCount": 1,
+    "attributionCount": 13,
+    "maplCount": 3,
+    "genCount": 2,
     "summary": "The watch ignore filter"
   },
   {
@@ -346,9 +346,9 @@
     "dir": "cli",
     "promptFile": "reconcile_derive.napl",
     "fileCount": 2,
-    "attributionCount": 17,
+    "attributionCount": 10,
     "maplCount": 2,
-    "genCount": 1,
+    "genCount": 2,
     "summary": "Deriving reconcile inputs from drifted files"
   },
   {
@@ -357,9 +357,9 @@
     "dir": "cli",
     "promptFile": "gen_classify.napl",
     "fileCount": 2,
-    "attributionCount": 10,
-    "maplCount": 4,
-    "genCount": 1,
+    "attributionCount": 17,
+    "maplCount": 2,
+    "genCount": 2,
     "summary": "Pure classification and derivation helpers for the generator"
   },
   {
@@ -369,8 +369,8 @@
     "promptFile": "gen_prompt_diff.napl",
     "fileCount": 2,
     "attributionCount": 7,
-    "maplCount": 1,
-    "genCount": 1,
+    "maplCount": 2,
+    "genCount": 2,
     "summary": "Deriving the prompt diff for a journal entry"
   },
   {
@@ -379,9 +379,9 @@
     "dir": "cli",
     "promptFile": "gen_attribution_check.napl",
     "fileCount": 2,
-    "attributionCount": 13,
-    "maplCount": 1,
-    "genCount": 1,
+    "attributionCount": 8,
+    "maplCount": 2,
+    "genCount": 2,
     "summary": "The attribution sanity gate"
   },
   {
@@ -390,9 +390,9 @@
     "dir": "cli",
     "promptFile": "gen_mode.napl",
     "fileCount": 2,
-    "attributionCount": 15,
-    "maplCount": 3,
-    "genCount": 1,
+    "attributionCount": 12,
+    "maplCount": 2,
+    "genCount": 2,
     "summary": "Full-vs-incremental mode selection"
   }
 ]

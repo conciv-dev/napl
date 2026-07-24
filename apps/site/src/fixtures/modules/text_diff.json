@@ -29,51 +29,123 @@
   "attribution": [
     {
       "promptLines": [
-        9,
-        14
+        18,
+        18
       ],
       "file": "text_diff/src/lib.rs",
       "lines": [
-        1,
-        1
+        39,
+        41
       ],
-      "note": "generated marker, crate lives in text_diff/ subdir"
+      "note": "empty text returns empty vector"
     },
     {
       "promptLines": [
-        18,
-        23
+        19,
+        20
       ],
       "file": "text_diff/src/lib.rs",
       "lines": [
-        38,
-        55
+        43,
+        50
       ],
-      "note": "to_lines: split text into owned lines, CRLF-aware trailing terminator strip"
+      "note": "strip single trailing \\n or \\r\\n terminator"
+    },
+    {
+      "promptLines": [
+        20,
+        21
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        52,
+        54
+      ],
+      "note": "split on \\n, consume \\r before split \\n"
     },
     {
       "promptLines": [
         27,
-        29
+        27
       ],
       "file": "text_diff/src/lib.rs",
       "lines": [
         125,
+        127
+      ],
+      "note": "unified_diff delegates with context 3"
+    },
+    {
+      "promptLines": [
+        28,
+        29
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        130,
         130
       ],
-      "note": "unified_diff and unified_diff_with_context entry points, default context 3"
+      "note": "unified_diff_with_context signature"
     },
     {
       "promptLines": [
         31,
+        31
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        131,
+        133
+      ],
+      "note": "split both inputs then align"
+    },
+    {
+      "promptLines": [
+        31,
+        33
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        65,
+        122
+      ],
+      "note": "LCS alignment producing entries"
+    },
+    {
+      "promptLines": [
+        32,
+        32
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        85,
+        92
+      ],
+      "note": "matching lines become context"
+    },
+    {
+      "promptLines": [
+        32,
+        33
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        93,
+        105
+      ],
+      "note": "choose deletion vs insertion via LCS table"
+    },
+    {
+      "promptLines": [
+        34,
         35
       ],
       "file": "text_diff/src/lib.rs",
       "lines": [
         58,
-        122
+        62
       ],
-      "note": "Entry enum and LCS-based align producing context/del/ins entries with line numbers"
+      "note": "entry carries 1-based old/new line numbers"
     },
     {
       "promptLines": [
@@ -82,70 +154,106 @@
       ],
       "file": "text_diff/src/lib.rs",
       "lines": [
-        135,
+        138,
         147
       ],
-      "note": "mark entries within context distance of a change as included"
+      "note": "mark entries within context of a change"
     },
     {
       "promptLines": [
         38,
+        38
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        152,
+        161
+      ],
+      "note": "group consecutive included entries into hunk"
+    },
+    {
+      "promptLines": [
+        41,
         41
       ],
       "file": "text_diff/src/lib.rs",
       "lines": [
-        149,
+        194,
         197
       ],
-      "note": "group consecutive included entries into hunks, emit @@ header"
+      "note": "emit hunk header line"
     },
     {
       "promptLines": [
         43,
-        46
+        45
       ],
       "file": "text_diff/src/lib.rs",
       "lines": [
-        163,
-        197
+        167,
+        192
       ],
-      "note": "compute oldStart/oldCount/newStart/newCount over hunk entries"
+      "note": "compute old/new start and counts"
+    },
+    {
+      "promptLines": [
+        43,
+        44
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        170,
+        175
+      ],
+      "note": "first non-insertion sets start, 0 if none"
     },
     {
       "promptLines": [
         46,
-        49
+        48
       ],
       "file": "text_diff/src/lib.rs",
       "lines": [
         198,
-        207
+        204
       ],
-      "note": "emit each hunk line with marker prefix, join with \\n"
+      "note": "prefix each entry with marker char"
     },
     {
       "promptLines": [
-        51,
-        53
+        48,
+        49
       ],
       "file": "text_diff/src/lib.rs",
       "lines": [
-        345,
-        358
+        207,
+        207
       ],
-      "note": "tests for empty-to-content, content-to-empty, identical-input diff behavior"
+      "note": "join lines with \\n, empty when no change"
     },
     {
       "promptLines": [
         57,
-        64
+        58
       ],
       "file": "text_diff/src/lib.rs",
       "lines": [
-        226,
-        259
+        227,
+        229
       ],
-      "note": "parse_hunks: split diff into lines, match header regex shape, classify line kind by first char"
+      "note": "empty/whitespace diff yields no hunks"
+    },
+    {
+      "promptLines": [
+        58,
+        58
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        232,
+        232
+      ],
+      "note": "split diff via CRLF-aware to_lines"
     },
     {
       "promptLines": [
@@ -157,7 +265,55 @@
         211,
         223
       ],
-      "note": "parse_header extracts A,B,C,D from @@ -A,B +C,D @@"
+      "note": "parse header shape into four numbers"
+    },
+    {
+      "promptLines": [
+        59,
+        60
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        233,
+        242
+      ],
+      "note": "header line starts new hunk"
+    },
+    {
+      "promptLines": [
+        61,
+        61
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        244,
+        246
+      ],
+      "note": "other lines belong to open hunk"
+    },
+    {
+      "promptLines": [
+        62,
+        64
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        247,
+        255
+      ],
+      "note": "first char selects kind, rest is text, unknown ignored"
+    },
+    {
+      "promptLines": [
+        64,
+        64
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        256,
+        256
+      ],
+      "note": "push parsed hunk line"
     },
     {
       "promptLines": [
@@ -166,50 +322,132 @@
       ],
       "file": "text_diff/src/lib.rs",
       "lines": [
-        8,
+        24,
         31
       ],
-      "note": "HunkKind, HunkLine, Hunk struct definitions with public fields"
+      "note": "Hunk struct public fields"
     },
     {
       "promptLines": [
-        69,
-        72
+        67,
+        68
       ],
       "file": "text_diff/src/lib.rs",
       "lines": [
-        394,
-        412
+        17,
+        21
       ],
-      "note": "test verifying parse_hunks example fields and line kinds/texts"
+      "note": "HunkLine kind and text fields"
     },
     {
       "promptLines": [
-        76,
+        68,
+        69
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        9,
+        14
+      ],
+      "note": "HunkKind Context/Del/Ins variants"
+    },
+    {
+      "promptLines": [
+        77,
+        77
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        263,
+        263
+      ],
+      "note": "take before lines via to_lines"
+    },
+    {
+      "promptLines": [
+        78,
+        78
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        270,
+        278
+      ],
+      "note": "copy original lines before hunk start"
+    },
+    {
+      "promptLines": [
+        79,
+        80
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        282,
+        289
+      ],
+      "note": "context copies original, fallback to text, advances"
+    },
+    {
+      "promptLines": [
+        81,
+        81
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        290,
+        292
+      ],
+      "note": "deletion advances without emitting"
+    },
+    {
+      "promptLines": [
+        81,
+        82
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        293,
+        295
+      ],
+      "note": "insertion emits text without advancing"
+    },
+    {
+      "promptLines": [
+        82,
+        82
+      ],
+      "file": "text_diff/src/lib.rs",
+      "lines": [
+        300,
+        303
+      ],
+      "note": "copy remaining original lines"
+    },
+    {
+      "promptLines": [
+        83,
         83
       ],
       "file": "text_diff/src/lib.rs",
       "lines": [
-        262,
-        306
+        305,
+        305
       ],
-      "note": "apply_hunks: walk hunks, copy preceding original lines, handle context/del/ins, copy remainder"
-    },
-    {
-      "promptLines": [
-        85,
-        87
-      ],
-      "file": "text_diff/src/lib.rs",
-      "lines": [
-        443,
-        467
-      ],
-      "note": "roundtrip property test: unified_diff -> parse_hunks -> apply_hunks reproduces after"
+      "note": "join result with \\n"
     }
   ],
-  "attributionYaml": "module: text_diff\ntarget: rust\nentries:\n  - promptLines:\n      - 9\n      - 14\n    file: text_diff/src/lib.rs\n    lines:\n      - 1\n      - 1\n    note: generated marker, crate lives in text_diff/ subdir\n  - promptLines:\n      - 18\n      - 23\n    file: text_diff/src/lib.rs\n    lines:\n      - 38\n      - 55\n    note: \"to_lines: split text into owned lines, CRLF-aware trailing terminator strip\"\n  - promptLines:\n      - 27\n      - 29\n    file: text_diff/src/lib.rs\n    lines:\n      - 125\n      - 130\n    note: unified_diff and unified_diff_with_context entry points, default context 3\n  - promptLines:\n      - 31\n      - 35\n    file: text_diff/src/lib.rs\n    lines:\n      - 58\n      - 122\n    note: Entry enum and LCS-based align producing context/del/ins entries with line numbers\n  - promptLines:\n      - 37\n      - 38\n    file: text_diff/src/lib.rs\n    lines:\n      - 135\n      - 147\n    note: mark entries within context distance of a change as included\n  - promptLines:\n      - 38\n      - 41\n    file: text_diff/src/lib.rs\n    lines:\n      - 149\n      - 197\n    note: group consecutive included entries into hunks, emit @@ header\n  - promptLines:\n      - 43\n      - 46\n    file: text_diff/src/lib.rs\n    lines:\n      - 163\n      - 197\n    note: compute oldStart/oldCount/newStart/newCount over hunk entries\n  - promptLines:\n      - 46\n      - 49\n    file: text_diff/src/lib.rs\n    lines:\n      - 198\n      - 207\n    note: emit each hunk line with marker prefix, join with \\n\n  - promptLines:\n      - 51\n      - 53\n    file: text_diff/src/lib.rs\n    lines:\n      - 345\n      - 358\n    note: tests for empty-to-content, content-to-empty, identical-input diff behavior\n  - promptLines:\n      - 57\n      - 64\n    file: text_diff/src/lib.rs\n    lines:\n      - 226\n      - 259\n    note: \"parse_hunks: split diff into lines, match header regex shape, classify line kind by first char\"\n  - promptLines:\n      - 59\n      - 60\n    file: text_diff/src/lib.rs\n    lines:\n      - 211\n      - 223\n    note: parse_header extracts A,B,C,D from @@ -A,B +C,D @@\n  - promptLines:\n      - 66\n      - 68\n    file: text_diff/src/lib.rs\n    lines:\n      - 8\n      - 31\n    note: HunkKind, HunkLine, Hunk struct definitions with public fields\n  - promptLines:\n      - 69\n      - 72\n    file: text_diff/src/lib.rs\n    lines:\n      - 394\n      - 412\n    note: test verifying parse_hunks example fields and line kinds/texts\n  - promptLines:\n      - 76\n      - 83\n    file: text_diff/src/lib.rs\n    lines:\n      - 262\n      - 306\n    note: \"apply_hunks: walk hunks, copy preceding original lines, handle context/del/ins, copy remainder\"\n  - promptLines:\n      - 85\n      - 87\n    file: text_diff/src/lib.rs\n    lines:\n      - 443\n      - 467\n    note: \"roundtrip property test: unified_diff -> parse_hunks -> apply_hunks reproduces after\"\n",
+  "attributionYaml": "module: text_diff\ntarget: rust\nentries:\n  - promptLines:\n      - 18\n      - 18\n    file: text_diff/src/lib.rs\n    lines:\n      - 39\n      - 41\n    note: empty text returns empty vector\n  - promptLines:\n      - 19\n      - 20\n    file: text_diff/src/lib.rs\n    lines:\n      - 43\n      - 50\n    note: strip single trailing \\n or \\r\\n terminator\n  - promptLines:\n      - 20\n      - 21\n    file: text_diff/src/lib.rs\n    lines:\n      - 52\n      - 54\n    note: split on \\n, consume \\r before split \\n\n  - promptLines:\n      - 27\n      - 27\n    file: text_diff/src/lib.rs\n    lines:\n      - 125\n      - 127\n    note: unified_diff delegates with context 3\n  - promptLines:\n      - 28\n      - 29\n    file: text_diff/src/lib.rs\n    lines:\n      - 130\n      - 130\n    note: unified_diff_with_context signature\n  - promptLines:\n      - 31\n      - 31\n    file: text_diff/src/lib.rs\n    lines:\n      - 131\n      - 133\n    note: split both inputs then align\n  - promptLines:\n      - 31\n      - 33\n    file: text_diff/src/lib.rs\n    lines:\n      - 65\n      - 122\n    note: LCS alignment producing entries\n  - promptLines:\n      - 32\n      - 32\n    file: text_diff/src/lib.rs\n    lines:\n      - 85\n      - 92\n    note: matching lines become context\n  - promptLines:\n      - 32\n      - 33\n    file: text_diff/src/lib.rs\n    lines:\n      - 93\n      - 105\n    note: choose deletion vs insertion via LCS table\n  - promptLines:\n      - 34\n      - 35\n    file: text_diff/src/lib.rs\n    lines:\n      - 58\n      - 62\n    note: entry carries 1-based old/new line numbers\n  - promptLines:\n      - 37\n      - 38\n    file: text_diff/src/lib.rs\n    lines:\n      - 138\n      - 147\n    note: mark entries within context of a change\n  - promptLines:\n      - 38\n      - 38\n    file: text_diff/src/lib.rs\n    lines:\n      - 152\n      - 161\n    note: group consecutive included entries into hunk\n  - promptLines:\n      - 41\n      - 41\n    file: text_diff/src/lib.rs\n    lines:\n      - 194\n      - 197\n    note: emit hunk header line\n  - promptLines:\n      - 43\n      - 45\n    file: text_diff/src/lib.rs\n    lines:\n      - 167\n      - 192\n    note: compute old/new start and counts\n  - promptLines:\n      - 43\n      - 44\n    file: text_diff/src/lib.rs\n    lines:\n      - 170\n      - 175\n    note: first non-insertion sets start, 0 if none\n  - promptLines:\n      - 46\n      - 48\n    file: text_diff/src/lib.rs\n    lines:\n      - 198\n      - 204\n    note: prefix each entry with marker char\n  - promptLines:\n      - 48\n      - 49\n    file: text_diff/src/lib.rs\n    lines:\n      - 207\n      - 207\n    note: join lines with \\n, empty when no change\n  - promptLines:\n      - 57\n      - 58\n    file: text_diff/src/lib.rs\n    lines:\n      - 227\n      - 229\n    note: empty/whitespace diff yields no hunks\n  - promptLines:\n      - 58\n      - 58\n    file: text_diff/src/lib.rs\n    lines:\n      - 232\n      - 232\n    note: split diff via CRLF-aware to_lines\n  - promptLines:\n      - 59\n      - 60\n    file: text_diff/src/lib.rs\n    lines:\n      - 211\n      - 223\n    note: parse header shape into four numbers\n  - promptLines:\n      - 59\n      - 60\n    file: text_diff/src/lib.rs\n    lines:\n      - 233\n      - 242\n    note: header line starts new hunk\n  - promptLines:\n      - 61\n      - 61\n    file: text_diff/src/lib.rs\n    lines:\n      - 244\n      - 246\n    note: other lines belong to open hunk\n  - promptLines:\n      - 62\n      - 64\n    file: text_diff/src/lib.rs\n    lines:\n      - 247\n      - 255\n    note: first char selects kind, rest is text, unknown ignored\n  - promptLines:\n      - 64\n      - 64\n    file: text_diff/src/lib.rs\n    lines:\n      - 256\n      - 256\n    note: push parsed hunk line\n  - promptLines:\n      - 66\n      - 68\n    file: text_diff/src/lib.rs\n    lines:\n      - 24\n      - 31\n    note: Hunk struct public fields\n  - promptLines:\n      - 67\n      - 68\n    file: text_diff/src/lib.rs\n    lines:\n      - 17\n      - 21\n    note: HunkLine kind and text fields\n  - promptLines:\n      - 68\n      - 69\n    file: text_diff/src/lib.rs\n    lines:\n      - 9\n      - 14\n    note: HunkKind Context/Del/Ins variants\n  - promptLines:\n      - 77\n      - 77\n    file: text_diff/src/lib.rs\n    lines:\n      - 263\n      - 263\n    note: take before lines via to_lines\n  - promptLines:\n      - 78\n      - 78\n    file: text_diff/src/lib.rs\n    lines:\n      - 270\n      - 278\n    note: copy original lines before hunk start\n  - promptLines:\n      - 79\n      - 80\n    file: text_diff/src/lib.rs\n    lines:\n      - 282\n      - 289\n    note: context copies original, fallback to text, advances\n  - promptLines:\n      - 81\n      - 81\n    file: text_diff/src/lib.rs\n    lines:\n      - 290\n      - 292\n    note: deletion advances without emitting\n  - promptLines:\n      - 81\n      - 82\n    file: text_diff/src/lib.rs\n    lines:\n      - 293\n      - 295\n    note: insertion emits text without advancing\n  - promptLines:\n      - 82\n      - 82\n    file: text_diff/src/lib.rs\n    lines:\n      - 300\n      - 303\n    note: copy remaining original lines\n  - promptLines:\n      - 83\n      - 83\n    file: text_diff/src/lib.rs\n    lines:\n      - 305\n      - 305\n    note: join result with \\n\n",
   "mapl": [
+    {
+      "promptLines": [
+        1,
+        88
+      ],
+      "kind": "no-op",
+      "severity": "warning",
+      "message": "No changes made — module already exists and reportedly matches the full spec.",
+      "reasoning": "The changes were \"NO CHANGES\". The coding agent reports that the text_diff crate (Cargo.toml + src/lib.rs) already exists in the working tree, that all of to_lines, unified_diff/unified_diff_with_context, parse_hunks, and apply_hunks already implement the described behavior, and that its 18 tests pass. Because the prior state already satisfied the contract, there was nothing to edit. Note that the \"18 tests pass\" claim is the agent's own assertion and is not independently evidenced by any diff in this compile."
+    },
     {
       "promptLines": [
         9,
@@ -217,20 +455,12 @@
       ],
       "kind": "note",
       "severity": "info",
-      "message": "Agent found NO CHANGES needed; text_diff crate already satisfies spec.",
-      "reasoning": "Prompt asks for new text_diff/ crate (Cargo.toml + src/lib.rs) untouched from body_lines root crate, with cargo test passing inside text_diff/. Agent reports 18 tests already pass with no diff, meaning crate already existed and matched spec fully — nothing to compile/change this pass."
-    },
-    {
-      "promptLines": [
-        1,
-        89
-      ],
-      "kind": "no-op",
-      "severity": "warning",
-      "message": "No source changes made; agent claims prior implementation already satisfies whole spec.",
-      "reasoning": "Coding agent's only output is \"Diff empty — no prompt change. All 18 tests pass already, no edits needed.\" No verification detail given (which functions/tests map to which requirements), so can't independently confirm to_lines, unified_diff, parse_hunks, apply_hunks all match spec exactly (e.g. CRLF edge cases, header formatting, round-trip property). Recorded as no-op since NO CHANGES were made; human should double check test coverage actually exercises the exact edge cases called out in lines 22-23, 51-53, 70-72, 85-87 rather than trusting the terse claim."
+      "message": "Instruction assumes a specific pre-existing repo layout (root body_lines crate, no workspace).",
+      "reasoning": "The prompt pins the module to a subdirectory crate that must coexist with a generated body_lines crate at the repo root, with no workspace manifest. Since NO CHANGES were made, the agent did not (re)establish this layout; correctness depends entirely on the already-present files matching these constraints (package name text_diff, no workspace manifest, nothing outside text_diff/ touched). Worth confirming the existing crate actually conforms rather than trusting the \"already exists\" report."
     }
   ],
+  "maplContent": "module: text_diff\ntarget: rust\nentries:\n  - promptLines:\n      - 1\n      - 88\n    kind: no-op\n    message: No changes made — module already exists and reportedly matches the full spec.\n    reasoning: The changes were \"NO CHANGES\". The coding agent reports that the text_diff crate (Cargo.toml + src/lib.rs) already exists in the working tree, that all of to_lines, unified_diff/unified_diff_with_context, parse_hunks, and apply_hunks already implement the described behavior, and that its 18 tests pass. Because the prior state already satisfied the contract, there was nothing to edit. Note that the \"18 tests pass\" claim is the agent's own assertion and is not independently evidenced by any diff in this compile.\n  - promptLines:\n      - 9\n      - 14\n    kind: note\n    message: Instruction assumes a specific pre-existing repo layout (root body_lines crate, no workspace).\n    reasoning: The prompt pins the module to a subdirectory crate that must coexist with a generated body_lines crate at the repo root, with no workspace manifest. Since NO CHANGES were made, the agent did not (re)establish this layout; correctness depends entirely on the already-present files matching these constraints (package name text_diff, no workspace manifest, nothing outside text_diff/ touched). Worth confirming the existing crate actually conforms rather than trusting the \"already exists\" report.\n",
+  "maplFile": "text_diff.mapl",
   "journal": [
     {
       "gen": 5,
@@ -253,6 +483,13 @@
     {
       "gen": 46,
       "timestamp": "2026-07-24T12:29:35.272Z",
+      "mode": "incremental",
+      "promptHash": "c12f6b2d040adc808d408f71fc27f225312be710a4088acef49a678e58ed21e2",
+      "files": []
+    },
+    {
+      "gen": 55,
+      "timestamp": "2026-07-24T12:43:31.361Z",
       "mode": "incremental",
       "promptHash": "c12f6b2d040adc808d408f71fc27f225312be710a4088acef49a678e58ed21e2",
       "files": []
@@ -305,51 +542,123 @@
         "entries": [
           {
             "promptLines": [
-              9,
-              14
+              18,
+              18
             ],
             "file": "text_diff/src/lib.rs",
             "lines": [
-              1,
-              1
+              39,
+              41
             ],
-            "note": "generated marker, crate lives in text_diff/ subdir"
+            "note": "empty text returns empty vector"
           },
           {
             "promptLines": [
-              18,
-              23
+              19,
+              20
             ],
             "file": "text_diff/src/lib.rs",
             "lines": [
-              38,
-              55
+              43,
+              50
             ],
-            "note": "to_lines: split text into owned lines, CRLF-aware trailing terminator strip"
+            "note": "strip single trailing \\n or \\r\\n terminator"
+          },
+          {
+            "promptLines": [
+              20,
+              21
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              52,
+              54
+            ],
+            "note": "split on \\n, consume \\r before split \\n"
           },
           {
             "promptLines": [
               27,
-              29
+              27
             ],
             "file": "text_diff/src/lib.rs",
             "lines": [
               125,
+              127
+            ],
+            "note": "unified_diff delegates with context 3"
+          },
+          {
+            "promptLines": [
+              28,
+              29
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              130,
               130
             ],
-            "note": "unified_diff and unified_diff_with_context entry points, default context 3"
+            "note": "unified_diff_with_context signature"
           },
           {
             "promptLines": [
               31,
+              31
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              131,
+              133
+            ],
+            "note": "split both inputs then align"
+          },
+          {
+            "promptLines": [
+              31,
+              33
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              65,
+              122
+            ],
+            "note": "LCS alignment producing entries"
+          },
+          {
+            "promptLines": [
+              32,
+              32
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              85,
+              92
+            ],
+            "note": "matching lines become context"
+          },
+          {
+            "promptLines": [
+              32,
+              33
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              93,
+              105
+            ],
+            "note": "choose deletion vs insertion via LCS table"
+          },
+          {
+            "promptLines": [
+              34,
               35
             ],
             "file": "text_diff/src/lib.rs",
             "lines": [
               58,
-              122
+              62
             ],
-            "note": "Entry enum and LCS-based align producing context/del/ins entries with line numbers"
+            "note": "entry carries 1-based old/new line numbers"
           },
           {
             "promptLines": [
@@ -358,70 +667,106 @@
             ],
             "file": "text_diff/src/lib.rs",
             "lines": [
-              135,
+              138,
               147
             ],
-            "note": "mark entries within context distance of a change as included"
+            "note": "mark entries within context of a change"
           },
           {
             "promptLines": [
               38,
+              38
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              152,
+              161
+            ],
+            "note": "group consecutive included entries into hunk"
+          },
+          {
+            "promptLines": [
+              41,
               41
             ],
             "file": "text_diff/src/lib.rs",
             "lines": [
-              149,
+              194,
               197
             ],
-            "note": "group consecutive included entries into hunks, emit @@ header"
+            "note": "emit hunk header line"
           },
           {
             "promptLines": [
               43,
-              46
+              45
             ],
             "file": "text_diff/src/lib.rs",
             "lines": [
-              163,
-              197
+              167,
+              192
             ],
-            "note": "compute oldStart/oldCount/newStart/newCount over hunk entries"
+            "note": "compute old/new start and counts"
+          },
+          {
+            "promptLines": [
+              43,
+              44
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              170,
+              175
+            ],
+            "note": "first non-insertion sets start, 0 if none"
           },
           {
             "promptLines": [
               46,
-              49
+              48
             ],
             "file": "text_diff/src/lib.rs",
             "lines": [
               198,
-              207
+              204
             ],
-            "note": "emit each hunk line with marker prefix, join with \\n"
+            "note": "prefix each entry with marker char"
           },
           {
             "promptLines": [
-              51,
-              53
+              48,
+              49
             ],
             "file": "text_diff/src/lib.rs",
             "lines": [
-              345,
-              358
+              207,
+              207
             ],
-            "note": "tests for empty-to-content, content-to-empty, identical-input diff behavior"
+            "note": "join lines with \\n, empty when no change"
           },
           {
             "promptLines": [
               57,
-              64
+              58
             ],
             "file": "text_diff/src/lib.rs",
             "lines": [
-              226,
-              259
+              227,
+              229
             ],
-            "note": "parse_hunks: split diff into lines, match header regex shape, classify line kind by first char"
+            "note": "empty/whitespace diff yields no hunks"
+          },
+          {
+            "promptLines": [
+              58,
+              58
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              232,
+              232
+            ],
+            "note": "split diff via CRLF-aware to_lines"
           },
           {
             "promptLines": [
@@ -433,7 +778,55 @@
               211,
               223
             ],
-            "note": "parse_header extracts A,B,C,D from @@ -A,B +C,D @@"
+            "note": "parse header shape into four numbers"
+          },
+          {
+            "promptLines": [
+              59,
+              60
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              233,
+              242
+            ],
+            "note": "header line starts new hunk"
+          },
+          {
+            "promptLines": [
+              61,
+              61
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              244,
+              246
+            ],
+            "note": "other lines belong to open hunk"
+          },
+          {
+            "promptLines": [
+              62,
+              64
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              247,
+              255
+            ],
+            "note": "first char selects kind, rest is text, unknown ignored"
+          },
+          {
+            "promptLines": [
+              64,
+              64
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              256,
+              256
+            ],
+            "note": "push parsed hunk line"
           },
           {
             "promptLines": [
@@ -442,48 +835,134 @@
             ],
             "file": "text_diff/src/lib.rs",
             "lines": [
-              8,
+              24,
               31
             ],
-            "note": "HunkKind, HunkLine, Hunk struct definitions with public fields"
+            "note": "Hunk struct public fields"
           },
           {
             "promptLines": [
-              69,
-              72
+              67,
+              68
             ],
             "file": "text_diff/src/lib.rs",
             "lines": [
-              394,
-              412
+              17,
+              21
             ],
-            "note": "test verifying parse_hunks example fields and line kinds/texts"
+            "note": "HunkLine kind and text fields"
           },
           {
             "promptLines": [
-              76,
+              68,
+              69
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              9,
+              14
+            ],
+            "note": "HunkKind Context/Del/Ins variants"
+          },
+          {
+            "promptLines": [
+              77,
+              77
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              263,
+              263
+            ],
+            "note": "take before lines via to_lines"
+          },
+          {
+            "promptLines": [
+              78,
+              78
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              270,
+              278
+            ],
+            "note": "copy original lines before hunk start"
+          },
+          {
+            "promptLines": [
+              79,
+              80
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              282,
+              289
+            ],
+            "note": "context copies original, fallback to text, advances"
+          },
+          {
+            "promptLines": [
+              81,
+              81
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              290,
+              292
+            ],
+            "note": "deletion advances without emitting"
+          },
+          {
+            "promptLines": [
+              81,
+              82
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              293,
+              295
+            ],
+            "note": "insertion emits text without advancing"
+          },
+          {
+            "promptLines": [
+              82,
+              82
+            ],
+            "file": "text_diff/src/lib.rs",
+            "lines": [
+              300,
+              303
+            ],
+            "note": "copy remaining original lines"
+          },
+          {
+            "promptLines": [
+              83,
               83
             ],
             "file": "text_diff/src/lib.rs",
             "lines": [
-              262,
-              306
+              305,
+              305
             ],
-            "note": "apply_hunks: walk hunks, copy preceding original lines, handle context/del/ins, copy remainder"
-          },
-          {
-            "promptLines": [
-              85,
-              87
-            ],
-            "file": "text_diff/src/lib.rs",
-            "lines": [
-              443,
-              467
-            ],
-            "note": "roundtrip property test: unified_diff -> parse_hunks -> apply_hunks reproduces after"
+            "note": "join result with \\n"
           }
         ]
+      },
+      {
+        "type": "mapl-entry",
+        "path": "text_diff.mapl",
+        "entry": {
+          "promptLines": [
+            1,
+            88
+          ],
+          "kind": "no-op",
+          "severity": "warning",
+          "message": "No changes made — module already exists and reportedly matches the full spec.",
+          "reasoning": "The changes were \"NO CHANGES\". The coding agent reports that the text_diff crate (Cargo.toml + src/lib.rs) already exists in the working tree, that all of to_lines, unified_diff/unified_diff_with_context, parse_hunks, and apply_hunks already implement the described behavior, and that its 18 tests pass. Because the prior state already satisfied the contract, there was nothing to edit. Note that the \"18 tests pass\" claim is the agent's own assertion and is not independently evidenced by any diff in this compile."
+        }
       },
       {
         "type": "mapl-entry",
@@ -495,22 +974,8 @@
           ],
           "kind": "note",
           "severity": "info",
-          "message": "Agent found NO CHANGES needed; text_diff crate already satisfies spec.",
-          "reasoning": "Prompt asks for new text_diff/ crate (Cargo.toml + src/lib.rs) untouched from body_lines root crate, with cargo test passing inside text_diff/. Agent reports 18 tests already pass with no diff, meaning crate already existed and matched spec fully — nothing to compile/change this pass."
-        }
-      },
-      {
-        "type": "mapl-entry",
-        "path": "text_diff.mapl",
-        "entry": {
-          "promptLines": [
-            1,
-            89
-          ],
-          "kind": "no-op",
-          "severity": "warning",
-          "message": "No source changes made; agent claims prior implementation already satisfies whole spec.",
-          "reasoning": "Coding agent's only output is \"Diff empty — no prompt change. All 18 tests pass already, no edits needed.\" No verification detail given (which functions/tests map to which requirements), so can't independently confirm to_lines, unified_diff, parse_hunks, apply_hunks all match spec exactly (e.g. CRLF edge cases, header formatting, round-trip property). Recorded as no-op since NO CHANGES were made; human should double check test coverage actually exercises the exact edge cases called out in lines 22-23, 51-53, 70-72, 85-87 rather than trusting the terse claim."
+          "message": "Instruction assumes a specific pre-existing repo layout (root body_lines crate, no workspace).",
+          "reasoning": "The prompt pins the module to a subdirectory crate that must coexist with a generated body_lines crate at the repo root, with no workspace manifest. Since NO CHANGES were made, the agent did not (re)establish this layout; correctness depends entirely on the already-present files matching these constraints (package name text_diff, no workspace manifest, nothing outside text_diff/ touched). Worth confirming the existing crate actually conforms rather than trusting the \"already exists\" report."
         }
       },
       {

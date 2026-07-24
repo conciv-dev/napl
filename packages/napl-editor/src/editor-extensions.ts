@@ -1,6 +1,8 @@
-import type { Extension } from '@codemirror/state';
+import { EditorState, type Extension } from '@codemirror/state';
 import { linter, type Diagnostic } from '@codemirror/lint';
-import { EditorView, hoverTooltip } from '@codemirror/view';
+import { EditorView, hoverTooltip, tooltips } from '@codemirror/view';
+import { resolveLanguage, type EditorLanguage } from './languages.ts';
+import { resolveEditorTheme, type EditorTheme } from './editor-theme.ts';
 
 export type EditorSeverity = 'error' | 'warning' | 'info';
 
@@ -26,6 +28,8 @@ export interface HoverContext {
 export interface HoverCardExcerpt {
   code: string;
   caption?: string;
+  language?: EditorLanguage;
+  theme?: EditorTheme;
 }
 
 export interface HoverCardJump {
@@ -79,9 +83,30 @@ export const naplLinter = (source: DiagnosticsSource): Extension =>
     return items.map((item) => toCmDiagnostic(view, item));
   });
 
-const buildCardDom = (card: HoverCard): HTMLElement => {
+const mountExcerpt = (
+  container: HTMLElement,
+  excerpt: HoverCardExcerpt,
+): (() => void) => {
+  const view = new EditorView({
+    state: EditorState.create({
+      doc: excerpt.code,
+      extensions: [
+        EditorState.readOnly.of(true),
+        EditorView.editable.of(false),
+        resolveLanguage(excerpt.language ?? 'text'),
+        resolveEditorTheme(excerpt.theme ?? 'dark'),
+        EditorView.lineWrapping,
+      ],
+    }),
+    parent: container,
+  });
+  return () => view.destroy();
+};
+
+const buildCardDom = (card: HoverCard): { dom: HTMLElement; destroy?: () => void } => {
   const root = document.createElement('div');
   root.className = 'cm-napl-card';
+  const cleanups: Array<() => void> = [];
   if (card.heading) {
     const heading = document.createElement('div');
     heading.className = 'cm-napl-card__heading';
@@ -95,12 +120,10 @@ const buildCardDom = (card: HoverCard): HTMLElement => {
     root.appendChild(quote);
   }
   if (card.excerpt) {
-    const pre = document.createElement('pre');
-    pre.className = 'cm-napl-card__excerpt';
-    const code = document.createElement('code');
-    code.textContent = card.excerpt.code;
-    pre.appendChild(code);
-    root.appendChild(pre);
+    const excerptHost = document.createElement('div');
+    excerptHost.className = 'cm-napl-card__excerpt';
+    root.appendChild(excerptHost);
+    cleanups.push(mountExcerpt(excerptHost, card.excerpt));
     if (card.excerpt.caption) {
       const caption = document.createElement('div');
       caption.className = 'cm-napl-card__caption';
@@ -133,10 +156,29 @@ const buildCardDom = (card: HoverCard): HTMLElement => {
     });
     root.appendChild(button);
   }
-  return root;
+  return {
+    dom: root,
+    destroy: cleanups.length
+      ? () => {
+          for (const cleanup of cleanups) cleanup();
+        }
+      : undefined,
+  };
 };
 
-export const naplHover = (source: HoverSource): Extension =>
+const paneTooltipSpace = tooltips({
+  tooltipSpace: (view) => {
+    const rect = view.scrollDOM.getBoundingClientRect();
+    return {
+      top: rect.top + 4,
+      left: 8,
+      bottom: rect.bottom - 4,
+      right: window.innerWidth - 8,
+    };
+  },
+});
+
+const hoverExtension = (source: HoverSource): Extension =>
   hoverTooltip(
     async (view, pos) => {
       const line = view.state.doc.lineAt(pos);
@@ -158,9 +200,14 @@ export const naplHover = (source: HoverSource): Extension =>
             dom.textContent = result;
             return { dom };
           }
-          return { dom: buildCardDom(result) };
+          return buildCardDom(result);
         },
       };
     },
     { hoverTime: 120 },
   );
+
+export const naplHover = (source: HoverSource): Extension => [
+  paneTooltipSpace,
+  hoverExtension(source),
+];

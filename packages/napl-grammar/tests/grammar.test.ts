@@ -213,11 +213,33 @@ describe('NAPL TextMate grammars', () => {
     highlighter.dispose();
   });
 
-  it('tokenizes real MAPL severity kinds with distinct scopes and colors', async () => {
-    const source = await readFile(
-      repoFile('selfhost/.napl/mapl/clock_fmt.mapl'),
-      'utf8',
-    );
+  it('tokenizes every MAPL severity kind with distinct scopes and colors', async () => {
+    const source = [
+      'module: sample',
+      'target: rust',
+      'entries:',
+      '  - promptLines:',
+      '      - 1',
+      '      - 4',
+      '    kind: ambiguity',
+      '    message: Two readings of the spec were possible.',
+      '  - promptLines:',
+      '      - 6',
+      '      - 9',
+      '    kind: assumption',
+      '    message: Pinned the behavior via the worked example.',
+      '  - promptLines:',
+      '      - 11',
+      '      - 14',
+      '    kind: no-op',
+      '    message: No edits made — existing code already satisfies the prompt.',
+      '  - promptLines:',
+      '      - 16',
+      '      - 19',
+      '    kind: note',
+      '    message: A subtle but load-bearing detail worth confirming.',
+      '',
+    ].join('\n');
     const highlighter = (await createHighlighter({
       themes: ['github-dark'],
       langs: ['yaml'],
@@ -232,7 +254,9 @@ describe('NAPL TextMate grammars', () => {
     });
     const selected = tokens
       .flat()
-      .filter((token) => ['ambiguity', 'assumption', 'note'].includes(token.content))
+      .filter((token) =>
+        ['ambiguity', 'assumption', 'no-op', 'note'].includes(token.content),
+      )
       .map((token) => ({
         content: token.content,
         color: token.color,
@@ -252,19 +276,27 @@ describe('NAPL TextMate grammars', () => {
           ],
         },
         {
-          "color": "#79B8FF",
-          "content": "note",
-          "scopes": [
-            "source.mapl",
-            "markup.inline.raw.info.machine-margin.mapl",
-          ],
-        },
-        {
           "color": "#FFAB70",
           "content": "assumption",
           "scopes": [
             "source.mapl",
             "markup.changed.warning.machine-margin.mapl",
+          ],
+        },
+        {
+          "color": "#FFAB70",
+          "content": "no-op",
+          "scopes": [
+            "source.mapl",
+            "markup.changed.warning.machine-margin.mapl",
+          ],
+        },
+        {
+          "color": "#79B8FF",
+          "content": "note",
+          "scopes": [
+            "source.mapl",
+            "markup.inline.raw.info.machine-margin.mapl",
           ],
         },
       ]

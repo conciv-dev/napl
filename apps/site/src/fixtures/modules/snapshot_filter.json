@@ -30,26 +30,98 @@
     {
       "promptLines": [
         20,
+        20
+      ],
+      "file": "snapshot_filter/src/lib.rs",
+      "lines": [
+        7,
+        12
+      ],
+      "note": "public SnapshotFilter struct with four rule sets"
+    },
+    {
+      "promptLines": [
+        22,
+        23
+      ],
+      "file": "snapshot_filter/src/lib.rs",
+      "lines": [
+        8,
+        8
+      ],
+      "note": "excluded directory names field"
+    },
+    {
+      "promptLines": [
+        24,
+        25
+      ],
+      "file": "snapshot_filter/src/lib.rs",
+      "lines": [
+        9,
+        9
+      ],
+      "note": "excluded file names field"
+    },
+    {
+      "promptLines": [
+        26,
+        29
+      ],
+      "file": "snapshot_filter/src/lib.rs",
+      "lines": [
+        10,
+        10
+      ],
+      "note": "excluded root-only file names field"
+    },
+    {
+      "promptLines": [
+        30,
+        31
+      ],
+      "file": "snapshot_filter/src/lib.rs",
+      "lines": [
+        11,
+        11
+      ],
+      "note": "excluded suffixes field"
+    },
+    {
+      "promptLines": [
+        33,
         34
       ],
       "file": "snapshot_filter/src/lib.rs",
       "lines": [
-        5,
-        12
+        8,
+        11
       ],
-      "note": "SnapshotFilter struct with four rule sets"
+      "note": "hash sets for names, vector for suffixes"
     },
     {
       "promptLines": [
-        36,
+        38,
+        39
+      ],
+      "file": "snapshot_filter/src/lib.rs",
+      "lines": [
+        15,
+        20
+      ],
+      "note": "make_filter signature in parameter order"
+    },
+    {
+      "promptLines": [
+        40,
         40
       ],
       "file": "snapshot_filter/src/lib.rs",
       "lines": [
-        14,
-        27
+        21,
+        26
       ],
-      "note": "make_filter builds struct from four lists"
+      "note": "copies entries into filter, no I/O"
     },
     {
       "promptLines": [
@@ -58,22 +130,82 @@
       ],
       "file": "snapshot_filter/src/lib.rs",
       "lines": [
-        30,
+        31,
         33
       ],
-      "note": "is_excluded_dir exact-match check"
+      "note": "is_excluded_dir exact whole-name match"
     },
     {
       "promptLines": [
         48,
+        55
+      ],
+      "file": "snapshot_filter/src/lib.rs",
+      "lines": [
+        37,
+        41
+      ],
+      "note": "is_excluded_file OR of rules"
+    },
+    {
+      "promptLines": [
+        52,
+        52
+      ],
+      "file": "snapshot_filter/src/lib.rs",
+      "lines": [
+        38,
+        38
+      ],
+      "note": "plain file name match"
+    },
+    {
+      "promptLines": [
+        53,
+        54
+      ],
+      "file": "snapshot_filter/src/lib.rs",
+      "lines": [
+        39,
+        39
+      ],
+      "note": "root-only match only when at_root"
+    },
+    {
+      "promptLines": [
+        55,
+        55
+      ],
+      "file": "snapshot_filter/src/lib.rs",
+      "lines": [
+        40,
+        40
+      ],
+      "note": "suffix ends_with match"
+    },
+    {
+      "promptLines": [
+        57,
         58
       ],
       "file": "snapshot_filter/src/lib.rs",
       "lines": [
-        35,
-        41
+        39,
+        39
       ],
-      "note": "is_excluded_file plain/root/suffix rule logic"
+      "note": "root-only ignored when at_root false"
+    },
+    {
+      "promptLines": [
+        62,
+        63
+      ],
+      "file": "snapshot_filter/src/lib.rs",
+      "lines": [
+        52,
+        59
+      ],
+      "note": "worked-example filter setup"
     },
     {
       "promptLines": [
@@ -82,10 +214,10 @@
       ],
       "file": "snapshot_filter/src/lib.rs",
       "lines": [
-        61,
-        79
+        62,
+        72
       ],
-      "note": "dir exact match tests, incl. non-match/no suffix-prefix"
+      "note": "dir match tests"
     },
     {
       "promptLines": [
@@ -97,7 +229,7 @@
         81,
         86
       ],
-      "note": "plain file rule test regardless of depth"
+      "note": "plain file rule test"
     },
     {
       "promptLines": [
@@ -121,7 +253,7 @@
         95,
         99
       ],
-      "note": "root-only rule applies at root test"
+      "note": "root-only at root test"
     },
     {
       "promptLines": [
@@ -133,7 +265,7 @@
         101,
         105
       ],
-      "note": "root-only rule ignored below root test"
+      "note": "root-only below root test"
     },
     {
       "promptLines": [
@@ -146,34 +278,43 @@
         112
       ],
       "note": "no matching rule test"
+    }
+  ],
+  "attributionYaml": "module: snapshot_filter\ntarget: rust\nentries:\n  - promptLines:\n      - 20\n      - 20\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 7\n      - 12\n    note: public SnapshotFilter struct with four rule sets\n  - promptLines:\n      - 22\n      - 23\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 8\n      - 8\n    note: excluded directory names field\n  - promptLines:\n      - 24\n      - 25\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 9\n      - 9\n    note: excluded file names field\n  - promptLines:\n      - 26\n      - 29\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 10\n      - 10\n    note: excluded root-only file names field\n  - promptLines:\n      - 30\n      - 31\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 11\n      - 11\n    note: excluded suffixes field\n  - promptLines:\n      - 33\n      - 34\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 8\n      - 11\n    note: hash sets for names, vector for suffixes\n  - promptLines:\n      - 38\n      - 39\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 15\n      - 20\n    note: make_filter signature in parameter order\n  - promptLines:\n      - 40\n      - 40\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 21\n      - 26\n    note: copies entries into filter, no I/O\n  - promptLines:\n      - 42\n      - 46\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 31\n      - 33\n    note: is_excluded_dir exact whole-name match\n  - promptLines:\n      - 48\n      - 55\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 37\n      - 41\n    note: is_excluded_file OR of rules\n  - promptLines:\n      - 52\n      - 52\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 38\n      - 38\n    note: plain file name match\n  - promptLines:\n      - 53\n      - 54\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 39\n      - 39\n    note: root-only match only when at_root\n  - promptLines:\n      - 55\n      - 55\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 40\n      - 40\n    note: suffix ends_with match\n  - promptLines:\n      - 57\n      - 58\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 39\n      - 39\n    note: root-only ignored when at_root false\n  - promptLines:\n      - 62\n      - 63\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 52\n      - 59\n    note: worked-example filter setup\n  - promptLines:\n      - 65\n      - 66\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 62\n      - 72\n    note: dir match tests\n  - promptLines:\n      - 67\n      - 68\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 81\n      - 86\n    note: plain file rule test\n  - promptLines:\n      - 69\n      - 69\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 88\n      - 93\n    note: suffix rule test\n  - promptLines:\n      - 70\n      - 70\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 95\n      - 99\n    note: root-only at root test\n  - promptLines:\n      - 71\n      - 72\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 101\n      - 105\n    note: root-only below root test\n  - promptLines:\n      - 73\n      - 73\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 107\n      - 112\n    note: no matching rule test\n",
+  "mapl": [
+    {
+      "promptLines": [
+        9,
+        16
+      ],
+      "kind": "no-op",
+      "severity": "warning",
+      "message": "Module already exists and matches spec exactly — nothing to create or edit.",
+      "reasoning": "Prompt reads as a from-scratch build (\"Create this module as its own member crate\"), but the agent found snapshot_filter/Cargo.toml and src/lib.rs already present, already realizing the full spec: SnapshotFilter with four rule sets, make_filter in the pinned param order, exact-match is_excluded_dir, and the plain-OR-(at_root AND root-only)-OR-suffix logic in is_excluded_file. All 9 tests (including every worked-decision case) pass under `cargo test`. No source change could add behavior without violating \"only the observable decisions are pinned,\" so nothing was produced."
     },
     {
       "promptLines": [
-        62,
-        63
+        11,
+        15
       ],
-      "file": "snapshot_filter/src/lib.rs",
-      "lines": [
-        48,
-        59
-      ],
-      "note": "worked_filter test fixture matching worked-decisions example"
+      "kind": "note",
+      "severity": "info",
+      "message": "\"Touch nothing outside snapshot_filter/\" was trivially satisfied — no files written at all.",
+      "reasoning": "The scope guard (leave the workspace root manifest alone, touch nothing outside the crate dir) held vacuously because the compile was a no-op. Worth surfacing so the human knows the constraint was honored by inaction, not by a checked edit."
     },
     {
       "promptLines": [
         33,
-        33
+        34
       ],
-      "file": "snapshot_filter/src/lib.rs",
-      "lines": [
-        3,
-        11
-      ],
-      "note": "internal repr uses HashSet for names, Vec for suffixes"
+      "kind": "assumption",
+      "severity": "warning",
+      "message": "Internal representation left to implementer; existing hash-sets + suffix vector kept as-is.",
+      "reasoning": "Prompt explicitly leaves the internal representation open (\"your choice\") and pins only observable decisions. The existing code uses hash sets for the three exact-name lists and a vector for suffixes; that matches the suggested shape, so it was accepted without change rather than re-picked."
     }
   ],
-  "attributionYaml": "module: snapshot_filter\ntarget: rust\nentries:\n  - promptLines:\n      - 20\n      - 34\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 5\n      - 12\n    note: SnapshotFilter struct with four rule sets\n  - promptLines:\n      - 36\n      - 40\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 14\n      - 27\n    note: make_filter builds struct from four lists\n  - promptLines:\n      - 42\n      - 46\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 30\n      - 33\n    note: is_excluded_dir exact-match check\n  - promptLines:\n      - 48\n      - 58\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 35\n      - 41\n    note: is_excluded_file plain/root/suffix rule logic\n  - promptLines:\n      - 65\n      - 66\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 61\n      - 79\n    note: dir exact match tests, incl. non-match/no suffix-prefix\n  - promptLines:\n      - 67\n      - 68\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 81\n      - 86\n    note: plain file rule test regardless of depth\n  - promptLines:\n      - 69\n      - 69\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 88\n      - 93\n    note: suffix rule test\n  - promptLines:\n      - 70\n      - 70\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 95\n      - 99\n    note: root-only rule applies at root test\n  - promptLines:\n      - 71\n      - 72\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 101\n      - 105\n    note: root-only rule ignored below root test\n  - promptLines:\n      - 73\n      - 73\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 107\n      - 112\n    note: no matching rule test\n  - promptLines:\n      - 62\n      - 63\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 48\n      - 59\n    note: worked_filter test fixture matching worked-decisions example\n  - promptLines:\n      - 33\n      - 33\n    file: snapshot_filter/src/lib.rs\n    lines:\n      - 3\n      - 11\n    note: internal repr uses HashSet for names, Vec for suffixes\n",
-  "mapl": [],
+  "maplContent": "module: snapshot_filter\ntarget: rust\nentries:\n  - promptLines:\n      - 9\n      - 16\n    kind: no-op\n    message: Module already exists and matches spec exactly — nothing to create or edit.\n    reasoning: 'Prompt reads as a from-scratch build (\"Create this module as its own member crate\"), but the agent found snapshot_filter/Cargo.toml and src/lib.rs already present, already realizing the full spec: SnapshotFilter with four rule sets, make_filter in the pinned param order, exact-match is_excluded_dir, and the plain-OR-(at_root AND root-only)-OR-suffix logic in is_excluded_file. All 9 tests (including every worked-decision case) pass under `cargo test`. No source change could add behavior without violating \"only the observable decisions are pinned,\" so nothing was produced.'\n  - promptLines:\n      - 11\n      - 15\n    kind: note\n    message: '\"Touch nothing outside snapshot_filter/\" was trivially satisfied — no files written at all.'\n    reasoning: The scope guard (leave the workspace root manifest alone, touch nothing outside the crate dir) held vacuously because the compile was a no-op. Worth surfacing so the human knows the constraint was honored by inaction, not by a checked edit.\n  - promptLines:\n      - 33\n      - 34\n    kind: assumption\n    message: Internal representation left to implementer; existing hash-sets + suffix vector kept as-is.\n    reasoning: Prompt explicitly leaves the internal representation open (\"your choice\") and pins only observable decisions. The existing code uses hash sets for the three exact-name lists and a vector for suffixes; that matches the suggested shape, so it was accepted without change rather than re-picked.\n",
+  "maplFile": "snapshot_filter.mapl",
   "journal": [
     {
       "gen": 31,
@@ -192,6 +333,13 @@
           "patch": "@@ -0,0 +1,121 @@\n+// GENERATED BY NAPL from snapshot_filter.napl — edit the prompt, not this file\n+\n+use std::collections::HashSet;\n+\n+/// Pure exclusion-predicate core for the snapshot walk: decides which\n+/// directories and files to skip, without touching the filesystem.\n+pub struct SnapshotFilter {\n+    excluded_dirs: HashSet<String>,\n+    excluded_files: HashSet<String>,\n+    excluded_root_files: HashSet<String>,\n+    excluded_suffixes: Vec<String>,\n+}\n+\n+/// Build a `SnapshotFilter` from the four rule lists.\n+pub fn make_filter(\n+    exclude_dirs: &[String],\n+    exclude_files: &[String],\n+    exclude_root_files: &[String],\n+    exclude_suffixes: &[String],\n+) -> SnapshotFilter {\n+    SnapshotFilter {\n+        excluded_dirs: exclude_dirs.iter().cloned().collect(),\n+        excluded_files: exclude_files.iter().cloned().collect(),\n+        excluded_root_files: exclude_root_files.iter().cloned().collect(),\n+        excluded_suffixes: exclude_suffixes.to_vec(),\n+    }\n+}\n+\n+impl SnapshotFilter {\n+    /// `true` when `name` exactly matches an excluded directory name.\n+    pub fn is_excluded_dir(&self, name: &str) -> bool {\n+        self.excluded_dirs.contains(name)\n+    }\n+\n+    /// `true` when `name` matches a plain file rule, a root-only rule\n+    /// (only if `at_root`), or a suffix rule.\n+    pub fn is_excluded_file(&self, name: &str, at_root: bool) -> bool {\n+        self.excluded_files.contains(name)\n+            || (at_root && self.excluded_root_files.contains(name))\n+            || self.excluded_suffixes.iter().any(|suffix| name.ends_with(suffix.as_str()))\n+    }\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    fn strs(items: &[&str]) -> Vec<String> {\n+        items.iter().map(|s| s.to_string()).collect()\n+    }\n+\n+    fn worked_filter() -> SnapshotFilter {\n+        make_filter(\n+            &strs(&[\"node_modules\", \".git\"]),\n+            &strs(&[\"AGENTS.md\"]),\n+            &strs(&[\"Cargo.toml\"]),\n+            &strs(&[\".d.ts\"]),\n+        )\n+    }\n+\n+    #[test]\n+    fn dir_exact_match_excluded() {\n+        let f = worked_filter();\n+        assert!(f.is_excluded_dir(\"node_modules\"));\n+        assert!(f.is_excluded_dir(\".git\"));\n+    }\n+\n+    #[test]\n+    fn dir_non_match_not_excluded() {\n+        let f = worked_filter();\n+        assert!(!f.is_excluded_dir(\"src\"));\n+    }\n+\n+    #[test]\n+    fn dir_no_suffix_or_prefix_logic() {\n+        let f = worked_filter();\n+        assert!(!f.is_excluded_dir(\"node_modules_extra\"));\n+        assert!(!f.is_excluded_dir(\"my_node_modules\"));\n+    }\n+\n+    #[test]\n+    fn plain_file_rule_excluded_regardless_of_depth() {\n+        let f = worked_filter();\n+        assert!(f.is_excluded_file(\"AGENTS.md\", false));\n+        assert!(f.is_excluded_file(\"AGENTS.md\", true));\n+    }\n+\n+    #[test]\n+    fn suffix_rule_excluded_anywhere() {\n+        let f = worked_filter();\n+        assert!(f.is_excluded_file(\"types.d.ts\", false));\n+        assert!(f.is_excluded_file(\"types.d.ts\", true));\n+    }\n+\n+    #[test]\n+    fn root_only_rule_applies_at_root() {\n+        let f = worked_filter();\n+        assert!(f.is_excluded_file(\"Cargo.toml\", true));\n+    }\n+\n+    #[test]\n+    fn root_only_rule_ignored_below_root() {\n+        let f = worked_filter();\n+        assert!(!f.is_excluded_file(\"Cargo.toml\", false));\n+    }\n+\n+    #[test]\n+    fn no_matching_rule_not_excluded() {\n+        let f = worked_filter();\n+        assert!(!f.is_excluded_file(\"keep.ts\", false));\n+        assert!(!f.is_excluded_file(\"keep.ts\", true));\n+    }\n+\n+    #[test]\n+    fn empty_rules_exclude_nothing() {\n+        let f = make_filter(&[], &[], &[], &[]);\n+        assert!(!f.is_excluded_dir(\"anything\"));\n+        assert!(!f.is_excluded_file(\"anything\", true));\n+        assert!(!f.is_excluded_file(\"anything\", false));\n+    }\n+}"
         }
       ]
+    },
+    {
+      "gen": 78,
+      "timestamp": "2026-07-24T13:27:12.915Z",
+      "mode": "incremental",
+      "promptHash": "7f505aa884a76cab7a726d8fff73fa09a2d8d7c9a21a7461dd627191827c8db8",
+      "files": []
     }
   ],
   "lock": [
@@ -242,26 +390,98 @@
           {
             "promptLines": [
               20,
+              20
+            ],
+            "file": "snapshot_filter/src/lib.rs",
+            "lines": [
+              7,
+              12
+            ],
+            "note": "public SnapshotFilter struct with four rule sets"
+          },
+          {
+            "promptLines": [
+              22,
+              23
+            ],
+            "file": "snapshot_filter/src/lib.rs",
+            "lines": [
+              8,
+              8
+            ],
+            "note": "excluded directory names field"
+          },
+          {
+            "promptLines": [
+              24,
+              25
+            ],
+            "file": "snapshot_filter/src/lib.rs",
+            "lines": [
+              9,
+              9
+            ],
+            "note": "excluded file names field"
+          },
+          {
+            "promptLines": [
+              26,
+              29
+            ],
+            "file": "snapshot_filter/src/lib.rs",
+            "lines": [
+              10,
+              10
+            ],
+            "note": "excluded root-only file names field"
+          },
+          {
+            "promptLines": [
+              30,
+              31
+            ],
+            "file": "snapshot_filter/src/lib.rs",
+            "lines": [
+              11,
+              11
+            ],
+            "note": "excluded suffixes field"
+          },
+          {
+            "promptLines": [
+              33,
               34
             ],
             "file": "snapshot_filter/src/lib.rs",
             "lines": [
-              5,
-              12
+              8,
+              11
             ],
-            "note": "SnapshotFilter struct with four rule sets"
+            "note": "hash sets for names, vector for suffixes"
           },
           {
             "promptLines": [
-              36,
+              38,
+              39
+            ],
+            "file": "snapshot_filter/src/lib.rs",
+            "lines": [
+              15,
+              20
+            ],
+            "note": "make_filter signature in parameter order"
+          },
+          {
+            "promptLines": [
+              40,
               40
             ],
             "file": "snapshot_filter/src/lib.rs",
             "lines": [
-              14,
-              27
+              21,
+              26
             ],
-            "note": "make_filter builds struct from four lists"
+            "note": "copies entries into filter, no I/O"
           },
           {
             "promptLines": [
@@ -270,22 +490,82 @@
             ],
             "file": "snapshot_filter/src/lib.rs",
             "lines": [
-              30,
+              31,
               33
             ],
-            "note": "is_excluded_dir exact-match check"
+            "note": "is_excluded_dir exact whole-name match"
           },
           {
             "promptLines": [
               48,
+              55
+            ],
+            "file": "snapshot_filter/src/lib.rs",
+            "lines": [
+              37,
+              41
+            ],
+            "note": "is_excluded_file OR of rules"
+          },
+          {
+            "promptLines": [
+              52,
+              52
+            ],
+            "file": "snapshot_filter/src/lib.rs",
+            "lines": [
+              38,
+              38
+            ],
+            "note": "plain file name match"
+          },
+          {
+            "promptLines": [
+              53,
+              54
+            ],
+            "file": "snapshot_filter/src/lib.rs",
+            "lines": [
+              39,
+              39
+            ],
+            "note": "root-only match only when at_root"
+          },
+          {
+            "promptLines": [
+              55,
+              55
+            ],
+            "file": "snapshot_filter/src/lib.rs",
+            "lines": [
+              40,
+              40
+            ],
+            "note": "suffix ends_with match"
+          },
+          {
+            "promptLines": [
+              57,
               58
             ],
             "file": "snapshot_filter/src/lib.rs",
             "lines": [
-              35,
-              41
+              39,
+              39
             ],
-            "note": "is_excluded_file plain/root/suffix rule logic"
+            "note": "root-only ignored when at_root false"
+          },
+          {
+            "promptLines": [
+              62,
+              63
+            ],
+            "file": "snapshot_filter/src/lib.rs",
+            "lines": [
+              52,
+              59
+            ],
+            "note": "worked-example filter setup"
           },
           {
             "promptLines": [
@@ -294,10 +574,10 @@
             ],
             "file": "snapshot_filter/src/lib.rs",
             "lines": [
-              61,
-              79
+              62,
+              72
             ],
-            "note": "dir exact match tests, incl. non-match/no suffix-prefix"
+            "note": "dir match tests"
           },
           {
             "promptLines": [
@@ -309,7 +589,7 @@
               81,
               86
             ],
-            "note": "plain file rule test regardless of depth"
+            "note": "plain file rule test"
           },
           {
             "promptLines": [
@@ -333,7 +613,7 @@
               95,
               99
             ],
-            "note": "root-only rule applies at root test"
+            "note": "root-only at root test"
           },
           {
             "promptLines": [
@@ -345,7 +625,7 @@
               101,
               105
             ],
-            "note": "root-only rule ignored below root test"
+            "note": "root-only below root test"
           },
           {
             "promptLines": [
@@ -358,32 +638,50 @@
               112
             ],
             "note": "no matching rule test"
-          },
-          {
-            "promptLines": [
-              62,
-              63
-            ],
-            "file": "snapshot_filter/src/lib.rs",
-            "lines": [
-              48,
-              59
-            ],
-            "note": "worked_filter test fixture matching worked-decisions example"
-          },
-          {
-            "promptLines": [
-              33,
-              33
-            ],
-            "file": "snapshot_filter/src/lib.rs",
-            "lines": [
-              3,
-              11
-            ],
-            "note": "internal repr uses HashSet for names, Vec for suffixes"
           }
         ]
+      },
+      {
+        "type": "mapl-entry",
+        "path": "snapshot_filter.mapl",
+        "entry": {
+          "promptLines": [
+            9,
+            16
+          ],
+          "kind": "no-op",
+          "severity": "warning",
+          "message": "Module already exists and matches spec exactly — nothing to create or edit.",
+          "reasoning": "Prompt reads as a from-scratch build (\"Create this module as its own member crate\"), but the agent found snapshot_filter/Cargo.toml and src/lib.rs already present, already realizing the full spec: SnapshotFilter with four rule sets, make_filter in the pinned param order, exact-match is_excluded_dir, and the plain-OR-(at_root AND root-only)-OR-suffix logic in is_excluded_file. All 9 tests (including every worked-decision case) pass under `cargo test`. No source change could add behavior without violating \"only the observable decisions are pinned,\" so nothing was produced."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "snapshot_filter.mapl",
+        "entry": {
+          "promptLines": [
+            11,
+            15
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "\"Touch nothing outside snapshot_filter/\" was trivially satisfied — no files written at all.",
+          "reasoning": "The scope guard (leave the workspace root manifest alone, touch nothing outside the crate dir) held vacuously because the compile was a no-op. Worth surfacing so the human knows the constraint was honored by inaction, not by a checked edit."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "snapshot_filter.mapl",
+        "entry": {
+          "promptLines": [
+            33,
+            34
+          ],
+          "kind": "assumption",
+          "severity": "warning",
+          "message": "Internal representation left to implementer; existing hash-sets + suffix vector kept as-is.",
+          "reasoning": "Prompt explicitly leaves the internal representation open (\"your choice\") and pins only observable decisions. The existing code uses hash sets for the three exact-name lists and a vector for suffixes; that matches the suggested shape, so it was accepted without change rather than re-picked."
+        }
       },
       {
         "type": "lock",

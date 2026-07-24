@@ -29,18 +29,6 @@
   "attribution": [
     {
       "promptLines": [
-        3,
-        7
-      ],
-      "file": "drift/src/lib.rs",
-      "lines": [
-        1,
-        1
-      ],
-      "note": "generated file header, module purpose"
-    },
-    {
-      "promptLines": [
         19,
         20
       ],
@@ -49,7 +37,7 @@
         3,
         10
       ],
-      "note": "DriftReason enum with Edited/Missing, derives Copy/Eq"
+      "note": "DriftReason enum with Edited/Missing, equality+copy derives"
     },
     {
       "promptLines": [
@@ -61,7 +49,91 @@
         12,
         28
       ],
-      "note": "DriftedFile struct fields, derives PartialEq"
+      "note": "DriftedFile struct with public fields and Eq"
+    },
+    {
+      "promptLines": [
+        22,
+        22
+      ],
+      "file": "drift/src/lib.rs",
+      "lines": [
+        16,
+        16
+      ],
+      "note": "file field, path relative to project root"
+    },
+    {
+      "promptLines": [
+        22,
+        22
+      ],
+      "file": "drift/src/lib.rs",
+      "lines": [
+        17,
+        17
+      ],
+      "note": "reason field"
+    },
+    {
+      "promptLines": [
+        23,
+        23
+      ],
+      "file": "drift/src/lib.rs",
+      "lines": [
+        18,
+        19
+      ],
+      "note": "expected_hash Option<String>"
+    },
+    {
+      "promptLines": [
+        24,
+        24
+      ],
+      "file": "drift/src/lib.rs",
+      "lines": [
+        20,
+        21
+      ],
+      "note": "actual_hash Option<String>"
+    },
+    {
+      "promptLines": [
+        25,
+        26
+      ],
+      "file": "drift/src/lib.rs",
+      "lines": [
+        22,
+        23
+      ],
+      "note": "baseline Option<String>"
+    },
+    {
+      "promptLines": [
+        26,
+        26
+      ],
+      "file": "drift/src/lib.rs",
+      "lines": [
+        24,
+        25
+      ],
+      "note": "current Option<String>"
+    },
+    {
+      "promptLines": [
+        27,
+        28
+      ],
+      "file": "drift/src/lib.rs",
+      "lines": [
+        26,
+        27
+      ],
+      "note": "diff Option<String>"
     },
     {
       "promptLines": [
@@ -73,7 +145,7 @@
         30,
         37
       ],
-      "note": "ModuleDrift struct fields, derives PartialEq"
+      "note": "ModuleDrift struct with module/prompt_file/target/files and Eq"
     },
     {
       "promptLines": [
@@ -82,10 +154,10 @@
       ],
       "file": "drift/src/lib.rs",
       "lines": [
-        84,
+        83,
         85
       ],
-      "note": "format_gen_drift_report signature, lines list"
+      "note": "format_gen_drift_report signature, builds lines vec"
     },
     {
       "promptLines": [
@@ -97,7 +169,7 @@
         87,
         90
       ],
-      "note": "opening BLOCKED line plus blank line"
+      "note": "BLOCKED opening line then empty line"
     },
     {
       "promptLines": [
@@ -109,7 +181,7 @@
         92,
         99
       ],
-      "note": "module header line with count and prompt_file"
+      "note": "per-module header line with count and prompt_file"
     },
     {
       "promptLines": [
@@ -121,55 +193,175 @@
         101,
         103
       ],
-      "note": "emit file blocks after header"
+      "note": "emit one block per drifted file"
     },
     {
       "promptLines": [
         50,
-        58
+        50
       ],
       "file": "drift/src/lib.rs",
       "lines": [
         105,
+        105
+      ],
+      "note": "empty line before resolutions block"
+    },
+    {
+      "promptLines": [
+        52,
+        52
+      ],
+      "file": "drift/src/lib.rs",
+      "lines": [
+        106,
+        106
+      ],
+      "note": "Resolve it one of three ways line"
+    },
+    {
+      "promptLines": [
+        53,
+        53
+      ],
+      "file": "drift/src/lib.rs",
+      "lines": [
+        107,
+        110
+      ],
+      "note": "resolution 1) napl reconcile"
+    },
+    {
+      "promptLines": [
+        54,
+        54
+      ],
+      "file": "drift/src/lib.rs",
+      "lines": [
+        111,
+        114
+      ],
+      "note": "resolution 2) napl gen --force"
+    },
+    {
+      "promptLines": [
+        55,
+        55
+      ],
+      "file": "drift/src/lib.rs",
+      "lines": [
+        115,
+        118
+      ],
+      "note": "resolution 3) edit the prompt"
+    },
+    {
+      "promptLines": [
+        58,
+        58
+      ],
+      "file": "drift/src/lib.rs",
+      "lines": [
+        119,
         119
       ],
-      "note": "blank line then resolutions block with three numbered options"
+      "note": "trailing empty line after block"
+    },
+    {
+      "promptLines": [
+        35,
+        36
+      ],
+      "file": "drift/src/lib.rs",
+      "lines": [
+        122,
+        122
+      ],
+      "note": "join lines with newline into String"
+    },
+    {
+      "promptLines": [
+        60,
+        60
+      ],
+      "file": "drift/src/lib.rs",
+      "lines": [
+        47,
+        48
+      ],
+      "note": "format_drifted_file builds line vec"
     },
     {
       "promptLines": [
         62,
-        70
+        65
       ],
       "file": "drift/src/lib.rs",
       "lines": [
         50,
-        58
+        54
       ],
-      "note": "missing-file block with optional recorded hash line"
+      "note": "Missing reason: file (missing...) line indented four"
+    },
+    {
+      "promptLines": [
+        66,
+        70
+      ],
+      "file": "drift/src/lib.rs",
+      "lines": [
+        55,
+        57
+      ],
+      "note": "recorded hash line only when expected_hash present"
     },
     {
       "promptLines": [
         72,
-        78
+        75
       ],
       "file": "drift/src/lib.rs",
       "lines": [
         59,
+        60
+      ],
+      "note": "Edited reason: file (edited by hand) line"
+    },
+    {
+      "promptLines": [
+        76,
+        77
+      ],
+      "file": "drift/src/lib.rs",
+      "lines": [
+        61,
         65
       ],
-      "note": "edited-file header line and diff presence check"
+      "note": "check diff present and not blank"
     },
     {
       "promptLines": [
         79,
-        81
+        80
       ],
       "file": "drift/src/lib.rs",
       "lines": [
         66,
+        66
+      ],
+      "note": "recorded baseline -> current header"
+    },
+    {
+      "promptLines": [
+        81,
+        82
+      ],
+      "file": "drift/src/lib.rs",
+      "lines": [
+        67,
         67
       ],
-      "note": "recorded baseline -> current header plus indented diff"
+      "note": "diff text with each line indented six spaces"
     },
     {
       "promptLines": [
@@ -181,93 +373,81 @@
         39,
         45
       ],
-      "note": "indent helper used for diff text"
+      "note": "indent helper prefixes each line"
     },
     {
       "promptLines": [
         82,
-        89
+        85
       ],
       "file": "drift/src/lib.rs",
       "lines": [
         68,
-        76
+        72
       ],
-      "note": "fallback hash-comparison lines with (none) defaults"
+      "note": "no-diff branch: comparing hashes only header"
     },
     {
       "promptLines": [
-        90,
-        91
+        86,
+        89
       ],
       "file": "drift/src/lib.rs",
       "lines": [
         73,
+        75
+      ],
+      "note": "recorded: expected_hash or (none)"
+    },
+    {
+      "promptLines": [
+        87,
+        91
+      ],
+      "file": "drift/src/lib.rs",
+      "lines": [
+        74,
         76
       ],
-      "note": "recorded/current spacing alignment"
-    },
-    {
-      "promptLines": [
-        95,
-        100
-      ],
-      "file": "drift/src/lib.rs",
-      "lines": [
-        130,
-        157
-      ],
-      "note": "test reproducing edited file with diff worked example"
-    },
-    {
-      "promptLines": [
-        101,
-        103
-      ],
-      "file": "drift/src/lib.rs",
-      "lines": [
-        160,
-        181
-      ],
-      "note": "test reproducing no-diff hash comparison worked example"
-    },
-    {
-      "promptLines": [
-        104,
-        106
-      ],
-      "file": "drift/src/lib.rs",
-      "lines": [
-        208,
-        228
-      ],
-      "note": "test reproducing missing file with hash worked example"
+      "note": "current: actual_hash or (none), two spaces"
     }
   ],
-  "attributionYaml": "module: drift\ntarget: rust\nentries:\n  - promptLines:\n      - 3\n      - 7\n    file: drift/src/lib.rs\n    lines:\n      - 1\n      - 1\n    note: generated file header, module purpose\n  - promptLines:\n      - 19\n      - 20\n    file: drift/src/lib.rs\n    lines:\n      - 3\n      - 10\n    note: DriftReason enum with Edited/Missing, derives Copy/Eq\n  - promptLines:\n      - 21\n      - 28\n    file: drift/src/lib.rs\n    lines:\n      - 12\n      - 28\n    note: DriftedFile struct fields, derives PartialEq\n  - promptLines:\n      - 29\n      - 31\n    file: drift/src/lib.rs\n    lines:\n      - 30\n      - 37\n    note: ModuleDrift struct fields, derives PartialEq\n  - promptLines:\n      - 33\n      - 36\n    file: drift/src/lib.rs\n    lines:\n      - 84\n      - 85\n    note: format_gen_drift_report signature, lines list\n  - promptLines:\n      - 38\n      - 42\n    file: drift/src/lib.rs\n    lines:\n      - 87\n      - 90\n    note: opening BLOCKED line plus blank line\n  - promptLines:\n      - 44\n      - 48\n    file: drift/src/lib.rs\n    lines:\n      - 92\n      - 99\n    note: module header line with count and prompt_file\n  - promptLines:\n      - 49\n      - 49\n    file: drift/src/lib.rs\n    lines:\n      - 101\n      - 103\n    note: emit file blocks after header\n  - promptLines:\n      - 50\n      - 58\n    file: drift/src/lib.rs\n    lines:\n      - 105\n      - 119\n    note: blank line then resolutions block with three numbered options\n  - promptLines:\n      - 62\n      - 70\n    file: drift/src/lib.rs\n    lines:\n      - 50\n      - 58\n    note: missing-file block with optional recorded hash line\n  - promptLines:\n      - 72\n      - 78\n    file: drift/src/lib.rs\n    lines:\n      - 59\n      - 65\n    note: edited-file header line and diff presence check\n  - promptLines:\n      - 79\n      - 81\n    file: drift/src/lib.rs\n    lines:\n      - 66\n      - 67\n    note: recorded baseline -> current header plus indented diff\n  - promptLines:\n      - 39\n      - 45\n    file: drift/src/lib.rs\n    lines:\n      - 39\n      - 45\n    note: indent helper used for diff text\n  - promptLines:\n      - 82\n      - 89\n    file: drift/src/lib.rs\n    lines:\n      - 68\n      - 76\n    note: fallback hash-comparison lines with (none) defaults\n  - promptLines:\n      - 90\n      - 91\n    file: drift/src/lib.rs\n    lines:\n      - 73\n      - 76\n    note: recorded/current spacing alignment\n  - promptLines:\n      - 95\n      - 100\n    file: drift/src/lib.rs\n    lines:\n      - 130\n      - 157\n    note: test reproducing edited file with diff worked example\n  - promptLines:\n      - 101\n      - 103\n    file: drift/src/lib.rs\n    lines:\n      - 160\n      - 181\n    note: test reproducing no-diff hash comparison worked example\n  - promptLines:\n      - 104\n      - 106\n    file: drift/src/lib.rs\n    lines:\n      - 208\n      - 228\n    note: test reproducing missing file with hash worked example\n",
+  "attributionYaml": "module: drift\ntarget: rust\nentries:\n  - promptLines:\n      - 19\n      - 20\n    file: drift/src/lib.rs\n    lines:\n      - 3\n      - 10\n    note: DriftReason enum with Edited/Missing, equality+copy derives\n  - promptLines:\n      - 21\n      - 28\n    file: drift/src/lib.rs\n    lines:\n      - 12\n      - 28\n    note: DriftedFile struct with public fields and Eq\n  - promptLines:\n      - 22\n      - 22\n    file: drift/src/lib.rs\n    lines:\n      - 16\n      - 16\n    note: file field, path relative to project root\n  - promptLines:\n      - 22\n      - 22\n    file: drift/src/lib.rs\n    lines:\n      - 17\n      - 17\n    note: reason field\n  - promptLines:\n      - 23\n      - 23\n    file: drift/src/lib.rs\n    lines:\n      - 18\n      - 19\n    note: expected_hash Option<String>\n  - promptLines:\n      - 24\n      - 24\n    file: drift/src/lib.rs\n    lines:\n      - 20\n      - 21\n    note: actual_hash Option<String>\n  - promptLines:\n      - 25\n      - 26\n    file: drift/src/lib.rs\n    lines:\n      - 22\n      - 23\n    note: baseline Option<String>\n  - promptLines:\n      - 26\n      - 26\n    file: drift/src/lib.rs\n    lines:\n      - 24\n      - 25\n    note: current Option<String>\n  - promptLines:\n      - 27\n      - 28\n    file: drift/src/lib.rs\n    lines:\n      - 26\n      - 27\n    note: diff Option<String>\n  - promptLines:\n      - 29\n      - 31\n    file: drift/src/lib.rs\n    lines:\n      - 30\n      - 37\n    note: ModuleDrift struct with module/prompt_file/target/files and Eq\n  - promptLines:\n      - 33\n      - 36\n    file: drift/src/lib.rs\n    lines:\n      - 83\n      - 85\n    note: format_gen_drift_report signature, builds lines vec\n  - promptLines:\n      - 38\n      - 42\n    file: drift/src/lib.rs\n    lines:\n      - 87\n      - 90\n    note: BLOCKED opening line then empty line\n  - promptLines:\n      - 44\n      - 48\n    file: drift/src/lib.rs\n    lines:\n      - 92\n      - 99\n    note: per-module header line with count and prompt_file\n  - promptLines:\n      - 49\n      - 49\n    file: drift/src/lib.rs\n    lines:\n      - 101\n      - 103\n    note: emit one block per drifted file\n  - promptLines:\n      - 50\n      - 50\n    file: drift/src/lib.rs\n    lines:\n      - 105\n      - 105\n    note: empty line before resolutions block\n  - promptLines:\n      - 52\n      - 52\n    file: drift/src/lib.rs\n    lines:\n      - 106\n      - 106\n    note: Resolve it one of three ways line\n  - promptLines:\n      - 53\n      - 53\n    file: drift/src/lib.rs\n    lines:\n      - 107\n      - 110\n    note: resolution 1) napl reconcile\n  - promptLines:\n      - 54\n      - 54\n    file: drift/src/lib.rs\n    lines:\n      - 111\n      - 114\n    note: resolution 2) napl gen --force\n  - promptLines:\n      - 55\n      - 55\n    file: drift/src/lib.rs\n    lines:\n      - 115\n      - 118\n    note: resolution 3) edit the prompt\n  - promptLines:\n      - 58\n      - 58\n    file: drift/src/lib.rs\n    lines:\n      - 119\n      - 119\n    note: trailing empty line after block\n  - promptLines:\n      - 35\n      - 36\n    file: drift/src/lib.rs\n    lines:\n      - 122\n      - 122\n    note: join lines with newline into String\n  - promptLines:\n      - 60\n      - 60\n    file: drift/src/lib.rs\n    lines:\n      - 47\n      - 48\n    note: format_drifted_file builds line vec\n  - promptLines:\n      - 62\n      - 65\n    file: drift/src/lib.rs\n    lines:\n      - 50\n      - 54\n    note: \"Missing reason: file (missing...) line indented four\"\n  - promptLines:\n      - 66\n      - 70\n    file: drift/src/lib.rs\n    lines:\n      - 55\n      - 57\n    note: recorded hash line only when expected_hash present\n  - promptLines:\n      - 72\n      - 75\n    file: drift/src/lib.rs\n    lines:\n      - 59\n      - 60\n    note: \"Edited reason: file (edited by hand) line\"\n  - promptLines:\n      - 76\n      - 77\n    file: drift/src/lib.rs\n    lines:\n      - 61\n      - 65\n    note: check diff present and not blank\n  - promptLines:\n      - 79\n      - 80\n    file: drift/src/lib.rs\n    lines:\n      - 66\n      - 66\n    note: recorded baseline -> current header\n  - promptLines:\n      - 81\n      - 82\n    file: drift/src/lib.rs\n    lines:\n      - 67\n      - 67\n    note: diff text with each line indented six spaces\n  - promptLines:\n      - 39\n      - 45\n    file: drift/src/lib.rs\n    lines:\n      - 39\n      - 45\n    note: indent helper prefixes each line\n  - promptLines:\n      - 82\n      - 85\n    file: drift/src/lib.rs\n    lines:\n      - 68\n      - 72\n    note: \"no-diff branch: comparing hashes only header\"\n  - promptLines:\n      - 86\n      - 89\n    file: drift/src/lib.rs\n    lines:\n      - 73\n      - 75\n    note: \"recorded: expected_hash or (none)\"\n  - promptLines:\n      - 87\n      - 91\n    file: drift/src/lib.rs\n    lines:\n      - 74\n      - 76\n    note: \"current: actual_hash or (none), two spaces\"\n",
   "mapl": [
     {
       "promptLines": [
-        12,
-        15
+        1,
+        107
       ],
       "kind": "no-op",
       "severity": "warning",
-      "message": "Crate already exists matching spec; agent found nothing to change.",
-      "reasoning": "Prompt asks for drift/ crate with Cargo.toml and src/lib.rs. Agent report say code already match prompt, diff empty, 8 tests pass. No source changes needed cause prior compile already satisfy requirement.\n"
+      "message": "NO CHANGES — existing drift crate already matches the spec and tests pass (8/8).",
+      "reasoning": "The prompt diff was empty (NO CHANGES) and the coding agent produced no edits. Per the agent, drift/src/lib.rs already defines the DriftReason/DriftedFile/ModuleDrift types and the format_gen_drift_report formatter matching this spec exactly, with all three worked examples covered and cargo test passing 8/8. The requirement was therefore already satisfied by existing code; nothing needed to be written.\n"
+    },
+    {
+      "promptLines": [
+        44,
+        87
+      ],
+      "kind": "ambiguity",
+      "severity": "error",
+      "message": "Report-template example lines carry an invisible leading character before the intended indentation.",
+      "reasoning": "Several indented code-block lines (the module header at 46, the \"Resolve\" and numbered lines at 52-55, and the file-block lines at 64, 68, 74, 79, 85-87) appear to begin with a stray zero-width/invisible character preceding the two/four/six-space indentation the surrounding prose describes. Because this module's whole purpose is pinned, byte-exact report text, any such invisible character taken literally would silently corrupt the output and break exact-match tests. The prose (\"begins with two spaces\", \"indented four spaces\", etc.) implies the indentation is plain spaces only, so the invisible characters read as an accidental copy-paste artifact rather than intended output.\n",
+      "suggestion": "Ensure the example blocks contain only plain ASCII spaces for indentation; strip any zero-width or non-breaking characters and state that lines begin with exactly N literal space characters.\n"
     },
     {
       "promptLines": [
         46,
         46
       ],
-      "kind": "ambiguity",
-      "severity": "error",
-      "message": "Zero-width space chars in report-line examples look like stray artifacts.",
-      "reasoning": "Lines 46,52-55,64,68,74,79,85-87 prefix code samples with what render as zero-width space (​) before normal spaces. Unclear if intentional formatting marker or copy-paste artifact. Agent treat as plain leading-space indentation per prose description, matching worked examples.\n",
-      "suggestion": "Strip stray zero-width-space chars before indentation spaces in code samples."
+      "kind": "assumption",
+      "severity": "warning",
+      "message": "Assumed the header line's em dash and exact punctuation are reproduced verbatim from the example.",
+      "reasoning": "The module header line is described only as beginning with two spaces and ending with a colon; the exact glyph of the em dash (\"—\") separating \"(<target>)\" from \"<count> file(s) drifted\" is shown in the example but never called out in prose, unlike the em dashes at lines 57-58 which are explicitly noted. Assumed the example's literal em-dash character is authoritative and reproduced verbatim.\n"
     }
   ],
+  "maplContent": "module: drift\ntarget: rust\nentries:\n  - promptLines:\n      - 1\n      - 107\n    kind: no-op\n    message: NO CHANGES — existing drift crate already matches the spec and tests pass (8/8).\n    reasoning: \"The prompt diff was empty (NO CHANGES) and the coding agent produced no edits. Per the agent, drift/src/lib.rs already defines the DriftReason/DriftedFile/ModuleDrift types and the format_gen_drift_report formatter matching this spec exactly, with all three worked examples covered and cargo test passing 8/8. The requirement was therefore already satisfied by existing code; nothing needed to be written.\\n\"\n  - promptLines:\n      - 44\n      - 87\n    kind: ambiguity\n    message: Report-template example lines carry an invisible leading character before the intended indentation.\n    reasoning: \"Several indented code-block lines (the module header at 46, the \\\"Resolve\\\" and numbered lines at 52-55, and the file-block lines at 64, 68, 74, 79, 85-87) appear to begin with a stray zero-width/invisible character preceding the two/four/six-space indentation the surrounding prose describes. Because this module's whole purpose is pinned, byte-exact report text, any such invisible character taken literally would silently corrupt the output and break exact-match tests. The prose (\\\"begins with two spaces\\\", \\\"indented four spaces\\\", etc.) implies the indentation is plain spaces only, so the invisible characters read as an accidental copy-paste artifact rather than intended output.\\n\"\n    suggestion: \"Ensure the example blocks contain only plain ASCII spaces for indentation; strip any zero-width or non-breaking characters and state that lines begin with exactly N literal space characters.\\n\"\n  - promptLines:\n      - 46\n      - 46\n    kind: assumption\n    message: Assumed the header line's em dash and exact punctuation are reproduced verbatim from the example.\n    reasoning: \"The module header line is described only as beginning with two spaces and ending with a colon; the exact glyph of the em dash (\\\"—\\\") separating \\\"(<target>)\\\" from \\\"<count> file(s) drifted\\\" is shown in the example but never called out in prose, unlike the em dashes at lines 57-58 which are explicitly noted. Assumed the example's literal em-dash character is authoritative and reproduced verbatim.\\n\"\n",
+  "maplFile": "drift.mapl",
   "journal": [
     {
       "gen": 11,
@@ -290,6 +470,13 @@
     {
       "gen": 47,
       "timestamp": "2026-07-24T12:30:31.720Z",
+      "mode": "incremental",
+      "promptHash": "291ef28967c7e57871c6cdbd15cfcf8d9fbf08993defcfd78d86cab0415f84f5",
+      "files": []
+    },
+    {
+      "gen": 56,
+      "timestamp": "2026-07-24T12:45:09.467Z",
       "mode": "incremental",
       "promptHash": "291ef28967c7e57871c6cdbd15cfcf8d9fbf08993defcfd78d86cab0415f84f5",
       "files": []
@@ -342,18 +529,6 @@
         "entries": [
           {
             "promptLines": [
-              3,
-              7
-            ],
-            "file": "drift/src/lib.rs",
-            "lines": [
-              1,
-              1
-            ],
-            "note": "generated file header, module purpose"
-          },
-          {
-            "promptLines": [
               19,
               20
             ],
@@ -362,7 +537,7 @@
               3,
               10
             ],
-            "note": "DriftReason enum with Edited/Missing, derives Copy/Eq"
+            "note": "DriftReason enum with Edited/Missing, equality+copy derives"
           },
           {
             "promptLines": [
@@ -374,7 +549,91 @@
               12,
               28
             ],
-            "note": "DriftedFile struct fields, derives PartialEq"
+            "note": "DriftedFile struct with public fields and Eq"
+          },
+          {
+            "promptLines": [
+              22,
+              22
+            ],
+            "file": "drift/src/lib.rs",
+            "lines": [
+              16,
+              16
+            ],
+            "note": "file field, path relative to project root"
+          },
+          {
+            "promptLines": [
+              22,
+              22
+            ],
+            "file": "drift/src/lib.rs",
+            "lines": [
+              17,
+              17
+            ],
+            "note": "reason field"
+          },
+          {
+            "promptLines": [
+              23,
+              23
+            ],
+            "file": "drift/src/lib.rs",
+            "lines": [
+              18,
+              19
+            ],
+            "note": "expected_hash Option<String>"
+          },
+          {
+            "promptLines": [
+              24,
+              24
+            ],
+            "file": "drift/src/lib.rs",
+            "lines": [
+              20,
+              21
+            ],
+            "note": "actual_hash Option<String>"
+          },
+          {
+            "promptLines": [
+              25,
+              26
+            ],
+            "file": "drift/src/lib.rs",
+            "lines": [
+              22,
+              23
+            ],
+            "note": "baseline Option<String>"
+          },
+          {
+            "promptLines": [
+              26,
+              26
+            ],
+            "file": "drift/src/lib.rs",
+            "lines": [
+              24,
+              25
+            ],
+            "note": "current Option<String>"
+          },
+          {
+            "promptLines": [
+              27,
+              28
+            ],
+            "file": "drift/src/lib.rs",
+            "lines": [
+              26,
+              27
+            ],
+            "note": "diff Option<String>"
           },
           {
             "promptLines": [
@@ -386,7 +645,7 @@
               30,
               37
             ],
-            "note": "ModuleDrift struct fields, derives PartialEq"
+            "note": "ModuleDrift struct with module/prompt_file/target/files and Eq"
           },
           {
             "promptLines": [
@@ -395,10 +654,10 @@
             ],
             "file": "drift/src/lib.rs",
             "lines": [
-              84,
+              83,
               85
             ],
-            "note": "format_gen_drift_report signature, lines list"
+            "note": "format_gen_drift_report signature, builds lines vec"
           },
           {
             "promptLines": [
@@ -410,7 +669,7 @@
               87,
               90
             ],
-            "note": "opening BLOCKED line plus blank line"
+            "note": "BLOCKED opening line then empty line"
           },
           {
             "promptLines": [
@@ -422,7 +681,7 @@
               92,
               99
             ],
-            "note": "module header line with count and prompt_file"
+            "note": "per-module header line with count and prompt_file"
           },
           {
             "promptLines": [
@@ -434,55 +693,175 @@
               101,
               103
             ],
-            "note": "emit file blocks after header"
+            "note": "emit one block per drifted file"
           },
           {
             "promptLines": [
               50,
-              58
+              50
             ],
             "file": "drift/src/lib.rs",
             "lines": [
               105,
+              105
+            ],
+            "note": "empty line before resolutions block"
+          },
+          {
+            "promptLines": [
+              52,
+              52
+            ],
+            "file": "drift/src/lib.rs",
+            "lines": [
+              106,
+              106
+            ],
+            "note": "Resolve it one of three ways line"
+          },
+          {
+            "promptLines": [
+              53,
+              53
+            ],
+            "file": "drift/src/lib.rs",
+            "lines": [
+              107,
+              110
+            ],
+            "note": "resolution 1) napl reconcile"
+          },
+          {
+            "promptLines": [
+              54,
+              54
+            ],
+            "file": "drift/src/lib.rs",
+            "lines": [
+              111,
+              114
+            ],
+            "note": "resolution 2) napl gen --force"
+          },
+          {
+            "promptLines": [
+              55,
+              55
+            ],
+            "file": "drift/src/lib.rs",
+            "lines": [
+              115,
+              118
+            ],
+            "note": "resolution 3) edit the prompt"
+          },
+          {
+            "promptLines": [
+              58,
+              58
+            ],
+            "file": "drift/src/lib.rs",
+            "lines": [
+              119,
               119
             ],
-            "note": "blank line then resolutions block with three numbered options"
+            "note": "trailing empty line after block"
+          },
+          {
+            "promptLines": [
+              35,
+              36
+            ],
+            "file": "drift/src/lib.rs",
+            "lines": [
+              122,
+              122
+            ],
+            "note": "join lines with newline into String"
+          },
+          {
+            "promptLines": [
+              60,
+              60
+            ],
+            "file": "drift/src/lib.rs",
+            "lines": [
+              47,
+              48
+            ],
+            "note": "format_drifted_file builds line vec"
           },
           {
             "promptLines": [
               62,
-              70
+              65
             ],
             "file": "drift/src/lib.rs",
             "lines": [
               50,
-              58
+              54
             ],
-            "note": "missing-file block with optional recorded hash line"
+            "note": "Missing reason: file (missing...) line indented four"
+          },
+          {
+            "promptLines": [
+              66,
+              70
+            ],
+            "file": "drift/src/lib.rs",
+            "lines": [
+              55,
+              57
+            ],
+            "note": "recorded hash line only when expected_hash present"
           },
           {
             "promptLines": [
               72,
-              78
+              75
             ],
             "file": "drift/src/lib.rs",
             "lines": [
               59,
+              60
+            ],
+            "note": "Edited reason: file (edited by hand) line"
+          },
+          {
+            "promptLines": [
+              76,
+              77
+            ],
+            "file": "drift/src/lib.rs",
+            "lines": [
+              61,
               65
             ],
-            "note": "edited-file header line and diff presence check"
+            "note": "check diff present and not blank"
           },
           {
             "promptLines": [
               79,
-              81
+              80
             ],
             "file": "drift/src/lib.rs",
             "lines": [
               66,
+              66
+            ],
+            "note": "recorded baseline -> current header"
+          },
+          {
+            "promptLines": [
+              81,
+              82
+            ],
+            "file": "drift/src/lib.rs",
+            "lines": [
+              67,
               67
             ],
-            "note": "recorded baseline -> current header plus indented diff"
+            "note": "diff text with each line indented six spaces"
           },
           {
             "promptLines": [
@@ -494,67 +873,43 @@
               39,
               45
             ],
-            "note": "indent helper used for diff text"
+            "note": "indent helper prefixes each line"
           },
           {
             "promptLines": [
               82,
-              89
+              85
             ],
             "file": "drift/src/lib.rs",
             "lines": [
               68,
-              76
+              72
             ],
-            "note": "fallback hash-comparison lines with (none) defaults"
+            "note": "no-diff branch: comparing hashes only header"
           },
           {
             "promptLines": [
-              90,
-              91
+              86,
+              89
             ],
             "file": "drift/src/lib.rs",
             "lines": [
               73,
+              75
+            ],
+            "note": "recorded: expected_hash or (none)"
+          },
+          {
+            "promptLines": [
+              87,
+              91
+            ],
+            "file": "drift/src/lib.rs",
+            "lines": [
+              74,
               76
             ],
-            "note": "recorded/current spacing alignment"
-          },
-          {
-            "promptLines": [
-              95,
-              100
-            ],
-            "file": "drift/src/lib.rs",
-            "lines": [
-              130,
-              157
-            ],
-            "note": "test reproducing edited file with diff worked example"
-          },
-          {
-            "promptLines": [
-              101,
-              103
-            ],
-            "file": "drift/src/lib.rs",
-            "lines": [
-              160,
-              181
-            ],
-            "note": "test reproducing no-diff hash comparison worked example"
-          },
-          {
-            "promptLines": [
-              104,
-              106
-            ],
-            "file": "drift/src/lib.rs",
-            "lines": [
-              208,
-              228
-            ],
-            "note": "test reproducing missing file with hash worked example"
+            "note": "current: actual_hash or (none), two spaces"
           }
         ]
       },
@@ -563,13 +918,28 @@
         "path": "drift.mapl",
         "entry": {
           "promptLines": [
-            12,
-            15
+            1,
+            107
           ],
           "kind": "no-op",
           "severity": "warning",
-          "message": "Crate already exists matching spec; agent found nothing to change.",
-          "reasoning": "Prompt asks for drift/ crate with Cargo.toml and src/lib.rs. Agent report say code already match prompt, diff empty, 8 tests pass. No source changes needed cause prior compile already satisfy requirement.\n"
+          "message": "NO CHANGES — existing drift crate already matches the spec and tests pass (8/8).",
+          "reasoning": "The prompt diff was empty (NO CHANGES) and the coding agent produced no edits. Per the agent, drift/src/lib.rs already defines the DriftReason/DriftedFile/ModuleDrift types and the format_gen_drift_report formatter matching this spec exactly, with all three worked examples covered and cargo test passing 8/8. The requirement was therefore already satisfied by existing code; nothing needed to be written.\n"
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "drift.mapl",
+        "entry": {
+          "promptLines": [
+            44,
+            87
+          ],
+          "kind": "ambiguity",
+          "severity": "error",
+          "message": "Report-template example lines carry an invisible leading character before the intended indentation.",
+          "reasoning": "Several indented code-block lines (the module header at 46, the \"Resolve\" and numbered lines at 52-55, and the file-block lines at 64, 68, 74, 79, 85-87) appear to begin with a stray zero-width/invisible character preceding the two/four/six-space indentation the surrounding prose describes. Because this module's whole purpose is pinned, byte-exact report text, any such invisible character taken literally would silently corrupt the output and break exact-match tests. The prose (\"begins with two spaces\", \"indented four spaces\", etc.) implies the indentation is plain spaces only, so the invisible characters read as an accidental copy-paste artifact rather than intended output.\n",
+          "suggestion": "Ensure the example blocks contain only plain ASCII spaces for indentation; strip any zero-width or non-breaking characters and state that lines begin with exactly N literal space characters.\n"
         }
       },
       {
@@ -580,11 +950,10 @@
             46,
             46
           ],
-          "kind": "ambiguity",
-          "severity": "error",
-          "message": "Zero-width space chars in report-line examples look like stray artifacts.",
-          "reasoning": "Lines 46,52-55,64,68,74,79,85-87 prefix code samples with what render as zero-width space (​) before normal spaces. Unclear if intentional formatting marker or copy-paste artifact. Agent treat as plain leading-space indentation per prose description, matching worked examples.\n",
-          "suggestion": "Strip stray zero-width-space chars before indentation spaces in code samples."
+          "kind": "assumption",
+          "severity": "warning",
+          "message": "Assumed the header line's em dash and exact punctuation are reproduced verbatim from the example.",
+          "reasoning": "The module header line is described only as beginning with two spaces and ending with a colon; the exact glyph of the em dash (\"—\") separating \"(<target>)\" from \"<count> file(s) drifted\" is shown in the example but never called out in prose, unlike the em dashes at lines 57-58 which are explicitly noted. Assumed the example's literal em-dash character is authoritative and reproduced verbatim.\n"
         }
       },
       {

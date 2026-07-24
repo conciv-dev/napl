@@ -29,30 +29,6 @@
   "attribution": [
     {
       "promptLines": [
-        19,
-        25
-      ],
-      "file": "scanner/src/lib.rs",
-      "lines": [
-        75,
-        77
-      ],
-      "note": "UTF-16 length counting per position model"
-    },
-    {
-      "promptLines": [
-        27,
-        29
-      ],
-      "file": "scanner/src/lib.rs",
-      "lines": [
-        69,
-        73
-      ],
-      "note": "split doc into lines, strip trailing CR"
-    },
-    {
-      "promptLines": [
         33,
         34
       ],
@@ -61,7 +37,7 @@
         3,
         13
       ],
-      "note": "Position and Span structs"
+      "note": "Position and Span structs with equality/copy"
     },
     {
       "promptLines": [
@@ -109,7 +85,7 @@
         33,
         37
       ],
-      "note": "DepSource enum"
+      "note": "DepSource enum Deps/Extends"
     },
     {
       "promptLines": [
@@ -157,31 +133,79 @@
         62,
         67
       ],
-      "note": "Target enum"
+      "note": "Target enum variants"
+    },
+    {
+      "promptLines": [
+        27,
+        29
+      ],
+      "file": "scanner/src/lib.rs",
+      "lines": [
+        69,
+        73
+      ],
+      "note": "split on newline, strip trailing CR"
+    },
+    {
+      "promptLines": [
+        20,
+        24
+      ],
+      "file": "scanner/src/lib.rs",
+      "lines": [
+        75,
+        77
+      ],
+      "note": "UTF-16 code unit length"
     },
     {
       "promptLines": [
         48,
-        51
+        50
       ],
       "file": "scanner/src/lib.rs",
       "lines": [
         329,
         338
       ],
-      "note": "detect frontmatter open/close delimiters"
+      "note": "detect --- delimiters for frontmatter"
+    },
+    {
+      "promptLines": [
+        51,
+        51
+      ],
+      "file": "scanner/src/lib.rs",
+      "lines": [
+        348,
+        348
+      ],
+      "note": "inner lines 1..close"
     },
     {
       "promptLines": [
         53,
+        54
+      ],
+      "file": "scanner/src/lib.rs",
+      "lines": [
+        357,
+        365
+      ],
+      "note": "frontmatter region span to last inner line"
+    },
+    {
+      "promptLines": [
+        55,
         55
       ],
       "file": "scanner/src/lib.rs",
       "lines": [
-        347,
-        366
+        349,
+        356
       ],
-      "note": "compute frontmatter RegionSpan"
+      "note": "empty frontmatter span (1,0)-(1,0)"
     },
     {
       "promptLines": [
@@ -190,34 +214,58 @@
       ],
       "file": "scanner/src/lib.rs",
       "lines": [
-        202,
-        214
+        209,
+        212
       ],
-      "note": "track block-list state while walking inner lines"
+      "note": "walk inner lines tracking block state"
     },
     {
       "promptLines": [
         62,
-        67
+        64
       ],
       "file": "scanner/src/lib.rs",
       "lines": [
         91,
         106
       ],
-      "note": "key line regex match"
+      "note": "match key line pattern"
     },
     {
       "promptLines": [
         62,
+        64
+      ],
+      "file": "scanner/src/lib.rs",
+      "lines": [
+        216,
+        220
+      ],
+      "note": "record key_span"
+    },
+    {
+      "promptLines": [
+        65,
+        65
+      ],
+      "file": "scanner/src/lib.rs",
+      "lines": [
+        221,
+        221
+      ],
+      "note": "key_end_char just past colon"
+    },
+    {
+      "promptLines": [
+        66,
         67
       ],
       "file": "scanner/src/lib.rs",
       "lines": [
-        213,
-        221
+        214,
+        214
       ],
-      "note": "emit FrontmatterKeyToken and key_end_char"
+      "note": "key line clears block state"
     },
     {
       "promptLines": [
@@ -229,7 +277,7 @@
         108,
         125
       ],
-      "note": "scalar value after colon parsing"
+      "note": "scalar value after colon: whitespace, trim, quotes, span"
     },
     {
       "promptLines": [
@@ -239,21 +287,21 @@
       "file": "scanner/src/lib.rs",
       "lines": [
         224,
-        234
+        233
       ],
-      "note": "module value extraction"
+      "note": "module produces module_value token"
     },
     {
       "promptLines": [
         80,
-        94
+        81
       ],
       "file": "scanner/src/lib.rs",
       "lines": [
         235,
-        252
+        236
       ],
-      "note": "deps/extends dispatch to inline list/block/scalar"
+      "note": "deps/extends select DepSource"
     },
     {
       "promptLines": [
@@ -265,7 +313,19 @@
         151,
         200
       ],
-      "note": "inline list parsing for deps"
+      "note": "parse inline list items with base column and offsets"
+    },
+    {
+      "promptLines": [
+        83,
+        83
+      ],
+      "file": "scanner/src/lib.rs",
+      "lines": [
+        238,
+        239
+      ],
+      "note": "dispatch inline list when starts with ["
     },
     {
       "promptLines": [
@@ -277,7 +337,19 @@
         240,
         241
       ],
-      "note": "mark open block list state"
+      "note": "empty after colon opens block list"
+    },
+    {
+      "promptLines": [
+        94,
+        94
+      ],
+      "file": "scanner/src/lib.rs",
+      "lines": [
+        242,
+        251
+      ],
+      "note": "single scalar dep value"
     },
     {
       "promptLines": [
@@ -289,7 +361,7 @@
         127,
         149
       ],
-      "note": "block list item line regex match"
+      "note": "match block list item indent/dash/spaces"
     },
     {
       "promptLines": [
@@ -299,62 +371,182 @@
       "file": "scanner/src/lib.rs",
       "lines": [
         255,
-        275
+        274
       ],
-      "note": "emit DepToken for block list item"
+      "note": "emit block list DepToken with computed start"
     },
     {
       "promptLines": [
         105,
-        110
+        105
       ],
       "file": "scanner/src/lib.rs",
       "lines": [
         372,
-        399
+        372
       ],
-      "note": "compute body RegionSpan present/absent cases"
+      "note": "body starts at close+1"
     },
     {
       "promptLines": [
-        114,
-        121
+        106,
+        107
       ],
       "file": "scanner/src/lib.rs",
       "lines": [
-        280,
-        323
+        373,
+        380
       ],
-      "note": "scan @-references in body lines"
+      "note": "body region span present"
+    },
+    {
+      "promptLines": [
+        108,
+        108
+      ],
+      "file": "scanner/src/lib.rs",
+      "lines": [
+        384,
+        385
+      ],
+      "note": "body absent when nothing after delimiter"
+    },
+    {
+      "promptLines": [
+        109,
+        110
+      ],
+      "file": "scanner/src/lib.rs",
+      "lines": [
+        388,
+        395
+      ],
+      "note": "no frontmatter: body from (0,0)"
     },
     {
       "promptLines": [
         114,
-        116
+        115
       ],
       "file": "scanner/src/lib.rs",
       "lines": [
         381,
+        383
+      ],
+      "note": "scan refs from body start"
+    },
+    {
+      "promptLines": [
+        114,
+        115
+      ],
+      "file": "scanner/src/lib.rs",
+      "lines": [
+        396,
         398
       ],
-      "note": "choose ref scan start line based on frontmatter presence"
+      "note": "scan refs from line 0 when no frontmatter"
+    },
+    {
+      "promptLines": [
+        116,
+        117
+      ],
+      "file": "scanner/src/lib.rs",
+      "lines": [
+        280,
+        282
+      ],
+      "note": "reference character predicate"
+    },
+    {
+      "promptLines": [
+        116,
+        121
+      ],
+      "file": "scanner/src/lib.rs",
+      "lines": [
+        284,
+        323
+      ],
+      "note": "scan @-references in a line"
+    },
+    {
+      "promptLines": [
+        118,
+        120
+      ],
+      "file": "scanner/src/lib.rs",
+      "lines": [
+        298,
+        311
+      ],
+      "note": "build ref module and span including @"
+    },
+    {
+      "promptLines": [
+        120,
+        121
+      ],
+      "file": "scanner/src/lib.rs",
+      "lines": [
+        298,
+        298
+      ],
+      "note": "bare @ not a reference"
     },
     {
       "promptLines": [
         123,
-        129
+        123
+      ],
+      "file": "scanner/src/lib.rs",
+      "lines": [
+        412,
+        412
+      ],
+      "note": "find_target_at_position entry"
+    },
+    {
+      "promptLines": [
+        125,
+        128
+      ],
+      "file": "scanner/src/lib.rs",
+      "lines": [
+        413,
+        427
+      ],
+      "note": "precedence module, deps, refs"
+    },
+    {
+      "promptLines": [
+        126,
+        128
       ],
       "file": "scanner/src/lib.rs",
       "lines": [
         404,
-        429
+        410
       ],
-      "note": "find_target_at_position precedence and containment"
+      "note": "span_contains inclusive check"
     },
     {
       "promptLines": [
-        443,
-        443
+        129,
+        129
+      ],
+      "file": "scanner/src/lib.rs",
+      "lines": [
+        428,
+        428
+      ],
+      "note": "return None when nothing contains"
+    },
+    {
+      "promptLines": [
+        135,
+        143
       ],
       "file": "scanner/src/lib.rs",
       "lines": [
@@ -366,39 +558,90 @@
     {
       "promptLines": [
         145,
+        145
+      ],
+      "file": "scanner/src/lib.rs",
+      "lines": [
+        445,
+        451
+      ],
+      "note": "test module value span (1,8)-(1,20)"
+    },
+    {
+      "promptLines": [
+        146,
+        147
+      ],
+      "file": "scanner/src/lib.rs",
+      "lines": [
+        453,
+        463
+      ],
+      "note": "test deps spans"
+    },
+    {
+      "promptLines": [
+        148,
+        149
+      ],
+      "file": "scanner/src/lib.rs",
+      "lines": [
+        465,
+        471
+      ],
+      "note": "test body refs"
+    },
+    {
+      "promptLines": [
+        149,
+        150
+      ],
+      "file": "scanner/src/lib.rs",
+      "lines": [
+        473,
+        481
+      ],
+      "note": "test frontmatter/body regions"
+    },
+    {
+      "promptLines": [
+        151,
         152
       ],
       "file": "scanner/src/lib.rs",
       "lines": [
-        446,
+        483,
         500
       ],
-      "note": "worked span assertions for main doc"
+      "note": "test find_target resolutions"
     }
   ],
-  "attributionYaml": "module: scanner\ntarget: rust\nentries:\n  - promptLines:\n      - 19\n      - 25\n    file: scanner/src/lib.rs\n    lines:\n      - 75\n      - 77\n    note: UTF-16 length counting per position model\n  - promptLines:\n      - 27\n      - 29\n    file: scanner/src/lib.rs\n    lines:\n      - 69\n      - 73\n    note: split doc into lines, strip trailing CR\n  - promptLines:\n      - 33\n      - 34\n    file: scanner/src/lib.rs\n    lines:\n      - 3\n      - 13\n    note: Position and Span structs\n  - promptLines:\n      - 35\n      - 35\n    file: scanner/src/lib.rs\n    lines:\n      - 15\n      - 19\n    note: RegionSpan struct\n  - promptLines:\n      - 36\n      - 36\n    file: scanner/src/lib.rs\n    lines:\n      - 21\n      - 25\n    note: FrontmatterKeyToken struct\n  - promptLines:\n      - 37\n      - 37\n    file: scanner/src/lib.rs\n    lines:\n      - 27\n      - 31\n    note: ModuleValueToken struct\n  - promptLines:\n      - 38\n      - 38\n    file: scanner/src/lib.rs\n    lines:\n      - 33\n      - 37\n    note: DepSource enum\n  - promptLines:\n      - 39\n      - 39\n    file: scanner/src/lib.rs\n    lines:\n      - 39\n      - 44\n    note: DepToken struct\n  - promptLines:\n      - 40\n      - 40\n    file: scanner/src/lib.rs\n    lines:\n      - 46\n      - 50\n    note: RefToken struct\n  - promptLines:\n      - 41\n      - 41\n    file: scanner/src/lib.rs\n    lines:\n      - 52\n      - 60\n    note: ScanResult struct\n  - promptLines:\n      - 42\n      - 44\n    file: scanner/src/lib.rs\n    lines:\n      - 62\n      - 67\n    note: Target enum\n  - promptLines:\n      - 48\n      - 51\n    file: scanner/src/lib.rs\n    lines:\n      - 329\n      - 338\n    note: detect frontmatter open/close delimiters\n  - promptLines:\n      - 53\n      - 55\n    file: scanner/src/lib.rs\n    lines:\n      - 347\n      - 366\n    note: compute frontmatter RegionSpan\n  - promptLines:\n      - 59\n      - 60\n    file: scanner/src/lib.rs\n    lines:\n      - 202\n      - 214\n    note: track block-list state while walking inner lines\n  - promptLines:\n      - 62\n      - 67\n    file: scanner/src/lib.rs\n    lines:\n      - 91\n      - 106\n    note: key line regex match\n  - promptLines:\n      - 62\n      - 67\n    file: scanner/src/lib.rs\n    lines:\n      - 213\n      - 221\n    note: emit FrontmatterKeyToken and key_end_char\n  - promptLines:\n      - 69\n      - 75\n    file: scanner/src/lib.rs\n    lines:\n      - 108\n      - 125\n    note: scalar value after colon parsing\n  - promptLines:\n      - 77\n      - 78\n    file: scanner/src/lib.rs\n    lines:\n      - 224\n      - 234\n    note: module value extraction\n  - promptLines:\n      - 80\n      - 94\n    file: scanner/src/lib.rs\n    lines:\n      - 235\n      - 252\n    note: deps/extends dispatch to inline list/block/scalar\n  - promptLines:\n      - 83\n      - 91\n    file: scanner/src/lib.rs\n    lines:\n      - 151\n      - 200\n    note: inline list parsing for deps\n  - promptLines:\n      - 92\n      - 93\n    file: scanner/src/lib.rs\n    lines:\n      - 240\n      - 241\n    note: mark open block list state\n  - promptLines:\n      - 96\n      - 101\n    file: scanner/src/lib.rs\n    lines:\n      - 127\n      - 149\n    note: block list item line regex match\n  - promptLines:\n      - 96\n      - 101\n    file: scanner/src/lib.rs\n    lines:\n      - 255\n      - 275\n    note: emit DepToken for block list item\n  - promptLines:\n      - 105\n      - 110\n    file: scanner/src/lib.rs\n    lines:\n      - 372\n      - 399\n    note: compute body RegionSpan present/absent cases\n  - promptLines:\n      - 114\n      - 121\n    file: scanner/src/lib.rs\n    lines:\n      - 280\n      - 323\n    note: scan @-references in body lines\n  - promptLines:\n      - 114\n      - 116\n    file: scanner/src/lib.rs\n    lines:\n      - 381\n      - 398\n    note: choose ref scan start line based on frontmatter presence\n  - promptLines:\n      - 123\n      - 129\n    file: scanner/src/lib.rs\n    lines:\n      - 404\n      - 429\n    note: find_target_at_position precedence and containment\n  - promptLines:\n      - 443\n      - 443\n    file: scanner/src/lib.rs\n    lines:\n      - 443\n      - 443\n    note: main reference document constant\n  - promptLines:\n      - 145\n      - 152\n    file: scanner/src/lib.rs\n    lines:\n      - 446\n      - 500\n    note: worked span assertions for main doc\n",
+  "attributionYaml": "module: scanner\ntarget: rust\nentries:\n  - promptLines:\n      - 33\n      - 34\n    file: scanner/src/lib.rs\n    lines:\n      - 3\n      - 13\n    note: Position and Span structs with equality/copy\n  - promptLines:\n      - 35\n      - 35\n    file: scanner/src/lib.rs\n    lines:\n      - 15\n      - 19\n    note: RegionSpan struct\n  - promptLines:\n      - 36\n      - 36\n    file: scanner/src/lib.rs\n    lines:\n      - 21\n      - 25\n    note: FrontmatterKeyToken struct\n  - promptLines:\n      - 37\n      - 37\n    file: scanner/src/lib.rs\n    lines:\n      - 27\n      - 31\n    note: ModuleValueToken struct\n  - promptLines:\n      - 38\n      - 38\n    file: scanner/src/lib.rs\n    lines:\n      - 33\n      - 37\n    note: DepSource enum Deps/Extends\n  - promptLines:\n      - 39\n      - 39\n    file: scanner/src/lib.rs\n    lines:\n      - 39\n      - 44\n    note: DepToken struct\n  - promptLines:\n      - 40\n      - 40\n    file: scanner/src/lib.rs\n    lines:\n      - 46\n      - 50\n    note: RefToken struct\n  - promptLines:\n      - 41\n      - 41\n    file: scanner/src/lib.rs\n    lines:\n      - 52\n      - 60\n    note: ScanResult struct\n  - promptLines:\n      - 42\n      - 44\n    file: scanner/src/lib.rs\n    lines:\n      - 62\n      - 67\n    note: Target enum variants\n  - promptLines:\n      - 27\n      - 29\n    file: scanner/src/lib.rs\n    lines:\n      - 69\n      - 73\n    note: split on newline, strip trailing CR\n  - promptLines:\n      - 20\n      - 24\n    file: scanner/src/lib.rs\n    lines:\n      - 75\n      - 77\n    note: UTF-16 code unit length\n  - promptLines:\n      - 48\n      - 50\n    file: scanner/src/lib.rs\n    lines:\n      - 329\n      - 338\n    note: detect --- delimiters for frontmatter\n  - promptLines:\n      - 51\n      - 51\n    file: scanner/src/lib.rs\n    lines:\n      - 348\n      - 348\n    note: inner lines 1..close\n  - promptLines:\n      - 53\n      - 54\n    file: scanner/src/lib.rs\n    lines:\n      - 357\n      - 365\n    note: frontmatter region span to last inner line\n  - promptLines:\n      - 55\n      - 55\n    file: scanner/src/lib.rs\n    lines:\n      - 349\n      - 356\n    note: empty frontmatter span (1,0)-(1,0)\n  - promptLines:\n      - 59\n      - 60\n    file: scanner/src/lib.rs\n    lines:\n      - 209\n      - 212\n    note: walk inner lines tracking block state\n  - promptLines:\n      - 62\n      - 64\n    file: scanner/src/lib.rs\n    lines:\n      - 91\n      - 106\n    note: match key line pattern\n  - promptLines:\n      - 62\n      - 64\n    file: scanner/src/lib.rs\n    lines:\n      - 216\n      - 220\n    note: record key_span\n  - promptLines:\n      - 65\n      - 65\n    file: scanner/src/lib.rs\n    lines:\n      - 221\n      - 221\n    note: key_end_char just past colon\n  - promptLines:\n      - 66\n      - 67\n    file: scanner/src/lib.rs\n    lines:\n      - 214\n      - 214\n    note: key line clears block state\n  - promptLines:\n      - 69\n      - 75\n    file: scanner/src/lib.rs\n    lines:\n      - 108\n      - 125\n    note: \"scalar value after colon: whitespace, trim, quotes, span\"\n  - promptLines:\n      - 77\n      - 78\n    file: scanner/src/lib.rs\n    lines:\n      - 224\n      - 233\n    note: module produces module_value token\n  - promptLines:\n      - 80\n      - 81\n    file: scanner/src/lib.rs\n    lines:\n      - 235\n      - 236\n    note: deps/extends select DepSource\n  - promptLines:\n      - 83\n      - 91\n    file: scanner/src/lib.rs\n    lines:\n      - 151\n      - 200\n    note: parse inline list items with base column and offsets\n  - promptLines:\n      - 83\n      - 83\n    file: scanner/src/lib.rs\n    lines:\n      - 238\n      - 239\n    note: dispatch inline list when starts with [\n  - promptLines:\n      - 92\n      - 93\n    file: scanner/src/lib.rs\n    lines:\n      - 240\n      - 241\n    note: empty after colon opens block list\n  - promptLines:\n      - 94\n      - 94\n    file: scanner/src/lib.rs\n    lines:\n      - 242\n      - 251\n    note: single scalar dep value\n  - promptLines:\n      - 96\n      - 101\n    file: scanner/src/lib.rs\n    lines:\n      - 127\n      - 149\n    note: match block list item indent/dash/spaces\n  - promptLines:\n      - 96\n      - 101\n    file: scanner/src/lib.rs\n    lines:\n      - 255\n      - 274\n    note: emit block list DepToken with computed start\n  - promptLines:\n      - 105\n      - 105\n    file: scanner/src/lib.rs\n    lines:\n      - 372\n      - 372\n    note: body starts at close+1\n  - promptLines:\n      - 106\n      - 107\n    file: scanner/src/lib.rs\n    lines:\n      - 373\n      - 380\n    note: body region span present\n  - promptLines:\n      - 108\n      - 108\n    file: scanner/src/lib.rs\n    lines:\n      - 384\n      - 385\n    note: body absent when nothing after delimiter\n  - promptLines:\n      - 109\n      - 110\n    file: scanner/src/lib.rs\n    lines:\n      - 388\n      - 395\n    note: \"no frontmatter: body from (0,0)\"\n  - promptLines:\n      - 114\n      - 115\n    file: scanner/src/lib.rs\n    lines:\n      - 381\n      - 383\n    note: scan refs from body start\n  - promptLines:\n      - 114\n      - 115\n    file: scanner/src/lib.rs\n    lines:\n      - 396\n      - 398\n    note: scan refs from line 0 when no frontmatter\n  - promptLines:\n      - 116\n      - 117\n    file: scanner/src/lib.rs\n    lines:\n      - 280\n      - 282\n    note: reference character predicate\n  - promptLines:\n      - 116\n      - 121\n    file: scanner/src/lib.rs\n    lines:\n      - 284\n      - 323\n    note: scan @-references in a line\n  - promptLines:\n      - 118\n      - 120\n    file: scanner/src/lib.rs\n    lines:\n      - 298\n      - 311\n    note: build ref module and span including @\n  - promptLines:\n      - 120\n      - 121\n    file: scanner/src/lib.rs\n    lines:\n      - 298\n      - 298\n    note: bare @ not a reference\n  - promptLines:\n      - 123\n      - 123\n    file: scanner/src/lib.rs\n    lines:\n      - 412\n      - 412\n    note: find_target_at_position entry\n  - promptLines:\n      - 125\n      - 128\n    file: scanner/src/lib.rs\n    lines:\n      - 413\n      - 427\n    note: precedence module, deps, refs\n  - promptLines:\n      - 126\n      - 128\n    file: scanner/src/lib.rs\n    lines:\n      - 404\n      - 410\n    note: span_contains inclusive check\n  - promptLines:\n      - 129\n      - 129\n    file: scanner/src/lib.rs\n    lines:\n      - 428\n      - 428\n    note: return None when nothing contains\n  - promptLines:\n      - 135\n      - 143\n    file: scanner/src/lib.rs\n    lines:\n      - 443\n      - 443\n    note: main reference document constant\n  - promptLines:\n      - 145\n      - 145\n    file: scanner/src/lib.rs\n    lines:\n      - 445\n      - 451\n    note: test module value span (1,8)-(1,20)\n  - promptLines:\n      - 146\n      - 147\n    file: scanner/src/lib.rs\n    lines:\n      - 453\n      - 463\n    note: test deps spans\n  - promptLines:\n      - 148\n      - 149\n    file: scanner/src/lib.rs\n    lines:\n      - 465\n      - 471\n    note: test body refs\n  - promptLines:\n      - 149\n      - 150\n    file: scanner/src/lib.rs\n    lines:\n      - 473\n      - 481\n    note: test frontmatter/body regions\n  - promptLines:\n      - 151\n      - 152\n    file: scanner/src/lib.rs\n    lines:\n      - 483\n      - 500\n    note: test find_target resolutions\n",
   "mapl": [
     {
       "promptLines": [
         1,
-        166
+        15
       ],
       "kind": "no-op",
       "severity": "warning",
-      "message": "Scanner crate already fully implements the prompt; no changes were needed.",
-      "reasoning": "Checked the workspace at .napl/src/rust: the `scanner` member crate already exists (Cargo.toml + src/lib.rs), is registered in the workspace root's members list, and `cargo test -p scanner` passes all 15 tests covering the position model, frontmatter detection, key/value/dep scanning, block lists, body/ref regions, UTF-16 offset handling for BMP/astral characters, and find_target_at_position precedence — matching the worked examples in the prompt exactly. The requirement was already satisfied by existing code, so the agent correctly made no changes.\n"
+      "message": "No changes — scanner crate already matches the prompt; cargo test green.",
+      "reasoning": "Prompt diff was empty (NO CHANGES). Agent reports the existing scanner/src/lib.rs and scanner/Cargo.toml already implement the described behavior, and `cargo test -p scanner` passes 15/15. No requirement was unmet, so no edits were produced."
     },
     {
       "promptLines": [
-        11,
-        15
+        33,
+        34
       ],
-      "kind": "note",
-      "severity": "info",
-      "message": "Workspace root and member list untouched, as required.",
-      "reasoning": "The prompt forbids touching anything outside `scanner/` and requires the crate be registered as a workspace member. Verified the root Cargo.toml's `members` array already lists \"scanner\" and no other files outside the scanner crate were modified, consistent with the \"leave it alone\" instruction."
+      "kind": "ambiguity",
+      "severity": "error",
+      "message": "'inclusive-in-spirit span' is vague and conflicts with the exclusive end columns used everywhere else.",
+      "reasoning": "Line 34 calls Span 'inclusive-in-spirit', but every worked span computes the end column as start + UTF-16 length (e.g. module value auth/session (1,8)-(1,20), a 12-unit value), which is an exclusive/past-the-end column. The 'inclusive' wording contradicts the actual half-open convention and would confuse anyone implementing containment tests. find_target_at_position (line 128) then treats both ends as inclusive, making the semantics inconsistent across the doc.",
+      "suggestion": "State the exact convention: end.character is the column just past the last UTF-16 unit of the token (half-open on character), and clarify that containment in find_target_at_position treats that end as inclusive."
     }
   ],
+  "maplContent": "module: scanner\ntarget: rust\nentries:\n  - promptLines:\n      - 1\n      - 15\n    kind: no-op\n    message: No changes — scanner crate already matches the prompt; cargo test green.\n    reasoning: Prompt diff was empty (NO CHANGES). Agent reports the existing scanner/src/lib.rs and scanner/Cargo.toml already implement the described behavior, and `cargo test -p scanner` passes 15/15. No requirement was unmet, so no edits were produced.\n  - promptLines:\n      - 33\n      - 34\n    kind: ambiguity\n    message: \"'inclusive-in-spirit span' is vague and conflicts with the exclusive end columns used everywhere else.\"\n    reasoning: Line 34 calls Span 'inclusive-in-spirit', but every worked span computes the end column as start + UTF-16 length (e.g. module value auth/session (1,8)-(1,20), a 12-unit value), which is an exclusive/past-the-end column. The 'inclusive' wording contradicts the actual half-open convention and would confuse anyone implementing containment tests. find_target_at_position (line 128) then treats both ends as inclusive, making the semantics inconsistent across the doc.\n    suggestion: \"State the exact convention: end.character is the column just past the last UTF-16 unit of the token (half-open on character), and clarify that containment in find_target_at_position treats that end as inclusive.\"\n",
+  "maplFile": "scanner.mapl",
   "journal": [
     {
       "gen": 14,
@@ -421,6 +664,13 @@
     {
       "gen": 48,
       "timestamp": "2026-07-24T12:32:32.287Z",
+      "mode": "incremental",
+      "promptHash": "2cc1cdc421bebc56913433d93fbd3892c3c7a60802b3045f7a01961e03b4b180",
+      "files": []
+    },
+    {
+      "gen": 57,
+      "timestamp": "2026-07-24T12:47:31.298Z",
       "mode": "incremental",
       "promptHash": "2cc1cdc421bebc56913433d93fbd3892c3c7a60802b3045f7a01961e03b4b180",
       "files": []
@@ -473,30 +723,6 @@
         "entries": [
           {
             "promptLines": [
-              19,
-              25
-            ],
-            "file": "scanner/src/lib.rs",
-            "lines": [
-              75,
-              77
-            ],
-            "note": "UTF-16 length counting per position model"
-          },
-          {
-            "promptLines": [
-              27,
-              29
-            ],
-            "file": "scanner/src/lib.rs",
-            "lines": [
-              69,
-              73
-            ],
-            "note": "split doc into lines, strip trailing CR"
-          },
-          {
-            "promptLines": [
               33,
               34
             ],
@@ -505,7 +731,7 @@
               3,
               13
             ],
-            "note": "Position and Span structs"
+            "note": "Position and Span structs with equality/copy"
           },
           {
             "promptLines": [
@@ -553,7 +779,7 @@
               33,
               37
             ],
-            "note": "DepSource enum"
+            "note": "DepSource enum Deps/Extends"
           },
           {
             "promptLines": [
@@ -601,31 +827,79 @@
               62,
               67
             ],
-            "note": "Target enum"
+            "note": "Target enum variants"
+          },
+          {
+            "promptLines": [
+              27,
+              29
+            ],
+            "file": "scanner/src/lib.rs",
+            "lines": [
+              69,
+              73
+            ],
+            "note": "split on newline, strip trailing CR"
+          },
+          {
+            "promptLines": [
+              20,
+              24
+            ],
+            "file": "scanner/src/lib.rs",
+            "lines": [
+              75,
+              77
+            ],
+            "note": "UTF-16 code unit length"
           },
           {
             "promptLines": [
               48,
-              51
+              50
             ],
             "file": "scanner/src/lib.rs",
             "lines": [
               329,
               338
             ],
-            "note": "detect frontmatter open/close delimiters"
+            "note": "detect --- delimiters for frontmatter"
+          },
+          {
+            "promptLines": [
+              51,
+              51
+            ],
+            "file": "scanner/src/lib.rs",
+            "lines": [
+              348,
+              348
+            ],
+            "note": "inner lines 1..close"
           },
           {
             "promptLines": [
               53,
+              54
+            ],
+            "file": "scanner/src/lib.rs",
+            "lines": [
+              357,
+              365
+            ],
+            "note": "frontmatter region span to last inner line"
+          },
+          {
+            "promptLines": [
+              55,
               55
             ],
             "file": "scanner/src/lib.rs",
             "lines": [
-              347,
-              366
+              349,
+              356
             ],
-            "note": "compute frontmatter RegionSpan"
+            "note": "empty frontmatter span (1,0)-(1,0)"
           },
           {
             "promptLines": [
@@ -634,34 +908,58 @@
             ],
             "file": "scanner/src/lib.rs",
             "lines": [
-              202,
-              214
+              209,
+              212
             ],
-            "note": "track block-list state while walking inner lines"
+            "note": "walk inner lines tracking block state"
           },
           {
             "promptLines": [
               62,
-              67
+              64
             ],
             "file": "scanner/src/lib.rs",
             "lines": [
               91,
               106
             ],
-            "note": "key line regex match"
+            "note": "match key line pattern"
           },
           {
             "promptLines": [
               62,
+              64
+            ],
+            "file": "scanner/src/lib.rs",
+            "lines": [
+              216,
+              220
+            ],
+            "note": "record key_span"
+          },
+          {
+            "promptLines": [
+              65,
+              65
+            ],
+            "file": "scanner/src/lib.rs",
+            "lines": [
+              221,
+              221
+            ],
+            "note": "key_end_char just past colon"
+          },
+          {
+            "promptLines": [
+              66,
               67
             ],
             "file": "scanner/src/lib.rs",
             "lines": [
-              213,
-              221
+              214,
+              214
             ],
-            "note": "emit FrontmatterKeyToken and key_end_char"
+            "note": "key line clears block state"
           },
           {
             "promptLines": [
@@ -673,7 +971,7 @@
               108,
               125
             ],
-            "note": "scalar value after colon parsing"
+            "note": "scalar value after colon: whitespace, trim, quotes, span"
           },
           {
             "promptLines": [
@@ -683,21 +981,21 @@
             "file": "scanner/src/lib.rs",
             "lines": [
               224,
-              234
+              233
             ],
-            "note": "module value extraction"
+            "note": "module produces module_value token"
           },
           {
             "promptLines": [
               80,
-              94
+              81
             ],
             "file": "scanner/src/lib.rs",
             "lines": [
               235,
-              252
+              236
             ],
-            "note": "deps/extends dispatch to inline list/block/scalar"
+            "note": "deps/extends select DepSource"
           },
           {
             "promptLines": [
@@ -709,7 +1007,19 @@
               151,
               200
             ],
-            "note": "inline list parsing for deps"
+            "note": "parse inline list items with base column and offsets"
+          },
+          {
+            "promptLines": [
+              83,
+              83
+            ],
+            "file": "scanner/src/lib.rs",
+            "lines": [
+              238,
+              239
+            ],
+            "note": "dispatch inline list when starts with ["
           },
           {
             "promptLines": [
@@ -721,7 +1031,19 @@
               240,
               241
             ],
-            "note": "mark open block list state"
+            "note": "empty after colon opens block list"
+          },
+          {
+            "promptLines": [
+              94,
+              94
+            ],
+            "file": "scanner/src/lib.rs",
+            "lines": [
+              242,
+              251
+            ],
+            "note": "single scalar dep value"
           },
           {
             "promptLines": [
@@ -733,7 +1055,7 @@
               127,
               149
             ],
-            "note": "block list item line regex match"
+            "note": "match block list item indent/dash/spaces"
           },
           {
             "promptLines": [
@@ -743,62 +1065,182 @@
             "file": "scanner/src/lib.rs",
             "lines": [
               255,
-              275
+              274
             ],
-            "note": "emit DepToken for block list item"
+            "note": "emit block list DepToken with computed start"
           },
           {
             "promptLines": [
               105,
-              110
+              105
             ],
             "file": "scanner/src/lib.rs",
             "lines": [
               372,
-              399
+              372
             ],
-            "note": "compute body RegionSpan present/absent cases"
+            "note": "body starts at close+1"
           },
           {
             "promptLines": [
-              114,
-              121
+              106,
+              107
             ],
             "file": "scanner/src/lib.rs",
             "lines": [
-              280,
-              323
+              373,
+              380
             ],
-            "note": "scan @-references in body lines"
+            "note": "body region span present"
+          },
+          {
+            "promptLines": [
+              108,
+              108
+            ],
+            "file": "scanner/src/lib.rs",
+            "lines": [
+              384,
+              385
+            ],
+            "note": "body absent when nothing after delimiter"
+          },
+          {
+            "promptLines": [
+              109,
+              110
+            ],
+            "file": "scanner/src/lib.rs",
+            "lines": [
+              388,
+              395
+            ],
+            "note": "no frontmatter: body from (0,0)"
           },
           {
             "promptLines": [
               114,
-              116
+              115
             ],
             "file": "scanner/src/lib.rs",
             "lines": [
               381,
+              383
+            ],
+            "note": "scan refs from body start"
+          },
+          {
+            "promptLines": [
+              114,
+              115
+            ],
+            "file": "scanner/src/lib.rs",
+            "lines": [
+              396,
               398
             ],
-            "note": "choose ref scan start line based on frontmatter presence"
+            "note": "scan refs from line 0 when no frontmatter"
+          },
+          {
+            "promptLines": [
+              116,
+              117
+            ],
+            "file": "scanner/src/lib.rs",
+            "lines": [
+              280,
+              282
+            ],
+            "note": "reference character predicate"
+          },
+          {
+            "promptLines": [
+              116,
+              121
+            ],
+            "file": "scanner/src/lib.rs",
+            "lines": [
+              284,
+              323
+            ],
+            "note": "scan @-references in a line"
+          },
+          {
+            "promptLines": [
+              118,
+              120
+            ],
+            "file": "scanner/src/lib.rs",
+            "lines": [
+              298,
+              311
+            ],
+            "note": "build ref module and span including @"
+          },
+          {
+            "promptLines": [
+              120,
+              121
+            ],
+            "file": "scanner/src/lib.rs",
+            "lines": [
+              298,
+              298
+            ],
+            "note": "bare @ not a reference"
           },
           {
             "promptLines": [
               123,
-              129
+              123
+            ],
+            "file": "scanner/src/lib.rs",
+            "lines": [
+              412,
+              412
+            ],
+            "note": "find_target_at_position entry"
+          },
+          {
+            "promptLines": [
+              125,
+              128
+            ],
+            "file": "scanner/src/lib.rs",
+            "lines": [
+              413,
+              427
+            ],
+            "note": "precedence module, deps, refs"
+          },
+          {
+            "promptLines": [
+              126,
+              128
             ],
             "file": "scanner/src/lib.rs",
             "lines": [
               404,
-              429
+              410
             ],
-            "note": "find_target_at_position precedence and containment"
+            "note": "span_contains inclusive check"
           },
           {
             "promptLines": [
-              443,
-              443
+              129,
+              129
+            ],
+            "file": "scanner/src/lib.rs",
+            "lines": [
+              428,
+              428
+            ],
+            "note": "return None when nothing contains"
+          },
+          {
+            "promptLines": [
+              135,
+              143
             ],
             "file": "scanner/src/lib.rs",
             "lines": [
@@ -810,14 +1252,62 @@
           {
             "promptLines": [
               145,
+              145
+            ],
+            "file": "scanner/src/lib.rs",
+            "lines": [
+              445,
+              451
+            ],
+            "note": "test module value span (1,8)-(1,20)"
+          },
+          {
+            "promptLines": [
+              146,
+              147
+            ],
+            "file": "scanner/src/lib.rs",
+            "lines": [
+              453,
+              463
+            ],
+            "note": "test deps spans"
+          },
+          {
+            "promptLines": [
+              148,
+              149
+            ],
+            "file": "scanner/src/lib.rs",
+            "lines": [
+              465,
+              471
+            ],
+            "note": "test body refs"
+          },
+          {
+            "promptLines": [
+              149,
+              150
+            ],
+            "file": "scanner/src/lib.rs",
+            "lines": [
+              473,
+              481
+            ],
+            "note": "test frontmatter/body regions"
+          },
+          {
+            "promptLines": [
+              151,
               152
             ],
             "file": "scanner/src/lib.rs",
             "lines": [
-              446,
+              483,
               500
             ],
-            "note": "worked span assertions for main doc"
+            "note": "test find_target resolutions"
           }
         ]
       },
@@ -827,12 +1317,12 @@
         "entry": {
           "promptLines": [
             1,
-            166
+            15
           ],
           "kind": "no-op",
           "severity": "warning",
-          "message": "Scanner crate already fully implements the prompt; no changes were needed.",
-          "reasoning": "Checked the workspace at .napl/src/rust: the `scanner` member crate already exists (Cargo.toml + src/lib.rs), is registered in the workspace root's members list, and `cargo test -p scanner` passes all 15 tests covering the position model, frontmatter detection, key/value/dep scanning, block lists, body/ref regions, UTF-16 offset handling for BMP/astral characters, and find_target_at_position precedence — matching the worked examples in the prompt exactly. The requirement was already satisfied by existing code, so the agent correctly made no changes.\n"
+          "message": "No changes — scanner crate already matches the prompt; cargo test green.",
+          "reasoning": "Prompt diff was empty (NO CHANGES). Agent reports the existing scanner/src/lib.rs and scanner/Cargo.toml already implement the described behavior, and `cargo test -p scanner` passes 15/15. No requirement was unmet, so no edits were produced."
         }
       },
       {
@@ -840,13 +1330,14 @@
         "path": "scanner.mapl",
         "entry": {
           "promptLines": [
-            11,
-            15
+            33,
+            34
           ],
-          "kind": "note",
-          "severity": "info",
-          "message": "Workspace root and member list untouched, as required.",
-          "reasoning": "The prompt forbids touching anything outside `scanner/` and requires the crate be registered as a workspace member. Verified the root Cargo.toml's `members` array already lists \"scanner\" and no other files outside the scanner crate were modified, consistent with the \"leave it alone\" instruction."
+          "kind": "ambiguity",
+          "severity": "error",
+          "message": "'inclusive-in-spirit span' is vague and conflicts with the exclusive end columns used everywhere else.",
+          "reasoning": "Line 34 calls Span 'inclusive-in-spirit', but every worked span computes the end column as start + UTF-16 length (e.g. module value auth/session (1,8)-(1,20), a 12-unit value), which is an exclusive/past-the-end column. The 'inclusive' wording contradicts the actual half-open convention and would confuse anyone implementing containment tests. find_target_at_position (line 128) then treats both ends as inclusive, making the semantics inconsistent across the doc.",
+          "suggestion": "State the exact convention: end.character is the column just past the last UTF-16 unit of the token (half-open on character), and clarify that containment in find_target_at_position treats that end as inclusive."
         }
       },
       {

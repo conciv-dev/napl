@@ -30,62 +30,26 @@
     {
       "promptLines": [
         18,
+        18
+      ],
+      "file": "gen_mode/src/lib.rs",
+      "lines": [
+        18,
+        23
+      ],
+      "note": "can_incremental signature with four bool params"
+    },
+    {
+      "promptLines": [
+        20,
         26
       ],
       "file": "gen_mode/src/lib.rs",
       "lines": [
-        17,
-        25
-      ],
-      "note": "can_incremental predicate logic"
-    },
-    {
-      "promptLines": [
-        21,
-        21
-      ],
-      "file": "gen_mode/src/lib.rs",
-      "lines": [
-        19,
-        19
-      ],
-      "note": "full param"
-    },
-    {
-      "promptLines": [
-        22,
-        22
-      ],
-      "file": "gen_mode/src/lib.rs",
-      "lines": [
-        20,
-        20
-      ],
-      "note": "has_target_record param"
-    },
-    {
-      "promptLines": [
-        23,
-        23
-      ],
-      "file": "gen_mode/src/lib.rs",
-      "lines": [
-        21,
-        21
-      ],
-      "note": "unattributed_is_true param"
-    },
-    {
-      "promptLines": [
         24,
         24
       ],
-      "file": "gen_mode/src/lib.rs",
-      "lines": [
-        22,
-        22
-      ],
-      "note": "has_prompt_hash_at_gen param"
+      "note": "returns AND of not-full, has-record, not-unattributed, has-hash"
     },
     {
       "promptLines": [
@@ -94,22 +58,58 @@
       ],
       "file": "gen_mode/src/lib.rs",
       "lines": [
-        6,
+        8,
         15
       ],
-      "note": "FullModeReason enum with three variants"
+      "note": "public enum with three full-mode reason variants"
+    },
+    {
+      "promptLines": [
+        31,
+        31
+      ],
+      "file": "gen_mode/src/lib.rs",
+      "lines": [
+        9,
+        10
+      ],
+      "note": "NoPriorOnDisk variant"
+    },
+    {
+      "promptLines": [
+        32,
+        32
+      ],
+      "file": "gen_mode/src/lib.rs",
+      "lines": [
+        11,
+        12
+      ],
+      "note": "ForcedFull variant"
+    },
+    {
+      "promptLines": [
+        33,
+        33
+      ],
+      "file": "gen_mode/src/lib.rs",
+      "lines": [
+        13,
+        14
+      ],
+      "note": "NoPriorGen variant"
     },
     {
       "promptLines": [
         36,
-        45
+        39
       ],
       "file": "gen_mode/src/lib.rs",
       "lines": [
-        27,
-        39
+        28,
+        29
       ],
-      "note": "full_mode_message rendering per reason"
+      "note": "full_mode_message match on reason"
     },
     {
       "promptLines": [
@@ -121,7 +121,7 @@
         30,
         33
       ],
-      "note": "no-prior-on-disk message text"
+      "note": "no-prior-on-disk status line"
     },
     {
       "promptLines": [
@@ -133,7 +133,7 @@
         34,
         34
       ],
-      "note": "forced-full message text"
+      "note": "forced-full status line"
     },
     {
       "promptLines": [
@@ -145,102 +145,59 @@
         35,
         37
       ],
-      "note": "no-prior-gen message text"
+      "note": "no-prior-gen status line"
     },
     {
       "promptLines": [
         46,
-        54
+        46
       ],
       "file": "gen_mode/src/lib.rs",
       "lines": [
         42,
-        46
+        42
       ],
-      "note": "incremental_mode_message formatting with em dash"
+      "note": "incremental_mode_message signature"
     },
     {
       "promptLines": [
-        1,
-        8
-      ],
-      "file": "gen_mode/src/lib.rs",
-      "lines": [
-        1,
-        4
-      ],
-      "note": "module purpose doc comment"
-    },
-    {
-      "promptLines": [
-        20,
-        26
-      ],
-      "file": "gen_mode/src/lib.rs",
-      "lines": [
-        52,
-        80
-      ],
-      "note": "tests covering can_incremental branches"
-    },
-    {
-      "promptLines": [
-        41,
-        44
-      ],
-      "file": "gen_mode/src/lib.rs",
-      "lines": [
-        82,
-        104
-      ],
-      "note": "tests covering full_mode_message variants"
-    },
-    {
-      "promptLines": [
-        46,
+        48,
         54
       ],
       "file": "gen_mode/src/lib.rs",
       "lines": [
-        106,
-        120
+        43,
+        45
       ],
-      "note": "tests covering incremental_mode_message"
+      "note": "format incremental line with em dash and both counts"
     }
   ],
-  "attributionYaml": "module: gen_mode\ntarget: rust\nentries:\n  - promptLines:\n      - 18\n      - 26\n    file: gen_mode/src/lib.rs\n    lines:\n      - 17\n      - 25\n    note: can_incremental predicate logic\n  - promptLines:\n      - 21\n      - 21\n    file: gen_mode/src/lib.rs\n    lines:\n      - 19\n      - 19\n    note: full param\n  - promptLines:\n      - 22\n      - 22\n    file: gen_mode/src/lib.rs\n    lines:\n      - 20\n      - 20\n    note: has_target_record param\n  - promptLines:\n      - 23\n      - 23\n    file: gen_mode/src/lib.rs\n    lines:\n      - 21\n      - 21\n    note: unattributed_is_true param\n  - promptLines:\n      - 24\n      - 24\n    file: gen_mode/src/lib.rs\n    lines:\n      - 22\n      - 22\n    note: has_prompt_hash_at_gen param\n  - promptLines:\n      - 30\n      - 34\n    file: gen_mode/src/lib.rs\n    lines:\n      - 6\n      - 15\n    note: FullModeReason enum with three variants\n  - promptLines:\n      - 36\n      - 45\n    file: gen_mode/src/lib.rs\n    lines:\n      - 27\n      - 39\n    note: full_mode_message rendering per reason\n  - promptLines:\n      - 41\n      - 42\n    file: gen_mode/src/lib.rs\n    lines:\n      - 30\n      - 33\n    note: no-prior-on-disk message text\n  - promptLines:\n      - 43\n      - 43\n    file: gen_mode/src/lib.rs\n    lines:\n      - 34\n      - 34\n    note: forced-full message text\n  - promptLines:\n      - 44\n      - 44\n    file: gen_mode/src/lib.rs\n    lines:\n      - 35\n      - 37\n    note: no-prior-gen message text\n  - promptLines:\n      - 46\n      - 54\n    file: gen_mode/src/lib.rs\n    lines:\n      - 42\n      - 46\n    note: incremental_mode_message formatting with em dash\n  - promptLines:\n      - 1\n      - 8\n    file: gen_mode/src/lib.rs\n    lines:\n      - 1\n      - 4\n    note: module purpose doc comment\n  - promptLines:\n      - 20\n      - 26\n    file: gen_mode/src/lib.rs\n    lines:\n      - 52\n      - 80\n    note: tests covering can_incremental branches\n  - promptLines:\n      - 41\n      - 44\n    file: gen_mode/src/lib.rs\n    lines:\n      - 82\n      - 104\n    note: tests covering full_mode_message variants\n  - promptLines:\n      - 46\n      - 54\n    file: gen_mode/src/lib.rs\n    lines:\n      - 106\n      - 120\n    note: tests covering incremental_mode_message\n",
+  "attributionYaml": "module: gen_mode\ntarget: rust\nentries:\n  - promptLines:\n      - 18\n      - 18\n    file: gen_mode/src/lib.rs\n    lines:\n      - 18\n      - 23\n    note: can_incremental signature with four bool params\n  - promptLines:\n      - 20\n      - 26\n    file: gen_mode/src/lib.rs\n    lines:\n      - 24\n      - 24\n    note: returns AND of not-full, has-record, not-unattributed, has-hash\n  - promptLines:\n      - 30\n      - 34\n    file: gen_mode/src/lib.rs\n    lines:\n      - 8\n      - 15\n    note: public enum with three full-mode reason variants\n  - promptLines:\n      - 31\n      - 31\n    file: gen_mode/src/lib.rs\n    lines:\n      - 9\n      - 10\n    note: NoPriorOnDisk variant\n  - promptLines:\n      - 32\n      - 32\n    file: gen_mode/src/lib.rs\n    lines:\n      - 11\n      - 12\n    note: ForcedFull variant\n  - promptLines:\n      - 33\n      - 33\n    file: gen_mode/src/lib.rs\n    lines:\n      - 13\n      - 14\n    note: NoPriorGen variant\n  - promptLines:\n      - 36\n      - 39\n    file: gen_mode/src/lib.rs\n    lines:\n      - 28\n      - 29\n    note: full_mode_message match on reason\n  - promptLines:\n      - 41\n      - 42\n    file: gen_mode/src/lib.rs\n    lines:\n      - 30\n      - 33\n    note: no-prior-on-disk status line\n  - promptLines:\n      - 43\n      - 43\n    file: gen_mode/src/lib.rs\n    lines:\n      - 34\n      - 34\n    note: forced-full status line\n  - promptLines:\n      - 44\n      - 44\n    file: gen_mode/src/lib.rs\n    lines:\n      - 35\n      - 37\n    note: no-prior-gen status line\n  - promptLines:\n      - 46\n      - 46\n    file: gen_mode/src/lib.rs\n    lines:\n      - 42\n      - 42\n    note: incremental_mode_message signature\n  - promptLines:\n      - 48\n      - 54\n    file: gen_mode/src/lib.rs\n    lines:\n      - 43\n      - 45\n    note: format incremental line with em dash and both counts\n",
   "mapl": [
     {
       "promptLines": [
-        12,
-        16
+        1,
+        55
       ],
-      "kind": "note",
-      "severity": "info",
-      "message": "Crate created at gen_mode/ per spec, cargo test passes, no files outside touched.",
-      "reasoning": "Prompt clearly scopes work to gen_mode/ subdirectory with own Cargo.toml and lib.rs, leaving workspace root manifest alone. Agent followed this exactly, only creating gen_mode/Cargo.toml and gen_mode/src/lib.rs. Verified via final message claiming 11 tests pass."
+      "kind": "no-op",
+      "severity": "warning",
+      "message": "No changes — agent says gen_mode crate already exists and matches prompt exactly, 11 tests pass.",
+      "reasoning": "Changes were \"NO CHANGES\". Agent reports the gen_mode member crate (Cargo.toml + src/lib.rs), the can_incremental predicate, the three-variant full-mode enum, and both message renderers already exist and match the prompt byte-for-byte, with 11 tests green and an empty prompt diff. So the compile is idempotent — spec already satisfied by existing source, nothing to emit. No way to independently confirm the crate really exists from this input; taking the agent's report at face value.\n"
     },
     {
       "promptLines": [
-        30,
+        28,
         34
       ],
-      "kind": "assumption",
-      "severity": "warning",
-      "message": "Enum doc comments phrase reasons verbatim from prompt wording.",
-      "reasoning": "Prompt gives suggested variant names (\"for example\") but not exact doc text. Agent wrote doc comments mirroring the prompt's own phrasing for each variant (\"There was no prior prompt body...\", etc.) — reasonable choice given no exact wording was mandated, but a different phrasing would've been equally valid."
-    },
-    {
-      "promptLines": [
-        18,
-        26
-      ],
       "kind": "note",
       "severity": "info",
-      "message": "can_incremental implemented as exact boolean expression given in prompt.",
-      "reasoning": "Prompt gave the literal boolean formula to return; agent copied it verbatim (line 24), so no ambiguity here."
+      "message": "Four can_incremental failure conditions but only three full-mode reasons — unattributed case has no dedicated variant.",
+      "reasoning": "can_incremental fails on any of four conditions (full, !has_target_record, unattributed_is_true, !has_prompt_hash_at_gen), but the enum names only three reasons. Mapping is plausible — ForcedFull←full, NoPriorGen←!has_target_record, NoPriorOnDisk←!has_prompt_hash_at_gen — leaving unattributed_is_true with no dedicated reason. This module is pure and does not wire facts to reasons, so no defect here, but the I/O shell must pick a reason when unattributed is the cause. Author should confirm unattributed folds into NoPriorOnDisk (no prior attribution to diff against) rather than needing a fourth variant.\n",
+      "suggestion": "State explicitly which full-mode reason the shell reports when the target is flagged unattributed (e.g. \"unattributed maps to NoPriorOnDisk\")."
     }
   ],
+  "maplContent": "module: gen_mode\ntarget: rust\nentries:\n  - promptLines:\n      - 1\n      - 55\n    kind: no-op\n    message: No changes — agent says gen_mode crate already exists and matches prompt exactly, 11 tests pass.\n    reasoning: \"Changes were \\\"NO CHANGES\\\". Agent reports the gen_mode member crate (Cargo.toml + src/lib.rs), the can_incremental predicate, the three-variant full-mode enum, and both message renderers already exist and match the prompt byte-for-byte, with 11 tests green and an empty prompt diff. So the compile is idempotent — spec already satisfied by existing source, nothing to emit. No way to independently confirm the crate really exists from this input; taking the agent's report at face value.\\n\"\n  - promptLines:\n      - 28\n      - 34\n    kind: note\n    message: Four can_incremental failure conditions but only three full-mode reasons — unattributed case has no dedicated variant.\n    reasoning: \"can_incremental fails on any of four conditions (full, !has_target_record, unattributed_is_true, !has_prompt_hash_at_gen), but the enum names only three reasons. Mapping is plausible — ForcedFull←full, NoPriorGen←!has_target_record, NoPriorOnDisk←!has_prompt_hash_at_gen — leaving unattributed_is_true with no dedicated reason. This module is pure and does not wire facts to reasons, so no defect here, but the I/O shell must pick a reason when unattributed is the cause. Author should confirm unattributed folds into NoPriorOnDisk (no prior attribution to diff against) rather than needing a fourth variant.\\n\"\n    suggestion: State explicitly which full-mode reason the shell reports when the target is flagged unattributed (e.g. \"unattributed maps to NoPriorOnDisk\").\n",
+  "maplFile": "gen_mode.mapl",
   "journal": [
     {
       "gen": 38,
@@ -259,6 +216,13 @@
           "patch": "@@ -0,0 +1,121 @@\n+//! Full-vs-incremental mode selection: the pure decision core the\n+//! code-generation command uses to choose between a from-scratch (full)\n+//! regeneration and an incremental update, and to render the one-line\n+//! `mode:` status it prints for each module.\n+\n+/// Reasons a full (non-incremental) generation was chosen.\n+#[derive(Debug, Clone, Copy, PartialEq, Eq)]\n+pub enum FullModeReason {\n+    /// There was no prior prompt body or attribution on disk to diff against.\n+    NoPriorOnDisk,\n+    /// The caller forced a full generation with `--full`.\n+    ForcedFull,\n+    /// There was no prior successful gen for this target.\n+    NoPriorGen,\n+}\n+\n+/// Decide whether an incremental update is possible.\n+pub fn can_incremental(\n+    full: bool,\n+    has_target_record: bool,\n+    unattributed_is_true: bool,\n+    has_prompt_hash_at_gen: bool,\n+) -> bool {\n+    !full && has_target_record && !unattributed_is_true && has_prompt_hash_at_gen\n+}\n+\n+/// Render the status line for a full-mode generation.\n+pub fn full_mode_message(reason: FullModeReason) -> String {\n+    match reason {\n+        FullModeReason::NoPriorOnDisk => {\n+            \"  mode: full (no prior prompt body or attribution on disk to diff against)\"\n+                .to_string()\n+        }\n+        FullModeReason::ForcedFull => \"  mode: full (forced --full)\".to_string(),\n+        FullModeReason::NoPriorGen => {\n+            \"  mode: full (no prior successful gen for this target)\".to_string()\n+        }\n+    }\n+}\n+\n+/// Render the status line for an incremental generation.\n+pub fn incremental_mode_message(changed_lines: usize, affected_regions: usize) -> String {\n+    format!(\n+        \"  mode: INCREMENTAL — {changed_lines} changed prompt line(s), {affected_regions} owned region(s) affected\"\n+    )\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn can_incremental_true_when_all_conditions_hold() {\n+        assert!(can_incremental(false, true, false, true));\n+    }\n+\n+    #[test]\n+    fn can_incremental_false_when_forced_full() {\n+        assert!(!can_incremental(true, true, false, true));\n+    }\n+\n+    #[test]\n+    fn can_incremental_false_when_no_target_record() {\n+        assert!(!can_incremental(false, false, false, true));\n+    }\n+\n+    #[test]\n+    fn can_incremental_false_when_unattributed() {\n+        assert!(!can_incremental(false, true, true, true));\n+    }\n+\n+    #[test]\n+    fn can_incremental_false_when_no_prompt_hash_at_gen() {\n+        assert!(!can_incremental(false, true, false, false));\n+    }\n+\n+    #[test]\n+    fn can_incremental_false_when_all_conditions_fail() {\n+        assert!(!can_incremental(true, false, true, false));\n+    }\n+\n+    #[test]\n+    fn full_mode_message_no_prior_on_disk() {\n+        assert_eq!(\n+            full_mode_message(FullModeReason::NoPriorOnDisk),\n+            \"  mode: full (no prior prompt body or attribution on disk to diff against)\"\n+        );\n+    }\n+\n+    #[test]\n+    fn full_mode_message_forced_full() {\n+        assert_eq!(\n+            full_mode_message(FullModeReason::ForcedFull),\n+            \"  mode: full (forced --full)\"\n+        );\n+    }\n+\n+    #[test]\n+    fn full_mode_message_no_prior_gen() {\n+        assert_eq!(\n+            full_mode_message(FullModeReason::NoPriorGen),\n+            \"  mode: full (no prior successful gen for this target)\"\n+        );\n+    }\n+\n+    #[test]\n+    fn incremental_mode_message_renders_counts() {\n+        assert_eq!(\n+            incremental_mode_message(3, 2),\n+            \"  mode: INCREMENTAL — 3 changed prompt line(s), 2 owned region(s) affected\"\n+        );\n+    }\n+\n+    #[test]\n+    fn incremental_mode_message_zero_counts() {\n+        assert_eq!(\n+            incremental_mode_message(0, 0),\n+            \"  mode: INCREMENTAL — 0 changed prompt line(s), 0 owned region(s) affected\"\n+        );\n+    }\n+}"
         }
       ]
+    },
+    {
+      "gen": 81,
+      "timestamp": "2026-07-24T13:31:47.148Z",
+      "mode": "incremental",
+      "promptHash": "fde5685a475e2a0776d6a95b88eaaa5a07ccc6dd78a0670ae39c2ee2f90adced",
+      "files": []
     }
   ],
   "lock": [
@@ -309,62 +273,26 @@
           {
             "promptLines": [
               18,
+              18
+            ],
+            "file": "gen_mode/src/lib.rs",
+            "lines": [
+              18,
+              23
+            ],
+            "note": "can_incremental signature with four bool params"
+          },
+          {
+            "promptLines": [
+              20,
               26
             ],
             "file": "gen_mode/src/lib.rs",
             "lines": [
-              17,
-              25
-            ],
-            "note": "can_incremental predicate logic"
-          },
-          {
-            "promptLines": [
-              21,
-              21
-            ],
-            "file": "gen_mode/src/lib.rs",
-            "lines": [
-              19,
-              19
-            ],
-            "note": "full param"
-          },
-          {
-            "promptLines": [
-              22,
-              22
-            ],
-            "file": "gen_mode/src/lib.rs",
-            "lines": [
-              20,
-              20
-            ],
-            "note": "has_target_record param"
-          },
-          {
-            "promptLines": [
-              23,
-              23
-            ],
-            "file": "gen_mode/src/lib.rs",
-            "lines": [
-              21,
-              21
-            ],
-            "note": "unattributed_is_true param"
-          },
-          {
-            "promptLines": [
               24,
               24
             ],
-            "file": "gen_mode/src/lib.rs",
-            "lines": [
-              22,
-              22
-            ],
-            "note": "has_prompt_hash_at_gen param"
+            "note": "returns AND of not-full, has-record, not-unattributed, has-hash"
           },
           {
             "promptLines": [
@@ -373,22 +301,58 @@
             ],
             "file": "gen_mode/src/lib.rs",
             "lines": [
-              6,
+              8,
               15
             ],
-            "note": "FullModeReason enum with three variants"
+            "note": "public enum with three full-mode reason variants"
+          },
+          {
+            "promptLines": [
+              31,
+              31
+            ],
+            "file": "gen_mode/src/lib.rs",
+            "lines": [
+              9,
+              10
+            ],
+            "note": "NoPriorOnDisk variant"
+          },
+          {
+            "promptLines": [
+              32,
+              32
+            ],
+            "file": "gen_mode/src/lib.rs",
+            "lines": [
+              11,
+              12
+            ],
+            "note": "ForcedFull variant"
+          },
+          {
+            "promptLines": [
+              33,
+              33
+            ],
+            "file": "gen_mode/src/lib.rs",
+            "lines": [
+              13,
+              14
+            ],
+            "note": "NoPriorGen variant"
           },
           {
             "promptLines": [
               36,
-              45
+              39
             ],
             "file": "gen_mode/src/lib.rs",
             "lines": [
-              27,
-              39
+              28,
+              29
             ],
-            "note": "full_mode_message rendering per reason"
+            "note": "full_mode_message match on reason"
           },
           {
             "promptLines": [
@@ -400,7 +364,7 @@
               30,
               33
             ],
-            "note": "no-prior-on-disk message text"
+            "note": "no-prior-on-disk status line"
           },
           {
             "promptLines": [
@@ -412,7 +376,7 @@
               34,
               34
             ],
-            "note": "forced-full message text"
+            "note": "forced-full status line"
           },
           {
             "promptLines": [
@@ -424,67 +388,31 @@
               35,
               37
             ],
-            "note": "no-prior-gen message text"
+            "note": "no-prior-gen status line"
           },
           {
             "promptLines": [
               46,
-              54
+              46
             ],
             "file": "gen_mode/src/lib.rs",
             "lines": [
               42,
-              46
+              42
             ],
-            "note": "incremental_mode_message formatting with em dash"
+            "note": "incremental_mode_message signature"
           },
           {
             "promptLines": [
-              1,
-              8
-            ],
-            "file": "gen_mode/src/lib.rs",
-            "lines": [
-              1,
-              4
-            ],
-            "note": "module purpose doc comment"
-          },
-          {
-            "promptLines": [
-              20,
-              26
-            ],
-            "file": "gen_mode/src/lib.rs",
-            "lines": [
-              52,
-              80
-            ],
-            "note": "tests covering can_incremental branches"
-          },
-          {
-            "promptLines": [
-              41,
-              44
-            ],
-            "file": "gen_mode/src/lib.rs",
-            "lines": [
-              82,
-              104
-            ],
-            "note": "tests covering full_mode_message variants"
-          },
-          {
-            "promptLines": [
-              46,
+              48,
               54
             ],
             "file": "gen_mode/src/lib.rs",
             "lines": [
-              106,
-              120
+              43,
+              45
             ],
-            "note": "tests covering incremental_mode_message"
+            "note": "format incremental line with em dash and both counts"
           }
         ]
       },
@@ -493,13 +421,13 @@
         "path": "gen_mode.mapl",
         "entry": {
           "promptLines": [
-            12,
-            16
+            1,
+            55
           ],
-          "kind": "note",
-          "severity": "info",
-          "message": "Crate created at gen_mode/ per spec, cargo test passes, no files outside touched.",
-          "reasoning": "Prompt clearly scopes work to gen_mode/ subdirectory with own Cargo.toml and lib.rs, leaving workspace root manifest alone. Agent followed this exactly, only creating gen_mode/Cargo.toml and gen_mode/src/lib.rs. Verified via final message claiming 11 tests pass."
+          "kind": "no-op",
+          "severity": "warning",
+          "message": "No changes — agent says gen_mode crate already exists and matches prompt exactly, 11 tests pass.",
+          "reasoning": "Changes were \"NO CHANGES\". Agent reports the gen_mode member crate (Cargo.toml + src/lib.rs), the can_incremental predicate, the three-variant full-mode enum, and both message renderers already exist and match the prompt byte-for-byte, with 11 tests green and an empty prompt diff. So the compile is idempotent — spec already satisfied by existing source, nothing to emit. No way to independently confirm the crate really exists from this input; taking the agent's report at face value.\n"
         }
       },
       {
@@ -507,27 +435,14 @@
         "path": "gen_mode.mapl",
         "entry": {
           "promptLines": [
-            30,
+            28,
             34
           ],
-          "kind": "assumption",
-          "severity": "warning",
-          "message": "Enum doc comments phrase reasons verbatim from prompt wording.",
-          "reasoning": "Prompt gives suggested variant names (\"for example\") but not exact doc text. Agent wrote doc comments mirroring the prompt's own phrasing for each variant (\"There was no prior prompt body...\", etc.) — reasonable choice given no exact wording was mandated, but a different phrasing would've been equally valid."
-        }
-      },
-      {
-        "type": "mapl-entry",
-        "path": "gen_mode.mapl",
-        "entry": {
-          "promptLines": [
-            18,
-            26
-          ],
           "kind": "note",
           "severity": "info",
-          "message": "can_incremental implemented as exact boolean expression given in prompt.",
-          "reasoning": "Prompt gave the literal boolean formula to return; agent copied it verbatim (line 24), so no ambiguity here."
+          "message": "Four can_incremental failure conditions but only three full-mode reasons — unattributed case has no dedicated variant.",
+          "reasoning": "can_incremental fails on any of four conditions (full, !has_target_record, unattributed_is_true, !has_prompt_hash_at_gen), but the enum names only three reasons. Mapping is plausible — ForcedFull←full, NoPriorGen←!has_target_record, NoPriorOnDisk←!has_prompt_hash_at_gen — leaving unattributed_is_true with no dedicated reason. This module is pure and does not wire facts to reasons, so no defect here, but the I/O shell must pick a reason when unattributed is the cause. Author should confirm unattributed folds into NoPriorOnDisk (no prior attribution to diff against) rather than needing a fourth variant.\n",
+          "suggestion": "State explicitly which full-mode reason the shell reports when the target is flagged unattributed (e.g. \"unattributed maps to NoPriorOnDisk\")."
         }
       },
       {

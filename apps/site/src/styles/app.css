@@ -2,13 +2,13 @@
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
 @import '@fontsource-variable/geist';
-@import '@fontsource-variable/jetbrains-mono';
+@import '@fontsource-variable/geist-mono';
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
   --font-sans: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-mono: 'Geist Mono Variable', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --fd-font-sans: var(--font-sans);
   --fd-font-mono: var(--font-mono);
   --napl-mono: var(--font-mono);
@@ -46,30 +46,15 @@ html > body[data-scroll-locked] {
   display: none;
 }
 
-.napl-example--static,
-.napl-example__pre {
+.napl-example--static {
   border: 1px solid var(--fd-border);
   border-radius: 12px;
   overflow: hidden;
 }
 
-.napl-example__label {
-  padding: 8px 14px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--fd-muted-foreground);
-  background: var(--fd-secondary);
-  border-bottom: 1px solid var(--fd-border);
-}
-
-.napl-example__pre {
+.napl-example__fallback {
   margin: 0;
-  padding: 14px 16px;
-  overflow-x: auto;
-  background: var(--fd-card);
-  font-family: var(--font-mono);
-  font-size: 13px;
-  line-height: 1.7;
+  border-radius: 12px;
 }
 
 .napl-example__placeholder {

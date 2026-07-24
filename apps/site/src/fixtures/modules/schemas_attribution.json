@@ -29,39 +29,87 @@
   "attribution": [
     {
       "promptLines": [
-        5,
+        3,
         6
       ],
       "file": "schemas_attribution/src/lib.rs",
       "lines": [
-        3,
+        4,
         4
       ],
-      "note": "bring in schemas_line_range and serde"
+      "note": "brings in serde Deserialize"
+    },
+    {
+      "promptLines": [
+        19,
+        28
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        3,
+        3
+      ],
+      "note": "imports LineRange from sibling crate"
+    },
+    {
+      "promptLines": [
+        30,
+        34
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        3,
+        3
+      ],
+      "note": "uses schemas_line_range path-dep type"
     },
     {
       "promptLines": [
         43,
-        45
+        44
       ],
       "file": "schemas_attribution/src/lib.rs",
       "lines": [
         10,
+        11
+      ],
+      "note": "AttributionEntry struct, derives eq/clone/deser"
+    },
+    {
+      "promptLines": [
+        45,
+        45
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        12,
         13
       ],
-      "note": "AttributionEntry struct with promptLines camelCase rename"
+      "note": "prompt_lines renamed to promptLines"
     },
     {
       "promptLines": [
         46,
-        47
+        46
       ],
       "file": "schemas_attribution/src/lib.rs",
       "lines": [
         14,
+        14
+      ],
+      "note": "file: String field"
+    },
+    {
+      "promptLines": [
+        47,
+        47
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        15,
         15
       ],
-      "note": "file and lines fields"
+      "note": "lines: LineRange field"
     },
     {
       "promptLines": [
@@ -73,7 +121,7 @@
         6,
         8
       ],
-      "note": "default_note helper for empty-string default"
+      "note": "default_note returns empty string"
     },
     {
       "promptLines": [
@@ -85,35 +133,131 @@
         16,
         17
       ],
-      "note": "note field defaults via default_note"
+      "note": "note defaults via default_note"
     },
     {
       "promptLines": [
         49,
-        53
+        50
       ],
       "file": "schemas_attribution/src/lib.rs",
       "lines": [
         20,
-        26
+        21
       ],
-      "note": "Attribution struct with module, target, entries default"
+      "note": "Attribution struct, derives eq/clone/deser"
+    },
+    {
+      "promptLines": [
+        51,
+        51
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        22,
+        22
+      ],
+      "note": "module: String field"
+    },
+    {
+      "promptLines": [
+        52,
+        52
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        23,
+        23
+      ],
+      "note": "target: String field"
+    },
+    {
+      "promptLines": [
+        53,
+        53
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        24,
+        25
+      ],
+      "note": "entries defaults to empty vec"
     },
     {
       "promptLines": [
         57,
-        63
+        57
       ],
       "file": "schemas_attribution/src/lib.rs",
       "lines": [
         49,
-        66
+        49
       ],
-      "note": "validate_attribution deserializes then checks non-empty module/target/file"
+      "note": "validate_attribution signature"
     },
     {
       "promptLines": [
-        57,
+        58,
+        58
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        50,
+        51
+      ],
+      "note": "deserialize value into Attribution"
+    },
+    {
+      "promptLines": [
+        59,
+        59
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        53,
+        55
+      ],
+      "note": "reject empty module"
+    },
+    {
+      "promptLines": [
+        59,
+        59
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        56,
+        58
+      ],
+      "note": "reject empty target"
+    },
+    {
+      "promptLines": [
+        59,
+        60
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        59,
+        63
+      ],
+      "note": "reject entry with empty file"
+    },
+    {
+      "promptLines": [
+        61,
+        61
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        51,
+        51
+      ],
+      "note": "malformed value is parse error"
+    },
+    {
+      "promptLines": [
+        63,
         63
       ],
       "file": "schemas_attribution/src/lib.rs",
@@ -121,31 +265,55 @@
         28,
         47
       ],
-      "note": "AttributionError enum and Display impl for rejection errors"
+      "note": "AttributionError enum + Display, error not panic"
     },
     {
       "promptLines": [
         64,
-        68
+        64
       ],
       "file": "schemas_attribution/src/lib.rs",
       "lines": [
         68,
-        85
+        70
       ],
-      "note": "parse_attribution_entries returns empty for non-array else validates entries"
+      "note": "parse_attribution_entries signature"
     },
     {
       "promptLines": [
-        70,
-        72
+        65,
+        65
       ],
       "file": "schemas_attribution/src/lib.rs",
       "lines": [
-        126,
-        139
+        71,
+        73
       ],
-      "note": "test for single-line spelling normalization and missing note default"
+      "note": "non-array returns empty list"
+    },
+    {
+      "promptLines": [
+        66,
+        66
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        75,
+        82
+      ],
+      "note": "deserialize list, validate each file"
+    },
+    {
+      "promptLines": [
+        67,
+        68
+      ],
+      "file": "schemas_attribution/src/lib.rs",
+      "lines": [
+        76,
+        76
+      ],
+      "note": "malformed list is parse error"
     },
     {
       "promptLines": [
@@ -157,118 +325,56 @@
         87,
         98
       ],
-      "note": "entries_at_body_line filters by inclusive range in document order"
-    },
-    {
-      "promptLines": [
-        80,
-        85
-      ],
-      "file": "schemas_attribution/src/lib.rs",
-      "lines": [
-        105,
-        115
-      ],
-      "note": "sample_document fixture matching the example entries"
-    },
-    {
-      "promptLines": [
-        80,
-        85
-      ],
-      "file": "schemas_attribution/src/lib.rs",
-      "lines": [
-        241,
-        255
-      ],
-      "note": "test asserting entries at body lines 3, 2, 9 match the example"
-    },
-    {
-      "promptLines": [
-        60,
-        63
-      ],
-      "file": "schemas_attribution/src/lib.rs",
-      "lines": [
-        160,
-        185
-      ],
-      "note": "tests for empty/missing file rejection"
-    },
-    {
-      "promptLines": [
-        60,
-        60
-      ],
-      "file": "schemas_attribution/src/lib.rs",
-      "lines": [
-        188,
-        200
-      ],
-      "note": "test rejects malformed line range as deserialization error"
-    },
-    {
-      "promptLines": [
-        65,
-        65
-      ],
-      "file": "schemas_attribution/src/lib.rs",
-      "lines": [
-        202,
-        206
-      ],
-      "note": "test parse_entries_returns_empty_for_non_array"
-    },
-    {
-      "promptLines": [
-        66,
-        68
-      ],
-      "file": "schemas_attribution/src/lib.rs",
-      "lines": [
-        208,
-        238
-      ],
-      "note": "tests parsing valid list, empty file rejection, malformed list error"
-    },
-    {
-      "promptLines": [
-        53,
-        53
-      ],
-      "file": "schemas_attribution/src/lib.rs",
-      "lines": [
-        142,
-        146
-      ],
-      "note": "test entries default to empty when absent"
-    },
-    {
-      "promptLines": [
-        58,
-        59
-      ],
-      "file": "schemas_attribution/src/lib.rs",
-      "lines": [
-        148,
-        158
-      ],
-      "note": "tests rejects empty module and empty target"
+      "note": "entries_at_body_line filters by range containment"
     }
   ],
-  "attributionYaml": "module: schemas_attribution\ntarget: rust\nentries:\n  - promptLines:\n      - 5\n      - 6\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 3\n      - 4\n    note: bring in schemas_line_range and serde\n  - promptLines:\n      - 43\n      - 45\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 10\n      - 13\n    note: AttributionEntry struct with promptLines camelCase rename\n  - promptLines:\n      - 46\n      - 47\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 14\n      - 15\n    note: file and lines fields\n  - promptLines:\n      - 48\n      - 48\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 6\n      - 8\n    note: default_note helper for empty-string default\n  - promptLines:\n      - 48\n      - 48\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 16\n      - 17\n    note: note field defaults via default_note\n  - promptLines:\n      - 49\n      - 53\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 20\n      - 26\n    note: Attribution struct with module, target, entries default\n  - promptLines:\n      - 57\n      - 63\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 49\n      - 66\n    note: validate_attribution deserializes then checks non-empty module/target/file\n  - promptLines:\n      - 57\n      - 63\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 28\n      - 47\n    note: AttributionError enum and Display impl for rejection errors\n  - promptLines:\n      - 64\n      - 68\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 68\n      - 85\n    note: parse_attribution_entries returns empty for non-array else validates entries\n  - promptLines:\n      - 70\n      - 72\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 126\n      - 139\n    note: test for single-line spelling normalization and missing note default\n  - promptLines:\n      - 76\n      - 78\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 87\n      - 98\n    note: entries_at_body_line filters by inclusive range in document order\n  - promptLines:\n      - 80\n      - 85\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 105\n      - 115\n    note: sample_document fixture matching the example entries\n  - promptLines:\n      - 80\n      - 85\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 241\n      - 255\n    note: test asserting entries at body lines 3, 2, 9 match the example\n  - promptLines:\n      - 60\n      - 63\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 160\n      - 185\n    note: tests for empty/missing file rejection\n  - promptLines:\n      - 60\n      - 60\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 188\n      - 200\n    note: test rejects malformed line range as deserialization error\n  - promptLines:\n      - 65\n      - 65\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 202\n      - 206\n    note: test parse_entries_returns_empty_for_non_array\n  - promptLines:\n      - 66\n      - 68\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 208\n      - 238\n    note: tests parsing valid list, empty file rejection, malformed list error\n  - promptLines:\n      - 53\n      - 53\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 142\n      - 146\n    note: test entries default to empty when absent\n  - promptLines:\n      - 58\n      - 59\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 148\n      - 158\n    note: tests rejects empty module and empty target\n",
+  "attributionYaml": "module: schemas_attribution\ntarget: rust\nentries:\n  - promptLines:\n      - 3\n      - 6\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 4\n      - 4\n    note: brings in serde Deserialize\n  - promptLines:\n      - 19\n      - 28\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 3\n      - 3\n    note: imports LineRange from sibling crate\n  - promptLines:\n      - 30\n      - 34\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 3\n      - 3\n    note: uses schemas_line_range path-dep type\n  - promptLines:\n      - 43\n      - 44\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 10\n      - 11\n    note: AttributionEntry struct, derives eq/clone/deser\n  - promptLines:\n      - 45\n      - 45\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 12\n      - 13\n    note: prompt_lines renamed to promptLines\n  - promptLines:\n      - 46\n      - 46\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 14\n      - 14\n    note: \"file: String field\"\n  - promptLines:\n      - 47\n      - 47\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 15\n      - 15\n    note: \"lines: LineRange field\"\n  - promptLines:\n      - 48\n      - 48\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 6\n      - 8\n    note: default_note returns empty string\n  - promptLines:\n      - 48\n      - 48\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 16\n      - 17\n    note: note defaults via default_note\n  - promptLines:\n      - 49\n      - 50\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 20\n      - 21\n    note: Attribution struct, derives eq/clone/deser\n  - promptLines:\n      - 51\n      - 51\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 22\n      - 22\n    note: \"module: String field\"\n  - promptLines:\n      - 52\n      - 52\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 23\n      - 23\n    note: \"target: String field\"\n  - promptLines:\n      - 53\n      - 53\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 24\n      - 25\n    note: entries defaults to empty vec\n  - promptLines:\n      - 57\n      - 57\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 49\n      - 49\n    note: validate_attribution signature\n  - promptLines:\n      - 58\n      - 58\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 50\n      - 51\n    note: deserialize value into Attribution\n  - promptLines:\n      - 59\n      - 59\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 53\n      - 55\n    note: reject empty module\n  - promptLines:\n      - 59\n      - 59\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 56\n      - 58\n    note: reject empty target\n  - promptLines:\n      - 59\n      - 60\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 59\n      - 63\n    note: reject entry with empty file\n  - promptLines:\n      - 61\n      - 61\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 51\n      - 51\n    note: malformed value is parse error\n  - promptLines:\n      - 63\n      - 63\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 28\n      - 47\n    note: AttributionError enum + Display, error not panic\n  - promptLines:\n      - 64\n      - 64\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 68\n      - 70\n    note: parse_attribution_entries signature\n  - promptLines:\n      - 65\n      - 65\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 71\n      - 73\n    note: non-array returns empty list\n  - promptLines:\n      - 66\n      - 66\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 75\n      - 82\n    note: deserialize list, validate each file\n  - promptLines:\n      - 67\n      - 68\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 76\n      - 76\n    note: malformed list is parse error\n  - promptLines:\n      - 76\n      - 78\n    file: schemas_attribution/src/lib.rs\n    lines:\n      - 87\n      - 98\n    note: entries_at_body_line filters by range containment\n",
   "mapl": [
     {
       "promptLines": [
         1,
         86
       ],
+      "kind": "no-op",
+      "severity": "warning",
+      "message": "No changes produced — existing generated code already satisfies the full spec.",
+      "reasoning": "The changes were \"NO CHANGES\". The coding agent reports the prompt diff was empty and the existing schemas_attribution crate already realizes every requirement (types, validators, lookup, lenient line-range normalization), with all 13 tests passing. So nothing needed to be regenerated. No-op is because the requirement was already met by existing code, not because the instruction was unintelligible. "
+    },
+    {
+      "promptLines": [
+        57,
+        57
+      ],
+      "kind": "ambiguity",
+      "severity": "error",
+      "message": "Error type of validate_attribution is left as `_` — concrete error type unspecified.",
+      "reasoning": "The signature is written `Result<Attribution, _>` with a placeholder error type. The prompt never says what the error type should be (a custom enum, serde_json::Error, String, a boxed error, etc.), only that malformed input is a deserialization error and validation failures are \"an error, not a panic\". Whatever concrete type the existing code uses was an unconstrained choice. ",
+      "suggestion": "Specify the error type explicitly, e.g. \"returns Result<Attribution, E>\" and define E (for example a String message, or a named error enum with Deserialize vs Validation variants). "
+    },
+    {
+      "promptLines": [
+        64,
+        68
+      ],
+      "kind": "ambiguity",
+      "severity": "error",
+      "message": "parse_attribution_entries error type also unspecified (`_` placeholder).",
+      "reasoning": "Same open question as validate_attribution: the `Result<Vec<AttributionEntry>, _>` error type is a placeholder. It is unclear whether it must match validate_attribution's error type or may differ. The existing code's choice was unconstrained by the prompt.\n",
+      "suggestion": "State the error type and whether both validators share one error type."
+    },
+    {
+      "promptLines": [
+        61,
+        62
+      ],
       "kind": "note",
       "severity": "info",
-      "message": "Prompt fully implemented, no ambiguity found worth flagging.",
-      "reasoning": "Agent created schemas_attribution/{Cargo.toml,src/lib.rs} with AttributionEntry, Attribution, validate_attribution, parse_attribution_entries, entries_at_body_line exactly matching spec — camelCase rename, note default, entries default, malformed-vs-missing-file error split, non-array returns empty list, inclusive containment lookup. 13 tests cover all documented behaviors including the worked example. No deviations to note."
+      "message": "Deserialization-vs-validation error boundary is described by example only.",
+      "reasoning": "The prompt distinguishes \"structurally malformed\" (deserialize error, e.g. 1.5) from rejected values (empty/missing file). Both are reported as errors and the observable Result contract is the same, so callers cannot tell them apart unless the error type carries that distinction — which the prompt does not require. Worth confirming whether the two error categories must be separately identifiable."
     }
   ],
+  "maplContent": "module: schemas_attribution\ntarget: rust\nentries:\n  - promptLines:\n      - 1\n      - 86\n    kind: no-op\n    message: No changes produced — existing generated code already satisfies the full spec.\n    reasoning: 'The changes were \"NO CHANGES\". The coding agent reports the prompt diff was empty and the existing schemas_attribution crate already realizes every requirement (types, validators, lookup, lenient line-range normalization), with all 13 tests passing. So nothing needed to be regenerated. No-op is because the requirement was already met by existing code, not because the instruction was unintelligible.\n'\n  - promptLines:\n      - 57\n      - 57\n    kind: ambiguity\n    message: Error type of validate_attribution is left as `_` — concrete error type unspecified.\n    reasoning: 'The signature is written `Result<Attribution, _>` with a placeholder error type. The prompt never says what the error type should be (a custom enum, serde_json::Error, String, a boxed error, etc.), only that malformed input is a deserialization error and validation failures are \"an error, not a panic\". Whatever concrete type the existing code uses was an unconstrained choice.\n'\n    suggestion: 'Specify the error type explicitly, e.g. \"returns Result<Attribution, E>\" and define E (for example a String message, or a named error enum with Deserialize vs Validation variants).\n'\n  - promptLines:\n      - 64\n      - 68\n    kind: ambiguity\n    message: parse_attribution_entries error type also unspecified (`_` placeholder).\n    reasoning: \"Same open question as validate_attribution: the `Result<Vec<AttributionEntry>, _>` error type is a placeholder. It is unclear whether it must match validate_attribution's error type or may differ. The existing code's choice was unconstrained by the prompt.\\n\"\n    suggestion: State the error type and whether both validators share one error type.\n  - promptLines:\n      - 61\n      - 62\n    kind: note\n    message: Deserialization-vs-validation error boundary is described by example only.\n    reasoning: The prompt distinguishes \"structurally malformed\" (deserialize error, e.g. 1.5) from rejected values (empty/missing file). Both are reported as errors and the observable Result contract is the same, so callers cannot tell them apart unless the error type carries that distinction — which the prompt does not require. Worth confirming whether the two error categories must be separately identifiable.\n",
+  "maplFile": "schemas_attribution.mapl",
   "journal": [
     {
       "gen": 16,
@@ -287,6 +393,13 @@
           "patch": "@@ -0,0 +1,256 @@\n+// GENERATED BY NAPL from schemas_attribution.napl — edit the prompt, not this file\n+\n+use schemas_line_range::LineRange;\n+use serde::Deserialize;\n+\n+fn default_note() -> String {\n+    String::new()\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]\n+pub struct AttributionEntry {\n+    #[serde(rename = \"promptLines\")]\n+    pub prompt_lines: LineRange,\n+    pub file: String,\n+    pub lines: LineRange,\n+    #[serde(default = \"default_note\")]\n+    pub note: String,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]\n+pub struct Attribution {\n+    pub module: String,\n+    pub target: String,\n+    #[serde(default)]\n+    pub entries: Vec<AttributionEntry>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub enum AttributionError {\n+    Parse(String),\n+    EmptyModule,\n+    EmptyTarget,\n+    EmptyFile,\n+}\n+\n+impl std::fmt::Display for AttributionError {\n+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n+        match self {\n+            AttributionError::Parse(msg) => write!(f, \"failed to parse attribution: {msg}\"),\n+            AttributionError::EmptyModule => write!(f, \"module must not be empty\"),\n+            AttributionError::EmptyTarget => write!(f, \"target must not be empty\"),\n+            AttributionError::EmptyFile => write!(f, \"entry file must not be empty\"),\n+        }\n+    }\n+}\n+\n+impl std::error::Error for AttributionError {}\n+\n+pub fn validate_attribution(value: serde_json::Value) -> Result<Attribution, AttributionError> {\n+    let attribution: Attribution =\n+        serde_json::from_value(value).map_err(|e| AttributionError::Parse(e.to_string()))?;\n+\n+    if attribution.module.is_empty() {\n+        return Err(AttributionError::EmptyModule);\n+    }\n+    if attribution.target.is_empty() {\n+        return Err(AttributionError::EmptyTarget);\n+    }\n+    for entry in &attribution.entries {\n+        if entry.file.is_empty() {\n+            return Err(AttributionError::EmptyFile);\n+        }\n+    }\n+\n+    Ok(attribution)\n+}\n+\n+pub fn parse_attribution_entries(\n+    value: serde_json::Value,\n+) -> Result<Vec<AttributionEntry>, AttributionError> {\n+    if !value.is_array() {\n+        return Ok(Vec::new());\n+    }\n+\n+    let entries: Vec<AttributionEntry> =\n+        serde_json::from_value(value).map_err(|e| AttributionError::Parse(e.to_string()))?;\n+\n+    for entry in &entries {\n+        if entry.file.is_empty() {\n+            return Err(AttributionError::EmptyFile);\n+        }\n+    }\n+\n+    Ok(entries)\n+}\n+\n+pub fn entries_at_body_line(\n+    attribution: &Attribution,\n+    body_line: u32,\n+) -> Vec<&AttributionEntry> {\n+    attribution\n+        .entries\n+        .iter()\n+        .filter(|entry| {\n+            entry.prompt_lines.start <= body_line && body_line <= entry.prompt_lines.end\n+        })\n+        .collect()\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+    use serde_json::json;\n+\n+    fn sample_document() -> serde_json::Value {\n+        json!({\n+            \"module\": \"m\",\n+            \"target\": \"rust\",\n+            \"entries\": [\n+                {\"promptLines\": [2, 2], \"file\": \"a.rs\", \"lines\": 1, \"note\": \"builds the greeting\"},\n+                {\"promptLines\": [3, 4], \"file\": \"a.rs\", \"lines\": 2, \"note\": \"trims whitespace\"},\n+                {\"promptLines\": [3, 3], \"file\": \"a.rs\", \"lines\": 3, \"note\": \"covers trimming\"}\n+            ]\n+        })\n+    }\n+\n+    #[test]\n+    fn validates_a_well_formed_document() {\n+        let attribution = validate_attribution(sample_document()).unwrap();\n+        assert_eq!(attribution.module, \"m\");\n+        assert_eq!(attribution.target, \"rust\");\n+        assert_eq!(attribution.entries.len(), 3);\n+    }\n+\n+    #[test]\n+    fn entry_field_normalization() {\n+        let value = json!({\n+            \"module\": \"m\",\n+            \"target\": \"rust\",\n+            \"entries\": [\n+                {\"promptLines\": [8], \"file\": \"a.rs\", \"lines\": 3}\n+            ]\n+        });\n+        let attribution = validate_attribution(value).unwrap();\n+        let entry = &attribution.entries[0];\n+        assert_eq!(entry.prompt_lines, LineRange::new(8, 8));\n+        assert_eq!(entry.lines, LineRange::new(3, 3));\n+        assert_eq!(entry.note, \"\");\n+    }\n+\n+    #[test]\n+    fn entries_default_to_empty_when_absent() {\n+        let value = json!({\"module\": \"m\", \"target\": \"rust\"});\n+        let attribution = validate_attribution(value).unwrap();\n+        assert!(attribution.entries.is_empty());\n+    }\n+\n+    #[test]\n+    fn rejects_empty_module() {\n+        let value = json!({\"module\": \"\", \"target\": \"rust\", \"entries\": []});\n+        assert_eq!(validate_attribution(value), Err(AttributionError::EmptyModule));\n+    }\n+\n+    #[test]\n+    fn rejects_empty_target() {\n+        let value = json!({\"module\": \"m\", \"target\": \"\", \"entries\": []});\n+        assert_eq!(validate_attribution(value), Err(AttributionError::EmptyTarget));\n+    }\n+\n+    #[test]\n+    fn rejects_entry_with_empty_file() {\n+        let value = json!({\n+            \"module\": \"m\",\n+            \"target\": \"rust\",\n+            \"entries\": [\n+                {\"promptLines\": 1, \"file\": \"\", \"lines\": 1}\n+            ]\n+        });\n+        assert_eq!(validate_attribution(value), Err(AttributionError::EmptyFile));\n+    }\n+\n+    #[test]\n+    fn rejects_entry_missing_file() {\n+        let value = json!({\n+            \"module\": \"m\",\n+            \"target\": \"rust\",\n+            \"entries\": [\n+                {\"promptLines\": 1, \"lines\": 1}\n+            ]\n+        });\n+        assert!(matches!(\n+            validate_attribution(value),\n+            Err(AttributionError::Parse(_))\n+        ));\n+    }\n+\n+    #[test]\n+    fn rejects_malformed_line_range() {\n+        let value = json!({\n+            \"module\": \"m\",\n+            \"target\": \"rust\",\n+            \"entries\": [\n+                {\"promptLines\": 1.5, \"file\": \"a.rs\", \"lines\": 1}\n+            ]\n+        });\n+        assert!(matches!(\n+            validate_attribution(value),\n+            Err(AttributionError::Parse(_))\n+        ));\n+    }\n+\n+    #[test]\n+    fn parse_entries_returns_empty_for_non_array() {\n+        let value = json!({\"not\": \"an array\"});\n+        assert_eq!(parse_attribution_entries(value).unwrap(), Vec::new());\n+    }\n+\n+    #[test]\n+    fn parse_entries_parses_a_valid_list() {\n+        let value = json!([\n+            {\"promptLines\": [2, 2], \"file\": \"a.rs\", \"lines\": 1}\n+        ]);\n+        let entries = parse_attribution_entries(value).unwrap();\n+        assert_eq!(entries.len(), 1);\n+        assert_eq!(entries[0].file, \"a.rs\");\n+    }\n+\n+    #[test]\n+    fn parse_entries_rejects_entry_with_empty_file() {\n+        let value = json!([\n+            {\"promptLines\": [2, 2], \"file\": \"\", \"lines\": 1}\n+        ]);\n+        assert_eq!(\n+            parse_attribution_entries(value),\n+            Err(AttributionError::EmptyFile)\n+        );\n+    }\n+\n+    #[test]\n+    fn parse_entries_errors_on_malformed_list() {\n+        let value = json!([\n+            {\"promptLines\": \"nope\", \"file\": \"a.rs\", \"lines\": 1}\n+        ]);\n+        assert!(matches!(\n+            parse_attribution_entries(value),\n+            Err(AttributionError::Parse(_))\n+        ));\n+    }\n+\n+    #[test]\n+    fn entries_at_body_line_finds_all_containing_entries() {\n+        let attribution = validate_attribution(sample_document()).unwrap();\n+\n+        let at_3 = entries_at_body_line(&attribution, 3);\n+        assert_eq!(at_3.len(), 2);\n+        assert_eq!(at_3[0].note, \"trims whitespace\");\n+        assert_eq!(at_3[1].note, \"covers trimming\");\n+\n+        let at_2 = entries_at_body_line(&attribution, 2);\n+        assert_eq!(at_2.len(), 1);\n+        assert_eq!(at_2[0].note, \"builds the greeting\");\n+\n+        let at_9 = entries_at_body_line(&attribution, 9);\n+        assert!(at_9.is_empty());\n+    }\n+}"
         }
       ]
+    },
+    {
+      "gen": 64,
+      "timestamp": "2026-07-24T13:00:05.006Z",
+      "mode": "incremental",
+      "promptHash": "ac240b384587d7549b089bad8cfe0d2128bf41076ed141de95edd689dbd98bfe",
+      "files": []
     }
   ],
   "lock": [
@@ -336,39 +449,87 @@
         "entries": [
           {
             "promptLines": [
-              5,
+              3,
               6
             ],
             "file": "schemas_attribution/src/lib.rs",
             "lines": [
-              3,
+              4,
               4
             ],
-            "note": "bring in schemas_line_range and serde"
+            "note": "brings in serde Deserialize"
+          },
+          {
+            "promptLines": [
+              19,
+              28
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              3,
+              3
+            ],
+            "note": "imports LineRange from sibling crate"
+          },
+          {
+            "promptLines": [
+              30,
+              34
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              3,
+              3
+            ],
+            "note": "uses schemas_line_range path-dep type"
           },
           {
             "promptLines": [
               43,
-              45
+              44
             ],
             "file": "schemas_attribution/src/lib.rs",
             "lines": [
               10,
+              11
+            ],
+            "note": "AttributionEntry struct, derives eq/clone/deser"
+          },
+          {
+            "promptLines": [
+              45,
+              45
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              12,
               13
             ],
-            "note": "AttributionEntry struct with promptLines camelCase rename"
+            "note": "prompt_lines renamed to promptLines"
           },
           {
             "promptLines": [
               46,
-              47
+              46
             ],
             "file": "schemas_attribution/src/lib.rs",
             "lines": [
               14,
+              14
+            ],
+            "note": "file: String field"
+          },
+          {
+            "promptLines": [
+              47,
+              47
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              15,
               15
             ],
-            "note": "file and lines fields"
+            "note": "lines: LineRange field"
           },
           {
             "promptLines": [
@@ -380,7 +541,7 @@
               6,
               8
             ],
-            "note": "default_note helper for empty-string default"
+            "note": "default_note returns empty string"
           },
           {
             "promptLines": [
@@ -392,35 +553,131 @@
               16,
               17
             ],
-            "note": "note field defaults via default_note"
+            "note": "note defaults via default_note"
           },
           {
             "promptLines": [
               49,
-              53
+              50
             ],
             "file": "schemas_attribution/src/lib.rs",
             "lines": [
               20,
-              26
+              21
             ],
-            "note": "Attribution struct with module, target, entries default"
+            "note": "Attribution struct, derives eq/clone/deser"
+          },
+          {
+            "promptLines": [
+              51,
+              51
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              22,
+              22
+            ],
+            "note": "module: String field"
+          },
+          {
+            "promptLines": [
+              52,
+              52
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              23,
+              23
+            ],
+            "note": "target: String field"
+          },
+          {
+            "promptLines": [
+              53,
+              53
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              24,
+              25
+            ],
+            "note": "entries defaults to empty vec"
           },
           {
             "promptLines": [
               57,
-              63
+              57
             ],
             "file": "schemas_attribution/src/lib.rs",
             "lines": [
               49,
-              66
+              49
             ],
-            "note": "validate_attribution deserializes then checks non-empty module/target/file"
+            "note": "validate_attribution signature"
           },
           {
             "promptLines": [
-              57,
+              58,
+              58
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              50,
+              51
+            ],
+            "note": "deserialize value into Attribution"
+          },
+          {
+            "promptLines": [
+              59,
+              59
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              53,
+              55
+            ],
+            "note": "reject empty module"
+          },
+          {
+            "promptLines": [
+              59,
+              59
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              56,
+              58
+            ],
+            "note": "reject empty target"
+          },
+          {
+            "promptLines": [
+              59,
+              60
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              59,
+              63
+            ],
+            "note": "reject entry with empty file"
+          },
+          {
+            "promptLines": [
+              61,
+              61
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              51,
+              51
+            ],
+            "note": "malformed value is parse error"
+          },
+          {
+            "promptLines": [
+              63,
               63
             ],
             "file": "schemas_attribution/src/lib.rs",
@@ -428,31 +685,55 @@
               28,
               47
             ],
-            "note": "AttributionError enum and Display impl for rejection errors"
+            "note": "AttributionError enum + Display, error not panic"
           },
           {
             "promptLines": [
               64,
-              68
+              64
             ],
             "file": "schemas_attribution/src/lib.rs",
             "lines": [
               68,
-              85
+              70
             ],
-            "note": "parse_attribution_entries returns empty for non-array else validates entries"
+            "note": "parse_attribution_entries signature"
           },
           {
             "promptLines": [
-              70,
-              72
+              65,
+              65
             ],
             "file": "schemas_attribution/src/lib.rs",
             "lines": [
-              126,
-              139
+              71,
+              73
             ],
-            "note": "test for single-line spelling normalization and missing note default"
+            "note": "non-array returns empty list"
+          },
+          {
+            "promptLines": [
+              66,
+              66
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              75,
+              82
+            ],
+            "note": "deserialize list, validate each file"
+          },
+          {
+            "promptLines": [
+              67,
+              68
+            ],
+            "file": "schemas_attribution/src/lib.rs",
+            "lines": [
+              76,
+              76
+            ],
+            "note": "malformed list is parse error"
           },
           {
             "promptLines": [
@@ -464,103 +745,7 @@
               87,
               98
             ],
-            "note": "entries_at_body_line filters by inclusive range in document order"
-          },
-          {
-            "promptLines": [
-              80,
-              85
-            ],
-            "file": "schemas_attribution/src/lib.rs",
-            "lines": [
-              105,
-              115
-            ],
-            "note": "sample_document fixture matching the example entries"
-          },
-          {
-            "promptLines": [
-              80,
-              85
-            ],
-            "file": "schemas_attribution/src/lib.rs",
-            "lines": [
-              241,
-              255
-            ],
-            "note": "test asserting entries at body lines 3, 2, 9 match the example"
-          },
-          {
-            "promptLines": [
-              60,
-              63
-            ],
-            "file": "schemas_attribution/src/lib.rs",
-            "lines": [
-              160,
-              185
-            ],
-            "note": "tests for empty/missing file rejection"
-          },
-          {
-            "promptLines": [
-              60,
-              60
-            ],
-            "file": "schemas_attribution/src/lib.rs",
-            "lines": [
-              188,
-              200
-            ],
-            "note": "test rejects malformed line range as deserialization error"
-          },
-          {
-            "promptLines": [
-              65,
-              65
-            ],
-            "file": "schemas_attribution/src/lib.rs",
-            "lines": [
-              202,
-              206
-            ],
-            "note": "test parse_entries_returns_empty_for_non_array"
-          },
-          {
-            "promptLines": [
-              66,
-              68
-            ],
-            "file": "schemas_attribution/src/lib.rs",
-            "lines": [
-              208,
-              238
-            ],
-            "note": "tests parsing valid list, empty file rejection, malformed list error"
-          },
-          {
-            "promptLines": [
-              53,
-              53
-            ],
-            "file": "schemas_attribution/src/lib.rs",
-            "lines": [
-              142,
-              146
-            ],
-            "note": "test entries default to empty when absent"
-          },
-          {
-            "promptLines": [
-              58,
-              59
-            ],
-            "file": "schemas_attribution/src/lib.rs",
-            "lines": [
-              148,
-              158
-            ],
-            "note": "tests rejects empty module and empty target"
+            "note": "entries_at_body_line filters by range containment"
           }
         ]
       },
@@ -572,10 +757,54 @@
             1,
             86
           ],
+          "kind": "no-op",
+          "severity": "warning",
+          "message": "No changes produced — existing generated code already satisfies the full spec.",
+          "reasoning": "The changes were \"NO CHANGES\". The coding agent reports the prompt diff was empty and the existing schemas_attribution crate already realizes every requirement (types, validators, lookup, lenient line-range normalization), with all 13 tests passing. So nothing needed to be regenerated. No-op is because the requirement was already met by existing code, not because the instruction was unintelligible. "
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "schemas_attribution.mapl",
+        "entry": {
+          "promptLines": [
+            57,
+            57
+          ],
+          "kind": "ambiguity",
+          "severity": "error",
+          "message": "Error type of validate_attribution is left as `_` — concrete error type unspecified.",
+          "reasoning": "The signature is written `Result<Attribution, _>` with a placeholder error type. The prompt never says what the error type should be (a custom enum, serde_json::Error, String, a boxed error, etc.), only that malformed input is a deserialization error and validation failures are \"an error, not a panic\". Whatever concrete type the existing code uses was an unconstrained choice. ",
+          "suggestion": "Specify the error type explicitly, e.g. \"returns Result<Attribution, E>\" and define E (for example a String message, or a named error enum with Deserialize vs Validation variants). "
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "schemas_attribution.mapl",
+        "entry": {
+          "promptLines": [
+            64,
+            68
+          ],
+          "kind": "ambiguity",
+          "severity": "error",
+          "message": "parse_attribution_entries error type also unspecified (`_` placeholder).",
+          "reasoning": "Same open question as validate_attribution: the `Result<Vec<AttributionEntry>, _>` error type is a placeholder. It is unclear whether it must match validate_attribution's error type or may differ. The existing code's choice was unconstrained by the prompt.\n",
+          "suggestion": "State the error type and whether both validators share one error type."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "schemas_attribution.mapl",
+        "entry": {
+          "promptLines": [
+            61,
+            62
+          ],
           "kind": "note",
           "severity": "info",
-          "message": "Prompt fully implemented, no ambiguity found worth flagging.",
-          "reasoning": "Agent created schemas_attribution/{Cargo.toml,src/lib.rs} with AttributionEntry, Attribution, validate_attribution, parse_attribution_entries, entries_at_body_line exactly matching spec — camelCase rename, note default, entries default, malformed-vs-missing-file error split, non-array returns empty list, inclusive containment lookup. 13 tests cover all documented behaviors including the worked example. No deviations to note."
+          "message": "Deserialization-vs-validation error boundary is described by example only.",
+          "reasoning": "The prompt distinguishes \"structurally malformed\" (deserialize error, e.g. 1.5) from rejected values (empty/missing file). Both are reported as errors and the observable Result contract is the same, so callers cannot tell them apart unless the error type carries that distinction — which the prompt does not require. Worth confirming whether the two error categories must be separately identifiable."
         }
       },
       {

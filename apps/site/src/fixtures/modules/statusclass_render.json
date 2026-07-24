@@ -29,6 +29,18 @@
   "attribution": [
     {
       "promptLines": [
+        1,
+        7
+      ],
+      "file": "statusclass_render/src/lib.rs",
+      "lines": [
+        1,
+        4
+      ],
+      "note": "module doc: pure rendering core, no I/O"
+    },
+    {
+      "promptLines": [
         20,
         21
       ],
@@ -37,19 +49,55 @@
         7,
         8
       ],
-      "note": "enum decl with required derives"
+      "note": "public FileStatus enum with required derives"
     },
     {
       "promptLines": [
-        22,
-        27
+        23,
+        23
       ],
       "file": "statusclass_render/src/lib.rs",
       "lines": [
         9,
-        17
+        10
       ],
-      "note": "four variants with doc comments"
+      "note": "Clean variant"
+    },
+    {
+      "promptLines": [
+        24,
+        24
+      ],
+      "file": "statusclass_render/src/lib.rs",
+      "lines": [
+        11,
+        12
+      ],
+      "note": "PromptStale variant"
+    },
+    {
+      "promptLines": [
+        25,
+        25
+      ],
+      "file": "statusclass_render/src/lib.rs",
+      "lines": [
+        13,
+        14
+      ],
+      "note": "Drift variant"
+    },
+    {
+      "promptLines": [
+        26,
+        26
+      ],
+      "file": "statusclass_render/src/lib.rs",
+      "lines": [
+        15,
+        16
+      ],
+      "note": "Unattributed variant"
     },
     {
       "promptLines": [
@@ -58,22 +106,106 @@
       ],
       "file": "statusclass_render/src/lib.rs",
       "lines": [
-        20,
+        21,
         28
       ],
-      "note": "label() match per variant"
+      "note": "label() maps each variant to its fixed string"
+    },
+    {
+      "promptLines": [
+        30,
+        30
+      ],
+      "file": "statusclass_render/src/lib.rs",
+      "lines": [
+        23,
+        23
+      ],
+      "note": "Clean -> clean"
+    },
+    {
+      "promptLines": [
+        31,
+        31
+      ],
+      "file": "statusclass_render/src/lib.rs",
+      "lines": [
+        24,
+        24
+      ],
+      "note": "PromptStale -> prompt-stale"
+    },
+    {
+      "promptLines": [
+        32,
+        32
+      ],
+      "file": "statusclass_render/src/lib.rs",
+      "lines": [
+        25,
+        25
+      ],
+      "note": "Drift -> DRIFT uppercase"
+    },
+    {
+      "promptLines": [
+        33,
+        33
+      ],
+      "file": "statusclass_render/src/lib.rs",
+      "lines": [
+        26,
+        26
+      ],
+      "note": "Unattributed -> unattributed"
     },
     {
       "promptLines": [
         37,
-        41
+        38
       ],
       "file": "statusclass_render/src/lib.rs",
       "lines": [
         37,
-        44
+        38
       ],
-      "note": "StatusEntry struct fields"
+      "note": "public StatusEntry struct"
+    },
+    {
+      "promptLines": [
+        39,
+        39
+      ],
+      "file": "statusclass_render/src/lib.rs",
+      "lines": [
+        39,
+        40
+      ],
+      "note": "file field, prompt path"
+    },
+    {
+      "promptLines": [
+        40,
+        40
+      ],
+      "file": "statusclass_render/src/lib.rs",
+      "lines": [
+        41,
+        41
+      ],
+      "note": "status field"
+    },
+    {
+      "promptLines": [
+        41,
+        41
+      ],
+      "file": "statusclass_render/src/lib.rs",
+      "lines": [
+        42,
+        43
+      ],
+      "note": "detail field, possibly empty"
     },
     {
       "promptLines": [
@@ -85,7 +217,19 @@
         48,
         55
       ],
-      "note": "line() renders padded label + file + optional detail"
+      "note": "line() renders one status line"
+    },
+    {
+      "promptLines": [
+        46,
+        49
+      ],
+      "file": "statusclass_render/src/lib.rs",
+      "lines": [
+        49,
+        53
+      ],
+      "note": "suffix empty when detail empty, else ' (detail)"
     },
     {
       "promptLines": [
@@ -94,58 +238,10 @@
       ],
       "file": "statusclass_render/src/lib.rs",
       "lines": [
-        49,
+        54,
         54
       ],
-      "note": "suffix format and format string"
-    },
-    {
-      "promptLines": [
-        54,
-        56
-      ],
-      "file": "statusclass_render/src/lib.rs",
-      "lines": [
-        84,
-        89
-      ],
-      "note": "byte-exact example test, clean empty detail"
-    },
-    {
-      "promptLines": [
-        57,
-        59
-      ],
-      "file": "statusclass_render/src/lib.rs",
-      "lines": [
-        91,
-        97
-      ],
-      "note": "byte-exact example test, prompt-stale with detail"
-    },
-    {
-      "promptLines": [
-        60,
-        61
-      ],
-      "file": "statusclass_render/src/lib.rs",
-      "lines": [
-        99,
-        105
-      ],
-      "note": "byte-exact example test, DRIFT with detail"
-    },
-    {
-      "promptLines": [
-        62,
-        63
-      ],
-      "file": "statusclass_render/src/lib.rs",
-      "lines": [
-        107,
-        113
-      ],
-      "note": "byte-exact example test, unattributed with detail"
+      "note": "{label:<12} {file}{suffix} format, pad to 12"
     },
     {
       "promptLines": [
@@ -170,33 +266,34 @@
         60
       ],
       "note": "StatusEntry::is_error delegates to status"
-    },
-    {
-      "promptLines": [
-        65,
-        68
-      ],
-      "file": "statusclass_render/src/lib.rs",
-      "lines": [
-        137,
-        148
-      ],
-      "note": "is_error test for all variants"
     }
   ],
-  "attributionYaml": "module: statusclass_render\ntarget: rust\nentries:\n  - promptLines:\n      - 20\n      - 21\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 7\n      - 8\n    note: enum decl with required derives\n  - promptLines:\n      - 22\n      - 27\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 9\n      - 17\n    note: four variants with doc comments\n  - promptLines:\n      - 28\n      - 33\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 20\n      - 28\n    note: label() match per variant\n  - promptLines:\n      - 37\n      - 41\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 37\n      - 44\n    note: StatusEntry struct fields\n  - promptLines:\n      - 43\n      - 49\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 48\n      - 55\n    note: line() renders padded label + file + optional detail\n  - promptLines:\n      - 51\n      - 52\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 49\n      - 54\n    note: suffix format and format string\n  - promptLines:\n      - 54\n      - 56\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 84\n      - 89\n    note: byte-exact example test, clean empty detail\n  - promptLines:\n      - 57\n      - 59\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 91\n      - 97\n    note: byte-exact example test, prompt-stale with detail\n  - promptLines:\n      - 60\n      - 61\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 99\n      - 105\n    note: byte-exact example test, DRIFT with detail\n  - promptLines:\n      - 62\n      - 63\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 107\n      - 113\n    note: byte-exact example test, unattributed with detail\n  - promptLines:\n      - 65\n      - 68\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 31\n      - 33\n    note: is_error true for Drift/Unattributed\n  - promptLines:\n      - 65\n      - 68\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 58\n      - 60\n    note: StatusEntry::is_error delegates to status\n  - promptLines:\n      - 65\n      - 68\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 137\n      - 148\n    note: is_error test for all variants\n",
+  "attributionYaml": "module: statusclass_render\ntarget: rust\nentries:\n  - promptLines:\n      - 1\n      - 7\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 1\n      - 4\n    note: \"module doc: pure rendering core, no I/O\"\n  - promptLines:\n      - 20\n      - 21\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 7\n      - 8\n    note: public FileStatus enum with required derives\n  - promptLines:\n      - 23\n      - 23\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 9\n      - 10\n    note: Clean variant\n  - promptLines:\n      - 24\n      - 24\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 11\n      - 12\n    note: PromptStale variant\n  - promptLines:\n      - 25\n      - 25\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 13\n      - 14\n    note: Drift variant\n  - promptLines:\n      - 26\n      - 26\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 15\n      - 16\n    note: Unattributed variant\n  - promptLines:\n      - 28\n      - 33\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 21\n      - 28\n    note: label() maps each variant to its fixed string\n  - promptLines:\n      - 30\n      - 30\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 23\n      - 23\n    note: Clean -> clean\n  - promptLines:\n      - 31\n      - 31\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 24\n      - 24\n    note: PromptStale -> prompt-stale\n  - promptLines:\n      - 32\n      - 32\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 25\n      - 25\n    note: Drift -> DRIFT uppercase\n  - promptLines:\n      - 33\n      - 33\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 26\n      - 26\n    note: Unattributed -> unattributed\n  - promptLines:\n      - 37\n      - 38\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 37\n      - 38\n    note: public StatusEntry struct\n  - promptLines:\n      - 39\n      - 39\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 39\n      - 40\n    note: file field, prompt path\n  - promptLines:\n      - 40\n      - 40\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 41\n      - 41\n    note: status field\n  - promptLines:\n      - 41\n      - 41\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 42\n      - 43\n    note: detail field, possibly empty\n  - promptLines:\n      - 43\n      - 49\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 48\n      - 55\n    note: line() renders one status line\n  - promptLines:\n      - 46\n      - 49\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 49\n      - 53\n    note: suffix empty when detail empty, else ' (detail)'\n  - promptLines:\n      - 51\n      - 52\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 54\n      - 54\n    note: \"{label:<12} {file}{suffix} format, pad to 12\"\n  - promptLines:\n      - 65\n      - 68\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 31\n      - 33\n    note: is_error true for Drift/Unattributed\n  - promptLines:\n      - 65\n      - 68\n    file: statusclass_render/src/lib.rs\n    lines:\n      - 58\n      - 60\n    note: StatusEntry::is_error delegates to status\n",
   "mapl": [
     {
       "promptLines": [
-        1,
-        69
+        9,
+        16
+      ],
+      "kind": "no-op",
+      "severity": "warning",
+      "message": "No changes made — existing statusclass_render crate already matches full spec.",
+      "reasoning": "Agent reported the prompt diff was empty and the existing code already realizes the entire spec (FileStatus enum, StatusEntry struct, line() padding/format, is_error() gate), with all 9 tests passing. No edits were needed, so nothing was produced. This is a re-compile of an already-satisfied contract, not a failure to understand or act."
+    },
+    {
+      "promptLines": [
+        28,
+        33
       ],
       "kind": "note",
       "severity": "info",
-      "message": "Prompt fully clear, spec map straight to Rust code 1:1.",
-      "reasoning": "Enum variants, labels, struct fields, line() format, is_error() rules all spelled exact with byte examples. Agent build match, tests match examples verbatim. No gap found."
+      "message": "\"lowercase-ish label\" is loose phrasing but disambiguated by the explicit table.",
+      "reasoning": "The word \"lowercase-ish\" is vague on its own (DRIFT is uppercase), but the per-variant table on lines 30-33 fixes each label exactly, so there is no real ambiguity for the machine to resolve. Flagging only so the author knows the adjective carries no independent meaning.",
+      "suggestion": "Each variant has a fixed **label** used when rendering:"
     }
   ],
+  "maplContent": "module: statusclass_render\ntarget: rust\nentries:\n  - promptLines:\n      - 9\n      - 16\n    kind: no-op\n    message: No changes made — existing statusclass_render crate already matches full spec.\n    reasoning: Agent reported the prompt diff was empty and the existing code already realizes the entire spec (FileStatus enum, StatusEntry struct, line() padding/format, is_error() gate), with all 9 tests passing. No edits were needed, so nothing was produced. This is a re-compile of an already-satisfied contract, not a failure to understand or act.\n  - promptLines:\n      - 28\n      - 33\n    kind: note\n    message: '\"lowercase-ish label\" is loose phrasing but disambiguated by the explicit table.'\n    reasoning: The word \"lowercase-ish\" is vague on its own (DRIFT is uppercase), but the per-variant table on lines 30-33 fixes each label exactly, so there is no real ambiguity for the machine to resolve. Flagging only so the author knows the adjective carries no independent meaning.\n    suggestion: \"Each variant has a fixed **label** used when rendering:\"\n",
+  "maplFile": "statusclass_render.mapl",
   "journal": [
     {
       "gen": 28,
@@ -215,6 +312,13 @@
           "patch": "@@ -0,0 +1,149 @@\n+//! The pure rendering core of the CLI's status command.\n+//!\n+//! Holds the status enum and the one-line rendering of a classified prompt.\n+//! Pure — no filesystem access, no hashing, no dependencies on other modules.\n+\n+/// The classification of a prompt relative to its generated files.\n+#[derive(Debug, Clone, Copy, PartialEq, Eq)]\n+pub enum FileStatus {\n+    /// Locked, attributed, and the prompt matches its last gen.\n+    Clean,\n+    /// Not generated, or the prompt changed since gen.\n+    PromptStale,\n+    /// A generated file was edited or deleted.\n+    Drift,\n+    /// Generated files exist but attribution failed.\n+    Unattributed,\n+}\n+\n+impl FileStatus {\n+    /// The fixed label used when rendering this status.\n+    pub fn label(self) -> &'static str {\n+        match self {\n+            FileStatus::Clean => \"clean\",\n+            FileStatus::PromptStale => \"prompt-stale\",\n+            FileStatus::Drift => \"DRIFT\",\n+            FileStatus::Unattributed => \"unattributed\",\n+        }\n+    }\n+\n+    /// Whether this status fails the CI gate.\n+    pub fn is_error(self) -> bool {\n+        matches!(self, FileStatus::Drift | FileStatus::Unattributed)\n+    }\n+}\n+\n+/// A classified prompt ready to be printed as one status line.\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct StatusEntry {\n+    /// The prompt path relative to the project root.\n+    pub file: String,\n+    pub status: FileStatus,\n+    /// A human-facing detail, possibly empty.\n+    pub detail: String,\n+}\n+\n+impl StatusEntry {\n+    /// Render the entry exactly as the CLI prints one status line.\n+    pub fn line(&self) -> String {\n+        let suffix = if self.detail.is_empty() {\n+            String::new()\n+        } else {\n+            format!(\" ({})\", self.detail)\n+        };\n+        format!(\"{:<12} {}{}\", self.status.label(), self.file, suffix)\n+    }\n+\n+    /// Whether this status fails the CI gate.\n+    pub fn is_error(&self) -> bool {\n+        self.status.is_error()\n+    }\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn labels_are_fixed() {\n+        assert_eq!(FileStatus::Clean.label(), \"clean\");\n+        assert_eq!(FileStatus::PromptStale.label(), \"prompt-stale\");\n+        assert_eq!(FileStatus::Drift.label(), \"DRIFT\");\n+        assert_eq!(FileStatus::Unattributed.label(), \"unattributed\");\n+    }\n+\n+    fn entry(status: FileStatus, detail: &str) -> StatusEntry {\n+        StatusEntry {\n+            file: \"examples/greeting.napl\".to_string(),\n+            status,\n+            detail: detail.to_string(),\n+        }\n+    }\n+\n+    #[test]\n+    fn line_clean_empty_detail() {\n+        assert_eq!(\n+            entry(FileStatus::Clean, \"\").line(),\n+            \"clean        examples/greeting.napl\"\n+        );\n+    }\n+\n+    #[test]\n+    fn line_prompt_stale_with_detail_has_single_separator() {\n+        assert_eq!(\n+            entry(FileStatus::PromptStale, \"never generated\").line(),\n+            \"prompt-stale examples/greeting.napl (never generated)\"\n+        );\n+    }\n+\n+    #[test]\n+    fn line_drift_with_detail() {\n+        assert_eq!(\n+            entry(FileStatus::Drift, \"typescript: x was edited\").line(),\n+            \"DRIFT        examples/greeting.napl (typescript: x was edited)\"\n+        );\n+    }\n+\n+    #[test]\n+    fn line_unattributed_with_detail() {\n+        assert_eq!(\n+            entry(FileStatus::Unattributed, \"run napl gen typescript --force\").line(),\n+            \"unattributed examples/greeting.napl (run napl gen typescript --force)\"\n+        );\n+    }\n+\n+    #[test]\n+    fn line_no_detail_has_no_trailing_space_or_parens() {\n+        let rendered = entry(FileStatus::Drift, \"\").line();\n+        assert_eq!(rendered, \"DRIFT        examples/greeting.napl\");\n+        assert!(!rendered.ends_with(' '));\n+        assert!(!rendered.contains('('));\n+    }\n+\n+    #[test]\n+    fn line_exact_twelve_char_label_gets_single_separator() {\n+        assert_eq!(FileStatus::PromptStale.label().len(), 12);\n+        let rendered = entry(FileStatus::PromptStale, \"\").line();\n+        assert_eq!(rendered, \"prompt-stale examples/greeting.napl\");\n+    }\n+\n+    #[test]\n+    fn line_shorter_labels_pad_to_width_twelve() {\n+        let prefix = \"clean        \";\n+        assert_eq!(prefix.len(), 13);\n+        assert!(entry(FileStatus::Clean, \"\").line().starts_with(prefix));\n+    }\n+\n+    #[test]\n+    fn is_error_for_all_variants() {\n+        assert!(!entry(FileStatus::Clean, \"\").is_error());\n+        assert!(!entry(FileStatus::PromptStale, \"\").is_error());\n+        assert!(entry(FileStatus::Drift, \"\").is_error());\n+        assert!(entry(FileStatus::Unattributed, \"\").is_error());\n+\n+        assert!(!FileStatus::Clean.is_error());\n+        assert!(!FileStatus::PromptStale.is_error());\n+        assert!(FileStatus::Drift.is_error());\n+        assert!(FileStatus::Unattributed.is_error());\n+    }\n+}"
         }
       ]
+    },
+    {
+      "gen": 76,
+      "timestamp": "2026-07-24T13:24:13.806Z",
+      "mode": "incremental",
+      "promptHash": "24cdb5c1328634b0489441dce5fdf5660ca766d6d9237bf9952163d442f61e2a",
+      "files": []
     }
   ],
   "lock": [
@@ -264,6 +368,18 @@
         "entries": [
           {
             "promptLines": [
+              1,
+              7
+            ],
+            "file": "statusclass_render/src/lib.rs",
+            "lines": [
+              1,
+              4
+            ],
+            "note": "module doc: pure rendering core, no I/O"
+          },
+          {
+            "promptLines": [
               20,
               21
             ],
@@ -272,19 +388,55 @@
               7,
               8
             ],
-            "note": "enum decl with required derives"
+            "note": "public FileStatus enum with required derives"
           },
           {
             "promptLines": [
-              22,
-              27
+              23,
+              23
             ],
             "file": "statusclass_render/src/lib.rs",
             "lines": [
               9,
-              17
+              10
             ],
-            "note": "four variants with doc comments"
+            "note": "Clean variant"
+          },
+          {
+            "promptLines": [
+              24,
+              24
+            ],
+            "file": "statusclass_render/src/lib.rs",
+            "lines": [
+              11,
+              12
+            ],
+            "note": "PromptStale variant"
+          },
+          {
+            "promptLines": [
+              25,
+              25
+            ],
+            "file": "statusclass_render/src/lib.rs",
+            "lines": [
+              13,
+              14
+            ],
+            "note": "Drift variant"
+          },
+          {
+            "promptLines": [
+              26,
+              26
+            ],
+            "file": "statusclass_render/src/lib.rs",
+            "lines": [
+              15,
+              16
+            ],
+            "note": "Unattributed variant"
           },
           {
             "promptLines": [
@@ -293,22 +445,106 @@
             ],
             "file": "statusclass_render/src/lib.rs",
             "lines": [
-              20,
+              21,
               28
             ],
-            "note": "label() match per variant"
+            "note": "label() maps each variant to its fixed string"
+          },
+          {
+            "promptLines": [
+              30,
+              30
+            ],
+            "file": "statusclass_render/src/lib.rs",
+            "lines": [
+              23,
+              23
+            ],
+            "note": "Clean -> clean"
+          },
+          {
+            "promptLines": [
+              31,
+              31
+            ],
+            "file": "statusclass_render/src/lib.rs",
+            "lines": [
+              24,
+              24
+            ],
+            "note": "PromptStale -> prompt-stale"
+          },
+          {
+            "promptLines": [
+              32,
+              32
+            ],
+            "file": "statusclass_render/src/lib.rs",
+            "lines": [
+              25,
+              25
+            ],
+            "note": "Drift -> DRIFT uppercase"
+          },
+          {
+            "promptLines": [
+              33,
+              33
+            ],
+            "file": "statusclass_render/src/lib.rs",
+            "lines": [
+              26,
+              26
+            ],
+            "note": "Unattributed -> unattributed"
           },
           {
             "promptLines": [
               37,
-              41
+              38
             ],
             "file": "statusclass_render/src/lib.rs",
             "lines": [
               37,
-              44
+              38
             ],
-            "note": "StatusEntry struct fields"
+            "note": "public StatusEntry struct"
+          },
+          {
+            "promptLines": [
+              39,
+              39
+            ],
+            "file": "statusclass_render/src/lib.rs",
+            "lines": [
+              39,
+              40
+            ],
+            "note": "file field, prompt path"
+          },
+          {
+            "promptLines": [
+              40,
+              40
+            ],
+            "file": "statusclass_render/src/lib.rs",
+            "lines": [
+              41,
+              41
+            ],
+            "note": "status field"
+          },
+          {
+            "promptLines": [
+              41,
+              41
+            ],
+            "file": "statusclass_render/src/lib.rs",
+            "lines": [
+              42,
+              43
+            ],
+            "note": "detail field, possibly empty"
           },
           {
             "promptLines": [
@@ -320,7 +556,19 @@
               48,
               55
             ],
-            "note": "line() renders padded label + file + optional detail"
+            "note": "line() renders one status line"
+          },
+          {
+            "promptLines": [
+              46,
+              49
+            ],
+            "file": "statusclass_render/src/lib.rs",
+            "lines": [
+              49,
+              53
+            ],
+            "note": "suffix empty when detail empty, else ' (detail)"
           },
           {
             "promptLines": [
@@ -329,58 +577,10 @@
             ],
             "file": "statusclass_render/src/lib.rs",
             "lines": [
-              49,
+              54,
               54
             ],
-            "note": "suffix format and format string"
-          },
-          {
-            "promptLines": [
-              54,
-              56
-            ],
-            "file": "statusclass_render/src/lib.rs",
-            "lines": [
-              84,
-              89
-            ],
-            "note": "byte-exact example test, clean empty detail"
-          },
-          {
-            "promptLines": [
-              57,
-              59
-            ],
-            "file": "statusclass_render/src/lib.rs",
-            "lines": [
-              91,
-              97
-            ],
-            "note": "byte-exact example test, prompt-stale with detail"
-          },
-          {
-            "promptLines": [
-              60,
-              61
-            ],
-            "file": "statusclass_render/src/lib.rs",
-            "lines": [
-              99,
-              105
-            ],
-            "note": "byte-exact example test, DRIFT with detail"
-          },
-          {
-            "promptLines": [
-              62,
-              63
-            ],
-            "file": "statusclass_render/src/lib.rs",
-            "lines": [
-              107,
-              113
-            ],
-            "note": "byte-exact example test, unattributed with detail"
+            "note": "{label:<12} {file}{suffix} format, pad to 12"
           },
           {
             "promptLines": [
@@ -405,18 +605,6 @@
               60
             ],
             "note": "StatusEntry::is_error delegates to status"
-          },
-          {
-            "promptLines": [
-              65,
-              68
-            ],
-            "file": "statusclass_render/src/lib.rs",
-            "lines": [
-              137,
-              148
-            ],
-            "note": "is_error test for all variants"
           }
         ]
       },
@@ -425,13 +613,28 @@
         "path": "statusclass_render.mapl",
         "entry": {
           "promptLines": [
-            1,
-            69
+            9,
+            16
+          ],
+          "kind": "no-op",
+          "severity": "warning",
+          "message": "No changes made — existing statusclass_render crate already matches full spec.",
+          "reasoning": "Agent reported the prompt diff was empty and the existing code already realizes the entire spec (FileStatus enum, StatusEntry struct, line() padding/format, is_error() gate), with all 9 tests passing. No edits were needed, so nothing was produced. This is a re-compile of an already-satisfied contract, not a failure to understand or act."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "statusclass_render.mapl",
+        "entry": {
+          "promptLines": [
+            28,
+            33
           ],
           "kind": "note",
           "severity": "info",
-          "message": "Prompt fully clear, spec map straight to Rust code 1:1.",
-          "reasoning": "Enum variants, labels, struct fields, line() format, is_error() rules all spelled exact with byte examples. Agent build match, tests match examples verbatim. No gap found."
+          "message": "\"lowercase-ish label\" is loose phrasing but disambiguated by the explicit table.",
+          "reasoning": "The word \"lowercase-ish\" is vague on its own (DRIFT is uppercase), but the per-variant table on lines 30-33 fixes each label exactly, so there is no real ambiguity for the machine to resolve. Flagging only so the author knows the adjective carries no independent meaning.",
+          "suggestion": "Each variant has a fixed **label** used when rendering:"
         }
       },
       {

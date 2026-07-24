@@ -37,7 +37,7 @@
         3,
         4
       ],
-      "note": "canonical prompt extension constant"
+      "note": "canonical prompt extension .napl constant"
     },
     {
       "promptLines": [
@@ -49,7 +49,7 @@
         6,
         7
       ],
-      "note": "canonical machine extension constant"
+      "note": "canonical machine extension .mapl constant"
     },
     {
       "promptLines": [
@@ -61,19 +61,19 @@
         9,
         10
       ],
-      "note": "machine alias robot emoji constant"
+      "note": "machine alias dot + robot emoji U+1F916"
     },
     {
       "promptLines": [
         28,
-        32
+        31
       ],
       "file": "extensions/src/lib.rs",
       "lines": [
         12,
         20
       ],
-      "note": "curated single-person emoji aliases in codepoint order"
+      "note": "curated six single-person emoji aliases in codepoint order"
     },
     {
       "promptLines": [
@@ -85,7 +85,7 @@
         22,
         25
       ],
-      "note": "default_prompt_aliases returns owned strings in order"
+      "note": "default_prompt_aliases returns curated as owned strings"
     },
     {
       "promptLines": [
@@ -97,7 +97,7 @@
         27,
         35
       ],
-      "note": "prompt_extensions canonical + optional or curated aliases"
+      "note": "prompt_extensions with canonical first then aliases or curated"
     },
     {
       "promptLines": [
@@ -109,7 +109,7 @@
         37,
         40
       ],
-      "note": "machine_extensions canonical then emoji alias"
+      "note": "machine_extensions lists .mapl then emoji alias"
     },
     {
       "promptLines": [
@@ -121,7 +121,19 @@
         42,
         45
       ],
-      "note": "is_prompt_file suffix check over prompt_extensions"
+      "note": "is_prompt_file suffix test over prompt extensions"
+    },
+    {
+      "promptLines": [
+        49,
+        49
+      ],
+      "file": "extensions/src/lib.rs",
+      "lines": [
+        44,
+        44
+      ],
+      "note": "plain suffix test via ends_with"
     },
     {
       "promptLines": [
@@ -133,43 +145,7 @@
         47,
         50
       ],
-      "note": "is_machine_file suffix check over machine_extensions"
-    },
-    {
-      "promptLines": [
-        49,
-        55
-      ],
-      "file": "extensions/src/lib.rs",
-      "lines": [
-        43,
-        44
-      ],
-      "note": "exact suffix test avoids composite emoji false match"
-    },
-    {
-      "promptLines": [
-        49,
-        55
-      ],
-      "file": "extensions/src/lib.rs",
-      "lines": [
-        134,
-        139
-      ],
-      "note": "test composite emoji sequence not a prompt file"
-    },
-    {
-      "promptLines": [
-        49,
-        55
-      ],
-      "file": "extensions/src/lib.rs",
-      "lines": [
-        141,
-        146
-      ],
-      "note": "test robot emoji is machine not prompt"
+      "note": "is_machine_file suffix test over machine extensions"
     },
     {
       "promptLines": [
@@ -178,10 +154,10 @@
       ],
       "file": "extensions/src/lib.rs",
       "lines": [
-        126,
-        131
+        30,
+        31
       ],
-      "note": "test alias override excludes curated aliases"
+      "note": "override branch uses only given aliases"
     },
     {
       "promptLines": [
@@ -190,109 +166,37 @@
       ],
       "file": "extensions/src/lib.rs",
       "lines": [
-        53,
+        52,
         59
       ],
       "note": "machine_extension_for_prompt mirrors napl vs emoji spelling"
-    },
+    }
+  ],
+  "attributionYaml": "module: extensions\ntarget: rust\nentries:\n  - promptLines:\n      - 21\n      - 21\n    file: extensions/src/lib.rs\n    lines:\n      - 3\n      - 4\n    note: canonical prompt extension .napl constant\n  - promptLines:\n      - 22\n      - 22\n    file: extensions/src/lib.rs\n    lines:\n      - 6\n      - 7\n    note: canonical machine extension .mapl constant\n  - promptLines:\n      - 23\n      - 24\n    file: extensions/src/lib.rs\n    lines:\n      - 9\n      - 10\n    note: machine alias dot + robot emoji U+1F916\n  - promptLines:\n      - 28\n      - 31\n    file: extensions/src/lib.rs\n    lines:\n      - 12\n      - 20\n    note: curated six single-person emoji aliases in codepoint order\n  - promptLines:\n      - 31\n      - 32\n    file: extensions/src/lib.rs\n    lines:\n      - 22\n      - 25\n    note: default_prompt_aliases returns curated as owned strings\n  - promptLines:\n      - 36\n      - 38\n    file: extensions/src/lib.rs\n    lines:\n      - 27\n      - 35\n    note: prompt_extensions with canonical first then aliases or curated\n  - promptLines:\n      - 39\n      - 40\n    file: extensions/src/lib.rs\n    lines:\n      - 37\n      - 40\n    note: machine_extensions lists .mapl then emoji alias\n  - promptLines:\n      - 44\n      - 45\n    file: extensions/src/lib.rs\n    lines:\n      - 42\n      - 45\n    note: is_prompt_file suffix test over prompt extensions\n  - promptLines:\n      - 49\n      - 49\n    file: extensions/src/lib.rs\n    lines:\n      - 44\n      - 44\n    note: plain suffix test via ends_with\n  - promptLines:\n      - 46\n      - 47\n    file: extensions/src/lib.rs\n    lines:\n      - 47\n      - 50\n    note: is_machine_file suffix test over machine extensions\n  - promptLines:\n      - 57\n      - 58\n    file: extensions/src/lib.rs\n    lines:\n      - 30\n      - 31\n    note: override branch uses only given aliases\n  - promptLines:\n      - 62\n      - 65\n    file: extensions/src/lib.rs\n    lines:\n      - 52\n      - 59\n    note: machine_extension_for_prompt mirrors napl vs emoji spelling\n",
+  "mapl": [
     {
       "promptLines": [
-        19,
-        19
+        9,
+        15
       ],
-      "file": "extensions/src/lib.rs",
-      "lines": [
-        66,
-        70
-      ],
-      "note": "test canonical constants values"
+      "kind": "no-op",
+      "severity": "warning",
+      "message": "Prompt asks to create a new `extensions/` crate, yet agent made NO CHANGES.",
+      "reasoning": "Prompt instructs creating a new, separate Rust library crate (extensions/Cargo.toml + extensions/src/lib.rs) with cargo test passing. Agent produced NO CHANGES, claiming the source already matches target behavior exactly and 13 tests pass. This means the extensions crate must already exist fully implemented in the working tree — the compile was a verification, not a build. Worth confirming the pre-existing crate genuinely covers every clause here (canonical constants, six curated aliases in codepoint order, optional-alias override rule, whole-codepoint suffix matching, machine_extension_for_prompt mirroring) rather than trusting a passing test count alone."
     },
     {
       "promptLines": [
         36,
         38
       ],
-      "file": "extensions/src/lib.rs",
-      "lines": [
-        90,
-        102
-      ],
-      "note": "tests for prompt_extensions defaults and override"
-    },
-    {
-      "promptLines": [
-        39,
-        40
-      ],
-      "file": "extensions/src/lib.rs",
-      "lines": [
-        105,
-        107
-      ],
-      "note": "test machine_extensions lists both"
-    },
-    {
-      "promptLines": [
-        44,
-        45
-      ],
-      "file": "extensions/src/lib.rs",
-      "lines": [
-        110,
-        123
-      ],
-      "note": "tests is_prompt_file matches canonical and curated aliases"
-    },
-    {
-      "promptLines": [
-        46,
-        47
-      ],
-      "file": "extensions/src/lib.rs",
-      "lines": [
-        149,
-        153
-      ],
-      "note": "test is_machine_file matches canonical and alias"
-    },
-    {
-      "promptLines": [
-        62,
-        65
-      ],
-      "file": "extensions/src/lib.rs",
-      "lines": [
-        156,
-        170
-      ],
-      "note": "tests machine_extension_for_prompt mirrors canonical and emoji"
-    },
-    {
-      "promptLines": [
-        26,
-        32
-      ],
-      "file": "extensions/src/lib.rs",
-      "lines": [
-        73,
-        87
-      ],
-      "note": "test curated aliases in order matches spec list"
+      "kind": "note",
+      "severity": "info",
+      "message": "Empty explicit alias list vs. omitted list — treated as distinct cases.",
+      "reasoning": "prompt_extensions distinguishes \"a list is supplied\" (use given aliases) from \"none supplied\" (use six curated). An explicitly-supplied empty list therefore yields only canonical .napl with no aliases, matching the line 57-58 override rule where only .napl plus overrides match. Since no changes were made, verify the pre-existing code models the option as Some(empty)-vs-None rather than treating empty and absent identically."
     }
   ],
-  "attributionYaml": "module: extensions\ntarget: rust\nentries:\n  - promptLines:\n      - 21\n      - 21\n    file: extensions/src/lib.rs\n    lines:\n      - 3\n      - 4\n    note: canonical prompt extension constant\n  - promptLines:\n      - 22\n      - 22\n    file: extensions/src/lib.rs\n    lines:\n      - 6\n      - 7\n    note: canonical machine extension constant\n  - promptLines:\n      - 23\n      - 24\n    file: extensions/src/lib.rs\n    lines:\n      - 9\n      - 10\n    note: machine alias robot emoji constant\n  - promptLines:\n      - 28\n      - 32\n    file: extensions/src/lib.rs\n    lines:\n      - 12\n      - 20\n    note: curated single-person emoji aliases in codepoint order\n  - promptLines:\n      - 31\n      - 32\n    file: extensions/src/lib.rs\n    lines:\n      - 22\n      - 25\n    note: default_prompt_aliases returns owned strings in order\n  - promptLines:\n      - 36\n      - 38\n    file: extensions/src/lib.rs\n    lines:\n      - 27\n      - 35\n    note: prompt_extensions canonical + optional or curated aliases\n  - promptLines:\n      - 39\n      - 40\n    file: extensions/src/lib.rs\n    lines:\n      - 37\n      - 40\n    note: machine_extensions canonical then emoji alias\n  - promptLines:\n      - 44\n      - 45\n    file: extensions/src/lib.rs\n    lines:\n      - 42\n      - 45\n    note: is_prompt_file suffix check over prompt_extensions\n  - promptLines:\n      - 46\n      - 47\n    file: extensions/src/lib.rs\n    lines:\n      - 47\n      - 50\n    note: is_machine_file suffix check over machine_extensions\n  - promptLines:\n      - 49\n      - 55\n    file: extensions/src/lib.rs\n    lines:\n      - 43\n      - 44\n    note: exact suffix test avoids composite emoji false match\n  - promptLines:\n      - 49\n      - 55\n    file: extensions/src/lib.rs\n    lines:\n      - 134\n      - 139\n    note: test composite emoji sequence not a prompt file\n  - promptLines:\n      - 49\n      - 55\n    file: extensions/src/lib.rs\n    lines:\n      - 141\n      - 146\n    note: test robot emoji is machine not prompt\n  - promptLines:\n      - 57\n      - 58\n    file: extensions/src/lib.rs\n    lines:\n      - 126\n      - 131\n    note: test alias override excludes curated aliases\n  - promptLines:\n      - 62\n      - 65\n    file: extensions/src/lib.rs\n    lines:\n      - 53\n      - 59\n    note: machine_extension_for_prompt mirrors napl vs emoji spelling\n  - promptLines:\n      - 19\n      - 19\n    file: extensions/src/lib.rs\n    lines:\n      - 66\n      - 70\n    note: test canonical constants values\n  - promptLines:\n      - 36\n      - 38\n    file: extensions/src/lib.rs\n    lines:\n      - 90\n      - 102\n    note: tests for prompt_extensions defaults and override\n  - promptLines:\n      - 39\n      - 40\n    file: extensions/src/lib.rs\n    lines:\n      - 105\n      - 107\n    note: test machine_extensions lists both\n  - promptLines:\n      - 44\n      - 45\n    file: extensions/src/lib.rs\n    lines:\n      - 110\n      - 123\n    note: tests is_prompt_file matches canonical and curated aliases\n  - promptLines:\n      - 46\n      - 47\n    file: extensions/src/lib.rs\n    lines:\n      - 149\n      - 153\n    note: test is_machine_file matches canonical and alias\n  - promptLines:\n      - 62\n      - 65\n    file: extensions/src/lib.rs\n    lines:\n      - 156\n      - 170\n    note: tests machine_extension_for_prompt mirrors canonical and emoji\n  - promptLines:\n      - 26\n      - 32\n    file: extensions/src/lib.rs\n    lines:\n      - 73\n      - 87\n    note: test curated aliases in order matches spec list\n",
-  "mapl": [
-    {
-      "promptLines": [
-        1,
-        66
-      ],
-      "kind": "no-op",
-      "severity": "warning",
-      "message": "Agent found existing code already satisfies full spec, made no changes.",
-      "reasoning": "Coding agent reports crate at extensions/ already implements constants, alias lists, classification functions, and mirroring logic exactly as prompt describes, with 13/13 tests passing. No diff was needed since prior compile already covered this contract."
-    }
-  ],
+  "maplContent": "module: extensions\ntarget: rust\nentries:\n  - promptLines:\n      - 9\n      - 15\n    kind: no-op\n    message: Prompt asks to create a new `extensions/` crate, yet agent made NO CHANGES.\n    reasoning: Prompt instructs creating a new, separate Rust library crate (extensions/Cargo.toml + extensions/src/lib.rs) with cargo test passing. Agent produced NO CHANGES, claiming the source already matches target behavior exactly and 13 tests pass. This means the extensions crate must already exist fully implemented in the working tree — the compile was a verification, not a build. Worth confirming the pre-existing crate genuinely covers every clause here (canonical constants, six curated aliases in codepoint order, optional-alias override rule, whole-codepoint suffix matching, machine_extension_for_prompt mirroring) rather than trusting a passing test count alone.\n  - promptLines:\n      - 36\n      - 38\n    kind: note\n    message: Empty explicit alias list vs. omitted list — treated as distinct cases.\n    reasoning: prompt_extensions distinguishes \"a list is supplied\" (use given aliases) from \"none supplied\" (use six curated). An explicitly-supplied empty list therefore yields only canonical .napl with no aliases, matching the line 57-58 override rule where only .napl plus overrides match. Since no changes were made, verify the pre-existing code models the option as Some(empty)-vs-None rather than treating empty and absent identically.\n",
+  "maplFile": "extensions.mapl",
   "journal": [
     {
       "gen": 2,
@@ -315,6 +219,13 @@
     {
       "gen": 45,
       "timestamp": "2026-07-24T12:28:26.819Z",
+      "mode": "incremental",
+      "promptHash": "53b3004a36ec7d3e18f21eccb7133d6620a90346ccabac373e809fc5de8cb56b",
+      "files": []
+    },
+    {
+      "gen": 54,
+      "timestamp": "2026-07-24T12:41:35.911Z",
       "mode": "incremental",
       "promptHash": "53b3004a36ec7d3e18f21eccb7133d6620a90346ccabac373e809fc5de8cb56b",
       "files": []
@@ -375,7 +286,7 @@
               3,
               4
             ],
-            "note": "canonical prompt extension constant"
+            "note": "canonical prompt extension .napl constant"
           },
           {
             "promptLines": [
@@ -387,7 +298,7 @@
               6,
               7
             ],
-            "note": "canonical machine extension constant"
+            "note": "canonical machine extension .mapl constant"
           },
           {
             "promptLines": [
@@ -399,19 +310,19 @@
               9,
               10
             ],
-            "note": "machine alias robot emoji constant"
+            "note": "machine alias dot + robot emoji U+1F916"
           },
           {
             "promptLines": [
               28,
-              32
+              31
             ],
             "file": "extensions/src/lib.rs",
             "lines": [
               12,
               20
             ],
-            "note": "curated single-person emoji aliases in codepoint order"
+            "note": "curated six single-person emoji aliases in codepoint order"
           },
           {
             "promptLines": [
@@ -423,7 +334,7 @@
               22,
               25
             ],
-            "note": "default_prompt_aliases returns owned strings in order"
+            "note": "default_prompt_aliases returns curated as owned strings"
           },
           {
             "promptLines": [
@@ -435,7 +346,7 @@
               27,
               35
             ],
-            "note": "prompt_extensions canonical + optional or curated aliases"
+            "note": "prompt_extensions with canonical first then aliases or curated"
           },
           {
             "promptLines": [
@@ -447,7 +358,7 @@
               37,
               40
             ],
-            "note": "machine_extensions canonical then emoji alias"
+            "note": "machine_extensions lists .mapl then emoji alias"
           },
           {
             "promptLines": [
@@ -459,7 +370,19 @@
               42,
               45
             ],
-            "note": "is_prompt_file suffix check over prompt_extensions"
+            "note": "is_prompt_file suffix test over prompt extensions"
+          },
+          {
+            "promptLines": [
+              49,
+              49
+            ],
+            "file": "extensions/src/lib.rs",
+            "lines": [
+              44,
+              44
+            ],
+            "note": "plain suffix test via ends_with"
           },
           {
             "promptLines": [
@@ -471,43 +394,7 @@
               47,
               50
             ],
-            "note": "is_machine_file suffix check over machine_extensions"
-          },
-          {
-            "promptLines": [
-              49,
-              55
-            ],
-            "file": "extensions/src/lib.rs",
-            "lines": [
-              43,
-              44
-            ],
-            "note": "exact suffix test avoids composite emoji false match"
-          },
-          {
-            "promptLines": [
-              49,
-              55
-            ],
-            "file": "extensions/src/lib.rs",
-            "lines": [
-              134,
-              139
-            ],
-            "note": "test composite emoji sequence not a prompt file"
-          },
-          {
-            "promptLines": [
-              49,
-              55
-            ],
-            "file": "extensions/src/lib.rs",
-            "lines": [
-              141,
-              146
-            ],
-            "note": "test robot emoji is machine not prompt"
+            "note": "is_machine_file suffix test over machine extensions"
           },
           {
             "promptLines": [
@@ -516,10 +403,10 @@
             ],
             "file": "extensions/src/lib.rs",
             "lines": [
-              126,
-              131
+              30,
+              31
             ],
-            "note": "test alias override excludes curated aliases"
+            "note": "override branch uses only given aliases"
           },
           {
             "promptLines": [
@@ -528,94 +415,10 @@
             ],
             "file": "extensions/src/lib.rs",
             "lines": [
-              53,
+              52,
               59
             ],
             "note": "machine_extension_for_prompt mirrors napl vs emoji spelling"
-          },
-          {
-            "promptLines": [
-              19,
-              19
-            ],
-            "file": "extensions/src/lib.rs",
-            "lines": [
-              66,
-              70
-            ],
-            "note": "test canonical constants values"
-          },
-          {
-            "promptLines": [
-              36,
-              38
-            ],
-            "file": "extensions/src/lib.rs",
-            "lines": [
-              90,
-              102
-            ],
-            "note": "tests for prompt_extensions defaults and override"
-          },
-          {
-            "promptLines": [
-              39,
-              40
-            ],
-            "file": "extensions/src/lib.rs",
-            "lines": [
-              105,
-              107
-            ],
-            "note": "test machine_extensions lists both"
-          },
-          {
-            "promptLines": [
-              44,
-              45
-            ],
-            "file": "extensions/src/lib.rs",
-            "lines": [
-              110,
-              123
-            ],
-            "note": "tests is_prompt_file matches canonical and curated aliases"
-          },
-          {
-            "promptLines": [
-              46,
-              47
-            ],
-            "file": "extensions/src/lib.rs",
-            "lines": [
-              149,
-              153
-            ],
-            "note": "test is_machine_file matches canonical and alias"
-          },
-          {
-            "promptLines": [
-              62,
-              65
-            ],
-            "file": "extensions/src/lib.rs",
-            "lines": [
-              156,
-              170
-            ],
-            "note": "tests machine_extension_for_prompt mirrors canonical and emoji"
-          },
-          {
-            "promptLines": [
-              26,
-              32
-            ],
-            "file": "extensions/src/lib.rs",
-            "lines": [
-              73,
-              87
-            ],
-            "note": "test curated aliases in order matches spec list"
           }
         ]
       },
@@ -624,13 +427,27 @@
         "path": "extensions.mapl",
         "entry": {
           "promptLines": [
-            1,
-            66
+            9,
+            15
           ],
           "kind": "no-op",
           "severity": "warning",
-          "message": "Agent found existing code already satisfies full spec, made no changes.",
-          "reasoning": "Coding agent reports crate at extensions/ already implements constants, alias lists, classification functions, and mirroring logic exactly as prompt describes, with 13/13 tests passing. No diff was needed since prior compile already covered this contract."
+          "message": "Prompt asks to create a new `extensions/` crate, yet agent made NO CHANGES.",
+          "reasoning": "Prompt instructs creating a new, separate Rust library crate (extensions/Cargo.toml + extensions/src/lib.rs) with cargo test passing. Agent produced NO CHANGES, claiming the source already matches target behavior exactly and 13 tests pass. This means the extensions crate must already exist fully implemented in the working tree — the compile was a verification, not a build. Worth confirming the pre-existing crate genuinely covers every clause here (canonical constants, six curated aliases in codepoint order, optional-alias override rule, whole-codepoint suffix matching, machine_extension_for_prompt mirroring) rather than trusting a passing test count alone."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "extensions.mapl",
+        "entry": {
+          "promptLines": [
+            36,
+            38
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "Empty explicit alias list vs. omitted list — treated as distinct cases.",
+          "reasoning": "prompt_extensions distinguishes \"a list is supplied\" (use given aliases) from \"none supplied\" (use six curated). An explicitly-supplied empty list therefore yields only canonical .napl with no aliases, matching the line 57-58 override rule where only .napl plus overrides match. Since no changes were made, verify the pre-existing code models the option as Some(empty)-vs-None rather than treating empty and absent identically."
         }
       },
       {

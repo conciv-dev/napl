@@ -61,7 +61,79 @@
         10,
         14
       ],
-      "note": "GeneratedPathInfo struct definition"
+      "note": "GeneratedPathInfo struct with target and target_rel_path"
+    },
+    {
+      "promptLines": [
+        55,
+        55
+      ],
+      "file": "reverse/src/lib.rs",
+      "lines": [
+        16,
+        16
+      ],
+      "note": "parse_generated_path signature"
+    },
+    {
+      "promptLines": [
+        56,
+        56
+      ],
+      "file": "reverse/src/lib.rs",
+      "lines": [
+        17,
+        17
+      ],
+      "note": "normalize backslashes to forward slashes"
+    },
+    {
+      "promptLines": [
+        56,
+        58
+      ],
+      "file": "reverse/src/lib.rs",
+      "lines": [
+        18,
+        18
+      ],
+      "note": "strip GENERATED_PREFIX, None if absent"
+    },
+    {
+      "promptLines": [
+        56,
+        58
+      ],
+      "file": "reverse/src/lib.rs",
+      "lines": [
+        19,
+        19
+      ],
+      "note": "find first slash, None if none"
+    },
+    {
+      "promptLines": [
+        57,
+        57
+      ],
+      "file": "reverse/src/lib.rs",
+      "lines": [
+        20,
+        21
+      ],
+      "note": "target before slash, rest is target_rel_path"
+    },
+    {
+      "promptLines": [
+        58,
+        59
+      ],
+      "file": "reverse/src/lib.rs",
+      "lines": [
+        22,
+        24
+      ],
+      "note": "None if target or rel path empty"
     },
     {
       "promptLines": [
@@ -70,22 +142,10 @@
       ],
       "file": "reverse/src/lib.rs",
       "lines": [
-        16,
-        29
+        25,
+        28
       ],
-      "note": "parse_generated_path normalizes, strips prefix, splits target/rel path"
-    },
-    {
-      "promptLines": [
-        60,
-        62
-      ],
-      "file": "reverse/src/lib.rs",
-      "lines": [
-        137,
-        159
-      ],
-      "note": "examples of parse_generated_path behavior as tests"
+      "note": "build GeneratedPathInfo result"
     },
     {
       "promptLines": [
@@ -97,7 +157,7 @@
         31,
         37
       ],
-      "note": "AttributionSource struct definition"
+      "note": "AttributionSource struct"
     },
     {
       "promptLines": [
@@ -109,31 +169,91 @@
         39,
         47
       ],
-      "note": "ReverseMatch struct definition"
+      "note": "ReverseMatch struct"
     },
     {
       "promptLines": [
         75,
-        82
+        75
       ],
       "file": "reverse/src/lib.rs",
       "lines": [
         49,
+        54
+      ],
+      "note": "reverse_matches signature"
+    },
+    {
+      "promptLines": [
+        76,
+        76
+      ],
+      "file": "reverse/src/lib.rs",
+      "lines": [
+        56,
+        59
+      ],
+      "note": "filter sources by target"
+    },
+    {
+      "promptLines": [
+        76,
+        76
+      ],
+      "file": "reverse/src/lib.rs",
+      "lines": [
+        60,
+        63
+      ],
+      "note": "filter entries by file"
+    },
+    {
+      "promptLines": [
+        77,
+        81
+      ],
+      "file": "reverse/src/lib.rs",
+      "lines": [
+        64,
+        68
+      ],
+      "note": "code_line containment filter, None skips filter"
+    },
+    {
+      "promptLines": [
+        78,
+        80
+      ],
+      "file": "reverse/src/lib.rs",
+      "lines": [
+        69,
+        78
+      ],
+      "note": "emit one match per prompt file"
+    },
+    {
+      "promptLines": [
+        81,
         82
       ],
-      "note": "reverse_matches filters by target/file/line and emits one match per prompt file"
+      "file": "reverse/src/lib.rs",
+      "lines": [
+        81,
+        81
+      ],
+      "note": "return matches in order"
     },
     {
       "promptLines": [
         86,
-        89
+        88
       ],
       "file": "reverse/src/lib.rs",
       "lines": [
         84,
         89
       ],
-      "note": "prompt_absolute_lines conversion formula"
+      "note": "prompt_absolute_lines conversion"
     },
     {
       "promptLines": [
@@ -145,7 +265,7 @@
         91,
         93
       ],
-      "note": "match_prompt_lines delegates using body_start_line"
+      "note": "match_prompt_lines uses body_start_line"
     },
     {
       "promptLines": [
@@ -157,7 +277,7 @@
         95,
         100
       ],
-      "note": "is_file_drifted hash comparison logic"
+      "note": "is_file_drifted hash comparison"
     },
     {
       "promptLines": [
@@ -169,7 +289,7 @@
         102,
         108
       ],
-      "note": "code_lens_title formatting with/without note"
+      "note": "code_lens_title with/without note"
     },
     {
       "promptLines": [
@@ -181,68 +301,44 @@
         110,
         120
       ],
-      "note": "dedupe_matches keeps first occurrence per prompt span"
-    },
-    {
-      "promptLines": [
-        27,
-        30
-      ],
-      "file": "reverse/src/lib.rs",
-      "lines": [
-        5,
-        5
-      ],
-      "note": "use of LineRange from schemas_line_range"
-    },
-    {
-      "promptLines": [
-        31,
-        36
-      ],
-      "file": "reverse/src/lib.rs",
-      "lines": [
-        4,
-        4
-      ],
-      "note": "use of AttributionEntry from schemas_attribution"
-    },
-    {
-      "promptLines": [
-        37,
-        39
-      ],
-      "file": "reverse/src/lib.rs",
-      "lines": [
-        3,
-        3
-      ],
-      "note": "use of PromptBody from body_lines"
+      "note": "dedupe_matches keeps first per span"
     }
   ],
-  "attributionYaml": "module: reverse\ntarget: rust\nentries:\n  - promptLines:\n      - 45\n      - 46\n    file: reverse/src/lib.rs\n    lines:\n      - 7\n      - 7\n    note: GENERATED_PREFIX constant\n  - promptLines:\n      - 47\n      - 48\n    file: reverse/src/lib.rs\n    lines:\n      - 8\n      - 8\n    note: DRIFT_LENS_PREFIX constant\n  - promptLines:\n      - 52\n      - 53\n    file: reverse/src/lib.rs\n    lines:\n      - 10\n      - 14\n    note: GeneratedPathInfo struct definition\n  - promptLines:\n      - 55\n      - 59\n    file: reverse/src/lib.rs\n    lines:\n      - 16\n      - 29\n    note: parse_generated_path normalizes, strips prefix, splits target/rel path\n  - promptLines:\n      - 60\n      - 62\n    file: reverse/src/lib.rs\n    lines:\n      - 137\n      - 159\n    note: examples of parse_generated_path behavior as tests\n  - promptLines:\n      - 66\n      - 69\n    file: reverse/src/lib.rs\n    lines:\n      - 31\n      - 37\n    note: AttributionSource struct definition\n  - promptLines:\n      - 70\n      - 73\n    file: reverse/src/lib.rs\n    lines:\n      - 39\n      - 47\n    note: ReverseMatch struct definition\n  - promptLines:\n      - 75\n      - 82\n    file: reverse/src/lib.rs\n    lines:\n      - 49\n      - 82\n    note: reverse_matches filters by target/file/line and emits one match per prompt file\n  - promptLines:\n      - 86\n      - 89\n    file: reverse/src/lib.rs\n    lines:\n      - 84\n      - 89\n    note: prompt_absolute_lines conversion formula\n  - promptLines:\n      - 90\n      - 91\n    file: reverse/src/lib.rs\n    lines:\n      - 91\n      - 93\n    note: match_prompt_lines delegates using body_start_line\n  - promptLines:\n      - 95\n      - 97\n    file: reverse/src/lib.rs\n    lines:\n      - 95\n      - 100\n    note: is_file_drifted hash comparison logic\n  - promptLines:\n      - 98\n      - 101\n    file: reverse/src/lib.rs\n    lines:\n      - 102\n      - 108\n    note: code_lens_title formatting with/without note\n  - promptLines:\n      - 102\n      - 104\n    file: reverse/src/lib.rs\n    lines:\n      - 110\n      - 120\n    note: dedupe_matches keeps first occurrence per prompt span\n  - promptLines:\n      - 27\n      - 30\n    file: reverse/src/lib.rs\n    lines:\n      - 5\n      - 5\n    note: use of LineRange from schemas_line_range\n  - promptLines:\n      - 31\n      - 36\n    file: reverse/src/lib.rs\n    lines:\n      - 4\n      - 4\n    note: use of AttributionEntry from schemas_attribution\n  - promptLines:\n      - 37\n      - 39\n    file: reverse/src/lib.rs\n    lines:\n      - 3\n      - 3\n    note: use of PromptBody from body_lines\n",
+  "attributionYaml": "module: reverse\ntarget: rust\nentries:\n  - promptLines:\n      - 45\n      - 46\n    file: reverse/src/lib.rs\n    lines:\n      - 7\n      - 7\n    note: GENERATED_PREFIX constant\n  - promptLines:\n      - 47\n      - 48\n    file: reverse/src/lib.rs\n    lines:\n      - 8\n      - 8\n    note: DRIFT_LENS_PREFIX constant\n  - promptLines:\n      - 52\n      - 53\n    file: reverse/src/lib.rs\n    lines:\n      - 10\n      - 14\n    note: GeneratedPathInfo struct with target and target_rel_path\n  - promptLines:\n      - 55\n      - 55\n    file: reverse/src/lib.rs\n    lines:\n      - 16\n      - 16\n    note: parse_generated_path signature\n  - promptLines:\n      - 56\n      - 56\n    file: reverse/src/lib.rs\n    lines:\n      - 17\n      - 17\n    note: normalize backslashes to forward slashes\n  - promptLines:\n      - 56\n      - 58\n    file: reverse/src/lib.rs\n    lines:\n      - 18\n      - 18\n    note: strip GENERATED_PREFIX, None if absent\n  - promptLines:\n      - 56\n      - 58\n    file: reverse/src/lib.rs\n    lines:\n      - 19\n      - 19\n    note: find first slash, None if none\n  - promptLines:\n      - 57\n      - 57\n    file: reverse/src/lib.rs\n    lines:\n      - 20\n      - 21\n    note: target before slash, rest is target_rel_path\n  - promptLines:\n      - 58\n      - 59\n    file: reverse/src/lib.rs\n    lines:\n      - 22\n      - 24\n    note: None if target or rel path empty\n  - promptLines:\n      - 55\n      - 59\n    file: reverse/src/lib.rs\n    lines:\n      - 25\n      - 28\n    note: build GeneratedPathInfo result\n  - promptLines:\n      - 66\n      - 69\n    file: reverse/src/lib.rs\n    lines:\n      - 31\n      - 37\n    note: AttributionSource struct\n  - promptLines:\n      - 70\n      - 73\n    file: reverse/src/lib.rs\n    lines:\n      - 39\n      - 47\n    note: ReverseMatch struct\n  - promptLines:\n      - 75\n      - 75\n    file: reverse/src/lib.rs\n    lines:\n      - 49\n      - 54\n    note: reverse_matches signature\n  - promptLines:\n      - 76\n      - 76\n    file: reverse/src/lib.rs\n    lines:\n      - 56\n      - 59\n    note: filter sources by target\n  - promptLines:\n      - 76\n      - 76\n    file: reverse/src/lib.rs\n    lines:\n      - 60\n      - 63\n    note: filter entries by file\n  - promptLines:\n      - 77\n      - 81\n    file: reverse/src/lib.rs\n    lines:\n      - 64\n      - 68\n    note: code_line containment filter, None skips filter\n  - promptLines:\n      - 78\n      - 80\n    file: reverse/src/lib.rs\n    lines:\n      - 69\n      - 78\n    note: emit one match per prompt file\n  - promptLines:\n      - 81\n      - 82\n    file: reverse/src/lib.rs\n    lines:\n      - 81\n      - 81\n    note: return matches in order\n  - promptLines:\n      - 86\n      - 88\n    file: reverse/src/lib.rs\n    lines:\n      - 84\n      - 89\n    note: prompt_absolute_lines conversion\n  - promptLines:\n      - 90\n      - 91\n    file: reverse/src/lib.rs\n    lines:\n      - 91\n      - 93\n    note: match_prompt_lines uses body_start_line\n  - promptLines:\n      - 95\n      - 97\n    file: reverse/src/lib.rs\n    lines:\n      - 95\n      - 100\n    note: is_file_drifted hash comparison\n  - promptLines:\n      - 98\n      - 101\n    file: reverse/src/lib.rs\n    lines:\n      - 102\n      - 108\n    note: code_lens_title with/without note\n  - promptLines:\n      - 102\n      - 104\n    file: reverse/src/lib.rs\n    lines:\n      - 110\n      - 120\n    note: dedupe_matches keeps first per span\n",
   "mapl": [
     {
       "promptLines": [
-        16,
-        25
+        1,
+        105
       ],
-      "kind": "note",
-      "severity": "info",
-      "message": "Sibling crate path deps added correctly as instructed.",
-      "reasoning": "Cargo.toml uses path = \"../schemas_line_range\" etc., matching \"one directory up and over\" layout; no ambiguity, confirms compile matched prompt intent."
+      "kind": "no-op",
+      "severity": "warning",
+      "message": "No source edits — prompt body unchanged, existing crate already realizes it.",
+      "reasoning": "Agent reported the prompt diff was empty and the existing `reverse` crate already implements the full body (constants, path parsing, reverse matching, line conversions, drift/title/dedupe). `cargo test` reported 16 passed / 0 failed, so no edits were produced. This is an incremental recompile with nothing new to apply."
     },
     {
       "promptLines": [
-        47,
-        48
+        45,
+        45
+      ],
+      "kind": "assumption",
+      "severity": "warning",
+      "message": "GENERATED_PREFIX = \".napl/src/\" already realized; not re-verified against source.",
+      "reasoning": "Since no changes were made, the literal prefix value and DRIFT_LENS_PREFIX string were assumed to match the existing constants exactly. If prior code drifted from these literals, the no-op would silently leave a mismatch — worth a spot check on the recorded strings."
+    },
+    {
+      "promptLines": [
+        55,
+        62
       ],
       "kind": "note",
       "severity": "info",
-      "message": "DRIFT_LENS_PREFIX constant defined but never used or tested.",
-      "reasoning": "Prompt only asks to \"expose\" the constant with a fixed value; agent did exactly that (no consumer logic specified), so lack of usage/test is expected, not a defect."
+      "message": "Path-parse edge cases rely on existing tests already covering them.",
+      "reasoning": "The four rejection conditions (missing prefix, no trailing slash, empty target, empty rel path) and the worked examples are only guaranteed correct because the 16 existing tests pass. No new test was added to confirm each listed example, so coverage is inherited, not re-proven for this compile."
     }
   ],
+  "maplContent": "module: reverse\ntarget: rust\nentries:\n  - promptLines:\n      - 1\n      - 105\n    kind: no-op\n    message: No source edits — prompt body unchanged, existing crate already realizes it.\n    reasoning: Agent reported the prompt diff was empty and the existing `reverse` crate already implements the full body (constants, path parsing, reverse matching, line conversions, drift/title/dedupe). `cargo test` reported 16 passed / 0 failed, so no edits were produced. This is an incremental recompile with nothing new to apply.\n  - promptLines:\n      - 45\n      - 45\n    kind: assumption\n    message: GENERATED_PREFIX = \".napl/src/\" already realized; not re-verified against source.\n    reasoning: Since no changes were made, the literal prefix value and DRIFT_LENS_PREFIX string were assumed to match the existing constants exactly. If prior code drifted from these literals, the no-op would silently leave a mismatch — worth a spot check on the recorded strings.\n  - promptLines:\n      - 55\n      - 62\n    kind: note\n    message: Path-parse edge cases rely on existing tests already covering them.\n    reasoning: The four rejection conditions (missing prefix, no trailing slash, empty target, empty rel path) and the worked examples are only guaranteed correct because the 16 existing tests pass. No new test was added to confirm each listed example, so coverage is inherited, not re-proven for this compile.\n",
+  "maplFile": "reverse.mapl",
   "journal": [
     {
       "gen": 20,
@@ -261,6 +357,13 @@
           "patch": "@@ -0,0 +1,309 @@\n+// GENERATED BY NAPL from reverse.napl — edit the prompt, not this file\n+\n+use body_lines::PromptBody;\n+use schemas_attribution::AttributionEntry;\n+use schemas_line_range::LineRange;\n+\n+pub const GENERATED_PREFIX: &str = \".napl/src/\";\n+pub const DRIFT_LENS_PREFIX: &str = \"DRIFT — edits here are not reflected in any prompt\";\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct GeneratedPathInfo {\n+    pub target: String,\n+    pub target_rel_path: String,\n+}\n+\n+pub fn parse_generated_path(rel_full: &str) -> Option<GeneratedPathInfo> {\n+    let normalized = rel_full.replace('\\\\', \"/\");\n+    let rest = normalized.strip_prefix(GENERATED_PREFIX)?;\n+    let slash_idx = rest.find('/')?;\n+    let target = &rest[..slash_idx];\n+    let target_rel_path = &rest[slash_idx + 1..];\n+    if target.is_empty() || target_rel_path.is_empty() {\n+        return None;\n+    }\n+    Some(GeneratedPathInfo {\n+        target: target.to_string(),\n+        target_rel_path: target_rel_path.to_string(),\n+    })\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct AttributionSource {\n+    pub module: String,\n+    pub target: String,\n+    pub entries: Vec<AttributionEntry>,\n+    pub prompt_files: Vec<String>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct ReverseMatch {\n+    pub module: String,\n+    pub target: String,\n+    pub prompt_file: String,\n+    pub note: String,\n+    pub prompt_lines: LineRange,\n+    pub code_lines: LineRange,\n+}\n+\n+pub fn reverse_matches(\n+    sources: &[AttributionSource],\n+    target: &str,\n+    target_rel_path: &str,\n+    code_line: Option<u32>,\n+) -> Vec<ReverseMatch> {\n+    let mut matches = Vec::new();\n+    for source in sources {\n+        if source.target != target {\n+            continue;\n+        }\n+        for entry in &source.entries {\n+            if entry.file != target_rel_path {\n+                continue;\n+            }\n+            if let Some(line) = code_line {\n+                if line < entry.lines.start || line > entry.lines.end {\n+                    continue;\n+                }\n+            }\n+            for prompt_file in &source.prompt_files {\n+                matches.push(ReverseMatch {\n+                    module: source.module.clone(),\n+                    target: source.target.clone(),\n+                    prompt_file: prompt_file.clone(),\n+                    note: entry.note.clone(),\n+                    prompt_lines: entry.prompt_lines,\n+                    code_lines: entry.lines,\n+                });\n+            }\n+        }\n+    }\n+    matches\n+}\n+\n+pub fn prompt_absolute_lines(body_start_line: usize, prompt_lines: LineRange) -> (usize, usize) {\n+    (\n+        body_start_line + prompt_lines.start as usize - 1,\n+        body_start_line + prompt_lines.end as usize - 1,\n+    )\n+}\n+\n+pub fn match_prompt_lines(body: &PromptBody, prompt_lines: LineRange) -> (usize, usize) {\n+    prompt_absolute_lines(body.body_start_line, prompt_lines)\n+}\n+\n+pub fn is_file_drifted(recorded_hash: Option<&str>, actual_hash: &str) -> bool {\n+    match recorded_hash {\n+        Some(hash) => hash != actual_hash,\n+        None => false,\n+    }\n+}\n+\n+pub fn code_lens_title(prompt_basename: &str, absolute_line: usize, note: &str) -> String {\n+    if note.is_empty() {\n+        format!(\"⇠ {prompt_basename}:{absolute_line}\")\n+    } else {\n+        format!(\"⇠ {prompt_basename}:{absolute_line} — {note}\")\n+    }\n+}\n+\n+pub fn dedupe_matches(matches: &[ReverseMatch]) -> Vec<ReverseMatch> {\n+    let mut seen = std::collections::HashSet::new();\n+    let mut result = Vec::new();\n+    for m in matches {\n+        let key = (m.prompt_file.clone(), m.prompt_lines.start, m.prompt_lines.end);\n+        if seen.insert(key) {\n+            result.push(m.clone());\n+        }\n+    }\n+    result\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+    use body_lines::prompt_body_lines;\n+\n+    fn entry(prompt_lines: (u32, u32), file: &str, lines: (u32, u32), note: &str) -> AttributionEntry {\n+        AttributionEntry {\n+            prompt_lines: LineRange::new(prompt_lines.0, prompt_lines.1),\n+            file: file.to_string(),\n+            lines: LineRange::new(lines.0, lines.1),\n+            note: note.to_string(),\n+        }\n+    }\n+\n+    #[test]\n+    fn parses_a_generated_path() {\n+        let info = parse_generated_path(\".napl/src/typescript/src/greeting.ts\").unwrap();\n+        assert_eq!(info.target, \"typescript\");\n+        assert_eq!(info.target_rel_path, \"src/greeting.ts\");\n+    }\n+\n+    #[test]\n+    fn normalizes_backslashes() {\n+        let info = parse_generated_path(\".napl\\\\src\\\\typescript\\\\src\\\\greeting.ts\").unwrap();\n+        assert_eq!(info.target, \"typescript\");\n+        assert_eq!(info.target_rel_path, \"src/greeting.ts\");\n+    }\n+\n+    #[test]\n+    fn none_without_trailing_path() {\n+        assert_eq!(parse_generated_path(\".napl/src/typescript\"), None);\n+    }\n+\n+    #[test]\n+    fn none_without_prefix() {\n+        assert_eq!(parse_generated_path(\"examples/greeting.napl\"), None);\n+        assert_eq!(parse_generated_path(\"src/greeting.ts\"), None);\n+    }\n+\n+    #[test]\n+    fn none_with_empty_target() {\n+        assert_eq!(parse_generated_path(\".napl/src//src/greeting.ts\"), None);\n+    }\n+\n+    #[test]\n+    fn none_with_empty_rel_path() {\n+        assert_eq!(parse_generated_path(\".napl/src/typescript/\"), None);\n+    }\n+\n+    #[test]\n+    fn reverse_matches_filters_by_target_and_file() {\n+        let sources = vec![\n+            AttributionSource {\n+                module: \"greeting\".to_string(),\n+                target: \"rust\".to_string(),\n+                entries: vec![entry((2, 2), \"src/lib.rs\", (5, 5), \"builds greeting\")],\n+                prompt_files: vec![\"greeting.napl\".to_string()],\n+            },\n+            AttributionSource {\n+                module: \"other\".to_string(),\n+                target: \"typescript\".to_string(),\n+                entries: vec![entry((3, 3), \"src/lib.rs\", (5, 5), \"wrong target\")],\n+                prompt_files: vec![\"other.napl\".to_string()],\n+            },\n+        ];\n+        let matches = reverse_matches(&sources, \"rust\", \"src/lib.rs\", None);\n+        assert_eq!(matches.len(), 1);\n+        assert_eq!(matches[0].module, \"greeting\");\n+        assert_eq!(matches[0].note, \"builds greeting\");\n+    }\n+\n+    #[test]\n+    fn reverse_matches_none_code_line_ignores_line_filter() {\n+        let sources = vec![AttributionSource {\n+            module: \"m\".to_string(),\n+            target: \"rust\".to_string(),\n+            entries: vec![\n+                entry((2, 2), \"src/lib.rs\", (5, 5), \"a\"),\n+                entry((3, 3), \"src/lib.rs\", (10, 12), \"b\"),\n+            ],\n+            prompt_files: vec![\"p.napl\".to_string()],\n+        }];\n+        let matches = reverse_matches(&sources, \"rust\", \"src/lib.rs\", None);\n+        assert_eq!(matches.len(), 2);\n+    }\n+\n+    #[test]\n+    fn reverse_matches_some_code_line_filters_by_containment() {\n+        let sources = vec![AttributionSource {\n+            module: \"m\".to_string(),\n+            target: \"rust\".to_string(),\n+            entries: vec![\n+                entry((2, 2), \"src/lib.rs\", (5, 5), \"a\"),\n+                entry((3, 3), \"src/lib.rs\", (10, 12), \"b\"),\n+            ],\n+            prompt_files: vec![\"p.napl\".to_string()],\n+        }];\n+        let matches = reverse_matches(&sources, \"rust\", \"src/lib.rs\", Some(11));\n+        assert_eq!(matches.len(), 1);\n+        assert_eq!(matches[0].note, \"b\");\n+\n+        let none = reverse_matches(&sources, \"rust\", \"src/lib.rs\", Some(6));\n+        assert!(none.is_empty());\n+    }\n+\n+    #[test]\n+    fn reverse_matches_emits_one_per_prompt_file() {\n+        let sources = vec![AttributionSource {\n+            module: \"m\".to_string(),\n+            target: \"rust\".to_string(),\n+            entries: vec![entry((2, 2), \"src/lib.rs\", (5, 5), \"a\")],\n+            prompt_files: vec![\"p1.napl\".to_string(), \"p2.napl\".to_string()],\n+        }];\n+        let matches = reverse_matches(&sources, \"rust\", \"src/lib.rs\", None);\n+        assert_eq!(matches.len(), 2);\n+        assert_eq!(matches[0].prompt_file, \"p1.napl\");\n+        assert_eq!(matches[1].prompt_file, \"p2.napl\");\n+    }\n+\n+    #[test]\n+    fn prompt_absolute_lines_converts_body_relative_to_absolute() {\n+        assert_eq!(prompt_absolute_lines(12, LineRange::new(7, 7)), (18, 18));\n+        assert_eq!(prompt_absolute_lines(12, LineRange::new(3, 4)), (14, 15));\n+        assert_eq!(prompt_absolute_lines(3, LineRange::new(1, 1)), (3, 3));\n+    }\n+\n+    #[test]\n+    fn match_prompt_lines_uses_body_start_line() {\n+        let body = prompt_body_lines(\"---\\nkey: value\\n---\\nfirst\\nsecond\");\n+        assert_eq!(body.body_start_line, 3);\n+        assert_eq!(match_prompt_lines(&body, LineRange::new(1, 1)), (3, 3));\n+        assert_eq!(match_prompt_lines(&body, LineRange::new(2, 2)), (4, 4));\n+    }\n+\n+    #[test]\n+    fn is_file_drifted_detects_hash_mismatch() {\n+        assert!(is_file_drifted(Some(\"abc\"), \"def\"));\n+        assert!(!is_file_drifted(Some(\"abc\"), \"abc\"));\n+        assert!(!is_file_drifted(None, \"abc\"));\n+    }\n+\n+    #[test]\n+    fn code_lens_title_without_note() {\n+        assert_eq!(code_lens_title(\"greeting.napl\", 18, \"\"), \"⇠ greeting.napl:18\");\n+    }\n+\n+    #[test]\n+    fn code_lens_title_with_note() {\n+        assert_eq!(\n+            code_lens_title(\"greeting.napl\", 18, \"builds the greeting\"),\n+            \"⇠ greeting.napl:18 — builds the greeting\"\n+        );\n+    }\n+\n+    #[test]\n+    fn dedupe_matches_keeps_first_occurrence_per_span() {\n+        let matches = vec![\n+            ReverseMatch {\n+                module: \"m\".to_string(),\n+                target: \"rust\".to_string(),\n+                prompt_file: \"p.napl\".to_string(),\n+                note: \"first\".to_string(),\n+                prompt_lines: LineRange::new(2, 2),\n+                code_lines: LineRange::new(5, 5),\n+            },\n+            ReverseMatch {\n+                module: \"m\".to_string(),\n+                target: \"rust\".to_string(),\n+                prompt_file: \"p.napl\".to_string(),\n+                note: \"duplicate\".to_string(),\n+                prompt_lines: LineRange::new(2, 2),\n+                code_lines: LineRange::new(9, 9),\n+            },\n+            ReverseMatch {\n+                module: \"m\".to_string(),\n+                target: \"rust\".to_string(),\n+                prompt_file: \"p.napl\".to_string(),\n+                note: \"different span\".to_string(),\n+                prompt_lines: LineRange::new(3, 3),\n+                code_lines: LineRange::new(6, 6),\n+            },\n+        ];\n+        let deduped = dedupe_matches(&matches);\n+        assert_eq!(deduped.len(), 2);\n+        assert_eq!(deduped[0].note, \"first\");\n+        assert_eq!(deduped[1].note, \"different span\");\n+    }\n+}"
         }
       ]
+    },
+    {
+      "gen": 69,
+      "timestamp": "2026-07-24T13:11:06.161Z",
+      "mode": "incremental",
+      "promptHash": "8d0dcc75b9f8226646b762eadafe5b39bc69eecb8577487b957bfde287d315ac",
+      "files": []
     }
   ],
   "lock": [
@@ -342,7 +445,79 @@
               10,
               14
             ],
-            "note": "GeneratedPathInfo struct definition"
+            "note": "GeneratedPathInfo struct with target and target_rel_path"
+          },
+          {
+            "promptLines": [
+              55,
+              55
+            ],
+            "file": "reverse/src/lib.rs",
+            "lines": [
+              16,
+              16
+            ],
+            "note": "parse_generated_path signature"
+          },
+          {
+            "promptLines": [
+              56,
+              56
+            ],
+            "file": "reverse/src/lib.rs",
+            "lines": [
+              17,
+              17
+            ],
+            "note": "normalize backslashes to forward slashes"
+          },
+          {
+            "promptLines": [
+              56,
+              58
+            ],
+            "file": "reverse/src/lib.rs",
+            "lines": [
+              18,
+              18
+            ],
+            "note": "strip GENERATED_PREFIX, None if absent"
+          },
+          {
+            "promptLines": [
+              56,
+              58
+            ],
+            "file": "reverse/src/lib.rs",
+            "lines": [
+              19,
+              19
+            ],
+            "note": "find first slash, None if none"
+          },
+          {
+            "promptLines": [
+              57,
+              57
+            ],
+            "file": "reverse/src/lib.rs",
+            "lines": [
+              20,
+              21
+            ],
+            "note": "target before slash, rest is target_rel_path"
+          },
+          {
+            "promptLines": [
+              58,
+              59
+            ],
+            "file": "reverse/src/lib.rs",
+            "lines": [
+              22,
+              24
+            ],
+            "note": "None if target or rel path empty"
           },
           {
             "promptLines": [
@@ -351,22 +526,10 @@
             ],
             "file": "reverse/src/lib.rs",
             "lines": [
-              16,
-              29
+              25,
+              28
             ],
-            "note": "parse_generated_path normalizes, strips prefix, splits target/rel path"
-          },
-          {
-            "promptLines": [
-              60,
-              62
-            ],
-            "file": "reverse/src/lib.rs",
-            "lines": [
-              137,
-              159
-            ],
-            "note": "examples of parse_generated_path behavior as tests"
+            "note": "build GeneratedPathInfo result"
           },
           {
             "promptLines": [
@@ -378,7 +541,7 @@
               31,
               37
             ],
-            "note": "AttributionSource struct definition"
+            "note": "AttributionSource struct"
           },
           {
             "promptLines": [
@@ -390,31 +553,91 @@
               39,
               47
             ],
-            "note": "ReverseMatch struct definition"
+            "note": "ReverseMatch struct"
           },
           {
             "promptLines": [
               75,
-              82
+              75
             ],
             "file": "reverse/src/lib.rs",
             "lines": [
               49,
+              54
+            ],
+            "note": "reverse_matches signature"
+          },
+          {
+            "promptLines": [
+              76,
+              76
+            ],
+            "file": "reverse/src/lib.rs",
+            "lines": [
+              56,
+              59
+            ],
+            "note": "filter sources by target"
+          },
+          {
+            "promptLines": [
+              76,
+              76
+            ],
+            "file": "reverse/src/lib.rs",
+            "lines": [
+              60,
+              63
+            ],
+            "note": "filter entries by file"
+          },
+          {
+            "promptLines": [
+              77,
+              81
+            ],
+            "file": "reverse/src/lib.rs",
+            "lines": [
+              64,
+              68
+            ],
+            "note": "code_line containment filter, None skips filter"
+          },
+          {
+            "promptLines": [
+              78,
+              80
+            ],
+            "file": "reverse/src/lib.rs",
+            "lines": [
+              69,
+              78
+            ],
+            "note": "emit one match per prompt file"
+          },
+          {
+            "promptLines": [
+              81,
               82
             ],
-            "note": "reverse_matches filters by target/file/line and emits one match per prompt file"
+            "file": "reverse/src/lib.rs",
+            "lines": [
+              81,
+              81
+            ],
+            "note": "return matches in order"
           },
           {
             "promptLines": [
               86,
-              89
+              88
             ],
             "file": "reverse/src/lib.rs",
             "lines": [
               84,
               89
             ],
-            "note": "prompt_absolute_lines conversion formula"
+            "note": "prompt_absolute_lines conversion"
           },
           {
             "promptLines": [
@@ -426,7 +649,7 @@
               91,
               93
             ],
-            "note": "match_prompt_lines delegates using body_start_line"
+            "note": "match_prompt_lines uses body_start_line"
           },
           {
             "promptLines": [
@@ -438,7 +661,7 @@
               95,
               100
             ],
-            "note": "is_file_drifted hash comparison logic"
+            "note": "is_file_drifted hash comparison"
           },
           {
             "promptLines": [
@@ -450,7 +673,7 @@
               102,
               108
             ],
-            "note": "code_lens_title formatting with/without note"
+            "note": "code_lens_title with/without note"
           },
           {
             "promptLines": [
@@ -462,43 +685,7 @@
               110,
               120
             ],
-            "note": "dedupe_matches keeps first occurrence per prompt span"
-          },
-          {
-            "promptLines": [
-              27,
-              30
-            ],
-            "file": "reverse/src/lib.rs",
-            "lines": [
-              5,
-              5
-            ],
-            "note": "use of LineRange from schemas_line_range"
-          },
-          {
-            "promptLines": [
-              31,
-              36
-            ],
-            "file": "reverse/src/lib.rs",
-            "lines": [
-              4,
-              4
-            ],
-            "note": "use of AttributionEntry from schemas_attribution"
-          },
-          {
-            "promptLines": [
-              37,
-              39
-            ],
-            "file": "reverse/src/lib.rs",
-            "lines": [
-              3,
-              3
-            ],
-            "note": "use of PromptBody from body_lines"
+            "note": "dedupe_matches keeps first per span"
           }
         ]
       },
@@ -507,13 +694,13 @@
         "path": "reverse.mapl",
         "entry": {
           "promptLines": [
-            16,
-            25
+            1,
+            105
           ],
-          "kind": "note",
-          "severity": "info",
-          "message": "Sibling crate path deps added correctly as instructed.",
-          "reasoning": "Cargo.toml uses path = \"../schemas_line_range\" etc., matching \"one directory up and over\" layout; no ambiguity, confirms compile matched prompt intent."
+          "kind": "no-op",
+          "severity": "warning",
+          "message": "No source edits — prompt body unchanged, existing crate already realizes it.",
+          "reasoning": "Agent reported the prompt diff was empty and the existing `reverse` crate already implements the full body (constants, path parsing, reverse matching, line conversions, drift/title/dedupe). `cargo test` reported 16 passed / 0 failed, so no edits were produced. This is an incremental recompile with nothing new to apply."
         }
       },
       {
@@ -521,13 +708,27 @@
         "path": "reverse.mapl",
         "entry": {
           "promptLines": [
-            47,
-            48
+            45,
+            45
+          ],
+          "kind": "assumption",
+          "severity": "warning",
+          "message": "GENERATED_PREFIX = \".napl/src/\" already realized; not re-verified against source.",
+          "reasoning": "Since no changes were made, the literal prefix value and DRIFT_LENS_PREFIX string were assumed to match the existing constants exactly. If prior code drifted from these literals, the no-op would silently leave a mismatch — worth a spot check on the recorded strings."
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "reverse.mapl",
+        "entry": {
+          "promptLines": [
+            55,
+            62
           ],
           "kind": "note",
           "severity": "info",
-          "message": "DRIFT_LENS_PREFIX constant defined but never used or tested.",
-          "reasoning": "Prompt only asks to \"expose\" the constant with a fixed value; agent did exactly that (no consumer logic specified), so lack of usage/test is expected, not a defect."
+          "message": "Path-parse edge cases rely on existing tests already covering them.",
+          "reasoning": "The four rejection conditions (missing prefix, no trailing slash, empty target, empty rel path) and the worked examples are only guaranteed correct because the 16 existing tests pass. No new test was added to confirm each listed example, so coverage is inherited, not re-proven for this compile."
         }
       },
       {

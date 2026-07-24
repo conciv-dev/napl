@@ -72,4 +72,38 @@ describe('/docs/thinking', () => {
       .toContain('compute_prompt_diff')
     await page.close()
   })
+
+  it('bounds the editor height with a real max-height cap so it never runs the page tall', async () => {
+    const page = await browser.newPage({viewport: {width: 1440, height: 1200}})
+    await openPlayground(page)
+    const editor = page.locator('[data-playground-root="gen_prompt_diff"] .cm-editor').first()
+    await expect.poll(() => editor.count(), {timeout: 15_000}).toBeGreaterThan(0)
+    const measured = await editor.evaluate((el) => {
+      const maxHeight = getComputedStyle(el).maxHeight
+      return {maxHeight, height: el.getBoundingClientRect().height}
+    })
+    expect(measured.maxHeight).not.toBe('none')
+    const cap = Number.parseFloat(measured.maxHeight)
+    expect(cap).toBeGreaterThan(0)
+    expect(cap).toBeLessThanOrEqual(700)
+    expect(measured.height).toBeLessThanOrEqual(cap + 1)
+    await page.close()
+  })
+
+  it('surfaces the machine-layer .mapl file as a real-filename tab that highlights severity', async () => {
+    const page = await browser.newPage({viewport: {width: 1440, height: 1200}})
+    await openPlayground(page)
+    const maplTab = page
+      .locator('[data-playground-root="gen_prompt_diff"] .napl-playground__tab[data-language="mapl"]')
+      .first()
+    await expect.poll(() => maplTab.count(), {timeout: 15_000}).toBeGreaterThan(0)
+    await expect.poll(() => maplTab.textContent()).toContain('.mapl')
+    await maplTab.click()
+    await expect
+      .poll(() => page.locator('[data-playground-root="gen_prompt_diff"] .cm-content').first().textContent(), {
+        timeout: 15_000,
+      })
+      .toContain('kind')
+    await page.close()
+  })
 })

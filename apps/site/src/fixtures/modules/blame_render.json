@@ -29,135 +29,15 @@
   "attribution": [
     {
       "promptLines": [
-        38,
-        44
+        1,
+        7
       ],
       "file": "blame_render/src/lib.rs",
       "lines": [
-        10,
-        18
+        1,
+        5
       ],
-      "note": "mode_str maps JournalMode to lowercase label, exhaustive match"
-    },
-    {
-      "promptLines": [
-        46,
-        53
-      ],
-      "file": "blame_render/src/lib.rs",
-      "lines": [
-        20,
-        26
-      ],
-      "note": "format_blame_row renders gen/timestamp/module/text row"
-    },
-    {
-      "promptLines": [
-        55,
-        61
-      ],
-      "file": "blame_render/src/lib.rs",
-      "lines": [
-        28,
-        36
-      ],
-      "note": "why_line delegates to blame::first_prompt_diff_line, defaults to initial generation"
-    },
-    {
-      "promptLines": [
-        63,
-        68
-      ],
-      "file": "blame_render/src/lib.rs",
-      "lines": [
-        38,
-        46
-      ],
-      "note": "BlameGenRender struct and render_blame_gen signature/entry lookup"
-    },
-    {
-      "promptLines": [
-        69,
-        73
-      ],
-      "file": "blame_render/src/lib.rs",
-      "lines": [
-        47,
-        52
-      ],
-      "note": "no matching entry returns error text with exit_code 1"
-    },
-    {
-      "promptLines": [
-        75,
-        81
-      ],
-      "file": "blame_render/src/lib.rs",
-      "lines": [
-        54,
-        63
-      ],
-      "note": "build lines vec, header line with gen/timestamp/module/target/mode"
-    },
-    {
-      "promptLines": [
-        82,
-        83
-      ],
-      "file": "blame_render/src/lib.rs",
-      "lines": [
-        64,
-        65
-      ],
-      "note": "empty line then 'prompt edit:' label"
-    },
-    {
-      "promptLines": [
-        84,
-        88
-      ],
-      "file": "blame_render/src/lib.rs",
-      "lines": [
-        67,
-        73
-      ],
-      "note": "prompt-diff block: trimmed-empty check vs split on newline with two-space prefix"
-    },
-    {
-      "promptLines": [
-        89,
-        90
-      ],
-      "file": "blame_render/src/lib.rs",
-      "lines": [
-        75,
-        76
-      ],
-      "note": "empty line then 'files touched:' label"
-    },
-    {
-      "promptLines": [
-        91,
-        93
-      ],
-      "file": "blame_render/src/lib.rs",
-      "lines": [
-        78,
-        84
-      ],
-      "note": "files block: (none) placeholder or one line per file path"
-    },
-    {
-      "promptLines": [
-        75,
-        76
-      ],
-      "file": "blame_render/src/lib.rs",
-      "lines": [
-        86,
-        89
-      ],
-      "note": "join lines with single newline, no trailing newline, exit_code 0"
+      "note": "module doc: pure rendering core, no I/O"
     },
     {
       "promptLines": [
@@ -169,7 +49,7 @@
         7,
         7
       ],
-      "note": "import BlameLine from blame sibling crate"
+      "note": "import BlameLine from blame crate"
     },
     {
       "promptLines": [
@@ -181,55 +61,127 @@
         8,
         8
       ],
-      "note": "import JournalEntry and JournalMode from schemas_journal sibling crate"
+      "note": "import JournalEntry, JournalMode from schemas_journal"
     },
     {
       "promptLines": [
-        95,
-        99
+        38,
+        44
       ],
       "file": "blame_render/src/lib.rs",
       "lines": [
-        166,
-        175
+        11,
+        18
       ],
-      "note": "test verifying exact example output for empty diff, no files"
+      "note": "mode_str maps each JournalMode variant to lowercase label"
     },
     {
       "promptLines": [
-        50,
+        40,
+        40
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        13,
+        14
+      ],
+      "note": "Full->full, Incremental->incremental"
+    },
+    {
+      "promptLines": [
+        41,
+        41
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        15,
+        16
+      ],
+      "note": "Reconcile->reconcile, Move->move"
+    },
+    {
+      "promptLines": [
+        46,
         53
       ],
       "file": "blame_render/src/lib.rs",
       "lines": [
-        132,
-        145
+        21,
+        26
       ],
-      "note": "test verifying format_blame_row example row"
+      "note": "format_blame_row: two-space separated gen/timestamp/module/text"
     },
     {
       "promptLines": [
-        57,
+        55,
         61
       ],
       "file": "blame_render/src/lib.rs",
       "lines": [
-        147,
-        156
+        29,
+        36
       ],
-      "note": "tests for why_line empty and non-empty diff"
+      "note": "why_line: first_prompt_diff_line, empty -> initial generation"
     },
     {
       "promptLines": [
-        84,
-        88
+        57,
+        57
       ],
       "file": "blame_render/src/lib.rs",
       "lines": [
-        177,
-        207
+        30,
+        30
       ],
-      "note": "tests for whitespace-only diff, multiline diff+files, trailing newline case"
+      "note": "call blame::first_prompt_diff_line"
+    },
+    {
+      "promptLines": [
+        58,
+        58
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        31,
+        32
+      ],
+      "note": "empty result returns initial generation"
+    },
+    {
+      "promptLines": [
+        58,
+        59
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        33,
+        34
+      ],
+      "note": "otherwise return result unchanged"
+    },
+    {
+      "promptLines": [
+        63,
+        67
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        46,
+        46
+      ],
+      "note": "render_blame_gen signature"
+    },
+    {
+      "promptLines": [
+        65,
+        66
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        40,
+        43
+      ],
+      "note": "BlameGenRender struct with text and exit_code fields"
     },
     {
       "promptLines": [
@@ -238,25 +190,191 @@
       ],
       "file": "blame_render/src/lib.rs",
       "lines": [
-        209,
-        218
+        47,
+        47
       ],
-      "note": "test that first matching gen entry is picked"
+      "note": "find first entry matching gen"
+    },
+    {
+      "promptLines": [
+        71,
+        73
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        48,
+        52
+      ],
+      "note": "no match: error text, exit_code 1"
+    },
+    {
+      "promptLines": [
+        75,
+        77
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        54,
+        54
+      ],
+      "note": "build lines vector"
+    },
+    {
+      "promptLines": [
+        79,
+        81
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        56,
+        63
+      ],
+      "note": "header line: gen/timestamp/module (target) mode"
+    },
+    {
+      "promptLines": [
+        82,
+        82
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        64,
+        64
+      ],
+      "note": "empty line"
+    },
+    {
+      "promptLines": [
+        83,
+        83
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        65,
+        65
+      ],
+      "note": "prompt edit: label"
+    },
+    {
+      "promptLines": [
+        84,
+        85
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        67,
+        68
+      ],
+      "note": "trimmed-empty diff -> initial generation line"
+    },
+    {
+      "promptLines": [
+        86,
+        88
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        69,
+        73
+      ],
+      "note": "split diff on newline, prefix each piece two spaces"
+    },
+    {
+      "promptLines": [
+        89,
+        89
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        75,
+        75
+      ],
+      "note": "empty line"
+    },
+    {
+      "promptLines": [
+        90,
+        90
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        76,
+        76
+      ],
+      "note": "files touched: label"
+    },
+    {
+      "promptLines": [
+        91,
+        91
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        78,
+        79
+      ],
+      "note": "empty files -> (none) line"
+    },
+    {
+      "promptLines": [
+        92,
+        93
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        80,
+        83
+      ],
+      "note": "one line per file path, two-space prefix"
+    },
+    {
+      "promptLines": [
+        75,
+        76
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        86,
+        89
+      ],
+      "note": "join lines with newline, exit_code 0"
     }
   ],
-  "attributionYaml": "module: blame_render\ntarget: rust\nentries:\n  - promptLines:\n      - 38\n      - 44\n    file: blame_render/src/lib.rs\n    lines:\n      - 10\n      - 18\n    note: mode_str maps JournalMode to lowercase label, exhaustive match\n  - promptLines:\n      - 46\n      - 53\n    file: blame_render/src/lib.rs\n    lines:\n      - 20\n      - 26\n    note: format_blame_row renders gen/timestamp/module/text row\n  - promptLines:\n      - 55\n      - 61\n    file: blame_render/src/lib.rs\n    lines:\n      - 28\n      - 36\n    note: why_line delegates to blame::first_prompt_diff_line, defaults to initial generation\n  - promptLines:\n      - 63\n      - 68\n    file: blame_render/src/lib.rs\n    lines:\n      - 38\n      - 46\n    note: BlameGenRender struct and render_blame_gen signature/entry lookup\n  - promptLines:\n      - 69\n      - 73\n    file: blame_render/src/lib.rs\n    lines:\n      - 47\n      - 52\n    note: no matching entry returns error text with exit_code 1\n  - promptLines:\n      - 75\n      - 81\n    file: blame_render/src/lib.rs\n    lines:\n      - 54\n      - 63\n    note: build lines vec, header line with gen/timestamp/module/target/mode\n  - promptLines:\n      - 82\n      - 83\n    file: blame_render/src/lib.rs\n    lines:\n      - 64\n      - 65\n    note: empty line then 'prompt edit:' label\n  - promptLines:\n      - 84\n      - 88\n    file: blame_render/src/lib.rs\n    lines:\n      - 67\n      - 73\n    note: \"prompt-diff block: trimmed-empty check vs split on newline with two-space prefix\"\n  - promptLines:\n      - 89\n      - 90\n    file: blame_render/src/lib.rs\n    lines:\n      - 75\n      - 76\n    note: empty line then 'files touched:' label\n  - promptLines:\n      - 91\n      - 93\n    file: blame_render/src/lib.rs\n    lines:\n      - 78\n      - 84\n    note: \"files block: (none) placeholder or one line per file path\"\n  - promptLines:\n      - 75\n      - 76\n    file: blame_render/src/lib.rs\n    lines:\n      - 86\n      - 89\n    note: join lines with single newline, no trailing newline, exit_code 0\n  - promptLines:\n      - 24\n      - 27\n    file: blame_render/src/lib.rs\n    lines:\n      - 7\n      - 7\n    note: import BlameLine from blame sibling crate\n  - promptLines:\n      - 28\n      - 33\n    file: blame_render/src/lib.rs\n    lines:\n      - 8\n      - 8\n    note: import JournalEntry and JournalMode from schemas_journal sibling crate\n  - promptLines:\n      - 95\n      - 99\n    file: blame_render/src/lib.rs\n    lines:\n      - 166\n      - 175\n    note: test verifying exact example output for empty diff, no files\n  - promptLines:\n      - 50\n      - 53\n    file: blame_render/src/lib.rs\n    lines:\n      - 132\n      - 145\n    note: test verifying format_blame_row example row\n  - promptLines:\n      - 57\n      - 61\n    file: blame_render/src/lib.rs\n    lines:\n      - 147\n      - 156\n    note: tests for why_line empty and non-empty diff\n  - promptLines:\n      - 84\n      - 88\n    file: blame_render/src/lib.rs\n    lines:\n      - 177\n      - 207\n    note: tests for whitespace-only diff, multiline diff+files, trailing newline case\n  - promptLines:\n      - 69\n      - 69\n    file: blame_render/src/lib.rs\n    lines:\n      - 209\n      - 218\n    note: test that first matching gen entry is picked\n",
+  "attributionYaml": "module: blame_render\ntarget: rust\nentries:\n  - promptLines:\n      - 1\n      - 7\n    file: blame_render/src/lib.rs\n    lines:\n      - 1\n      - 5\n    note: \"module doc: pure rendering core, no I/O\"\n  - promptLines:\n      - 24\n      - 27\n    file: blame_render/src/lib.rs\n    lines:\n      - 7\n      - 7\n    note: import BlameLine from blame crate\n  - promptLines:\n      - 28\n      - 33\n    file: blame_render/src/lib.rs\n    lines:\n      - 8\n      - 8\n    note: import JournalEntry, JournalMode from schemas_journal\n  - promptLines:\n      - 38\n      - 44\n    file: blame_render/src/lib.rs\n    lines:\n      - 11\n      - 18\n    note: mode_str maps each JournalMode variant to lowercase label\n  - promptLines:\n      - 40\n      - 40\n    file: blame_render/src/lib.rs\n    lines:\n      - 13\n      - 14\n    note: Full->full, Incremental->incremental\n  - promptLines:\n      - 41\n      - 41\n    file: blame_render/src/lib.rs\n    lines:\n      - 15\n      - 16\n    note: Reconcile->reconcile, Move->move\n  - promptLines:\n      - 46\n      - 53\n    file: blame_render/src/lib.rs\n    lines:\n      - 21\n      - 26\n    note: \"format_blame_row: two-space separated gen/timestamp/module/text\"\n  - promptLines:\n      - 55\n      - 61\n    file: blame_render/src/lib.rs\n    lines:\n      - 29\n      - 36\n    note: \"why_line: first_prompt_diff_line, empty -> initial generation\"\n  - promptLines:\n      - 57\n      - 57\n    file: blame_render/src/lib.rs\n    lines:\n      - 30\n      - 30\n    note: call blame::first_prompt_diff_line\n  - promptLines:\n      - 58\n      - 58\n    file: blame_render/src/lib.rs\n    lines:\n      - 31\n      - 32\n    note: empty result returns initial generation\n  - promptLines:\n      - 58\n      - 59\n    file: blame_render/src/lib.rs\n    lines:\n      - 33\n      - 34\n    note: otherwise return result unchanged\n  - promptLines:\n      - 63\n      - 67\n    file: blame_render/src/lib.rs\n    lines:\n      - 46\n      - 46\n    note: render_blame_gen signature\n  - promptLines:\n      - 65\n      - 66\n    file: blame_render/src/lib.rs\n    lines:\n      - 40\n      - 43\n    note: BlameGenRender struct with text and exit_code fields\n  - promptLines:\n      - 69\n      - 69\n    file: blame_render/src/lib.rs\n    lines:\n      - 47\n      - 47\n    note: find first entry matching gen\n  - promptLines:\n      - 71\n      - 73\n    file: blame_render/src/lib.rs\n    lines:\n      - 48\n      - 52\n    note: \"no match: error text, exit_code 1\"\n  - promptLines:\n      - 75\n      - 77\n    file: blame_render/src/lib.rs\n    lines:\n      - 54\n      - 54\n    note: build lines vector\n  - promptLines:\n      - 79\n      - 81\n    file: blame_render/src/lib.rs\n    lines:\n      - 56\n      - 63\n    note: \"header line: gen/timestamp/module (target) mode\"\n  - promptLines:\n      - 82\n      - 82\n    file: blame_render/src/lib.rs\n    lines:\n      - 64\n      - 64\n    note: empty line\n  - promptLines:\n      - 83\n      - 83\n    file: blame_render/src/lib.rs\n    lines:\n      - 65\n      - 65\n    note: \"prompt edit: label\"\n  - promptLines:\n      - 84\n      - 85\n    file: blame_render/src/lib.rs\n    lines:\n      - 67\n      - 68\n    note: trimmed-empty diff -> initial generation line\n  - promptLines:\n      - 86\n      - 88\n    file: blame_render/src/lib.rs\n    lines:\n      - 69\n      - 73\n    note: split diff on newline, prefix each piece two spaces\n  - promptLines:\n      - 89\n      - 89\n    file: blame_render/src/lib.rs\n    lines:\n      - 75\n      - 75\n    note: empty line\n  - promptLines:\n      - 90\n      - 90\n    file: blame_render/src/lib.rs\n    lines:\n      - 76\n      - 76\n    note: \"files touched: label\"\n  - promptLines:\n      - 91\n      - 91\n    file: blame_render/src/lib.rs\n    lines:\n      - 78\n      - 79\n    note: empty files -> (none) line\n  - promptLines:\n      - 92\n      - 93\n    file: blame_render/src/lib.rs\n    lines:\n      - 80\n      - 83\n    note: one line per file path, two-space prefix\n  - promptLines:\n      - 75\n      - 76\n    file: blame_render/src/lib.rs\n    lines:\n      - 86\n      - 89\n    note: join lines with newline, exit_code 0\n",
   "mapl": [
     {
       "promptLines": [
-        38,
-        44
+        11,
+        16
       ],
       "kind": "no-op",
       "severity": "warning",
-      "message": "mode_str already handles Move variant exhaustively — no change needed.",
-      "reasoning": "Prompt spends extra emphasis explaining the Move variant (\"records a location-heal... exhaustive so every variant — including Move — is handled\"), suggesting this was a spot the author worried might get missed. Checked ./.napl/src/rust/blame_render/src/lib.rs directly: the match over JournalMode already covers Full, Incremental, Reconcile, and Move (mapping to \"move\"), and a test (mode_str_maps_all_variants) asserts all four. Nothing needed changing."
+      "message": "Crate said to be \"created\" but agent made NO CHANGES — module already present and matching spec.",
+      "reasoning": "The prompt reads as a creation task (\"Create this module as its own member crate ... blame_render/Cargo.toml and blame_render/src/lib.rs\"), yet the agent produced NO CHANGES, reporting that the code already exists, matches every function spec exactly, and all 10 tests pass. Nothing was written because the requirement was already satisfied by pre-existing source. Worth confirming the crate truly exists at blame_render/ and that `cargo test` from the workspace root passes, since a creation prompt yielding zero diff is surprising. "
+    },
+    {
+      "promptLines": [
+        84,
+        88
+      ],
+      "kind": "note",
+      "severity": "info",
+      "message": "prompt_diff emptiness uses trimmed check here, but why_line relies on blame::first_prompt_diff_line's own empty result.",
+      "reasoning": "render_blame_gen decides \"initial generation\" by trimming surrounding whitespace on entry.prompt_diff (line 84), while why_line (lines 57-59) decides emptiness from the return of blame::first_prompt_diff_line without an explicit trim. The two \"empty\" notions are defined by different mechanisms; they likely agree but are not the same test. Since NO CHANGES were made this was not exercised — flagging so the author confirms both paths behave as intended. "
+    },
+    {
+      "promptLines": [
+        86,
+        88
+      ],
+      "kind": "assumption",
+      "severity": "warning",
+      "message": "Trailing newline in a non-empty prompt_diff yields a final two-space line — confirm this is intended output.",
+      "reasoning": "Line 87-88 states that splitting prompt_diff on \"\\n\" and prefixing each piece with two spaces means \"a trailing newline in the diff yields a final `  ` two-space line.\" This produces a dangling two-space line in the rendered block. The prompt asserts it explicitly, so it was treated as intended rather than an oversight, but it is unusual output worth a second look."
     }
   ],
+  "maplContent": "module: blame_render\ntarget: rust\nentries:\n  - promptLines:\n      - 11\n      - 16\n    kind: no-op\n    message: Crate said to be \"created\" but agent made NO CHANGES — module already present and matching spec.\n    reasoning: 'The prompt reads as a creation task (\"Create this module as its own member crate ... blame_render/Cargo.toml and blame_render/src/lib.rs\"), yet the agent produced NO CHANGES, reporting that the code already exists, matches every function spec exactly, and all 10 tests pass. Nothing was written because the requirement was already satisfied by pre-existing source. Worth confirming the crate truly exists at blame_render/ and that `cargo test` from the workspace root passes, since a creation prompt yielding zero diff is surprising.\n'\n  - promptLines:\n      - 84\n      - 88\n    kind: note\n    message: prompt_diff emptiness uses trimmed check here, but why_line relies on blame::first_prompt_diff_line's own empty result.\n    reasoning: 'render_blame_gen decides \"initial generation\" by trimming surrounding whitespace on entry.prompt_diff (line 84), while why_line (lines 57-59) decides emptiness from the return of blame::first_prompt_diff_line without an explicit trim. The two \"empty\" notions are defined by different mechanisms; they likely agree but are not the same test. Since NO CHANGES were made this was not exercised — flagging so the author confirms both paths behave as intended.\n'\n  - promptLines:\n      - 86\n      - 88\n    kind: assumption\n    message: Trailing newline in a non-empty prompt_diff yields a final two-space line — confirm this is intended output.\n    reasoning: Line 87-88 states that splitting prompt_diff on \"\\n\" and prefixing each piece with two spaces means \"a trailing newline in the diff yields a final `  ` two-space line.\" This produces a dangling two-space line in the rendered block. The prompt asserts it explicitly, so it was treated as intended rather than an oversight, but it is unusual output worth a second look.\n",
+  "maplFile": "blame_render.mapl",
   "journal": [
     {
       "gen": 32,
@@ -279,6 +397,13 @@
     {
       "gen": 40,
       "timestamp": "2026-07-24T12:10:43.654Z",
+      "mode": "incremental",
+      "promptHash": "e97118c4bf71f4f22a034d9d6d1c3f196540fdcedc94fc8583fd0fdd14cc2a9a",
+      "files": []
+    },
+    {
+      "gen": 83,
+      "timestamp": "2026-07-24T13:34:49.620Z",
       "mode": "incremental",
       "promptHash": "e97118c4bf71f4f22a034d9d6d1c3f196540fdcedc94fc8583fd0fdd14cc2a9a",
       "files": []
@@ -331,135 +456,15 @@
         "entries": [
           {
             "promptLines": [
-              38,
-              44
+              1,
+              7
             ],
             "file": "blame_render/src/lib.rs",
             "lines": [
-              10,
-              18
+              1,
+              5
             ],
-            "note": "mode_str maps JournalMode to lowercase label, exhaustive match"
-          },
-          {
-            "promptLines": [
-              46,
-              53
-            ],
-            "file": "blame_render/src/lib.rs",
-            "lines": [
-              20,
-              26
-            ],
-            "note": "format_blame_row renders gen/timestamp/module/text row"
-          },
-          {
-            "promptLines": [
-              55,
-              61
-            ],
-            "file": "blame_render/src/lib.rs",
-            "lines": [
-              28,
-              36
-            ],
-            "note": "why_line delegates to blame::first_prompt_diff_line, defaults to initial generation"
-          },
-          {
-            "promptLines": [
-              63,
-              68
-            ],
-            "file": "blame_render/src/lib.rs",
-            "lines": [
-              38,
-              46
-            ],
-            "note": "BlameGenRender struct and render_blame_gen signature/entry lookup"
-          },
-          {
-            "promptLines": [
-              69,
-              73
-            ],
-            "file": "blame_render/src/lib.rs",
-            "lines": [
-              47,
-              52
-            ],
-            "note": "no matching entry returns error text with exit_code 1"
-          },
-          {
-            "promptLines": [
-              75,
-              81
-            ],
-            "file": "blame_render/src/lib.rs",
-            "lines": [
-              54,
-              63
-            ],
-            "note": "build lines vec, header line with gen/timestamp/module/target/mode"
-          },
-          {
-            "promptLines": [
-              82,
-              83
-            ],
-            "file": "blame_render/src/lib.rs",
-            "lines": [
-              64,
-              65
-            ],
-            "note": "empty line then 'prompt edit:' label"
-          },
-          {
-            "promptLines": [
-              84,
-              88
-            ],
-            "file": "blame_render/src/lib.rs",
-            "lines": [
-              67,
-              73
-            ],
-            "note": "prompt-diff block: trimmed-empty check vs split on newline with two-space prefix"
-          },
-          {
-            "promptLines": [
-              89,
-              90
-            ],
-            "file": "blame_render/src/lib.rs",
-            "lines": [
-              75,
-              76
-            ],
-            "note": "empty line then 'files touched:' label"
-          },
-          {
-            "promptLines": [
-              91,
-              93
-            ],
-            "file": "blame_render/src/lib.rs",
-            "lines": [
-              78,
-              84
-            ],
-            "note": "files block: (none) placeholder or one line per file path"
-          },
-          {
-            "promptLines": [
-              75,
-              76
-            ],
-            "file": "blame_render/src/lib.rs",
-            "lines": [
-              86,
-              89
-            ],
-            "note": "join lines with single newline, no trailing newline, exit_code 0"
+            "note": "module doc: pure rendering core, no I/O"
           },
           {
             "promptLines": [
@@ -471,7 +476,7 @@
               7,
               7
             ],
-            "note": "import BlameLine from blame sibling crate"
+            "note": "import BlameLine from blame crate"
           },
           {
             "promptLines": [
@@ -483,55 +488,127 @@
               8,
               8
             ],
-            "note": "import JournalEntry and JournalMode from schemas_journal sibling crate"
+            "note": "import JournalEntry, JournalMode from schemas_journal"
           },
           {
             "promptLines": [
-              95,
-              99
+              38,
+              44
             ],
             "file": "blame_render/src/lib.rs",
             "lines": [
-              166,
-              175
+              11,
+              18
             ],
-            "note": "test verifying exact example output for empty diff, no files"
+            "note": "mode_str maps each JournalMode variant to lowercase label"
           },
           {
             "promptLines": [
-              50,
+              40,
+              40
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              13,
+              14
+            ],
+            "note": "Full->full, Incremental->incremental"
+          },
+          {
+            "promptLines": [
+              41,
+              41
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              15,
+              16
+            ],
+            "note": "Reconcile->reconcile, Move->move"
+          },
+          {
+            "promptLines": [
+              46,
               53
             ],
             "file": "blame_render/src/lib.rs",
             "lines": [
-              132,
-              145
+              21,
+              26
             ],
-            "note": "test verifying format_blame_row example row"
+            "note": "format_blame_row: two-space separated gen/timestamp/module/text"
           },
           {
             "promptLines": [
-              57,
+              55,
               61
             ],
             "file": "blame_render/src/lib.rs",
             "lines": [
-              147,
-              156
+              29,
+              36
             ],
-            "note": "tests for why_line empty and non-empty diff"
+            "note": "why_line: first_prompt_diff_line, empty -> initial generation"
           },
           {
             "promptLines": [
-              84,
-              88
+              57,
+              57
             ],
             "file": "blame_render/src/lib.rs",
             "lines": [
-              177,
-              207
+              30,
+              30
             ],
-            "note": "tests for whitespace-only diff, multiline diff+files, trailing newline case"
+            "note": "call blame::first_prompt_diff_line"
+          },
+          {
+            "promptLines": [
+              58,
+              58
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              31,
+              32
+            ],
+            "note": "empty result returns initial generation"
+          },
+          {
+            "promptLines": [
+              58,
+              59
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              33,
+              34
+            ],
+            "note": "otherwise return result unchanged"
+          },
+          {
+            "promptLines": [
+              63,
+              67
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              46,
+              46
+            ],
+            "note": "render_blame_gen signature"
+          },
+          {
+            "promptLines": [
+              65,
+              66
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              40,
+              43
+            ],
+            "note": "BlameGenRender struct with text and exit_code fields"
           },
           {
             "promptLines": [
@@ -540,10 +617,154 @@
             ],
             "file": "blame_render/src/lib.rs",
             "lines": [
-              209,
-              218
+              47,
+              47
             ],
-            "note": "test that first matching gen entry is picked"
+            "note": "find first entry matching gen"
+          },
+          {
+            "promptLines": [
+              71,
+              73
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              48,
+              52
+            ],
+            "note": "no match: error text, exit_code 1"
+          },
+          {
+            "promptLines": [
+              75,
+              77
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              54,
+              54
+            ],
+            "note": "build lines vector"
+          },
+          {
+            "promptLines": [
+              79,
+              81
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              56,
+              63
+            ],
+            "note": "header line: gen/timestamp/module (target) mode"
+          },
+          {
+            "promptLines": [
+              82,
+              82
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              64,
+              64
+            ],
+            "note": "empty line"
+          },
+          {
+            "promptLines": [
+              83,
+              83
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              65,
+              65
+            ],
+            "note": "prompt edit: label"
+          },
+          {
+            "promptLines": [
+              84,
+              85
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              67,
+              68
+            ],
+            "note": "trimmed-empty diff -> initial generation line"
+          },
+          {
+            "promptLines": [
+              86,
+              88
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              69,
+              73
+            ],
+            "note": "split diff on newline, prefix each piece two spaces"
+          },
+          {
+            "promptLines": [
+              89,
+              89
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              75,
+              75
+            ],
+            "note": "empty line"
+          },
+          {
+            "promptLines": [
+              90,
+              90
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              76,
+              76
+            ],
+            "note": "files touched: label"
+          },
+          {
+            "promptLines": [
+              91,
+              91
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              78,
+              79
+            ],
+            "note": "empty files -> (none) line"
+          },
+          {
+            "promptLines": [
+              92,
+              93
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              80,
+              83
+            ],
+            "note": "one line per file path, two-space prefix"
+          },
+          {
+            "promptLines": [
+              75,
+              76
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              86,
+              89
+            ],
+            "note": "join lines with newline, exit_code 0"
           }
         ]
       },
@@ -552,13 +773,41 @@
         "path": "blame_render.mapl",
         "entry": {
           "promptLines": [
-            38,
-            44
+            11,
+            16
           ],
           "kind": "no-op",
           "severity": "warning",
-          "message": "mode_str already handles Move variant exhaustively — no change needed.",
-          "reasoning": "Prompt spends extra emphasis explaining the Move variant (\"records a location-heal... exhaustive so every variant — including Move — is handled\"), suggesting this was a spot the author worried might get missed. Checked ./.napl/src/rust/blame_render/src/lib.rs directly: the match over JournalMode already covers Full, Incremental, Reconcile, and Move (mapping to \"move\"), and a test (mode_str_maps_all_variants) asserts all four. Nothing needed changing."
+          "message": "Crate said to be \"created\" but agent made NO CHANGES — module already present and matching spec.",
+          "reasoning": "The prompt reads as a creation task (\"Create this module as its own member crate ... blame_render/Cargo.toml and blame_render/src/lib.rs\"), yet the agent produced NO CHANGES, reporting that the code already exists, matches every function spec exactly, and all 10 tests pass. Nothing was written because the requirement was already satisfied by pre-existing source. Worth confirming the crate truly exists at blame_render/ and that `cargo test` from the workspace root passes, since a creation prompt yielding zero diff is surprising. "
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "blame_render.mapl",
+        "entry": {
+          "promptLines": [
+            84,
+            88
+          ],
+          "kind": "note",
+          "severity": "info",
+          "message": "prompt_diff emptiness uses trimmed check here, but why_line relies on blame::first_prompt_diff_line's own empty result.",
+          "reasoning": "render_blame_gen decides \"initial generation\" by trimming surrounding whitespace on entry.prompt_diff (line 84), while why_line (lines 57-59) decides emptiness from the return of blame::first_prompt_diff_line without an explicit trim. The two \"empty\" notions are defined by different mechanisms; they likely agree but are not the same test. Since NO CHANGES were made this was not exercised — flagging so the author confirms both paths behave as intended. "
+        }
+      },
+      {
+        "type": "mapl-entry",
+        "path": "blame_render.mapl",
+        "entry": {
+          "promptLines": [
+            86,
+            88
+          ],
+          "kind": "assumption",
+          "severity": "warning",
+          "message": "Trailing newline in a non-empty prompt_diff yields a final two-space line — confirm this is intended output.",
+          "reasoning": "Line 87-88 states that splitting prompt_diff on \"\\n\" and prefixing each piece with two spaces means \"a trailing newline in the diff yields a final `  ` two-space line.\" This produces a dangling two-space line in the rendered block. The prompt asserts it explicitly, so it was treated as intended rather than an oversight, but it is unusual output worth a second look."
         }
       },
       {

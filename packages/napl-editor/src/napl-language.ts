@@ -188,3 +188,108 @@ export const naplHighlightStyle = HighlightStyle.define([
 export const naplHighlighting: Extension = syntaxHighlighting(naplHighlightStyle);
 
 export const naplLanguage = (): Extension => [naplStreamLanguage, naplHighlighting];
+
+export const maplSeverityErrorTag = Tag.define();
+export const maplSeverityWarnTag = Tag.define();
+export const maplSeverityInfoTag = Tag.define();
+
+interface MaplStreamState {
+  expectKind: boolean;
+}
+
+const MAPL_KIND_KEY = /^kind(?=\s*:)/;
+
+const maplStreamParser: StreamParser<MaplStreamState> = {
+  name: 'mapl',
+  startState: () => ({ expectKind: false }),
+  copyState: (state) => ({ expectKind: state.expectKind }),
+  token(stream, state) {
+    if (stream.sol() && stream.match(FENCE)) {
+      return 'punctuation';
+    }
+    if (stream.eatSpace()) {
+      return null;
+    }
+    if (stream.peek() === '#') {
+      stream.skipToEnd();
+      return 'comment';
+    }
+    if (stream.match(/^-(?=\s)/)) {
+      return 'punctuation';
+    }
+    if (state.expectKind) {
+      if (stream.match(/^ambiguity\b/)) {
+        state.expectKind = false;
+        return 'sevError';
+      }
+      if (stream.match(/^(assumption|no-op)\b/)) {
+        state.expectKind = false;
+        return 'sevWarn';
+      }
+      if (stream.match(/^note\b/)) {
+        state.expectKind = false;
+        return 'sevInfo';
+      }
+    }
+    if (stream.match(MAPL_KIND_KEY)) {
+      state.expectKind = true;
+      return 'yamlKey';
+    }
+    if (stream.match(GENERIC_KEY)) {
+      return 'yamlKey';
+    }
+    if (stream.eat(':')) {
+      return 'punctuation';
+    }
+    if (stream.match(DOUBLE_STRING) || stream.match(SINGLE_STRING)) {
+      return 'string';
+    }
+    if (stream.match(/^[[\]{},]/)) {
+      return 'punctuation';
+    }
+    if (stream.match(NUMBER)) {
+      return 'number';
+    }
+    if (stream.match(CONSTANT)) {
+      return 'bool';
+    }
+    if (stream.match(SCALAR)) {
+      return null;
+    }
+    stream.next();
+    return null;
+  },
+  tokenTable: {
+    yamlKey: tags.propertyName,
+    sevError: maplSeverityErrorTag,
+    sevWarn: maplSeverityWarnTag,
+    sevInfo: maplSeverityInfoTag,
+    punctuation: tags.punctuation,
+    string: tags.string,
+    number: tags.number,
+    bool: tags.bool,
+    comment: tags.comment,
+  },
+  languageData: {
+    commentTokens: { line: '#' },
+  },
+};
+
+export const maplStreamLanguage = StreamLanguage.define(maplStreamParser);
+
+export const maplHighlightStyle = HighlightStyle.define([
+  { tag: tags.propertyName, color: '#79b8ff' },
+  { tag: maplSeverityErrorTag, color: '#f97583', fontWeight: 'bold' },
+  { tag: maplSeverityWarnTag, color: '#ffab70', fontWeight: 'bold' },
+  { tag: maplSeverityInfoTag, color: '#79b8ff', fontWeight: 'bold' },
+  { tag: tags.punctuation, color: '#e1e4e8' },
+  { tag: tags.string, color: '#9ecbff' },
+  { tag: tags.number, color: '#79b8ff' },
+  { tag: tags.bool, color: '#79b8ff' },
+  { tag: tags.comment, color: '#6a737d', fontStyle: 'italic' },
+]);
+
+export const maplLanguage = (): Extension => [
+  maplStreamLanguage,
+  syntaxHighlighting(maplHighlightStyle),
+];

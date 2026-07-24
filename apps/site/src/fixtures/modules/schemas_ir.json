@@ -29,51 +29,15 @@
   "attribution": [
     {
       "promptLines": [
-        23,
-        23
+        6,
+        8
       ],
       "file": "schemas_ir/src/lib.rs",
       "lines": [
-        7,
-        11
+        3,
+        4
       ],
-      "note": "IrType struct fields"
-    },
-    {
-      "promptLines": [
-        24,
-        24
-      ],
-      "file": "schemas_ir/src/lib.rs",
-      "lines": [
-        13,
-        18
-      ],
-      "note": "IrFunction struct fields"
-    },
-    {
-      "promptLines": [
-        25,
-        27
-      ],
-      "file": "schemas_ir/src/lib.rs",
-      "lines": [
-        20,
-        31
-      ],
-      "note": "IrTest struct with default empty-object given/expect"
-    },
-    {
-      "promptLines": [
-        28,
-        31
-      ],
-      "file": "schemas_ir/src/lib.rs",
-      "lines": [
-        33,
-        44
-      ],
-      "note": "Ir struct with defaulted list fields"
+      "note": "brings in serde Deserialize and serde_json Value"
     },
     {
       "promptLines": [
@@ -85,7 +49,19 @@
         7,
         7
       ],
-      "note": "derive Deserialize + equality on IrType"
+      "note": "derives Deserialize and equality for IrType"
+    },
+    {
+      "promptLines": [
+        23,
+        23
+      ],
+      "file": "schemas_ir/src/lib.rs",
+      "lines": [
+        8,
+        11
+      ],
+      "note": "IrType with name and description fields"
     },
     {
       "promptLines": [
@@ -97,7 +73,31 @@
         13,
         13
       ],
-      "note": "derive Deserialize + equality on IrFunction"
+      "note": "derives Deserialize and equality for IrFunction"
+    },
+    {
+      "promptLines": [
+        24,
+        24
+      ],
+      "file": "schemas_ir/src/lib.rs",
+      "lines": [
+        14,
+        18
+      ],
+      "note": "IrFunction with name, signature, behavior fields"
+    },
+    {
+      "promptLines": [
+        26,
+        27
+      ],
+      "file": "schemas_ir/src/lib.rs",
+      "lines": [
+        20,
+        22
+      ],
+      "note": "default helper producing empty JSON object"
     },
     {
       "promptLines": [
@@ -109,7 +109,31 @@
         24,
         24
       ],
-      "note": "derive Deserialize + equality on IrTest"
+      "note": "derives Deserialize and equality for IrTest"
+    },
+    {
+      "promptLines": [
+        25,
+        25
+      ],
+      "file": "schemas_ir/src/lib.rs",
+      "lines": [
+        26,
+        26
+      ],
+      "note": "IrTest name field"
+    },
+    {
+      "promptLines": [
+        25,
+        27
+      ],
+      "file": "schemas_ir/src/lib.rs",
+      "lines": [
+        27,
+        30
+      ],
+      "note": "given/expect as Value defaulting to empty object"
     },
     {
       "promptLines": [
@@ -121,7 +145,31 @@
         33,
         33
       ],
-      "note": "derive Deserialize + equality on Ir"
+      "note": "derives Deserialize and equality for Ir"
+    },
+    {
+      "promptLines": [
+        28,
+        28
+      ],
+      "file": "schemas_ir/src/lib.rs",
+      "lines": [
+        35,
+        35
+      ],
+      "note": "Ir module string field"
+    },
+    {
+      "promptLines": [
+        28,
+        31
+      ],
+      "file": "schemas_ir/src/lib.rs",
+      "lines": [
+        36,
+        43
+      ],
+      "note": "deps/types/functions/tests list fields defaulting empty"
     },
     {
       "promptLines": [
@@ -130,10 +178,34 @@
       ],
       "file": "schemas_ir/src/lib.rs",
       "lines": [
-        72,
-        74
+        46,
+        66
       ],
-      "note": "validate_ir signature and deserialize step"
+      "note": "error type returned on failure instead of panic"
+    },
+    {
+      "promptLines": [
+        44,
+        46
+      ],
+      "file": "schemas_ir/src/lib.rs",
+      "lines": [
+        68,
+        70
+      ],
+      "note": "predicate: value is JSON object or string"
+    },
+    {
+      "promptLines": [
+        33,
+        36
+      ],
+      "file": "schemas_ir/src/lib.rs",
+      "lines": [
+        72,
+        72
+      ],
+      "note": "validate_ir takes Value, returns Result<Ir, error>"
     },
     {
       "promptLines": [
@@ -145,7 +217,7 @@
         73,
         74
       ],
-      "note": "deserialize rejects wrong-shaped/missing required fields"
+      "note": "deserialize value into Ir, rejecting wrong shapes"
     },
     {
       "promptLines": [
@@ -157,7 +229,7 @@
         76,
         78
       ],
-      "note": "reject empty/missing module"
+      "note": "reject empty module"
     },
     {
       "promptLines": [
@@ -166,22 +238,22 @@
       ],
       "file": "schemas_ir/src/lib.rs",
       "lines": [
-        68,
+        80,
         93
       ],
-      "note": "enforce given/expect must be object or string"
+      "note": "reject test given/expect that aren't object or string"
     },
     {
       "promptLines": [
-        36,
+        35,
         36
       ],
       "file": "schemas_ir/src/lib.rs",
       "lines": [
-        46,
-        66
+        95,
+        95
       ],
-      "note": "error type, never panics, implements Display/Error"
+      "note": "return parsed Ir on success"
     },
     {
       "promptLines": [
@@ -190,22 +262,46 @@
       ],
       "file": "schemas_ir/src/lib.rs",
       "lines": [
-        104,
+        103,
         120
       ],
-      "note": "worked example - minimal function validates"
+      "note": "test: minimal function validates with empty lists"
     },
     {
       "promptLines": [
         54,
+        54
+      ],
+      "file": "schemas_ir/src/lib.rs",
+      "lines": [
+        122,
+        126
+      ],
+      "note": "test: missing module rejected"
+    },
+    {
+      "promptLines": [
+        54,
+        55
+      ],
+      "file": "schemas_ir/src/lib.rs",
+      "lines": [
+        128,
+        133
+      ],
+      "note": "test: empty module rejected"
+    },
+    {
+      "promptLines": [
+        55,
         56
       ],
       "file": "schemas_ir/src/lib.rs",
       "lines": [
-        123,
+        135,
         142
       ],
-      "note": "worked example - missing/empty module and incomplete function rejected"
+      "note": "test: incomplete function rejected"
     },
     {
       "promptLines": [
@@ -214,10 +310,10 @@
       ],
       "file": "schemas_ir/src/lib.rs",
       "lines": [
-        145,
+        144,
         152
       ],
-      "note": "worked example - expect string preserved"
+      "note": "test: expect string preserved"
     },
     {
       "promptLines": [
@@ -226,36 +322,35 @@
       ],
       "file": "schemas_ir/src/lib.rs",
       "lines": [
-        155,
+        154,
         163
       ],
-      "note": "worked example - given defaults to empty object"
+      "note": "test: given defaults to empty object"
     },
     {
       "promptLines": [
-        6,
-        8
+        44,
+        46
       ],
       "file": "schemas_ir/src/lib.rs",
       "lines": [
-        3,
-        4
+        165,
+        199
       ],
-      "note": "serde/serde_json dependency usage, Value for given/expect"
+      "note": "tests: non-object/non-string given/expect rejected"
     }
   ],
-  "attributionYaml": "module: schemas_ir\ntarget: rust\nentries:\n  - promptLines:\n      - 23\n      - 23\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 7\n      - 11\n    note: IrType struct fields\n  - promptLines:\n      - 24\n      - 24\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 13\n      - 18\n    note: IrFunction struct fields\n  - promptLines:\n      - 25\n      - 27\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 20\n      - 31\n    note: IrTest struct with default empty-object given/expect\n  - promptLines:\n      - 28\n      - 31\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 33\n      - 44\n    note: Ir struct with defaulted list fields\n  - promptLines:\n      - 21\n      - 21\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 7\n      - 7\n    note: derive Deserialize + equality on IrType\n  - promptLines:\n      - 21\n      - 21\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 13\n      - 13\n    note: derive Deserialize + equality on IrFunction\n  - promptLines:\n      - 21\n      - 21\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 24\n      - 24\n    note: derive Deserialize + equality on IrTest\n  - promptLines:\n      - 21\n      - 21\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 33\n      - 33\n    note: derive Deserialize + equality on Ir\n  - promptLines:\n      - 35\n      - 36\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 72\n      - 74\n    note: validate_ir signature and deserialize step\n  - promptLines:\n      - 38\n      - 41\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 73\n      - 74\n    note: deserialize rejects wrong-shaped/missing required fields\n  - promptLines:\n      - 42\n      - 43\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 76\n      - 78\n    note: reject empty/missing module\n  - promptLines:\n      - 44\n      - 46\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 68\n      - 93\n    note: enforce given/expect must be object or string\n  - promptLines:\n      - 36\n      - 36\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 46\n      - 66\n    note: error type, never panics, implements Display/Error\n  - promptLines:\n      - 50\n      - 53\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 104\n      - 120\n    note: worked example - minimal function validates\n  - promptLines:\n      - 54\n      - 56\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 123\n      - 142\n    note: worked example - missing/empty module and incomplete function rejected\n  - promptLines:\n      - 57\n      - 58\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 145\n      - 152\n    note: worked example - expect string preserved\n  - promptLines:\n      - 59\n      - 60\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 155\n      - 163\n    note: worked example - given defaults to empty object\n  - promptLines:\n      - 6\n      - 8\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 3\n      - 4\n    note: serde/serde_json dependency usage, Value for given/expect\n",
+  "attributionYaml": "module: schemas_ir\ntarget: rust\nentries:\n  - promptLines:\n      - 6\n      - 8\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 3\n      - 4\n    note: brings in serde Deserialize and serde_json Value\n  - promptLines:\n      - 21\n      - 21\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 7\n      - 7\n    note: derives Deserialize and equality for IrType\n  - promptLines:\n      - 23\n      - 23\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 8\n      - 11\n    note: IrType with name and description fields\n  - promptLines:\n      - 21\n      - 21\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 13\n      - 13\n    note: derives Deserialize and equality for IrFunction\n  - promptLines:\n      - 24\n      - 24\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 14\n      - 18\n    note: IrFunction with name, signature, behavior fields\n  - promptLines:\n      - 26\n      - 27\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 20\n      - 22\n    note: default helper producing empty JSON object\n  - promptLines:\n      - 21\n      - 21\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 24\n      - 24\n    note: derives Deserialize and equality for IrTest\n  - promptLines:\n      - 25\n      - 25\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 26\n      - 26\n    note: IrTest name field\n  - promptLines:\n      - 25\n      - 27\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 27\n      - 30\n    note: given/expect as Value defaulting to empty object\n  - promptLines:\n      - 21\n      - 21\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 33\n      - 33\n    note: derives Deserialize and equality for Ir\n  - promptLines:\n      - 28\n      - 28\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 35\n      - 35\n    note: Ir module string field\n  - promptLines:\n      - 28\n      - 31\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 36\n      - 43\n    note: deps/types/functions/tests list fields defaulting empty\n  - promptLines:\n      - 35\n      - 36\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 46\n      - 66\n    note: error type returned on failure instead of panic\n  - promptLines:\n      - 44\n      - 46\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 68\n      - 70\n    note: \"predicate: value is JSON object or string\"\n  - promptLines:\n      - 33\n      - 36\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 72\n      - 72\n    note: validate_ir takes Value, returns Result<Ir, error>\n  - promptLines:\n      - 38\n      - 41\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 73\n      - 74\n    note: deserialize value into Ir, rejecting wrong shapes\n  - promptLines:\n      - 42\n      - 43\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 76\n      - 78\n    note: reject empty module\n  - promptLines:\n      - 44\n      - 46\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 80\n      - 93\n    note: reject test given/expect that aren't object or string\n  - promptLines:\n      - 35\n      - 36\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 95\n      - 95\n    note: return parsed Ir on success\n  - promptLines:\n      - 50\n      - 53\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 103\n      - 120\n    note: \"test: minimal function validates with empty lists\"\n  - promptLines:\n      - 54\n      - 54\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 122\n      - 126\n    note: \"test: missing module rejected\"\n  - promptLines:\n      - 54\n      - 55\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 128\n      - 133\n    note: \"test: empty module rejected\"\n  - promptLines:\n      - 55\n      - 56\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 135\n      - 142\n    note: \"test: incomplete function rejected\"\n  - promptLines:\n      - 57\n      - 58\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 144\n      - 152\n    note: \"test: expect string preserved\"\n  - promptLines:\n      - 59\n      - 60\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 154\n      - 163\n    note: \"test: given defaults to empty object\"\n  - promptLines:\n      - 44\n      - 46\n    file: schemas_ir/src/lib.rs\n    lines:\n      - 165\n      - 199\n    note: \"tests: non-object/non-string given/expect rejected\"\n",
   "mapl": [
     {
       "promptLines": [
-        21,
-        21
+        10,
+        17
       ],
-      "kind": "assumption",
+      "kind": "no-op",
       "severity": "warning",
-      "message": "IrTest/Ir only derive PartialEq, not Eq, since they hold serde_json::Value.",
-      "reasoning": "Prompt says all types 'support equality comparison' without specifying PartialEq vs Eq. IrType/IrFunction (pure Strings) derive PartialEq+Eq, but IrTest/Ir contain serde_json::Value, which has no Eq impl, so only PartialEq could be derived for them. Agent assumed this relaxation was acceptable rather than flagging a conflict.",
-      "suggestion": "Note that types containing serde_json::Value need only derive PartialEq (Value has no Eq), while pure-string types should derive both PartialEq and Eq."
+      "message": "No changes made — crate schemas_ir/ already exists and matches full prompt.",
+      "reasoning": "Changes were \"NO CHANGES\". Agent reports schemas_ir/Cargo.toml and schemas_ir/src/lib.rs already present, all types, validate_ir, and both semantic rules already implemented, and all 10 tests passing from workspace root. Prompt fully satisfied by pre-existing source; nothing to compile."
     },
     {
       "promptLines": [
@@ -264,20 +359,23 @@
       ],
       "kind": "assumption",
       "severity": "warning",
-      "message": "Added Debug and Clone derives beyond what prompt required.",
-      "reasoning": "Prompt only asked for Deserialize and equality comparison. Agent additionally derived Debug and Clone on all types for ergonomics (e.g. test assertions, error messages), which is a reasonable but unrequested addition."
+      "message": "\"support equality comparison\" taken as deriving PartialEq (and Eq where valid) on all IR types.",
+      "reasoning": "Prompt says types must \"support equality comparison\" without naming a trait. Standard Rust reading is `#[derive(PartialEq)]`. Note serde_json::Value fields (given/expect) only implement PartialEq, not Eq, so IrTest/Ir cannot derive Eq; existing code presumably derives PartialEq only. Flagged since prompt did not specify which equality trait.",
+      "suggestion": "All of these derive `serde::Deserialize` and `PartialEq`."
     },
     {
       "promptLines": [
-        36,
-        47
+        44,
+        46
       ],
-      "kind": "assumption",
-      "severity": "warning",
-      "message": "Error type shape (enum with Deserialize/EmptyModule/InvalidTestValue variants) was invented, not specified.",
-      "reasoning": "Prompt only requires validate_ir return 'an error on failure (an error value, never a panic)' without specifying its structure. Agent designed a custom IrValidationError enum with Display/Error impls and a field name in InvalidTestValue; a different but equally valid error shape (e.g. a single String error) could have been chosen instead."
+      "kind": "note",
+      "severity": "info",
+      "message": "Rule 3 (given/expect must be object or string) is stricter than the empty-object default in the types.",
+      "reasoning": "Type layer (lines 26-27) defaults omitted given/expect to `{}` and accepts any Value; validator rule 3 then narrows accepted non-default values to object or string only. The two layers are consistent (an omitted field becomes `{}`, which is an object and passes), but the split responsibility is worth noting so a reader does not expect rule 3 to also reject the defaulted case."
     }
   ],
+  "maplContent": "module: schemas_ir\ntarget: rust\nentries:\n  - promptLines:\n      - 10\n      - 17\n    kind: no-op\n    message: No changes made — crate schemas_ir/ already exists and matches full prompt.\n    reasoning: Changes were \"NO CHANGES\". Agent reports schemas_ir/Cargo.toml and schemas_ir/src/lib.rs already present, all types, validate_ir, and both semantic rules already implemented, and all 10 tests passing from workspace root. Prompt fully satisfied by pre-existing source; nothing to compile.\n  - promptLines:\n      - 21\n      - 21\n    kind: assumption\n    message: '\"support equality comparison\" taken as deriving PartialEq (and Eq where valid) on all IR types.'\n    reasoning: Prompt says types must \"support equality comparison\" without naming a trait. Standard Rust reading is `#[derive(PartialEq)]`. Note serde_json::Value fields (given/expect) only implement PartialEq, not Eq, so IrTest/Ir cannot derive Eq; existing code presumably derives PartialEq only. Flagged since prompt did not specify which equality trait.\n    suggestion: All of these derive `serde::Deserialize` and `PartialEq`.\n  - promptLines:\n      - 44\n      - 46\n    kind: note\n    message: Rule 3 (given/expect must be object or string) is stricter than the empty-object default in the types.\n    reasoning: Type layer (lines 26-27) defaults omitted given/expect to `{}` and accepts any Value; validator rule 3 then narrows accepted non-default values to object or string only. The two layers are consistent (an omitted field becomes `{}`, which is an object and passes), but the split responsibility is worth noting so a reader does not expect rule 3 to also reject the defaulted case.\n",
+  "maplFile": "schemas_ir.mapl",
   "journal": [
     {
       "gen": 9,
@@ -296,6 +394,13 @@
           "patch": "@@ -0,0 +1,200 @@\n+// GENERATED BY NAPL from schemas_ir.napl — edit the prompt, not this file\n+\n+use serde::Deserialize;\n+use serde_json::Value;\n+use std::fmt;\n+\n+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]\n+pub struct IrType {\n+    pub name: String,\n+    pub description: String,\n+}\n+\n+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]\n+pub struct IrFunction {\n+    pub name: String,\n+    pub signature: String,\n+    pub behavior: String,\n+}\n+\n+fn empty_object() -> Value {\n+    Value::Object(serde_json::Map::new())\n+}\n+\n+#[derive(Debug, Deserialize, PartialEq, Clone)]\n+pub struct IrTest {\n+    pub name: String,\n+    #[serde(default = \"empty_object\")]\n+    pub given: Value,\n+    #[serde(default = \"empty_object\")]\n+    pub expect: Value,\n+}\n+\n+#[derive(Debug, Deserialize, PartialEq, Clone)]\n+pub struct Ir {\n+    pub module: String,\n+    #[serde(default)]\n+    pub deps: Vec<String>,\n+    #[serde(default)]\n+    pub types: Vec<IrType>,\n+    #[serde(default)]\n+    pub functions: Vec<IrFunction>,\n+    #[serde(default)]\n+    pub tests: Vec<IrTest>,\n+}\n+\n+#[derive(Debug, PartialEq, Eq, Clone)]\n+pub enum IrValidationError {\n+    Deserialize(String),\n+    EmptyModule,\n+    InvalidTestValue { test_name: String, field: &'static str },\n+}\n+\n+impl fmt::Display for IrValidationError {\n+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {\n+        match self {\n+            IrValidationError::Deserialize(msg) => write!(f, \"failed to parse IR: {msg}\"),\n+            IrValidationError::EmptyModule => write!(f, \"module must be a non-empty string\"),\n+            IrValidationError::InvalidTestValue { test_name, field } => write!(\n+                f,\n+                \"test '{test_name}' field '{field}' must be a JSON object or string\"\n+            ),\n+        }\n+    }\n+}\n+\n+impl std::error::Error for IrValidationError {}\n+\n+fn is_object_or_string(value: &Value) -> bool {\n+    matches!(value, Value::Object(_) | Value::String(_))\n+}\n+\n+pub fn validate_ir(value: Value) -> Result<Ir, IrValidationError> {\n+    let ir: Ir =\n+        serde_json::from_value(value).map_err(|e| IrValidationError::Deserialize(e.to_string()))?;\n+\n+    if ir.module.is_empty() {\n+        return Err(IrValidationError::EmptyModule);\n+    }\n+\n+    for test in &ir.tests {\n+        if !is_object_or_string(&test.given) {\n+            return Err(IrValidationError::InvalidTestValue {\n+                test_name: test.name.clone(),\n+                field: \"given\",\n+            });\n+        }\n+        if !is_object_or_string(&test.expect) {\n+            return Err(IrValidationError::InvalidTestValue {\n+                test_name: test.name.clone(),\n+                field: \"expect\",\n+            });\n+        }\n+    }\n+\n+    Ok(ir)\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+    use serde_json::json;\n+\n+    #[test]\n+    fn validates_minimal_function() {\n+        let value = json!({\n+            \"module\": \"greeting\",\n+            \"functions\": [{\n+                \"name\": \"greet\",\n+                \"signature\": \"greet(name): string\",\n+                \"behavior\": \"returns Hello\"\n+            }]\n+        });\n+        let ir = validate_ir(value).expect(\"should validate\");\n+        assert_eq!(ir.module, \"greeting\");\n+        assert!(ir.deps.is_empty());\n+        assert!(ir.types.is_empty());\n+        assert!(ir.tests.is_empty());\n+        assert_eq!(ir.functions.len(), 1);\n+        assert_eq!(ir.functions[0].name, \"greet\");\n+    }\n+\n+    #[test]\n+    fn rejects_missing_module() {\n+        let value = json!({ \"functions\": [] });\n+        assert!(validate_ir(value).is_err());\n+    }\n+\n+    #[test]\n+    fn rejects_empty_module() {\n+        let value = json!({ \"module\": \"\", \"functions\": [] });\n+        let err = validate_ir(value).unwrap_err();\n+        assert_eq!(err, IrValidationError::EmptyModule);\n+    }\n+\n+    #[test]\n+    fn rejects_incomplete_function() {\n+        let value = json!({\n+            \"module\": \"x\",\n+            \"functions\": [{ \"name\": \"f\" }]\n+        });\n+        assert!(validate_ir(value).is_err());\n+    }\n+\n+    #[test]\n+    fn test_expect_string_is_preserved() {\n+        let value = json!({\n+            \"module\": \"m\",\n+            \"tests\": [{ \"name\": \"a\", \"given\": { \"x\": 1 }, \"expect\": \"ok\" }]\n+        });\n+        let ir = validate_ir(value).expect(\"should validate\");\n+        assert_eq!(ir.tests[0].expect, json!(\"ok\"));\n+    }\n+\n+    #[test]\n+    fn test_given_defaults_to_empty_object() {\n+        let value = json!({\n+            \"module\": \"m\",\n+            \"tests\": [{ \"name\": \"a\" }]\n+        });\n+        let ir = validate_ir(value).expect(\"should validate\");\n+        assert_eq!(ir.tests[0].given, json!({}));\n+        assert_eq!(ir.tests[0].expect, json!({}));\n+    }\n+\n+    #[test]\n+    fn rejects_non_object_non_string_given() {\n+        let value = json!({\n+            \"module\": \"m\",\n+            \"tests\": [{ \"name\": \"a\", \"given\": 42, \"expect\": \"ok\" }]\n+        });\n+        assert!(validate_ir(value).is_err());\n+    }\n+\n+    #[test]\n+    fn rejects_non_object_non_string_expect() {\n+        let value = json!({\n+            \"module\": \"m\",\n+            \"tests\": [{ \"name\": \"a\", \"given\": {}, \"expect\": [1, 2] }]\n+        });\n+        assert!(validate_ir(value).is_err());\n+    }\n+\n+    #[test]\n+    fn rejects_null_given() {\n+        let value = json!({\n+            \"module\": \"m\",\n+            \"tests\": [{ \"name\": \"a\", \"given\": null, \"expect\": \"ok\" }]\n+        });\n+        assert!(validate_ir(value).is_err());\n+    }\n+\n+    #[test]\n+    fn rejects_boolean_expect() {\n+        let value = json!({\n+            \"module\": \"m\",\n+            \"tests\": [{ \"name\": \"a\", \"given\": {}, \"expect\": true }]\n+        });\n+        assert!(validate_ir(value).is_err());\n+    }\n+}"
         }
       ]
+    },
+    {
+      "gen": 62,
+      "timestamp": "2026-07-24T12:56:38.446Z",
+      "mode": "incremental",
+      "promptHash": "9774858515e616c6840e4f9e49eaa8a4ee19d5868be410cf6701a71df61feeeb",
+      "files": []
     }
   ],
   "lock": [
@@ -345,51 +450,15 @@
         "entries": [
           {
             "promptLines": [
-              23,
-              23
+              6,
+              8
             ],
             "file": "schemas_ir/src/lib.rs",
             "lines": [
-              7,
-              11
+              3,
+              4
             ],
-            "note": "IrType struct fields"
-          },
-          {
-            "promptLines": [
-              24,
-              24
-            ],
-            "file": "schemas_ir/src/lib.rs",
-            "lines": [
-              13,
-              18
-            ],
-            "note": "IrFunction struct fields"
-          },
-          {
-            "promptLines": [
-              25,
-              27
-            ],
-            "file": "schemas_ir/src/lib.rs",
-            "lines": [
-              20,
-              31
-            ],
-            "note": "IrTest struct with default empty-object given/expect"
-          },
-          {
-            "promptLines": [
-              28,
-              31
-            ],
-            "file": "schemas_ir/src/lib.rs",
-            "lines": [
-              33,
-              44
-            ],
-            "note": "Ir struct with defaulted list fields"
+            "note": "brings in serde Deserialize and serde_json Value"
           },
           {
             "promptLines": [
@@ -401,7 +470,19 @@
               7,
               7
             ],
-            "note": "derive Deserialize + equality on IrType"
+            "note": "derives Deserialize and equality for IrType"
+          },
+          {
+            "promptLines": [
+              23,
+              23
+            ],
+            "file": "schemas_ir/src/lib.rs",
+            "lines": [
+              8,
+              11
+            ],
+            "note": "IrType with name and description fields"
           },
           {
             "promptLines": [
@@ -413,7 +494,31 @@
               13,
               13
             ],
-            "note": "derive Deserialize + equality on IrFunction"
+            "note": "derives Deserialize and equality for IrFunction"
+          },
+          {
+            "promptLines": [
+              24,
+              24
+            ],
+            "file": "schemas_ir/src/lib.rs",
+            "lines": [
+              14,
+              18
+            ],
+            "note": "IrFunction with name, signature, behavior fields"
+          },
+          {
+            "promptLines": [
+              26,
+              27
+            ],
+            "file": "schemas_ir/src/lib.rs",
+            "lines": [
+              20,
+              22
+            ],
+            "note": "default helper producing empty JSON object"
           },
           {
             "promptLines": [
@@ -425,7 +530,31 @@
               24,
               24
             ],
-            "note": "derive Deserialize + equality on IrTest"
+            "note": "derives Deserialize and equality for IrTest"
+          },
+          {
+            "promptLines": [
+              25,
+              25
+            ],
+            "file": "schemas_ir/src/lib.rs",
+            "lines": [
+              26,
+              26
+            ],
+            "note": "IrTest name field"
+          },
+          {
+            "promptLines": [
+              25,
+              27
+            ],
+            "file": "schemas_ir/src/lib.rs",
+            "lines": [
+              27,
+              30
+            ],
+            "note": "given/expect as Value defaulting to empty object"
           },
           {
             "promptLines": [
@@ -437,7 +566,31 @@
               33,
               33
             ],
-            "note": "derive Deserialize + equality on Ir"
+            "note": "derives Deserialize and equality for Ir"
+          },
+          {
+            "promptLines": [
+              28,
+              28
+            ],
+            "file": "schemas_ir/src/lib.rs",
+            "lines": [
+              35,
+              35
+            ],
+            "note": "Ir module string field"
+          },
+          {
+            "promptLines": [
+              28,
+              31
+            ],
+            "file": "schemas_ir/src/lib.rs",
+            "lines": [
+              36,
+              43
+            ],
+            "note": "deps/types/functions/tests list fields defaulting empty"
           },
           {
             "promptLines": [
@@ -446,10 +599,34 @@
             ],
             "file": "schemas_ir/src/lib.rs",
             "lines": [
-              72,
-              74
+              46,
+              66
             ],
-            "note": "validate_ir signature and deserialize step"
+            "note": "error type returned on failure instead of panic"
+          },
+          {
+            "promptLines": [
+              44,
+              46
+            ],
+            "file": "schemas_ir/src/lib.rs",
+            "lines": [
+              68,
+              70
+            ],
+            "note": "predicate: value is JSON object or string"
+          },
+          {
+            "promptLines": [
+              33,
+              36
+            ],
+            "file": "schemas_ir/src/lib.rs",
+            "lines": [
+              72,
+              72
+            ],
+            "note": "validate_ir takes Value, returns Result<Ir, error>"
           },
           {
             "promptLines": [
@@ -461,7 +638,7 @@
               73,
               74
             ],
-            "note": "deserialize rejects wrong-shaped/missing required fields"
+            "note": "deserialize value into Ir, rejecting wrong shapes"
           },
           {
             "promptLines": [
@@ -473,7 +650,7 @@
               76,
               78
             ],
-            "note": "reject empty/missing module"
+            "note": "reject empty module"
           },
           {
             "promptLines": [
@@ -482,22 +659,22 @@
             ],
             "file": "schemas_ir/src/lib.rs",
             "lines": [
-              68,
+              80,
               93
             ],
-            "note": "enforce given/expect must be object or string"
+            "note": "reject test given/expect that aren't object or string"
           },
           {
             "promptLines": [
-              36,
+              35,
               36
             ],
             "file": "schemas_ir/src/lib.rs",
             "lines": [
-              46,
-              66
+              95,
+              95
             ],
-            "note": "error type, never panics, implements Display/Error"
+            "note": "return parsed Ir on success"
           },
           {
             "promptLines": [
@@ -506,22 +683,46 @@
             ],
             "file": "schemas_ir/src/lib.rs",
             "lines": [
-              104,
+              103,
               120
             ],
-            "note": "worked example - minimal function validates"
+            "note": "test: minimal function validates with empty lists"
           },
           {
             "promptLines": [
               54,
+              54
+            ],
+            "file": "schemas_ir/src/lib.rs",
+            "lines": [
+              122,
+              126
+            ],
+            "note": "test: missing module rejected"
+          },
+          {
+            "promptLines": [
+              54,
+              55
+            ],
+            "file": "schemas_ir/src/lib.rs",
+            "lines": [
+              128,
+              133
+            ],
+            "note": "test: empty module rejected"
+          },
+          {
+            "promptLines": [
+              55,
               56
             ],
             "file": "schemas_ir/src/lib.rs",
             "lines": [
-              123,
+              135,
               142
             ],
-            "note": "worked example - missing/empty module and incomplete function rejected"
+            "note": "test: incomplete function rejected"
           },
           {
             "promptLines": [
@@ -530,10 +731,10 @@
             ],
             "file": "schemas_ir/src/lib.rs",
             "lines": [
-              145,
+              144,
               152
             ],
-            "note": "worked example - expect string preserved"
+            "note": "test: expect string preserved"
           },
           {
             "promptLines": [
@@ -542,22 +743,22 @@
             ],
             "file": "schemas_ir/src/lib.rs",
             "lines": [
-              155,
+              154,
               163
             ],
-            "note": "worked example - given defaults to empty object"
+            "note": "test: given defaults to empty object"
           },
           {
             "promptLines": [
-              6,
-              8
+              44,
+              46
             ],
             "file": "schemas_ir/src/lib.rs",
             "lines": [
-              3,
-              4
+              165,
+              199
             ],
-            "note": "serde/serde_json dependency usage, Value for given/expect"
+            "note": "tests: non-object/non-string given/expect rejected"
           }
         ]
       },
@@ -566,14 +767,13 @@
         "path": "schemas_ir.mapl",
         "entry": {
           "promptLines": [
-            21,
-            21
+            10,
+            17
           ],
-          "kind": "assumption",
+          "kind": "no-op",
           "severity": "warning",
-          "message": "IrTest/Ir only derive PartialEq, not Eq, since they hold serde_json::Value.",
-          "reasoning": "Prompt says all types 'support equality comparison' without specifying PartialEq vs Eq. IrType/IrFunction (pure Strings) derive PartialEq+Eq, but IrTest/Ir contain serde_json::Value, which has no Eq impl, so only PartialEq could be derived for them. Agent assumed this relaxation was acceptable rather than flagging a conflict.",
-          "suggestion": "Note that types containing serde_json::Value need only derive PartialEq (Value has no Eq), while pure-string types should derive both PartialEq and Eq."
+          "message": "No changes made — crate schemas_ir/ already exists and matches full prompt.",
+          "reasoning": "Changes were \"NO CHANGES\". Agent reports schemas_ir/Cargo.toml and schemas_ir/src/lib.rs already present, all types, validate_ir, and both semantic rules already implemented, and all 10 tests passing from workspace root. Prompt fully satisfied by pre-existing source; nothing to compile."
         }
       },
       {
@@ -586,8 +786,9 @@
           ],
           "kind": "assumption",
           "severity": "warning",
-          "message": "Added Debug and Clone derives beyond what prompt required.",
-          "reasoning": "Prompt only asked for Deserialize and equality comparison. Agent additionally derived Debug and Clone on all types for ergonomics (e.g. test assertions, error messages), which is a reasonable but unrequested addition."
+          "message": "\"support equality comparison\" taken as deriving PartialEq (and Eq where valid) on all IR types.",
+          "reasoning": "Prompt says types must \"support equality comparison\" without naming a trait. Standard Rust reading is `#[derive(PartialEq)]`. Note serde_json::Value fields (given/expect) only implement PartialEq, not Eq, so IrTest/Ir cannot derive Eq; existing code presumably derives PartialEq only. Flagged since prompt did not specify which equality trait.",
+          "suggestion": "All of these derive `serde::Deserialize` and `PartialEq`."
         }
       },
       {
@@ -595,13 +796,13 @@
         "path": "schemas_ir.mapl",
         "entry": {
           "promptLines": [
-            36,
-            47
+            44,
+            46
           ],
-          "kind": "assumption",
-          "severity": "warning",
-          "message": "Error type shape (enum with Deserialize/EmptyModule/InvalidTestValue variants) was invented, not specified.",
-          "reasoning": "Prompt only requires validate_ir return 'an error on failure (an error value, never a panic)' without specifying its structure. Agent designed a custom IrValidationError enum with Display/Error impls and a field name in InvalidTestValue; a different but equally valid error shape (e.g. a single String error) could have been chosen instead."
+          "kind": "note",
+          "severity": "info",
+          "message": "Rule 3 (given/expect must be object or string) is stricter than the empty-object default in the types.",
+          "reasoning": "Type layer (lines 26-27) defaults omitted given/expect to `{}` and accepts any Value; validator rule 3 then narrows accepted non-default values to object or string only. The two layers are consistent (an omitted field becomes `{}`, which is an object and passes), but the split responsibility is worth noting so a reader does not expect rule 3 to also reject the defaulted case."
         }
       },
       {

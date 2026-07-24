@@ -37,19 +37,31 @@
         4,
         5
       ],
-      "note": "recognized source-file extensions const array"
+      "note": "public array of recognized source-file extensions in order"
     },
     {
       "promptLines": [
         24,
-        28
+        24
       ],
       "file": "gen_classify/src/lib.rs",
       "lines": [
         11,
+        11
+      ],
+      "note": "is_source_file signature"
+    },
+    {
+      "promptLines": [
+        29,
+        30
+      ],
+      "file": "gen_classify/src/lib.rs",
+      "lines": [
+        12,
         15
       ],
-      "note": "is_source_file signature, base name extraction"
+      "note": "base name after last slash, else whole string"
     },
     {
       "promptLines": [
@@ -59,9 +71,21 @@
       "file": "gen_classify/src/lib.rs",
       "lines": [
         7,
+        7
+      ],
+      "note": "config suffix constants"
+    },
+    {
+      "promptLines": [
+        31,
+        33
+      ],
+      "file": "gen_classify/src/lib.rs",
+      "lines": [
+        17,
         19
       ],
-      "note": "config suffix check returns false"
+      "note": "return false if base ends with config suffix"
     },
     {
       "promptLines": [
@@ -73,7 +97,7 @@
         21,
         23
       ],
-      "note": "find last dot, no dot -> false"
+      "note": "find last dot, false if none"
     },
     {
       "promptLines": [
@@ -85,112 +109,154 @@
         25,
         26
       ],
-      "note": "extension slice, membership check"
-    },
-    {
-      "promptLines": [
-        40,
-        42
-      ],
-      "file": "gen_classify/src/lib.rs",
-      "lines": [
-        65,
-        91
-      ],
-      "note": "worked-decision tests for is_source_file"
+      "note": "extension from last dot, check membership"
     },
     {
       "promptLines": [
         44,
-        50
+        44
       ],
       "file": "gen_classify/src/lib.rs",
       "lines": [
         30,
-        41
+        30
       ],
-      "note": "first_meaningful_line impl - split, strip CR/#, trim, cap 120, default"
+      "note": "first_meaningful_line signature"
     },
     {
       "promptLines": [
-        52,
-        55
+        46,
+        46
       ],
       "file": "gen_classify/src/lib.rs",
       "lines": [
-        100,
-        116
+        31,
+        31
       ],
-      "note": "worked-decision tests for first_meaningful_line"
+      "note": "split body on newline, iterate in order"
+    },
+    {
+      "promptLines": [
+        47,
+        47
+      ],
+      "file": "gen_classify/src/lib.rs",
+      "lines": [
+        32,
+        32
+      ],
+      "note": "strip single trailing carriage return"
+    },
+    {
+      "promptLines": [
+        47,
+        48
+      ],
+      "file": "gen_classify/src/lib.rs",
+      "lines": [
+        33,
+        33
+      ],
+      "note": "strip all leading hash characters"
+    },
+    {
+      "promptLines": [
+        48,
+        48
+      ],
+      "file": "gen_classify/src/lib.rs",
+      "lines": [
+        34,
+        34
+      ],
+      "note": "trim leading/trailing whitespace"
+    },
+    {
+      "promptLines": [
+        48,
+        49
+      ],
+      "file": "gen_classify/src/lib.rs",
+      "lines": [
+        35,
+        35
+      ],
+      "note": "return first non-empty result"
+    },
+    {
+      "promptLines": [
+        49,
+        49
+      ],
+      "file": "gen_classify/src/lib.rs",
+      "lines": [
+        36,
+        37
+      ],
+      "note": "cap to first 120 Unicode chars and return"
+    },
+    {
+      "promptLines": [
+        50,
+        50
+      ],
+      "file": "gen_classify/src/lib.rs",
+      "lines": [
+        40,
+        40
+      ],
+      "note": "fallback (no description) literal"
     },
     {
       "promptLines": [
         57,
-        63
+        57
       ],
       "file": "gen_classify/src/lib.rs",
       "lines": [
         44,
-        49
+        44
       ],
-      "note": "split_body_lines CRLF-aware split impl"
+      "note": "split_body_lines signature"
     },
     {
       "promptLines": [
-        61,
-        63
+        59,
+        60
       ],
       "file": "gen_classify/src/lib.rs",
       "lines": [
-        129,
-        147
+        45,
+        48
       ],
-      "note": "worked-decision tests for split_body_lines"
+      "note": "split on newline, strip trailing CR, collect owned strings"
     }
   ],
-  "attributionYaml": "module: gen_classify\ntarget: rust\nentries:\n  - promptLines:\n      - 20\n      - 22\n    file: gen_classify/src/lib.rs\n    lines:\n      - 4\n      - 5\n    note: recognized source-file extensions const array\n  - promptLines:\n      - 24\n      - 28\n    file: gen_classify/src/lib.rs\n    lines:\n      - 11\n      - 15\n    note: is_source_file signature, base name extraction\n  - promptLines:\n      - 31\n      - 33\n    file: gen_classify/src/lib.rs\n    lines:\n      - 7\n      - 19\n    note: config suffix check returns false\n  - promptLines:\n      - 34\n      - 35\n    file: gen_classify/src/lib.rs\n    lines:\n      - 21\n      - 23\n    note: find last dot, no dot -> false\n  - promptLines:\n      - 36\n      - 38\n    file: gen_classify/src/lib.rs\n    lines:\n      - 25\n      - 26\n    note: extension slice, membership check\n  - promptLines:\n      - 40\n      - 42\n    file: gen_classify/src/lib.rs\n    lines:\n      - 65\n      - 91\n    note: worked-decision tests for is_source_file\n  - promptLines:\n      - 44\n      - 50\n    file: gen_classify/src/lib.rs\n    lines:\n      - 30\n      - 41\n    note: first_meaningful_line impl - split, strip CR/#, trim, cap 120, default\n  - promptLines:\n      - 52\n      - 55\n    file: gen_classify/src/lib.rs\n    lines:\n      - 100\n      - 116\n    note: worked-decision tests for first_meaningful_line\n  - promptLines:\n      - 57\n      - 63\n    file: gen_classify/src/lib.rs\n    lines:\n      - 44\n      - 49\n    note: split_body_lines CRLF-aware split impl\n  - promptLines:\n      - 61\n      - 63\n    file: gen_classify/src/lib.rs\n    lines:\n      - 129\n      - 147\n    note: worked-decision tests for split_body_lines\n",
+  "attributionYaml": "module: gen_classify\ntarget: rust\nentries:\n  - promptLines:\n      - 20\n      - 22\n    file: gen_classify/src/lib.rs\n    lines:\n      - 4\n      - 5\n    note: public array of recognized source-file extensions in order\n  - promptLines:\n      - 24\n      - 24\n    file: gen_classify/src/lib.rs\n    lines:\n      - 11\n      - 11\n    note: is_source_file signature\n  - promptLines:\n      - 29\n      - 30\n    file: gen_classify/src/lib.rs\n    lines:\n      - 12\n      - 15\n    note: base name after last slash, else whole string\n  - promptLines:\n      - 31\n      - 33\n    file: gen_classify/src/lib.rs\n    lines:\n      - 7\n      - 7\n    note: config suffix constants\n  - promptLines:\n      - 31\n      - 33\n    file: gen_classify/src/lib.rs\n    lines:\n      - 17\n      - 19\n    note: return false if base ends with config suffix\n  - promptLines:\n      - 34\n      - 35\n    file: gen_classify/src/lib.rs\n    lines:\n      - 21\n      - 23\n    note: find last dot, false if none\n  - promptLines:\n      - 36\n      - 38\n    file: gen_classify/src/lib.rs\n    lines:\n      - 25\n      - 26\n    note: extension from last dot, check membership\n  - promptLines:\n      - 44\n      - 44\n    file: gen_classify/src/lib.rs\n    lines:\n      - 30\n      - 30\n    note: first_meaningful_line signature\n  - promptLines:\n      - 46\n      - 46\n    file: gen_classify/src/lib.rs\n    lines:\n      - 31\n      - 31\n    note: split body on newline, iterate in order\n  - promptLines:\n      - 47\n      - 47\n    file: gen_classify/src/lib.rs\n    lines:\n      - 32\n      - 32\n    note: strip single trailing carriage return\n  - promptLines:\n      - 47\n      - 48\n    file: gen_classify/src/lib.rs\n    lines:\n      - 33\n      - 33\n    note: strip all leading hash characters\n  - promptLines:\n      - 48\n      - 48\n    file: gen_classify/src/lib.rs\n    lines:\n      - 34\n      - 34\n    note: trim leading/trailing whitespace\n  - promptLines:\n      - 48\n      - 49\n    file: gen_classify/src/lib.rs\n    lines:\n      - 35\n      - 35\n    note: return first non-empty result\n  - promptLines:\n      - 49\n      - 49\n    file: gen_classify/src/lib.rs\n    lines:\n      - 36\n      - 37\n    note: cap to first 120 Unicode chars and return\n  - promptLines:\n      - 50\n      - 50\n    file: gen_classify/src/lib.rs\n    lines:\n      - 40\n      - 40\n    note: fallback (no description) literal\n  - promptLines:\n      - 57\n      - 57\n    file: gen_classify/src/lib.rs\n    lines:\n      - 44\n      - 44\n    note: split_body_lines signature\n  - promptLines:\n      - 59\n      - 60\n    file: gen_classify/src/lib.rs\n    lines:\n      - 45\n      - 48\n    note: split on newline, strip trailing CR, collect owned strings\n",
   "mapl": [
     {
       "promptLines": [
         11,
         16
       ],
-      "kind": "note",
-      "severity": "info",
-      "message": "Crate scaffolded correctly under gen_classify/, workspace untouched.",
-      "reasoning": "Prompt say root manifest owned by toolchain, leave alone, new crate at gen_classify/Cargo.toml + src/lib.rs. Agent output shows only lib.rs touched (Cargo.toml presumably added too); no workspace edits reported. Matches spec."
+      "kind": "no-op",
+      "severity": "warning",
+      "message": "No changes — existing gen_classify crate already matches prompt exactly.",
+      "reasoning": "Agent reported the crate, constant array, and all three functions (is_source_file, first_meaningful_line, split_body_lines) already exist and satisfy every worked decision; 14 tests pass. Prompt says \"Create this module\" but the source was already present and correct, so no edits were produced."
     },
     {
       "promptLines": [
-        24,
-        42
+        31,
+        33
       ],
       "kind": "note",
       "severity": "info",
-      "message": "is_source_file logic matches spec exactly, incl. worked examples as tests.",
-      "reasoning": "Base-name extraction, config-suffix check, last-dot extension check all implemented per steps; test suite covers each worked decision line-for-line."
-    },
-    {
-      "promptLines": [
-        44,
-        55
-      ],
-      "kind": "note",
-      "severity": "info",
-      "message": "first_meaningful_line matches spec, 120-char cap uses char count not byte len.",
-      "reasoning": "chars().take(120) correctly handles Unicode char cap as required; worked examples covered by tests."
-    },
-    {
-      "promptLines": [
-        57,
-        63
-      ],
-      "kind": "note",
-      "severity": "info",
-      "message": "split_body_lines matches CRLF-aware spec exactly, worked examples covered.",
-      "reasoning": "split('\\n') + strip_suffix('\\r') matches; empty string and trailing-newline cases tested per spec."
+      "message": "Config-suffix check runs before extension check, so a config file's real extension never reached.",
+      "reasoning": "Step 2 rejects `.config.ts`/`.config.tsx`/`.config.js`/`.config.jsx` before step 3/4 inspect the extension. Consistent with worked decision `vite.config.ts` → false. No conflict, but note that a name like `x.config.css` still returns true since it is not in the four listed config suffixes — confirm that gap is intended."
     }
   ],
+  "maplContent": "module: gen_classify\ntarget: rust\nentries:\n  - promptLines:\n      - 11\n      - 16\n    kind: no-op\n    message: No changes — existing gen_classify crate already matches prompt exactly.\n    reasoning: Agent reported the crate, constant array, and all three functions (is_source_file, first_meaningful_line, split_body_lines) already exist and satisfy every worked decision; 14 tests pass. Prompt says \"Create this module\" but the source was already present and correct, so no edits were produced.\n  - promptLines:\n      - 31\n      - 33\n    kind: note\n    message: Config-suffix check runs before extension check, so a config file's real extension never reached.\n    reasoning: Step 2 rejects `.config.ts`/`.config.tsx`/`.config.js`/`.config.jsx` before step 3/4 inspect the extension. Consistent with worked decision `vite.config.ts` → false. No conflict, but note that a name like `x.config.css` still returns true since it is not in the four listed config suffixes — confirm that gap is intended.\n",
+  "maplFile": "gen_classify.mapl",
   "journal": [
     {
       "gen": 35,
@@ -209,6 +275,13 @@
           "patch": "@@ -0,0 +1,148 @@\n+//! Pure classification and derivation helpers for the generator.\n+\n+/// Recognized source-file extensions, in priority order.\n+pub const SOURCE_FILE_EXTENSIONS: [&str; 7] =\n+    [\".ts\", \".tsx\", \".js\", \".jsx\", \".css\", \".html\", \".rs\"];\n+\n+const CONFIG_SUFFIXES: [&str; 4] = [\".config.ts\", \".config.tsx\", \".config.js\", \".config.jsx\"];\n+\n+/// Decide whether a path (relative to the generation target directory) names\n+/// a source file that should be numbered for attribution.\n+pub fn is_source_file(rel_to_target: &str) -> bool {\n+    let base = match rel_to_target.rsplit_once('/') {\n+        Some((_, tail)) => tail,\n+        None => rel_to_target,\n+    };\n+\n+    if CONFIG_SUFFIXES.iter().any(|suffix| base.ends_with(suffix)) {\n+        return false;\n+    }\n+\n+    let Some(dot_idx) = base.rfind('.') else {\n+        return false;\n+    };\n+\n+    let ext = &base[dot_idx..];\n+    SOURCE_FILE_EXTENSIONS.contains(&ext)\n+}\n+\n+/// Derive a one-line description from a prompt body.\n+pub fn first_meaningful_line(body: &str) -> String {\n+    for line in body.split('\\n') {\n+        let stripped = line.strip_suffix('\\r').unwrap_or(line);\n+        let stripped = stripped.trim_start_matches('#');\n+        let trimmed = stripped.trim();\n+        if !trimmed.is_empty() {\n+            let capped: String = trimmed.chars().take(120).collect();\n+            return capped;\n+        }\n+    }\n+    \"(no description)\".to_string()\n+}\n+\n+/// Split content into CRLF-aware lines for numbering.\n+pub fn split_body_lines(content: &str) -> Vec<String> {\n+    content\n+        .split('\\n')\n+        .map(|piece| piece.strip_suffix('\\r').unwrap_or(piece).to_string())\n+        .collect()\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    #[test]\n+    fn source_file_extensions_order() {\n+        assert_eq!(\n+            SOURCE_FILE_EXTENSIONS,\n+            [\".ts\", \".tsx\", \".js\", \".jsx\", \".css\", \".html\", \".rs\"]\n+        );\n+    }\n+\n+    #[test]\n+    fn is_source_file_recognizes_extensions() {\n+        assert!(is_source_file(\"src/lib.rs\"));\n+        assert!(is_source_file(\"app.tsx\"));\n+        assert!(is_source_file(\"page.html\"));\n+        assert!(is_source_file(\"style.css\"));\n+        assert!(is_source_file(\"index.js\"));\n+        assert!(is_source_file(\"index.jsx\"));\n+        assert!(is_source_file(\"index.ts\"));\n+    }\n+\n+    #[test]\n+    fn is_source_file_rejects_config_suffixes() {\n+        assert!(!is_source_file(\"vite.config.ts\"));\n+        assert!(!is_source_file(\"vite.config.tsx\"));\n+        assert!(!is_source_file(\"vite.config.js\"));\n+        assert!(!is_source_file(\"vite.config.jsx\"));\n+        assert!(!is_source_file(\"path/to/vite.config.ts\"));\n+    }\n+\n+    #[test]\n+    fn is_source_file_rejects_unrecognized_extension() {\n+        assert!(!is_source_file(\"README.md\"));\n+    }\n+\n+    #[test]\n+    fn is_source_file_rejects_no_extension() {\n+        assert!(!is_source_file(\"noext\"));\n+    }\n+\n+    #[test]\n+    fn is_source_file_uses_base_name_after_last_slash() {\n+        assert!(is_source_file(\"a/b/c/main.rs\"));\n+        assert!(!is_source_file(\"a/b/c/noext\"));\n+    }\n+\n+    #[test]\n+    fn first_meaningful_line_strips_heading_markers() {\n+        assert_eq!(first_meaningful_line(\"# Title\\n\\nBody line\"), \"Title\");\n+        assert_eq!(first_meaningful_line(\"### Deep\\nmore\"), \"Deep\");\n+    }\n+\n+    #[test]\n+    fn first_meaningful_line_whitespace_only_body() {\n+        assert_eq!(first_meaningful_line(\"   \\n\\t\\n  \"), \"(no description)\");\n+    }\n+\n+    #[test]\n+    fn first_meaningful_line_caps_at_120_chars() {\n+        let body = \"x\".repeat(200);\n+        let result = first_meaningful_line(&body);\n+        assert_eq!(result.chars().count(), 120);\n+        assert!(result.chars().all(|c| c == 'x'));\n+    }\n+\n+    #[test]\n+    fn first_meaningful_line_empty_body() {\n+        assert_eq!(first_meaningful_line(\"\"), \"(no description)\");\n+    }\n+\n+    #[test]\n+    fn first_meaningful_line_strips_trailing_cr() {\n+        assert_eq!(first_meaningful_line(\"# Title\\r\\nmore\"), \"Title\");\n+    }\n+\n+    #[test]\n+    fn split_body_lines_handles_crlf_and_lf() {\n+        assert_eq!(\n+            split_body_lines(\"a\\r\\nb\\nc\"),\n+            vec![\"a\".to_string(), \"b\".to_string(), \"c\".to_string()]\n+        );\n+    }\n+\n+    #[test]\n+    fn split_body_lines_empty_string() {\n+        assert_eq!(split_body_lines(\"\"), vec![\"\".to_string()]);\n+    }\n+\n+    #[test]\n+    fn split_body_lines_trailing_newline_yields_final_empty_line() {\n+        assert_eq!(\n+            split_body_lines(\"x\\r\\n\"),\n+            vec![\"x\".to_string(), \"\".to_string()]\n+        );\n+    }\n+}"
         }
       ]
+    },
+    {
+      "gen": 80,
+      "timestamp": "2026-07-24T13:30:23.631Z",
+      "mode": "incremental",
+      "promptHash": "3627515696a514875f675bff4c4b5d80502695bc2ee3cd1c112a1863e40dc2d1",
+      "files": []
     }
   ],
   "lock": [
@@ -266,19 +339,31 @@
               4,
               5
             ],
-            "note": "recognized source-file extensions const array"
+            "note": "public array of recognized source-file extensions in order"
           },
           {
             "promptLines": [
               24,
-              28
+              24
             ],
             "file": "gen_classify/src/lib.rs",
             "lines": [
               11,
+              11
+            ],
+            "note": "is_source_file signature"
+          },
+          {
+            "promptLines": [
+              29,
+              30
+            ],
+            "file": "gen_classify/src/lib.rs",
+            "lines": [
+              12,
               15
             ],
-            "note": "is_source_file signature, base name extraction"
+            "note": "base name after last slash, else whole string"
           },
           {
             "promptLines": [
@@ -288,9 +373,21 @@
             "file": "gen_classify/src/lib.rs",
             "lines": [
               7,
+              7
+            ],
+            "note": "config suffix constants"
+          },
+          {
+            "promptLines": [
+              31,
+              33
+            ],
+            "file": "gen_classify/src/lib.rs",
+            "lines": [
+              17,
               19
             ],
-            "note": "config suffix check returns false"
+            "note": "return false if base ends with config suffix"
           },
           {
             "promptLines": [
@@ -302,7 +399,7 @@
               21,
               23
             ],
-            "note": "find last dot, no dot -> false"
+            "note": "find last dot, false if none"
           },
           {
             "promptLines": [
@@ -314,67 +411,127 @@
               25,
               26
             ],
-            "note": "extension slice, membership check"
-          },
-          {
-            "promptLines": [
-              40,
-              42
-            ],
-            "file": "gen_classify/src/lib.rs",
-            "lines": [
-              65,
-              91
-            ],
-            "note": "worked-decision tests for is_source_file"
+            "note": "extension from last dot, check membership"
           },
           {
             "promptLines": [
               44,
-              50
+              44
             ],
             "file": "gen_classify/src/lib.rs",
             "lines": [
               30,
-              41
+              30
             ],
-            "note": "first_meaningful_line impl - split, strip CR/#, trim, cap 120, default"
+            "note": "first_meaningful_line signature"
           },
           {
             "promptLines": [
-              52,
-              55
+              46,
+              46
             ],
             "file": "gen_classify/src/lib.rs",
             "lines": [
-              100,
-              116
+              31,
+              31
             ],
-            "note": "worked-decision tests for first_meaningful_line"
+            "note": "split body on newline, iterate in order"
+          },
+          {
+            "promptLines": [
+              47,
+              47
+            ],
+            "file": "gen_classify/src/lib.rs",
+            "lines": [
+              32,
+              32
+            ],
+            "note": "strip single trailing carriage return"
+          },
+          {
+            "promptLines": [
+              47,
+              48
+            ],
+            "file": "gen_classify/src/lib.rs",
+            "lines": [
+              33,
+              33
+            ],
+            "note": "strip all leading hash characters"
+          },
+          {
+            "promptLines": [
+              48,
+              48
+            ],
+            "file": "gen_classify/src/lib.rs",
+            "lines": [
+              34,
+              34
+            ],
+            "note": "trim leading/trailing whitespace"
+          },
+          {
+            "promptLines": [
+              48,
+              49
+            ],
+            "file": "gen_classify/src/lib.rs",
+            "lines": [
+              35,
+              35
+            ],
+            "note": "return first non-empty result"
+          },
+          {
+            "promptLines": [
+              49,
+              49
+            ],
+            "file": "gen_classify/src/lib.rs",
+            "lines": [
+              36,
+              37
+            ],
+            "note": "cap to first 120 Unicode chars and return"
+          },
+          {
+            "promptLines": [
+              50,
+              50
+            ],
+            "file": "gen_classify/src/lib.rs",
+            "lines": [
+              40,
+              40
+            ],
+            "note": "fallback (no description) literal"
           },
           {
             "promptLines": [
               57,
-              63
+              57
             ],
             "file": "gen_classify/src/lib.rs",
             "lines": [
               44,
-              49
+              44
             ],
-            "note": "split_body_lines CRLF-aware split impl"
+            "note": "split_body_lines signature"
           },
           {
             "promptLines": [
-              61,
-              63
+              59,
+              60
             ],
             "file": "gen_classify/src/lib.rs",
             "lines": [
-              129,
-              147
+              45,
+              48
             ],
-            "note": "worked-decision tests for split_body_lines"
+            "note": "split on newline, strip trailing CR, collect owned strings"
           }
         ]
       },
@@ -386,10 +543,10 @@
             11,
             16
           ],
-          "kind": "note",
-          "severity": "info",
-          "message": "Crate scaffolded correctly under gen_classify/, workspace untouched.",
-          "reasoning": "Prompt say root manifest owned by toolchain, leave alone, new crate at gen_classify/Cargo.toml + src/lib.rs. Agent output shows only lib.rs touched (Cargo.toml presumably added too); no workspace edits reported. Matches spec."
+          "kind": "no-op",
+          "severity": "warning",
+          "message": "No changes — existing gen_classify crate already matches prompt exactly.",
+          "reasoning": "Agent reported the crate, constant array, and all three functions (is_source_file, first_meaningful_line, split_body_lines) already exist and satisfy every worked decision; 14 tests pass. Prompt says \"Create this module\" but the source was already present and correct, so no edits were produced."
         }
       },
       {
@@ -397,41 +554,13 @@
         "path": "gen_classify.mapl",
         "entry": {
           "promptLines": [
-            24,
-            42
+            31,
+            33
           ],
           "kind": "note",
           "severity": "info",
-          "message": "is_source_file logic matches spec exactly, incl. worked examples as tests.",
-          "reasoning": "Base-name extraction, config-suffix check, last-dot extension check all implemented per steps; test suite covers each worked decision line-for-line."
-        }
-      },
-      {
-        "type": "mapl-entry",
-        "path": "gen_classify.mapl",
-        "entry": {
-          "promptLines": [
-            44,
-            55
-          ],
-          "kind": "note",
-          "severity": "info",
-          "message": "first_meaningful_line matches spec, 120-char cap uses char count not byte len.",
-          "reasoning": "chars().take(120) correctly handles Unicode char cap as required; worked examples covered by tests."
-        }
-      },
-      {
-        "type": "mapl-entry",
-        "path": "gen_classify.mapl",
-        "entry": {
-          "promptLines": [
-            57,
-            63
-          ],
-          "kind": "note",
-          "severity": "info",
-          "message": "split_body_lines matches CRLF-aware spec exactly, worked examples covered.",
-          "reasoning": "split('\\n') + strip_suffix('\\r') matches; empty string and trailing-newline cases tested per spec."
+          "message": "Config-suffix check runs before extension check, so a config file's real extension never reached.",
+          "reasoning": "Step 2 rejects `.config.ts`/`.config.tsx`/`.config.js`/`.config.jsx` before step 3/4 inspect the extension. Consistent with worked decision `vite.config.ts` → false. No conflict, but note that a name like `x.config.css` still returns true since it is not in the four listed config suffixes — confirm that gap is intended."
         }
       },
       {

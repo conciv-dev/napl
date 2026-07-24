@@ -143,6 +143,8 @@
       "reasoning": "Agent found greet function already matches all requirements (format, trim, empty-name rejection) and 4/4 tests pass. Nothing to change."
     }
   ],
+  "maplContent": "module: greeting\ntarget: typescript\nentries:\n  - promptLines:\n      - 1\n      - 9\n    kind: no-op\n    message: Code already implements spec; no diff needed.\n    reasoning: Agent found greet function already matches all requirements (format,\n      trim, empty-name rejection) and 4/4 tests pass. Nothing to change.\n",
+  "maplFile": "greeting.mapl",
   "journal": [
     {
       "gen": 1,

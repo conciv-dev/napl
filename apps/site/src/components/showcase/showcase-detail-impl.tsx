@@ -21,6 +21,7 @@ import {
 } from 'react'
 import {Group, Panel, Separator} from 'react-resizable-panels'
 import {
+  Bot,
   CircleAlert,
   FileCode2,
   FileCog,
@@ -63,6 +64,7 @@ const KIND_LABEL: Record<string, string> = {
 const countLabel = (n: number): string => (n === 1 ? 'once' : n === 2 ? 'twice' : `${n} times`)
 
 const fileIcon = (path: string) => {
+  if (path.endsWith('.mapl')) return Bot
   if (path.endsWith('.json')) return FileJson
   if (path.endsWith('.toml')) return FileCog
   return FileCode2
@@ -139,10 +141,21 @@ export function ShowcaseDetailClient({name, theme}: ShowcaseDetailProps): ReactE
     return engine.subscribe(setSnapshot)
   }, [data])
 
-  const activeFile = data?.files[fileIndex] ?? null
+  const viewFiles = useMemo(() => {
+    if (!data) return []
+    if (!data.maplContent) return data.files
+    return [
+      ...data.files,
+      {path: data.maplFile, journalPath: '', content: data.maplContent, language: 'mapl'},
+    ]
+  }, [data])
+
+  const activeFile = viewFiles[fileIndex] ?? null
+  const isMaplView = Boolean(activeFile && data && activeFile.path === data.maplFile)
 
   const generatedContent = useMemo(() => {
     if (!activeFile) return ''
+    if (isMaplView) return activeFile.content
     const edited = data?.session.events.some(
       (event) => event.type === 'file-edit' && event.path === activeFile.path,
     )
@@ -174,13 +187,12 @@ export function ShowcaseDetailClient({name, theme}: ShowcaseDetailProps): ReactE
       const excerptFile = data.files.find((file) => file.path === chosen.file)
       return {
         kind: 'card',
-        heading: 'Produces',
         excerpt: excerptFile
-          ? {code: excerptFromContent(excerptFile.content, chosen.lines), caption: chosen.note}
+          ? {code: excerptFromContent(excerptFile.content, chosen.lines), caption: chosen.note, language: languageForFilename(chosen.file)}
           : undefined,
         meta: `${chosen.file} · lines ${chosen.lines[0]}–${chosen.lines[1]}`,
         jump: {
-          label: 'Jump to generated code ↵',
+          label: `Go to ${chosen.file}:${chosen.lines[0]} ↵`,
           onJump: () => {
             const index = data.files.findIndex((file) => file.path === chosen.file)
             if (index >= 0) setFileIndex(index)
@@ -214,9 +226,9 @@ export function ShowcaseDetailClient({name, theme}: ShowcaseDetailProps): ReactE
         kind: 'card',
         heading: 'Comes from the prompt',
         quote: chosen.sentence || undefined,
-        meta: `Prompt · lines ${chosen.promptLines[0]}–${chosen.promptLines[1]} · ${chosen.note}`,
+        meta: `${data.prompt.file} · lines ${chosen.promptLines[0]}–${chosen.promptLines[1]} · ${chosen.note}`,
         jump: {
-          label: 'Jump to prompt ↵',
+          label: `Go to ${data.prompt.file}:${chosen.promptDocLines[0]} ↵`,
           onJump: () => {
             setPromptHighlight([chosen.promptDocLines])
             requestAnimationFrame(() => promptApiRef.current?.scrollToLine(chosen.promptDocLines[0]))
@@ -257,7 +269,7 @@ export function ShowcaseDetailClient({name, theme}: ShowcaseDetailProps): ReactE
       .join('\n') || 'Generated from the prompt'
 
   return (
-    <div className="flex h-full min-h-0 flex-col" data-testid="showcase-detail">
+    <div className="dark flex h-full min-h-0 flex-col bg-fd-background text-fd-foreground" data-testid="showcase-detail">
       <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-b border-fd-border px-4 py-2.5">
         <div className="flex flex-col">
           <span
@@ -279,9 +291,9 @@ export function ShowcaseDetailClient({name, theme}: ShowcaseDetailProps): ReactE
           </span>
         ) : null}
         <div className="ml-auto flex items-center gap-1.5">
-          {data.files.length > 1 ? (
+          {viewFiles.length > 1 ? (
             <div className="flex items-center gap-1 rounded-lg border border-fd-border bg-fd-card p-0.5">
-              {data.files.map((file, index) => {
+              {viewFiles.map((file, index) => {
                 const Icon = fileIcon(file.path)
                 return (
                   <button
@@ -327,7 +339,7 @@ export function ShowcaseDetailClient({name, theme}: ShowcaseDetailProps): ReactE
                 value={data.prompt.content}
                 readOnly
                 language="napl"
-                theme={theme}
+                theme="dark"
                 hover={promptHover}
                 highlightRanges={promptHighlight}
                 apiRef={promptApiRef}
@@ -337,10 +349,12 @@ export function ShowcaseDetailClient({name, theme}: ShowcaseDetailProps): ReactE
           <Separator className="w-1.5 shrink-0 cursor-col-resize bg-fd-border/70 outline-none transition-colors hover:bg-fd-primary data-[resize-handle-state=hover]:bg-fd-primary data-[resize-handle-state=drag]:bg-fd-primary" />
           <Panel defaultSize="48%" minSize="28%" className="flex min-w-0 flex-col">
             <div className="flex shrink-0 items-center gap-1.5 border-b border-fd-border/70 bg-fd-secondary/60 px-4 py-1.5 text-[11px] font-medium text-fd-muted-foreground">
-              <span className="uppercase tracking-wide text-fd-foreground/70">Generated</span>
+              <span className="uppercase tracking-wide text-fd-foreground/70">
+                {isMaplView ? 'Machine layer' : 'Generated'}
+              </span>
               <span className="font-mono">{activeFile?.path}</span>
             </div>
-            {!hintDismissed ? (
+            {!hintDismissed && !isMaplView ? (
               <div className="flex shrink-0 items-center gap-2 border-b border-fd-border/70 bg-fd-primary/5 px-4 py-1.5 text-xs text-fd-muted-foreground">
                 <MousePointerClick className="size-3.5 shrink-0 text-fd-primary" />
                 <span className="flex-1">
@@ -361,10 +375,10 @@ export function ShowcaseDetailClient({name, theme}: ShowcaseDetailProps): ReactE
                 key={activeFile?.path}
                 value={generatedContent}
                 readOnly
-                language={activeFile ? languageForFilename(activeFile.path) : 'text'}
-                theme={theme}
-                hover={generatedHover}
-                highlightRanges={genHighlight}
+                language={isMaplView ? 'mapl' : activeFile ? languageForFilename(activeFile.path) : 'text'}
+                theme="dark"
+                hover={isMaplView ? undefined : generatedHover}
+                highlightRanges={isMaplView ? [] : genHighlight}
                 apiRef={genApiRef}
               />
             </div>

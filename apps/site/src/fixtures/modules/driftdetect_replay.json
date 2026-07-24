@@ -29,51 +29,15 @@
   "attribution": [
     {
       "promptLines": [
-        3,
-        8
+        38,
+        38
       ],
       "file": "driftdetect_replay/src/lib.rs",
       "lines": [
-        1,
-        7
-      ],
-      "note": "module doc summarizing pure baseline-reconstruction role"
-    },
-    {
-      "promptLines": [
-        27,
-        31
-      ],
-      "file": "driftdetect_replay/src/lib.rs",
-      "lines": [
-        9,
-        9
-      ],
-      "note": "import JournalEntry from schemas_journal sibling crate"
-    },
-    {
-      "promptLines": [
-        32,
-        34
-      ],
-      "file": "driftdetect_replay/src/lib.rs",
-      "lines": [
-        22,
-        23
-      ],
-      "note": "use text_diff parse_hunks/apply_hunks to apply recorded patch"
-    },
-    {
-      "promptLines": [
-        36,
-        39
-      ],
-      "file": "driftdetect_replay/src/lib.rs",
-      "lines": [
-        11,
+        14,
         14
       ],
-      "note": "function signature and doc for reconstruct_file_content"
+      "note": "reconstruct_file_content signature: entries slice + file_path, returns Option<String>"
     },
     {
       "promptLines": [
@@ -83,9 +47,21 @@
       "file": "driftdetect_replay/src/lib.rs",
       "lines": [
         15,
+        15
+      ],
+      "note": "borrow view of entries without mutating caller's slice"
+    },
+    {
+      "promptLines": [
+        41,
+        42
+      ],
+      "file": "driftdetect_replay/src/lib.rs",
+      "lines": [
+        16,
         16
       ],
-      "note": "sort borrowed view of entries by ascending gen without mutating input"
+      "note": "sort borrowed view by ascending gen"
     },
     {
       "promptLines": [
@@ -102,14 +78,50 @@
     {
       "promptLines": [
         44,
-        47
+        44
       ],
       "file": "driftdetect_replay/src/lib.rs",
       "lines": [
         19,
-        24
+        20
       ],
-      "note": "find matching file per entry, apply patch to current content"
+      "note": "walk entries in gen order, find file whose path equals file_path"
+    },
+    {
+      "promptLines": [
+        46,
+        46
+      ],
+      "file": "driftdetect_replay/src/lib.rs",
+      "lines": [
+        21,
+        21
+      ],
+      "note": "take current content or empty string when none yet"
+    },
+    {
+      "promptLines": [
+        46,
+        47
+      ],
+      "file": "driftdetect_replay/src/lib.rs",
+      "lines": [
+        22,
+        22
+      ],
+      "note": "parse patch into hunks"
+    },
+    {
+      "promptLines": [
+        47,
+        47
+      ],
+      "file": "driftdetect_replay/src/lib.rs",
+      "lines": [
+        23,
+        23
+      ],
+      "note": "apply hunks, result becomes new current content"
     },
     {
       "promptLines": [
@@ -121,102 +133,59 @@
         26,
         26
       ],
-      "note": "return accumulated content or None"
+      "note": "return accumulated content, or None if path never touched"
     },
     {
       "promptLines": [
-        51,
-        53
+        27,
+        31
       ],
       "file": "driftdetect_replay/src/lib.rs",
       "lines": [
-        52,
-        62
+        9,
+        9
       ],
-      "note": "test replays two patches in gen order to expected content"
+      "note": "depend on schemas_journal JournalEntry type"
     },
     {
       "promptLines": [
-        41,
-        42
+        32,
+        34
       ],
       "file": "driftdetect_replay/src/lib.rs",
       "lines": [
-        64,
-        76
+        22,
+        23
       ],
-      "note": "test sorts out-of-order entries without mutating caller slice"
-    },
-    {
-      "promptLines": [
-        48,
-        49
-      ],
-      "file": "driftdetect_replay/src/lib.rs",
-      "lines": [
-        78,
-        82
-      ],
-      "note": "test returns None for untouched path"
-    },
-    {
-      "promptLines": [
-        44,
-        47
-      ],
-      "file": "driftdetect_replay/src/lib.rs",
-      "lines": [
-        84,
-        102
-      ],
-      "note": "test ignores files with different paths within/between entries"
-    },
-    {
-      "promptLines": [
-        41,
-        51
-      ],
-      "file": "driftdetect_replay/src/lib.rs",
-      "lines": [
-        104,
-        115
-      ],
-      "note": "test three entries apply in ascending gen order regardless of input order"
+      "note": "use text_diff parse_hunks and apply_hunks"
     }
   ],
-  "attributionYaml": "module: driftdetect_replay\ntarget: rust\nentries:\n  - promptLines:\n      - 3\n      - 8\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 1\n      - 7\n    note: module doc summarizing pure baseline-reconstruction role\n  - promptLines:\n      - 27\n      - 31\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 9\n      - 9\n    note: import JournalEntry from schemas_journal sibling crate\n  - promptLines:\n      - 32\n      - 34\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 22\n      - 23\n    note: use text_diff parse_hunks/apply_hunks to apply recorded patch\n  - promptLines:\n      - 36\n      - 39\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 11\n      - 14\n    note: function signature and doc for reconstruct_file_content\n  - promptLines:\n      - 41\n      - 42\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 15\n      - 16\n    note: sort borrowed view of entries by ascending gen without mutating input\n  - promptLines:\n      - 43\n      - 43\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 18\n      - 18\n    note: start with no content (None)\n  - promptLines:\n      - 44\n      - 47\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 19\n      - 24\n    note: find matching file per entry, apply patch to current content\n  - promptLines:\n      - 48\n      - 49\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 26\n      - 26\n    note: return accumulated content or None\n  - promptLines:\n      - 51\n      - 53\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 52\n      - 62\n    note: test replays two patches in gen order to expected content\n  - promptLines:\n      - 41\n      - 42\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 64\n      - 76\n    note: test sorts out-of-order entries without mutating caller slice\n  - promptLines:\n      - 48\n      - 49\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 78\n      - 82\n    note: test returns None for untouched path\n  - promptLines:\n      - 44\n      - 47\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 84\n      - 102\n    note: test ignores files with different paths within/between entries\n  - promptLines:\n      - 41\n      - 51\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 104\n      - 115\n    note: test three entries apply in ascending gen order regardless of input order\n",
+  "attributionYaml": "module: driftdetect_replay\ntarget: rust\nentries:\n  - promptLines:\n      - 38\n      - 38\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 14\n      - 14\n    note: \"reconstruct_file_content signature: entries slice + file_path, returns Option<String>\"\n  - promptLines:\n      - 41\n      - 42\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 15\n      - 15\n    note: borrow view of entries without mutating caller's slice\n  - promptLines:\n      - 41\n      - 42\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 16\n      - 16\n    note: sort borrowed view by ascending gen\n  - promptLines:\n      - 43\n      - 43\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 18\n      - 18\n    note: start with no content (None)\n  - promptLines:\n      - 44\n      - 44\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 19\n      - 20\n    note: walk entries in gen order, find file whose path equals file_path\n  - promptLines:\n      - 46\n      - 46\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 21\n      - 21\n    note: take current content or empty string when none yet\n  - promptLines:\n      - 46\n      - 47\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 22\n      - 22\n    note: parse patch into hunks\n  - promptLines:\n      - 47\n      - 47\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 23\n      - 23\n    note: apply hunks, result becomes new current content\n  - promptLines:\n      - 48\n      - 49\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 26\n      - 26\n    note: return accumulated content, or None if path never touched\n  - promptLines:\n      - 27\n      - 31\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 9\n      - 9\n    note: depend on schemas_journal JournalEntry type\n  - promptLines:\n      - 32\n      - 34\n    file: driftdetect_replay/src/lib.rs\n    lines:\n      - 22\n      - 23\n    note: use text_diff parse_hunks and apply_hunks\n",
   "mapl": [
     {
       "promptLines": [
-        21,
-        25
+        1,
+        53
       ],
-      "kind": "note",
-      "severity": "info",
-      "message": "sibling crate paths add as path deps, no reimpl — done straight.",
-      "reasoning": "Prompt say add path deps on schemas_journal + text_diff, use public API only. Code just `use schemas_journal::JournalEntry;` and calls `text_diff::parse_hunks`/`apply_hunks` directly, no reimpl. Clear, no guess needed."
-    },
-    {
-      "promptLines": [
-        41,
-        42
-      ],
-      "kind": "assumption",
+      "kind": "no-op",
       "severity": "warning",
-      "message": "sort via Vec<&JournalEntry> collect, no mutate caller slice.",
-      "reasoning": "Prompt say \"sort a borrowed view, do not mutate caller's slice\" — agent pick collecting refs into new Vec<&JournalEntry> then sort_by_key. Reasonable, tests confirm original untouched (line 65-76 test)."
+      "message": "No changes — existing crate already implements reconstruct_file_content as specified.",
+      "reasoning": "Agent reported the prompt diff was empty and the code already matches the target; all 5 tests pass. The driftdetect_replay crate, its Cargo.toml path deps on schemas_journal and text_diff, and the reconstruct_file_content replay logic (sort by gen, apply hunks, return Option) were already present and satisfy the contract, so no edits were needed."
     },
     {
       "promptLines": [
-        38,
-        38
+        54,
+        54
       ],
-      "kind": "note",
-      "severity": "info",
-      "message": "signature match prompt exact, type path shortened via use.",
-      "reasoning": "Prompt spec full path `schemas_journal::JournalEntry` in signature; code use local import `JournalEntry` after `use schemas_journal::JournalEntry;` — same type, just shorter. No issue."
+      "kind": "ambiguity",
+      "severity": "error",
+      "message": "Stray `</content>` tag at end of prompt body looks like an accidental insertion.",
+      "reasoning": "Line 54 is a lone `</content>` closing tag with no matching opening tag anywhere in the prompt. Reads like leftover markup from an editing/templating step, not a requirement. Harmless here (no code depends on it), but worth removing so it is not mistaken for content.",
+      "suggestion": "Delete line 54 (`</content>`)."
     }
   ],
+  "maplContent": "module: driftdetect_replay\ntarget: rust\nentries:\n  - promptLines:\n      - 1\n      - 53\n    kind: no-op\n    message: No changes — existing crate already implements reconstruct_file_content as specified.\n    reasoning: Agent reported the prompt diff was empty and the code already matches the target; all 5 tests pass. The driftdetect_replay crate, its Cargo.toml path deps on schemas_journal and text_diff, and the reconstruct_file_content replay logic (sort by gen, apply hunks, return Option) were already present and satisfy the contract, so no edits were needed.\n  - promptLines:\n      - 54\n      - 54\n    kind: ambiguity\n    message: Stray `</content>` tag at end of prompt body looks like an accidental insertion.\n    reasoning: Line 54 is a lone `</content>` closing tag with no matching opening tag anywhere in the prompt. Reads like leftover markup from an editing/templating step, not a requirement. Harmless here (no code depends on it), but worth removing so it is not mistaken for content.\n    suggestion: Delete line 54 (`</content>`).\n",
+  "maplFile": "driftdetect_replay.mapl",
   "journal": [
     {
       "gen": 29,
@@ -235,6 +204,13 @@
           "patch": "@@ -0,0 +1,116 @@\n+//! Reconstructing a generated file's baseline content from journal patches.\n+//!\n+//! Pure baseline-reconstruction core of the generation-time drift detector:\n+//! given journal entries and a file path, replay that file's recorded patches\n+//! in gen order to rebuild the content the toolchain last wrote. No filesystem\n+//! access — the I/O shell reads the current file and diffs it against this\n+//! baseline.\n+\n+use schemas_journal::JournalEntry;\n+\n+/// Replay the patches recorded for `file_path` across `entries`, oldest gen\n+/// first, returning the reconstructed content or `None` if no entry ever\n+/// touched `file_path`.\n+pub fn reconstruct_file_content(entries: &[JournalEntry], file_path: &str) -> Option<String> {\n+    let mut ordered: Vec<&JournalEntry> = entries.iter().collect();\n+    ordered.sort_by_key(|entry| entry.gen);\n+\n+    let mut content: Option<String> = None;\n+    for entry in ordered {\n+        if let Some(file) = entry.files.iter().find(|f| f.path == file_path) {\n+            let base = content.unwrap_or_default();\n+            let hunks = text_diff::parse_hunks(&file.patch);\n+            content = Some(text_diff::apply_hunks(&base, &hunks));\n+        }\n+    }\n+    content\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+    use schemas_journal::{JournalFile, JournalMode};\n+\n+    fn entry(gen: i64, path: &str, before: &str, after: &str) -> JournalEntry {\n+        JournalEntry {\n+            gen,\n+            timestamp: \"2024-01-01T00:00:00Z\".to_string(),\n+            module: \"m\".to_string(),\n+            target: \"t\".to_string(),\n+            prompt_hash: \"h\".to_string(),\n+            prompt_diff: \"\".to_string(),\n+            mode: JournalMode::Full,\n+            files: vec![JournalFile {\n+                path: path.to_string(),\n+                patch: text_diff::unified_diff(before, after),\n+                hash_before: None,\n+                hash_after: \"h\".to_string(),\n+            }],\n+        }\n+    }\n+\n+    #[test]\n+    fn replays_two_patches_in_gen_order() {\n+        let entries = vec![\n+            entry(1, \"a.rs\", \"\", \"line one\"),\n+            entry(2, \"a.rs\", \"line one\", \"line one\\nline two\"),\n+        ];\n+        assert_eq!(\n+            reconstruct_file_content(&entries, \"a.rs\"),\n+            Some(\"line one\\nline two\".to_string())\n+        );\n+    }\n+\n+    #[test]\n+    fn sorts_out_of_order_entries_without_mutating_input() {\n+        let entries = vec![\n+            entry(2, \"a.rs\", \"line one\", \"line one\\nline two\"),\n+            entry(1, \"a.rs\", \"\", \"line one\"),\n+        ];\n+        let original = entries.clone();\n+        assert_eq!(\n+            reconstruct_file_content(&entries, \"a.rs\"),\n+            Some(\"line one\\nline two\".to_string())\n+        );\n+        assert_eq!(entries, original);\n+    }\n+\n+    #[test]\n+    fn returns_none_for_untouched_path() {\n+        let entries = vec![entry(1, \"a.rs\", \"\", \"line one\")];\n+        assert_eq!(reconstruct_file_content(&entries, \"b.rs\"), None);\n+    }\n+\n+    #[test]\n+    fn ignores_files_from_other_entries_with_different_paths() {\n+        let mut e1 = entry(1, \"a.rs\", \"\", \"content a\");\n+        e1.files.push(JournalFile {\n+            path: \"b.rs\".to_string(),\n+            patch: text_diff::unified_diff(\"\", \"content b\"),\n+            hash_before: None,\n+            hash_after: \"h\".to_string(),\n+        });\n+        let entries = vec![e1];\n+        assert_eq!(\n+            reconstruct_file_content(&entries, \"a.rs\"),\n+            Some(\"content a\".to_string())\n+        );\n+        assert_eq!(\n+            reconstruct_file_content(&entries, \"b.rs\"),\n+            Some(\"content b\".to_string())\n+        );\n+    }\n+\n+    #[test]\n+    fn three_entries_apply_in_ascending_gen_order() {\n+        let entries = vec![\n+            entry(3, \"a.rs\", \"v1\\nv2\", \"v1\\nv2\\nv3\"),\n+            entry(1, \"a.rs\", \"\", \"v1\"),\n+            entry(2, \"a.rs\", \"v1\", \"v1\\nv2\"),\n+        ];\n+        assert_eq!(\n+            reconstruct_file_content(&entries, \"a.rs\"),\n+            Some(\"v1\\nv2\\nv3\".to_string())\n+        );\n+    }\n+}"
         }
       ]
+    },
+    {
+      "gen": 82,
+      "timestamp": "2026-07-24T13:32:59.095Z",
+      "mode": "incremental",
+      "promptHash": "2dc207581462ff8cc3269a946b1dcb811f7f20af2b496429e810bacc40d60e25",
+      "files": []
     }
   ],
   "lock": [
@@ -284,51 +260,15 @@
         "entries": [
           {
             "promptLines": [
-              3,
-              8
+              38,
+              38
             ],
             "file": "driftdetect_replay/src/lib.rs",
             "lines": [
-              1,
-              7
-            ],
-            "note": "module doc summarizing pure baseline-reconstruction role"
-          },
-          {
-            "promptLines": [
-              27,
-              31
-            ],
-            "file": "driftdetect_replay/src/lib.rs",
-            "lines": [
-              9,
-              9
-            ],
-            "note": "import JournalEntry from schemas_journal sibling crate"
-          },
-          {
-            "promptLines": [
-              32,
-              34
-            ],
-            "file": "driftdetect_replay/src/lib.rs",
-            "lines": [
-              22,
-              23
-            ],
-            "note": "use text_diff parse_hunks/apply_hunks to apply recorded patch"
-          },
-          {
-            "promptLines": [
-              36,
-              39
-            ],
-            "file": "driftdetect_replay/src/lib.rs",
-            "lines": [
-              11,
+              14,
               14
             ],
-            "note": "function signature and doc for reconstruct_file_content"
+            "note": "reconstruct_file_content signature: entries slice + file_path, returns Option<String>"
           },
           {
             "promptLines": [
@@ -338,9 +278,21 @@
             "file": "driftdetect_replay/src/lib.rs",
             "lines": [
               15,
+              15
+            ],
+            "note": "borrow view of entries without mutating caller's slice"
+          },
+          {
+            "promptLines": [
+              41,
+              42
+            ],
+            "file": "driftdetect_replay/src/lib.rs",
+            "lines": [
+              16,
               16
             ],
-            "note": "sort borrowed view of entries by ascending gen without mutating input"
+            "note": "sort borrowed view by ascending gen"
           },
           {
             "promptLines": [
@@ -357,14 +309,50 @@
           {
             "promptLines": [
               44,
-              47
+              44
             ],
             "file": "driftdetect_replay/src/lib.rs",
             "lines": [
               19,
-              24
+              20
             ],
-            "note": "find matching file per entry, apply patch to current content"
+            "note": "walk entries in gen order, find file whose path equals file_path"
+          },
+          {
+            "promptLines": [
+              46,
+              46
+            ],
+            "file": "driftdetect_replay/src/lib.rs",
+            "lines": [
+              21,
+              21
+            ],
+            "note": "take current content or empty string when none yet"
+          },
+          {
+            "promptLines": [
+              46,
+              47
+            ],
+            "file": "driftdetect_replay/src/lib.rs",
+            "lines": [
+              22,
+              22
+            ],
+            "note": "parse patch into hunks"
+          },
+          {
+            "promptLines": [
+              47,
+              47
+            ],
+            "file": "driftdetect_replay/src/lib.rs",
+            "lines": [
+              23,
+              23
+            ],
+            "note": "apply hunks, result becomes new current content"
           },
           {
             "promptLines": [
@@ -376,67 +364,31 @@
               26,
               26
             ],
-            "note": "return accumulated content or None"
+            "note": "return accumulated content, or None if path never touched"
           },
           {
             "promptLines": [
-              51,
-              53
+              27,
+              31
             ],
             "file": "driftdetect_replay/src/lib.rs",
             "lines": [
-              52,
-              62
+              9,
+              9
             ],
-            "note": "test replays two patches in gen order to expected content"
+            "note": "depend on schemas_journal JournalEntry type"
           },
           {
             "promptLines": [
-              41,
-              42
+              32,
+              34
             ],
             "file": "driftdetect_replay/src/lib.rs",
             "lines": [
-              64,
-              76
+              22,
+              23
             ],
-            "note": "test sorts out-of-order entries without mutating caller slice"
-          },
-          {
-            "promptLines": [
-              48,
-              49
-            ],
-            "file": "driftdetect_replay/src/lib.rs",
-            "lines": [
-              78,
-              82
-            ],
-            "note": "test returns None for untouched path"
-          },
-          {
-            "promptLines": [
-              44,
-              47
-            ],
-            "file": "driftdetect_replay/src/lib.rs",
-            "lines": [
-              84,
-              102
-            ],
-            "note": "test ignores files with different paths within/between entries"
-          },
-          {
-            "promptLines": [
-              41,
-              51
-            ],
-            "file": "driftdetect_replay/src/lib.rs",
-            "lines": [
-              104,
-              115
-            ],
-            "note": "test three entries apply in ascending gen order regardless of input order"
+            "note": "use text_diff parse_hunks and apply_hunks"
           }
         ]
       },
@@ -445,27 +397,13 @@
         "path": "driftdetect_replay.mapl",
         "entry": {
           "promptLines": [
-            21,
-            25
+            1,
+            53
           ],
-          "kind": "note",
-          "severity": "info",
-          "message": "sibling crate paths add as path deps, no reimpl — done straight.",
-          "reasoning": "Prompt say add path deps on schemas_journal + text_diff, use public API only. Code just `use schemas_journal::JournalEntry;` and calls `text_diff::parse_hunks`/`apply_hunks` directly, no reimpl. Clear, no guess needed."
-        }
-      },
-      {
-        "type": "mapl-entry",
-        "path": "driftdetect_replay.mapl",
-        "entry": {
-          "promptLines": [
-            41,
-            42
-          ],
-          "kind": "assumption",
+          "kind": "no-op",
           "severity": "warning",
-          "message": "sort via Vec<&JournalEntry> collect, no mutate caller slice.",
-          "reasoning": "Prompt say \"sort a borrowed view, do not mutate caller's slice\" — agent pick collecting refs into new Vec<&JournalEntry> then sort_by_key. Reasonable, tests confirm original untouched (line 65-76 test)."
+          "message": "No changes — existing crate already implements reconstruct_file_content as specified.",
+          "reasoning": "Agent reported the prompt diff was empty and the code already matches the target; all 5 tests pass. The driftdetect_replay crate, its Cargo.toml path deps on schemas_journal and text_diff, and the reconstruct_file_content replay logic (sort by gen, apply hunks, return Option) were already present and satisfy the contract, so no edits were needed."
         }
       },
       {
@@ -473,13 +411,14 @@
         "path": "driftdetect_replay.mapl",
         "entry": {
           "promptLines": [
-            38,
-            38
+            54,
+            54
           ],
-          "kind": "note",
-          "severity": "info",
-          "message": "signature match prompt exact, type path shortened via use.",
-          "reasoning": "Prompt spec full path `schemas_journal::JournalEntry` in signature; code use local import `JournalEntry` after `use schemas_journal::JournalEntry;` — same type, just shorter. No issue."
+          "kind": "ambiguity",
+          "severity": "error",
+          "message": "Stray `</content>` tag at end of prompt body looks like an accidental insertion.",
+          "reasoning": "Line 54 is a lone `</content>` closing tag with no matching opening tag anywhere in the prompt. Reads like leftover markup from an editing/templating step, not a requirement. Harmless here (no code depends on it), but worth removing so it is not mistaken for content.",
+          "suggestion": "Delete line 54 (`</content>`)."
         }
       },
       {
