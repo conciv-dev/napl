@@ -2,8 +2,11 @@ packages:
   - apps/*
   - conformance
   - npm/*
+  - packages/*
 
 # Supply-chain hardening (pnpm 11): only these deps may run install/build
 # scripts; everything else is blocked by strictDepBuilds (default on in pnpm 11).
 allowBuilds:
   esbuild: true
+  sharp: set this to true or false
+  workerd: set this to true or false

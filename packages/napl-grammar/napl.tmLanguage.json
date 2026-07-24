@@ -1,0 +1,79 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "NAPL",
+  "scopeName": "source.napl",
+  "fileTypes": ["napl", "🧑"],
+  "patterns": [
+    {
+      "include": "#frontmatter"
+    },
+    {
+      "include": "#body"
+    }
+  ],
+  "repository": {
+    "frontmatter": {
+      "begin": "\\A(-{3})[ \\t]*$",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.frontmatter.begin.napl"
+        }
+      },
+      "end": "^(-{3})[ \\t]*$",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.frontmatter.end.napl"
+        }
+      },
+      "contentName": "meta.embedded.block.yaml",
+      "patterns": [
+        {
+          "include": "#test-block"
+        },
+        {
+          "include": "#frontmatter-key"
+        },
+        {
+          "include": "source.yaml"
+        }
+      ]
+    },
+    "frontmatter-key": {
+      "match": "^(\\s*)(module|deps|targets|tests)(\\s*:)",
+      "captures": {
+        "2": {
+          "name": "entity.name.tag.frontmatter.napl"
+        },
+        "3": {
+          "name": "punctuation.separator.key-value.yaml"
+        }
+      }
+    },
+    "test-block": {
+      "begin": "^(\\s*)(given|expect)(\\s*:)",
+      "beginCaptures": {
+        "2": {
+          "name": "keyword.control.test-block.napl"
+        },
+        "3": {
+          "name": "punctuation.separator.key-value.yaml"
+        }
+      },
+      "end": "^(?=\\s*(?:given|expect|-[ \\t]+name)\\s*:)|(?=^---[ \\t]*$)",
+      "contentName": "meta.test-block.$2.napl",
+      "patterns": [
+        {
+          "include": "source.yaml"
+        }
+      ]
+    },
+    "body": {
+      "contentName": "meta.embedded.block.markdown",
+      "patterns": [
+        {
+          "include": "text.html.markdown"
+        }
+      ]
+    }
+  }
+}
