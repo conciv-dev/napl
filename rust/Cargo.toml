@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/napl-core", "crates/napl-cli"]
+members = ["crates/napl-core", "crates/napl-cli", "crates/napl-lsp"]
 
 [workspace.package]
 edition = "2021"
@@ -27,3 +27,4 @@ many_single_char_names = "allow"
 similar_names = "allow"
 too_many_lines = "allow"
 struct_excessive_bools = "allow"
+doc_markdown = "allow"

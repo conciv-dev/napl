@@ -15,6 +15,7 @@ pub mod hash;
 pub mod incremental;
 pub mod parse_output;
 pub mod prompts;
+pub mod reverse;
 pub mod scanner;
 pub mod schemas;
 pub mod targets;

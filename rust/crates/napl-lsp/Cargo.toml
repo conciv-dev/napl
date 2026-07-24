@@ -1,24 +1,20 @@
 [package]
-name = "napl-cli"
+name = "napl-lsp"
 version = "0.1.0"
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 
-[[bin]]
-name = "napl"
-path = "src/main.rs"
-
 [dependencies]
 napl-core = { path = "../napl-core" }
-napl-lsp = { path = "../napl-lsp" }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_yaml = { workspace = true }
-thiserror = { workspace = true }
-clap = { version = "4", features = ["derive"] }
-notify = "8"
-ctrlc = "3"
+tower-lsp-server = { version = "0.23", features = ["proposed"] }
+tokio = { version = "1", features = ["rt-multi-thread", "io-std", "macros"] }
+
+[dev-dependencies]
+tempfile = "3"
 
 [lints]
 workspace = true

@@ -97,6 +97,8 @@ enum Command {
         #[arg(default_value = "typescript")]
         target: String,
     },
+    /// Start the language server over stdio (used by editor extensions).
+    Lsp,
 }
 
 fn main() {
@@ -167,6 +169,9 @@ fn real_main() -> i32 {
         ),
         Command::Status => cmd_status::run(&root),
         Command::Test { target } => cmd_test::run(&root, &target),
+        Command::Lsp => napl_lsp::run()
+            .map(|()| 0)
+            .map_err(|error| error::CliError::new(error.to_string())),
     };
 
     match result {

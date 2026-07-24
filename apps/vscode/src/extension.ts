@@ -1,22 +1,13 @@
-import { join } from 'node:path';
-import { commands, Range, Selection, StatusBarAlignment, Uri, window, workspace } from 'vscode';
-import type { ExtensionContext, StatusBarItem } from 'vscode';
+import { commands, Range, Selection, Uri, window, workspace } from 'vscode';
+import type { ExtensionContext } from 'vscode';
 import { LanguageClient, TransportKind } from 'vscode-languageclient/node.js';
 import type { LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node.js';
 
 let client: LanguageClient | undefined;
-let statusBar: StatusBarItem | undefined;
-let errorTimer: ReturnType<typeof setTimeout> | undefined;
 
 interface LspRange {
   start: { line: number; character: number };
   end: { line: number; character: number };
-}
-
-interface GenStatus {
-  module: string;
-  state: 'running' | 'done' | 'error';
-  message?: string;
 }
 
 async function revealLocation(uriString: string, range: LspRange): Promise<void> {
@@ -32,34 +23,9 @@ async function revealLocation(uriString: string, range: LspRange): Promise<void>
   editor.revealRange(target);
 }
 
-function readConfig(): { genOnSave: boolean; cliPath: string } {
-  const config = workspace.getConfiguration('napl');
-  return {
-    genOnSave: config.get<boolean>('genOnSave', true),
-    cliPath: config.get<string>('cliPath', 'napl'),
-  };
-}
-
-function showGenStatus(status: GenStatus): void {
-  if (statusBar === undefined) return;
-  if (errorTimer !== undefined) {
-    clearTimeout(errorTimer);
-    errorTimer = undefined;
-  }
-  if (status.state === 'running') {
-    statusBar.text = `$(sync~spin) NAPL: compiling ${status.module}…`;
-    statusBar.tooltip = 'NAPL is regenerating code from the saved prompt.';
-    statusBar.show();
-    return;
-  }
-  if (status.state === 'error') {
-    statusBar.text = `$(error) NAPL: ${status.module} failed`;
-    statusBar.tooltip = status.message ?? 'gen-on-save failed';
-    statusBar.show();
-    errorTimer = setTimeout(() => statusBar?.hide(), 6000);
-    return;
-  }
-  statusBar.hide();
+function resolveCliPath(): string {
+  const configured = workspace.getConfiguration('napl').get<string>('cliPath', 'napl');
+  return configured.length > 0 ? configured : 'napl';
 }
 
 export function activate(context: ExtensionContext): void {
@@ -69,37 +35,23 @@ export function activate(context: ExtensionContext): void {
     ),
   );
 
-  statusBar = window.createStatusBarItem(StatusBarAlignment.Left, 100);
-  context.subscriptions.push(statusBar);
-
-  const serverModule = context.asAbsolutePath(join('dist', 'server.js'));
+  const command = resolveCliPath();
   const serverOptions: ServerOptions = {
-    run: { module: serverModule, transport: TransportKind.ipc },
-    debug: { module: serverModule, transport: TransportKind.ipc },
+    run: { command, args: ['lsp'], transport: TransportKind.stdio },
+    debug: { command, args: ['lsp'], transport: TransportKind.stdio },
   };
   const clientOptions: LanguageClientOptions = {
     documentSelector: [
       { scheme: 'file', language: 'napl' },
+      { scheme: 'file', pattern: '**/*.mapl' },
+      { scheme: 'file', pattern: '**/*.\u{1F916}' },
       { scheme: 'file', pattern: '**/.napl/src/**' },
     ],
-    initializationOptions: readConfig(),
   };
   client = new LanguageClient('napl', 'NAPL', serverOptions, clientOptions);
-
-  void client.start().then(() => {
-    client?.onNotification('napl/genStatus', (status: GenStatus) => showGenStatus(status));
-  });
-
-  context.subscriptions.push(
-    workspace.onDidChangeConfiguration((event) => {
-      if (event.affectsConfiguration('napl')) {
-        void client?.sendNotification('napl/config', readConfig());
-      }
-    }),
-  );
+  void client.start();
 }
 
 export function deactivate(): Thenable<void> | undefined {
-  if (errorTimer !== undefined) clearTimeout(errorTimer);
   return client?.stop();
 }

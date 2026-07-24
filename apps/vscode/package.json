@@ -13,7 +13,8 @@
   ],
   "main": "./dist/extension.js",
   "activationEvents": [
-    "onLanguage:napl"
+    "onLanguage:napl",
+    "workspaceContains:**/.napl"
   ],
   "contributes": {
     "languages": [
@@ -48,15 +49,10 @@
     "configuration": {
       "title": "NAPL",
       "properties": {
-        "napl.genOnSave": {
-          "type": "boolean",
-          "default": true,
-          "description": "Automatically run a diff-scoped incremental gen when a .napl prompt file is saved."
-        },
         "napl.cliPath": {
           "type": "string",
           "default": "napl",
-          "description": "Path to the napl CLI used for gen-on-save. Either a command on PATH (default \"napl\") or an absolute path to the CLI's dist entry (e.g. .../dist/cli.js)."
+          "description": "Path to the napl CLI binary that hosts the language server (run as `napl lsp`). A command on PATH (default \"napl\") or an absolute path to the binary."
         }
       }
     }
