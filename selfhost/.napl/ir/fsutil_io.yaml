@@ -1,0 +1,41 @@
+module: fsutil_io
+deps: []
+types:
+  - name: READONLY_MODE
+    description: Public unsigned 32-bit integer constant equal to octal 444; the read-only unix permission bit pattern for locked, generated source.
+  - name: WRITABLE_MODE
+    description: Public unsigned 32-bit integer constant equal to octal 644; the writable unix permission bit pattern for unlocked source.
+  - name: EXEC_MODE
+    description: Public unsigned 32-bit integer constant equal to octal 755; the executable unix permission bit pattern for the installed pre-commit hook.
+functions:
+  - name: read_opt
+    signature: "read_opt(path: Path) -> Result<Option<String>, IoError>"
+    behavior: Reads the entire file at path into a string. Returns Some(content) on success; returns None only when the file does not exist (not-found error kind); every other I/O error is propagated as Err. A permission failure must surface as an error, not as absence.
+  - name: mkdir_parent
+    signature: "mkdir_parent(path: Path) -> Result<(), IoError>"
+    behavior: Recursively creates the parent directory of path (mkdir -p on the parent), including all missing ancestors, when the parent component is non-empty. When there is no parent or the parent is the empty path, does nothing and returns Ok. Creating a tree that already exists is not an error.
+  - name: write
+    signature: "write(path: Path, content: string) -> Result<(), IoError>"
+    behavior: Creates the parent directory of path via the same recursive parent creation as mkdir_parent, then writes content to path, truncating any existing file.
+  - name: set_mode
+    signature: "set_mode(path: Path, mode: u32) -> Result<(), IoError>"
+    behavior: Sets the unix permission bits of path to the raw mode value, using the standard library's unix permissions extension. Unix-specific.
+  - name: exists
+    signature: "exists(path: Path) -> bool"
+    behavior: Returns whether path currently exists on disk.
+tests:
+  - name: read_opt_missing_is_none
+    given: A path under a unique temporary directory that does not exist.
+    expect: read_opt returns Ok(None).
+  - name: write_then_read_round_trips
+    given: write(path, "hello") is called on a path with missing parent directories, then set_mode is applied with READONLY_MODE and later WRITABLE_MODE.
+    expect: read_opt returns Ok(Some("hello")); after READONLY_MODE the low nine mode bits equal octal 444; after WRITABLE_MODE they equal octal 644.
+  - name: write_creates_missing_parents
+    given: write is called on a deeply nested path whose parent dirs are absent.
+    expect: The parents are created and the file exists on disk.
+  - name: mkdir_parent_without_parent_is_ok
+    given: mkdir_parent is called on a bare relative name with an empty parent.
+    expect: It is a no-op and returns Ok.
+  - name: exists_reflects_disk
+    given: A path checked before creation and again after writing to it.
+    expect: exists returns false before the write and true after.

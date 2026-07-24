@@ -1,0 +1,22 @@
+module: fsutil_io
+target: rust
+entries:
+  - promptLines:
+      - 12
+      - 15
+    kind: assumption
+    message: New workspace member usually needs a root manifest edit, but prompt forbids touching it.
+    reasoning: Adding a crate under fsutil_io/ makes it a workspace member, which normally requires listing it in the root Cargo.toml `[workspace] members`. The prompt says the root manifest is toolchain-owned and must be left alone, and to touch nothing outside fsutil_io/. The compile assumed the root manifest already discovers members via a glob (e.g. `members = ["*"]`) so the new crate is picked up without editing root, and that `cargo test` passes on that basis. If the root instead lists members explicitly, the new crate would not be seen and this constraint would be unsatisfiable without editing root.
+    suggestion: State that the workspace root already globs members (e.g. `members = ["*"]`), so a new subdirectory crate is auto-included without editing the root manifest.
+  - promptLines:
+      - 14
+      - 16
+    kind: note
+    message: Cargo.toml required by prompt but not shown in the diff; agent claims it was created.
+    reasoning: The prompt requires both fsutil_io/Cargo.toml and fsutil_io/src/lib.rs. The recorded source changes show only src/lib.rs; the Cargo.toml does not appear in the diff. The agent's final message asserts it created Cargo.toml (pkg `fsutil_io`, no deps). Surfacing so the human can confirm the manifest exists and matches (package name, no external deps).
+  - promptLines:
+      - 63
+      - 63
+    kind: assumption
+    message: '"unique temporary path" implemented via temp_dir + PID + per-test tag, not a random name.'
+    reasoning: The prompt asks for a "unique temporary path" but does not define the uniqueness scheme. Random-name generators (Math.random equivalent) aren't used; the compile used std::env::temp_dir() plus process id plus a per-test tag, cleaned on Drop. This is unique across concurrent tests within one run, but the same PID+tag reused across runs would reuse the path (mitigated by remove_dir_all on drop and create_dir_all being idempotent).

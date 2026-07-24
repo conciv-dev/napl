@@ -1,0 +1,57 @@
+module: discovery_core
+deps:
+  - schemas_frontmatter
+types: []
+functions:
+  - name: declared_crate
+    signature: "declared_crate(raw: string) -> Option<string>"
+    behavior: "Parses the prompt's frontmatter from raw and returns its declared member crate name. Precondition: none. Postcondition: returns Some(crate_name) when the frontmatter parses and carries a crate key (e.g. \"crate: shared\" yields Some(\"shared\")); returns None when the crate key is absent, or when the frontmatter fails to parse (unparseable input carries no usable identity). Pure: no filesystem or environment access."
+  - name: find_duplicate_module
+    signature: "find_duplicate_module(files: list of (raw_contents: string, relative_path: string)) -> Option<string>"
+    behavior: "Walks the (raw_contents, relative_path) pairs in discovery order, parsing each prompt's frontmatter. Skips any file whose frontmatter fails to parse (its parse error is surfaced elsewhere). Records the first relative_path seen for each module name. Postcondition: the moment a module name is seen a second time, returns Some(error message) and stops walking; the message is \"duplicate module '{module}' is declared by two prompts: {existing} and {new}. Copied a prompt? Rename the module in the copy.\" where {module} is the repeated module name, {existing} is the first recorded path for it, and {new} is the current (second) prompt's path. Returns None when no module repeats or input is empty. Two unparseable prompts do not count as a shared module. Pure: no filesystem or environment access."
+  - name: module_paths_from
+    signature: "module_paths_from(files: list of (raw_contents: string, relative_path: string)) -> Map<string, string> ordered by key"
+    behavior: "Builds the derived module -> relative_path index. Parses each prompt's frontmatter, skipping any that fails to parse, and inserts module -> relative_path into an ordered (sorted-by-key) map. Postcondition: when two files declare the same module (assumed already rejected by find_duplicate_module), the later entry overwrites the earlier one; unparseable prompts are omitted; empty input yields an empty map. This resolves a prompt's location by module now that no path is stored — the path is always the one found on disk this run. Pure: no filesystem or environment access."
+tests:
+  - name: declared_crate_returns_the_crate_key
+    given: 'raw frontmatter declaring "module: alpha" and "crate: shared"'
+    expect: declared_crate returns Some("shared")
+  - name: declared_crate_is_none_when_key_absent
+    given: 'raw frontmatter declaring "module: alpha" with no crate key'
+    expect: declared_crate returns None
+  - name: declared_crate_is_none_when_frontmatter_unparseable
+    given: raw input "no frontmatter here" that fails to parse
+    expect: declared_crate returns None
+  - name: declared_crate_is_none_when_module_missing
+    given: 'raw frontmatter with "crate: shared" but no module key (fails to parse)'
+    expect: declared_crate returns None
+  - name: no_duplicate_returns_none
+    given: three files declaring distinct modules alpha, beta, gamma
+    expect: find_duplicate_module returns None
+  - name: duplicate_reports_first_and_second_path
+    given: files declaring alpha at "src/a.napl", beta at "src/b.napl", then alpha again at "copy/a.napl"
+    expect: "find_duplicate_module returns Some(\"duplicate module 'alpha' is declared by two prompts: src/a.napl and copy/a.napl. Copied a prompt? Rename the module in the copy.\")"
+  - name: duplicate_stops_at_first_repeat
+    given: files declaring alpha at "first.napl", beta, alpha again at "second.napl", then beta again
+    expect: find_duplicate_module returns a message containing "duplicate module 'alpha'" and "first.napl and second.napl"; the later beta repeat is never reached
+  - name: unparseable_prompts_are_skipped_not_matched
+    given: two unparseable entries "garbage one" and "garbage two", then alpha
+    expect: find_duplicate_module returns None (unparseable entries are not treated as a shared empty module)
+  - name: unparseable_does_not_reserve_a_module_name
+    given: files declaring alpha at "a.napl", an unparseable "garbage" entry, then alpha again at "dup.napl"
+    expect: find_duplicate_module returns a message containing "a.napl and dup.napl"
+  - name: empty_input_has_no_duplicate
+    given: an empty list of files
+    expect: find_duplicate_module returns None
+  - name: builds_module_to_path_index
+    given: files declaring alpha at "a.napl" and beta at "b.napl"
+    expect: module_paths_from returns a map of size 2 mapping "alpha" to "a.napl" and "beta" to "b.napl"
+  - name: later_entry_overwrites_earlier_for_same_module
+    given: files declaring alpha at "old.napl" then alpha at "new.napl"
+    expect: module_paths_from returns a map of size 1 mapping "alpha" to "new.napl"
+  - name: unparseable_prompts_are_omitted_from_index
+    given: files declaring alpha at "a.napl" and an unparseable "garbage" entry
+    expect: module_paths_from returns a map of size 1 mapping "alpha" to "a.napl"
+  - name: empty_input_yields_empty_index
+    given: an empty list of files
+    expect: module_paths_from returns an empty map

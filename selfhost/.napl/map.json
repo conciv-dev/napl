@@ -577,6 +577,54 @@
           ]
         }
       }
+    },
+    "fsutil_io": {
+      "module": "fsutil_io",
+      "promptHash": "c6795c872744d3dc759ab248a313bc1190693bb70aca1058eeee17887e6d347f",
+      "declaredTargets": [
+        "rust"
+      ],
+      "targets": {
+        "rust": {
+          "promptHashAtGen": "c6795c872744d3dc759ab248a313bc1190693bb70aca1058eeee17887e6d347f",
+          "files": [
+            ".napl/src/rust/fsutil_io/Cargo.toml",
+            ".napl/src/rust/fsutil_io/src/lib.rs"
+          ]
+        }
+      }
+    },
+    "build_notice": {
+      "module": "build_notice",
+      "promptHash": "dfdf0a5cefa4a5fab5254378e8a13819cde9a56d787cce6af22cbd5a3286feed",
+      "declaredTargets": [
+        "rust"
+      ],
+      "targets": {
+        "rust": {
+          "promptHashAtGen": "dfdf0a5cefa4a5fab5254378e8a13819cde9a56d787cce6af22cbd5a3286feed",
+          "files": [
+            ".napl/src/rust/build_notice/Cargo.toml",
+            ".napl/src/rust/build_notice/src/lib.rs"
+          ]
+        }
+      }
+    },
+    "discovery_core": {
+      "module": "discovery_core",
+      "promptHash": "d5b3b392761454d63e1ff84b5a1092920d9370b5cbfb6c094f9544c0f64a1d37",
+      "declaredTargets": [
+        "rust"
+      ],
+      "targets": {
+        "rust": {
+          "promptHashAtGen": "d5b3b392761454d63e1ff84b5a1092920d9370b5cbfb6c094f9544c0f64a1d37",
+          "files": [
+            ".napl/src/rust/discovery_core/Cargo.toml",
+            ".napl/src/rust/discovery_core/src/lib.rs"
+          ]
+        }
+      }
     }
   },
   "files": {
@@ -1083,6 +1131,48 @@
       "hash": "68b79fe4c18777e42a9b37c524d27640b97c9ff546ee01d6f4108a967dd731d5",
       "prompts": [
         "gen_mode"
+      ]
+    },
+    ".napl/src/rust/fsutil_io/Cargo.toml": {
+      "target": "rust",
+      "hash": "eead48535bc12274205d95d81a60773aaa80c3eb2ec32b5730240ca998b3a3e8",
+      "prompts": [
+        "fsutil_io"
+      ]
+    },
+    ".napl/src/rust/fsutil_io/src/lib.rs": {
+      "target": "rust",
+      "hash": "96479de335e6f52349fa3549f5f03aff5b85a5cf6128969bd3c23c5cca8e350d",
+      "prompts": [
+        "fsutil_io"
+      ]
+    },
+    ".napl/src/rust/build_notice/Cargo.toml": {
+      "target": "rust",
+      "hash": "d3837cd8d9619a1105357706b8810eaec71288c72e169963aa74c1c41cb16d08",
+      "prompts": [
+        "build_notice"
+      ]
+    },
+    ".napl/src/rust/build_notice/src/lib.rs": {
+      "target": "rust",
+      "hash": "452a8fb31739b4ca2c1ba82f28cf50465854c48c3bd5b46e1b78b5704d483e56",
+      "prompts": [
+        "build_notice"
+      ]
+    },
+    ".napl/src/rust/discovery_core/Cargo.toml": {
+      "target": "rust",
+      "hash": "0f365b11a982083ae4c7c78d9adcc6e47a0581313393fa342f95bd5aaf3f3bed",
+      "prompts": [
+        "discovery_core"
+      ]
+    },
+    ".napl/src/rust/discovery_core/src/lib.rs": {
+      "target": "rust",
+      "hash": "2a8db090a08c93436b3cb97cd0d529a96a43154ad060d6334ada4711cb25fa1a",
+      "prompts": [
+        "discovery_core"
       ]
     }
   }

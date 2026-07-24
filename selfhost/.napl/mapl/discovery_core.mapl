@@ -1,0 +1,22 @@
+module: discovery_core
+target: rust
+entries:
+  - promptLines:
+      - 14
+      - 19
+    kind: note
+    message: Root-manifest tension — new crate must be a workspace member yet prompt says touch nothing outside discovery_core/.
+    reasoning: Prompt says the root manifest is toolchain-owned, "leave it alone," and to touch nothing outside discovery_core/. But `cargo test` from the workspace root only picks up the new crate if it is declared as a member in that root manifest. Agent reported the member was already declared, so no edit was needed and the constraint held. If it had NOT been declared, the two instructions would directly conflict.
+    suggestion: Note that the root manifest already lists discovery_core/ as a member (or state who adds it); otherwise clarify whether the agent may edit the root manifest's members list despite "touch nothing outside discovery_core/".
+  - promptLines:
+      - 23
+      - 26
+    kind: assumption
+    message: Cargo.toml depends on schemas_frontmatter via path ../schemas_frontmatter.
+    reasoning: Prompt gives the relative path `../schemas_frontmatter` and says use its public API, but does not specify the dependency declaration form. Agent added a path dependency `../schemas_frontmatter` in discovery_core/Cargo.toml, matching the given layout.
+  - promptLines:
+      - 28
+      - 29
+    kind: note
+    message: No-module frontmatter treated as parse-fail, driving skip/None behavior.
+    reasoning: "\"Fails to parse\" is defined by schemas_frontmatter. Tests assume frontmatter lacking a `module` key fails to parse (so declared_crate returns None and such files are skipped). Behavior is inherited from the dependency, not decided here — flagged so the author knows correctness hinges on that crate's parse semantics."

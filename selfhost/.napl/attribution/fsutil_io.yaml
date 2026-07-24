@@ -1,0 +1,163 @@
+module: fsutil_io
+target: rust
+entries:
+  - promptLines:
+      - 1
+      - 8
+    file: fsutil_io/src/lib.rs
+    lines:
+      - 1
+      - 8
+    note: module doc describing I/O shell seam
+  - promptLines:
+      - 8
+      - 8
+    file: fsutil_io/src/lib.rs
+    lines:
+      - 10
+      - 12
+    note: std-library-only imports
+  - promptLines:
+      - 23
+      - 23
+    file: fsutil_io/src/lib.rs
+    lines:
+      - 14
+      - 15
+    note: READONLY_MODE = 0o444 constant
+  - promptLines:
+      - 24
+      - 24
+    file: fsutil_io/src/lib.rs
+    lines:
+      - 16
+      - 17
+    note: WRITABLE_MODE = 0o644 constant
+  - promptLines:
+      - 25
+      - 25
+    file: fsutil_io/src/lib.rs
+    lines:
+      - 18
+      - 19
+    note: EXEC_MODE = 0o755 constant
+  - promptLines:
+      - 29
+      - 30
+    file: fsutil_io/src/lib.rs
+    lines:
+      - 26
+      - 28
+    note: read_opt signature; Ok(Some(content)) on read
+  - promptLines:
+      - 31
+      - 31
+    file: fsutil_io/src/lib.rs
+    lines:
+      - 29
+      - 29
+    note: map NotFound error kind to Ok(None)
+  - promptLines:
+      - 32
+      - 34
+    file: fsutil_io/src/lib.rs
+    lines:
+      - 30
+      - 30
+    note: propagate other I/O errors as Err
+  - promptLines:
+      - 38
+      - 40
+    file: fsutil_io/src/lib.rs
+    lines:
+      - 40
+      - 41
+    note: mkdir_parent signature; inspect parent
+  - promptLines:
+      - 40
+      - 42
+    file: fsutil_io/src/lib.rs
+    lines:
+      - 42
+      - 42
+    note: create_dir_all for non-empty parent
+  - promptLines:
+      - 41
+      - 41
+    file: fsutil_io/src/lib.rs
+    lines:
+      - 43
+      - 43
+    note: no parent or empty parent is Ok(())
+  - promptLines:
+      - 46
+      - 48
+    file: fsutil_io/src/lib.rs
+    lines:
+      - 49
+      - 50
+    note: write creates parent dir first
+  - promptLines:
+      - 48
+      - 48
+    file: fsutil_io/src/lib.rs
+    lines:
+      - 51
+      - 51
+    note: fs::write truncating existing file
+  - promptLines:
+      - 52
+      - 55
+    file: fsutil_io/src/lib.rs
+    lines:
+      - 55
+      - 58
+    note: set_mode via unix PermissionsExt
+  - promptLines:
+      - 59
+      - 59
+    file: fsutil_io/src/lib.rs
+    lines:
+      - 61
+      - 63
+    note: exists returns path.exists()
+  - promptLines:
+      - 63
+      - 63
+    file: fsutil_io/src/lib.rs
+    lines:
+      - 72
+      - 95
+    note: unique TmpDir helper removed on drop
+  - promptLines:
+      - 65
+      - 65
+    file: fsutil_io/src/lib.rs
+    lines:
+      - 97
+      - 102
+    note: test missing path returns Ok(None)
+  - promptLines:
+      - 66
+      - 66
+    file: fsutil_io/src/lib.rs
+    lines:
+      - 104
+      - 110
+    note: write then read_opt round-trips hello
+  - promptLines:
+      - 67
+      - 67
+    file: fsutil_io/src/lib.rs
+    lines:
+      - 112
+      - 114
+    note: READONLY_MODE gives low nine bits 0o444
+  - promptLines:
+      - 68
+      - 68
+    file: fsutil_io/src/lib.rs
+    lines:
+      - 116
+      - 118
+    note: WRITABLE_MODE restores 0o644

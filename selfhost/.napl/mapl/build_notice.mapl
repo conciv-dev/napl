@@ -1,0 +1,22 @@
+module: build_notice
+target: rust
+entries:
+  - promptLines:
+      - 10
+      - 15
+    kind: ambiguity
+    message: '"Leave root manifest alone" + "touch nothing outside build_notice/" conflicts with registering a new workspace member so `cargo test` sees it.'
+    reasoning: A new member crate normally must be listed in the root Cargo.toml `[workspace] members` (explicitly or via glob) for `cargo test` from the workspace root to build and test it. The prompt forbids touching anything outside build_notice/ AND requires root `cargo test` to pass. These only coexist if the root manifest already includes the new crate (glob or pre-listed). Agent reported root manifest "already listed the member" — so it worked, but this was luck/precondition, not guaranteed by the prompt. If root had not listed it, the two constraints would be unsatisfiable.
+    suggestion: 'State the precondition explicitly, e.g.: "The root manifest already includes build_notice/ as a workspace member (via a members glob); do not modify it. If it does not, adding the single member line is the only permitted root edit."'
+  - promptLines:
+      - 12
+      - 13
+    kind: note
+    message: Cargo.toml creation implied but not in the diff listing; agent created build_notice/Cargo.toml as instructed.
+    reasoning: Prompt requires build_notice/Cargo.toml (package name build_notice) and build_notice/src/lib.rs. Change listing only shows src/lib.rs, but agent's final message confirms Cargo.toml (package build_notice, no deps) was created. Both files are inside build_notice/, satisfying scope.
+  - promptLines:
+      - 25
+      - 25
+    kind: assumption
+    message: Prompt required one exact-string test; agent added two extra tests (no-trailing-newline, run()==0).
+    reasoning: Line 25 mandates a single `#[cfg(test)]` test asserting `notice()` equals the exact string. Agent added that plus a no-trailing-newline assert and a `run() == 0` assert. Extra coverage, consistent with lines 19-32 requirements; assumed acceptable since prompt sets a minimum, not a cap.

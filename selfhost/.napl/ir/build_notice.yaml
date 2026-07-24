@@ -1,0 +1,20 @@
+module: build_notice
+deps: []
+types: []
+functions:
+  - name: notice
+    signature: notice() -> String
+    behavior: "Returns the deprecation message as an owned string. Postcondition: the result is exactly the single-line notice 'napl build is deprecated. Generation now works directly from prompts — the coding agent writes source, and the IR is derived afterwards. Run \"napl gen <target>\" instead.' — an em-dash between \"prompts\" and \"the\", straight double quotes around napl gen <target>, a trailing period, and no trailing newline. No preconditions; pure and deterministic.\n"
+  - name: run
+    signature: run() -> i32 (exit code)
+    behavior: "Prints the notice() string followed by a single newline to standard output, then returns exit code 0. No preconditions, no arguments, no filesystem access; this is the entire behavior of the deprecated command.\n"
+tests:
+  - name: notice_is_exact
+    given: notice() is called.
+    expect: "The returned string equals exactly 'napl build is deprecated. Generation now works directly from prompts — the coding agent writes source, and the IR is derived afterwards. Run \"napl gen <target>\" instead.'\n"
+  - name: notice_has_no_trailing_newline
+    given: notice() is called.
+    expect: The returned string does not end with a newline character.
+  - name: run_returns_zero
+    given: run() is called.
+    expect: It returns the exit code 0.

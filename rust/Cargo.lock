@@ -102,6 +102,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc0b364ead1874514c8c2855ab558056ebfeb775653e7ae45ff72f28f8f3166c"
 
 [[package]]
+name = "build_notice"
+version = "0.1.0"
+
+[[package]]
 name = "bytes"
 version = "1.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -230,6 +234,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "discovery_core"
+version = "0.1.0"
+dependencies = [
+ "schemas_frontmatter",
+]
+
+[[package]]
 name = "dispatch2"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -298,6 +309,10 @@ checksum = "76ee7a02da4d231650c7cea31349b889be2f45ddb3ef3032d2ec8185f6313fd2"
 dependencies = [
  "libc",
 ]
+
+[[package]]
+name = "fsutil_io"
+version = "0.1.0"
 
 [[package]]
 name = "futures"
@@ -589,10 +604,13 @@ name = "napl-cli"
 version = "0.1.0"
 dependencies = [
  "blame_render",
+ "build_notice",
  "clap",
  "clock_fmt",
  "ctrlc",
+ "discovery_core",
  "driftdetect_replay",
+ "fsutil_io",
  "gen_attribution_check",
  "gen_classify",
  "gen_mode",

@@ -40,6 +40,8 @@ gen_classify = { path = "../.napl/src/rust/gen_classify" }
 gen_prompt_diff = { path = "../.napl/src/rust/gen_prompt_diff" }
 gen_attribution_check = { path = "../.napl/src/rust/gen_attribution_check" }
 gen_mode = { path = "../.napl/src/rust/gen_mode" }
+build_notice = { path = "../.napl/src/rust/build_notice" }
+discovery_core = { path = "../.napl/src/rust/discovery_core" }
 
 [dev-dependencies]
 serde_json = "1"

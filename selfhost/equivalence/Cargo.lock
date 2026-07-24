@@ -31,6 +31,10 @@ name = "body_lines"
 version = "0.1.0"
 
 [[package]]
+name = "build_notice"
+version = "0.1.0"
+
+[[package]]
 name = "cfg-if"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -70,6 +74,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "discovery_core"
+version = "0.1.0"
+dependencies = [
+ "schemas_frontmatter",
+]
+
+[[package]]
 name = "drift"
 version = "0.1.0"
 
@@ -88,7 +99,9 @@ dependencies = [
  "blame",
  "blame_render",
  "body_lines",
+ "build_notice",
  "clock_fmt",
+ "discovery_core",
  "drift",
  "driftdetect_replay",
  "extensions",

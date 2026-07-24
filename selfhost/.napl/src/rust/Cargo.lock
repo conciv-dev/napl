@@ -31,6 +31,10 @@ name = "body_lines"
 version = "0.1.0"
 
 [[package]]
+name = "build_notice"
+version = "0.1.0"
+
+[[package]]
 name = "cfg-if"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -70,6 +74,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "discovery_core"
+version = "0.1.0"
+dependencies = [
+ "schemas_frontmatter",
+]
+
+[[package]]
 name = "drift"
 version = "0.1.0"
 
@@ -89,6 +100,10 @@ checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
 name = "extensions"
+version = "0.1.0"
+
+[[package]]
+name = "fsutil_io"
 version = "0.1.0"
 
 [[package]]

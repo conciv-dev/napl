@@ -1,0 +1,147 @@
+module: discovery_core
+target: rust
+entries:
+  - promptLines:
+      - 3
+      - 10
+    file: discovery_core/src/lib.rs
+    lines:
+      - 3
+      - 12
+    note: "module doc: location-free identity, pure decisions"
+  - promptLines:
+      - 23
+      - 26
+    file: discovery_core/src/lib.rs
+    lines:
+      - 16
+      - 16
+    note: import parse_frontmatter from schemas_frontmatter
+  - promptLines:
+      - 33
+      - 33
+    file: discovery_core/src/lib.rs
+    lines:
+      - 23
+      - 23
+    note: declared_crate signature
+  - promptLines:
+      - 33
+      - 35
+    file: discovery_core/src/lib.rs
+    lines:
+      - 24
+      - 24
+    note: parse frontmatter, return crate_name; None on parse fail
+  - promptLines:
+      - 40
+      - 40
+    file: discovery_core/src/lib.rs
+    lines:
+      - 37
+      - 37
+    note: find_duplicate_module signature
+  - promptLines:
+      - 43
+      - 44
+    file: discovery_core/src/lib.rs
+    lines:
+      - 38
+      - 38
+    note: track first path per module
+  - promptLines:
+      - 41
+      - 42
+    file: discovery_core/src/lib.rs
+    lines:
+      - 40
+      - 40
+    note: walk files in discovery order
+  - promptLines:
+      - 42
+      - 43
+    file: discovery_core/src/lib.rs
+    lines:
+      - 41
+      - 43
+    note: skip prompts whose frontmatter fails to parse
+  - promptLines:
+      - 44
+      - 44
+    file: discovery_core/src/lib.rs
+    lines:
+      - 44
+      - 44
+    note: extract module name
+  - promptLines:
+      - 44
+      - 45
+    file: discovery_core/src/lib.rs
+    lines:
+      - 46
+      - 46
+    note: detect second sighting of module
+  - promptLines:
+      - 45
+      - 52
+    file: discovery_core/src/lib.rs
+    lines:
+      - 47
+      - 52
+    note: return duplicate error message and stop
+  - promptLines:
+      - 43
+      - 44
+    file: discovery_core/src/lib.rs
+    lines:
+      - 54
+      - 54
+    note: record first path for module
+  - promptLines:
+      - 51
+      - 51
+    file: discovery_core/src/lib.rs
+    lines:
+      - 57
+      - 57
+    note: no repeat returns None
+  - promptLines:
+      - 57
+      - 57
+    file: discovery_core/src/lib.rs
+    lines:
+      - 69
+      - 69
+    note: module_paths_from signature returning BTreeMap
+  - promptLines:
+      - 58
+      - 60
+    file: discovery_core/src/lib.rs
+    lines:
+      - 70
+      - 70
+    note: init BTreeMap index
+  - promptLines:
+      - 58
+      - 59
+    file: discovery_core/src/lib.rs
+    lines:
+      - 72
+      - 72
+    note: iterate files
+  - promptLines:
+      - 59
+      - 62
+    file: discovery_core/src/lib.rs
+    lines:
+      - 73
+      - 74
+    note: parse, skip failures, insert module->path (later overwrites)
+  - promptLines:
+      - 57
+      - 57
+    file: discovery_core/src/lib.rs
+    lines:
+      - 78
+      - 78
+    note: return index

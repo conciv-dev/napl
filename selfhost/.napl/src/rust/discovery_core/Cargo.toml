@@ -1,0 +1,7 @@
+[package]
+name = "discovery_core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+schemas_frontmatter = { path = "../schemas_frontmatter" }

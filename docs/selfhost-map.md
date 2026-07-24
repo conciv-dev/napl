@@ -453,3 +453,165 @@ locked, not drift-checked. Every module — `body_lines` included — is now a u
 member crate at `.napl/src/rust/<module>/`, and the in-gen `cargo test` runs at the
 workspace root, covering **all 13 members** in one gate. The shared equivalence
 harness (`selfhost/equivalence/`) remains the behavioral cross-module gate.
+
+## Shell wave — self-hosting the `napl-cli` I/O surface (OPEN)
+
+Phases 1–2 (batches 1–3) extracted every cleanly-separable **pure core** out of
+`napl-cli` and generated it, keeping the surrounding I/O shell hand-written. The
+**shell wave** goes the rest of the way: it self-hosts the *shells themselves* —
+the filesystem, subprocess, and orchestration plumbing — so that ultimately every
+hand-written `.rs` body under `rust/crates/napl-cli` (and then `napl-lsp`) can be
+deleted (the **rust-final** endgame). A shell module does I/O, so its given/expect
+equivalence corpus is thin or empty; the **gate is the 48-scenario conformance
+corpus** (byte-identical goldens), which is the sole spec of observable CLI
+behavior. A pure straggler that still has a unit corpus is gated the phase-1 way
+(equivalence harness); a shell is gated by conformance byte-identity before and
+after each swap.
+
+### Remaining hand-written `napl-cli` inventory (LOC from `wc -l`, 2026-07-24)
+
+Class: **(a)** pure-decision residue that slipped through (immediate prompt
+candidate *with* a unit corpus, gated by the equivalence harness); **(b)** thin
+I/O shell whose behavior the conformance corpus fully pins (prompt candidate gated
+by corpus); **(c)** architectural glue (arg-parse / error plumbing / binary entry)
+that collapses **last**.
+
+| Module | LOC | Already-swapped pure core | Residual hand-written surface | Class | Conformance pin |
+| --- | ---: | --- | --- | --- | --- |
+| `cmd_build` | 12 | — | prints the deprecation notice, returns 0 | **(b)** thinnest shell | `04-build-deprecated` |
+| `cmd_test` | 30 | — | `get_adapter`+`resolve_paths`+`create_dir`+`run_command`+print | (b) shell (needs `process`) | `51-test-passthrough` |
+| `cmd_status` | 35 | — | orchestration: map/journal read → heal → aliases → find prompts → dup-check → classify → print | (b) orchestration shell | `20`–`24`,`76` |
+| `error` | 35 | — | `CliError` type + `From<SchemaError>`/`From<io::Error>` | **(c)** glue | all (stderr `napl: {msg}`) |
+| `clock` | 47 | `clock_fmt` | `now()` reads `NAPL_FIXED_NOW`/wall clock | (b)/(c) tiny env shell | fixed-now branch only (**gap:** wall-clock branch untestable) |
+| `discovery` | 69 | — | `declared_crate` (**pure**), `check_duplicate_modules` (dup-detect verdict is **pure**; fs-read is shell), `module_paths` (**pure** mapping; fs-read is shell) | **(a)** pure stragglers in a (b) fs shell | `27-duplicate-module` |
+| `fsutil` | 70 | — | `read_opt`/`write`/`set_mode`/`exists`/`mkdir_parent` + mode consts (all fs I/O over `std`) | **(b)** thinnest I/O shell (leaf) | transitively every fs scenario (**no isolated pin**) |
+| `paths` | 83 | `paths_core` | `find_prompt_files`/`walk` (readdir + alias filter) | (b) fs-walk shell | `40`,`41` (alias discovery), all |
+| `state` | 89 | schema cores | `read_map`/`write_map`/`read_journal`/`append_journal_entry`/`read_lock`/`write_lock` (fs over generated parsers); `default_lock` is (c) schema glue | (b) fs state shell | `25` (lock contention), all gen |
+| `driftdetect` | 143 | `driftdetect_replay` | `classify_file`/`detect_gen_drift` (fs read + hash) | (b) fs classifier shell | `23`,`60`,`61` |
+| `snapshot` | 154 | `snapshot_diff`,`snapshot_filter` | `walk`/`snapshot_hashes`/`snapshot_contents` (readdir + hash) | (b) fs-walk shell | via drift/heal scenarios |
+| `cmd_init` | 162 | — | scaffold: writes `.napl/` tree, `lock.json`, example prompt, guard files, hook (composes on generated `guard`/`targets`) | (b) scaffold-I/O shell | `01`,`02`,`62`,`63` |
+| `statusclass` | 168 | `statusclass_render` | `classify_prompt`/`detect_drift` (fs read + hash + scan) | (b) fs classifier shell | `20`–`24`,`76` |
+| `main` | 186 | — | clap parse + `--version` + dispatch + top-level `napl: {err}` | **(c)** binary entry glue | `03-version`, all (dispatch/exit codes) |
+| `cmd_watch` | 191 | `watch_filter` | `notify` watcher loop + debounce + gen dispatch | (b) shell — **external `notify` crate + threads** | `80-watch-once` only (**gap:** live loop uncovered; likely escape-hatch) |
+| `cmd_blame` | 208 | `blame_render` | journal read + `blame_file` compute + print | (b) blame-I/O shell | `30`–`33` |
+| `healing` | 262 | — | `heal_moved_files`: **pure** LCS move-match decision (`lcs_len`, clean/drifted/ambiguous verdict) wrapped in fs walk + journal write | **(a)** pure decision in a (b) fs shell | `28`,`29`,`35` |
+| `cmd_reconcile` | 280 | `reconcile_derive` | drift-detect + agent run + journal/map writes | (b) reconcile orchestration shell | `72`,`73` |
+| `process` | 435 | — | `run_command` (subprocess spawn + capture), gen lockfile (`flock`) — all over `std::process`, leaf | **(b)** subprocess/lock shell (leaf) | `25` (contention), all gen/test (spawn) |
+| `cmd_gen` | 1483 | 4 gen_* cores | `run_gen_locked` orchestrator + `run_attempts`/`retry_for_change`/`derive_*` LLM loops + fs/journal/manifest writes; `check_declared_deps` deps-gate verdict is **pure** (flagged future module) | (b) irreducible I/O shell + **(a)** `check_declared_deps` | all gen scenarios; `81-gen-undeclared-dep` |
+
+### Linking architecture — least-glue integration of generated shell crates
+
+Evidence from the existing seams (`napl-cli/Cargo.toml` lines 23–35 path-dep every
+generated cli crate; `clock.rs`/`state.rs`/etc. re-export them behind unchanged
+module call sites; `napl-core`'s stage1 swap preserved its public surface so
+`napl-cli`/`napl-lsp` needed **zero edits**). The shell wave extends that exact
+pattern:
+
+1. **Generated crate = the I/O entry function.** A shell module's generated crate
+   exposes the operation it performs (`read_opt(&Path) -> io::Result<Option<String>>`,
+   `run() -> i32`, `run_command(cmd, args, cwd) -> RunOutput`, …). It does its **own**
+   I/O with `std::fs`/`std::process` — the rust target idiom ("a Rust library crate,
+   modern idiomatic Rust") does not forbid `std`; only the *agent's* tools are scoped
+   to `cargo`/`rustc`/`rustfmt`. It path-deps generated siblings for any composition
+   and **never** a hand-written crate.
+2. **Hand-written module becomes a thin re-export/wrap adapter.** `mod fsutil { pub
+   use fsutil_io::*; }`; `pub fn run() -> CliResult<i32> { Ok(build_notice::run()) }`.
+   Call sites and `main.rs` are unchanged — the same "preserve the public surface"
+   discipline that made the stage1 core a zero-edit swap.
+3. **Keep hand-written types out of generated crates (the boundary rule).** Prefer
+   crates that return **`std` types** (`io::Result`, `String`, `i32` exit codes) so
+   nothing hand-written crosses the seam. Where a command must yield `CliError`, the
+   generated crate surfaces a **generated-local error** (or a plain message string)
+   and the adapter `map_err`s it to `CliError` — the identical seam the schema
+   adapters use. `CliError`/`CliResult` themselves are **category (c)** and stay in
+   the shrinking `error.rs` until the glue-collapse.
+4. **`main.rs` is the final glue-collapse target.** As each `cmd_*` becomes a
+   generated crate, `main.rs` shrinks to clap parsing + dispatch. It collapses last:
+   once every command is a generated crate, `main.rs` can dispatch to them directly
+   and the re-export adapters + `error.rs` are deleted together. The binary entry
+   (`fn main` / `real_main`) is the irreducible hand-written seam — the CLI analog of
+   `cmd_gen`'s I/O skeleton.
+
+### Dependency-safe, corpus-gated batch order
+
+Each batch keeps conformance **48/48 byte-identical** before and after every swap;
+a golden change = revert and investigate.
+
+- **Batch 1 (this run) — leaves + pure stragglers.** `fsutil_io` (fs primitives,
+  leaf, clean `std::io` boundary), `build_notice` (`cmd_build`, leaf, `i32`/`String`
+  boundary), `discovery_core` (the pure `declared_crate`/dup-detect-verdict/
+  `module_paths` stragglers → `schemas_frontmatter`). Pins: broad fs coverage +
+  `04` + `27`.
+- **Batch 2 — the subprocess/state leaves.** `process_run` (subprocess spawn +
+  capture + gen lockfile, leaf) and `state_io` (fs map/journal/lock over generated
+  schema parsers + `fsutil_io`). Unblocks `cmd_test`. Pins: `25`, `51`, all gen.
+- **Batch 3 — the fs-walk / classifier shells.** `paths_walk` (`find_prompt_files`),
+  `snapshot_io` (walk/hashes/contents), `statusclass_io` (`classify_prompt`/
+  `detect_drift`), `driftdetect_io` (`classify_file`/`detect_gen_drift`), `healing_io`
+  (`heal_moved_files` — extract the pure LCS verdict first). Compose on generated
+  pure cores + `hash` + `fsutil_io`. Pins: `20`–`24`, `28`–`29`, `35`, `76`.
+- **Batch 4 — the command shells.** `cmd_init_io`, `cmd_status_io`, `cmd_test_io`,
+  `cmd_blame_io`, `cmd_reconcile_io`, and `cmd_watch_io` (**escape-hatch risk:** the
+  live `notify` event loop is external-crate + thread I/O and only `80-watch-once`
+  pins any of it). Pins: `01`–`02`,`62`–`63`; `20`–`24`; `51`; `30`–`33`; `72`–`73`;
+  `80`.
+- **Batch 5 — the `cmd_gen` fixpoint.** Generate `check_declared_deps` (pure) and
+  shrink the residual `run_gen_locked`/`run_attempts`/`derive_*` I/O skeleton as far
+  as it composes; the LLM-loop orchestrator is the irreducible shell. Pins: all gen,
+  `81`.
+- **Glue-collapse (final) — `main` + `error` + `clock::now`.** Category (c). Dispatch
+  `main.rs` directly to the generated command crates; delete the re-export adapters
+  and `error.rs` seam. The binary entry stays hand-written by design.
+
+### Scenario-coverage gaps to flag (do **not** add scenarios speculatively)
+
+- **`fsutil_io`** has no isolated scenario — it is exercised transitively by every
+  fs-touching scenario, which is sufficient as a gate but leaves no single pin.
+- **`cmd_watch`** live loop: only the `--once` path (`80`) is pinned; the debounce +
+  `notify` event stream is uncovered and depends on an external crate + threads —
+  the most likely escape-hatch of the wave.
+- **`clock::now()`** wall-clock branch is inherently untestable (only the
+  `NAPL_FIXED_NOW` branch is exercised); `now()` stays a hand-written env-read seam.
+- **`process`** kill/timeout paths beyond lockfile contention (`25`) and normal
+  spawn (gen/test scenarios) are thinly pinned — flag before self-hosting `process`.
+
+### Batch 1 — results (DONE)
+
+Three modules, each `napl gen rust --module <m>` from `selfhost/cli/`, each
+**converged on attempt 1 of 3**, swapped in behind unchanged call sites,
+conformance **48/48 byte-identical** after each swap. Totals: **39/39 generated
+modules**, escape-hatch list still empty.
+
+| Generated crate | Replaces (napl-cli surface) | Class | Deps | Gate |
+| --- | --- | --- | --- | --- |
+| `fsutil_io` | `fsutil::{read_opt,mkdir_parent,write,set_mode,exists,*_MODE}` | (b) I/O shell (leaf) | — | conformance (fs) + crate temp-file tests |
+| `build_notice` | `cmd_build::run` (the deprecation notice + exit 0) | (b) thinnest shell | — | `04` + equivalence `notice()` |
+| `discovery_core` | `discovery::{declared_crate, find_duplicate_module, module_paths_from}` | (a) pure stragglers | `schemas_frontmatter` | `27` + equivalence |
+
+The first **shell** self-hosts of the campaign. `fsutil_io` proves the linking
+architecture's boundary rule end-to-end: the generated crate does its own
+`std::fs`/unix-mode I/O and returns `std::io::Result`/`bool`/`u32`, so the swap is
+a bare `pub use fsutil_io::*;` re-export with **no hand-written type crossing the
+seam** (its two temp-file round-trip tests ride along as the regression net).
+`build_notice` proves the command-entry pattern: the generated crate owns the
+`println!` and returns an `i32` exit code, and the `cmd_build` shell is a one-line
+`Ok(build_notice::run())` adapter with `main.rs` unchanged; its `notice()` string
+is byte-pinned in the equivalence harness and `04-build-deprecated` pins the I/O.
+`discovery_core` is the pure-straggler representative: an extraction refactor moved
+the fs reads into the `discovery` shell (which now builds `(raw, rel)` pairs) and
+the three pure decisions — `declared_crate`, the byte-exact duplicate-module verdict
+(`27`), and the `module -> path` index — became a generated crate composing on
+`schemas_frontmatter`, the public signatures unchanged so `cmd_status`/
+`cmd_reconcile`/`cmd_gen` call sites are untouched.
+
+**Gate numbers (post-batch-1):** conformance **48/48 byte-identical** · equivalence
+**231/231** (226 + `build_notice` 1 + `discovery_core` 4) · `cargo test --workspace`
+**247/247** (181 napl-core + 45 napl-cli + 16 napl-lsp + 5 cross_check) · clippy
+**clean** · `napl status` (selfhost) **39/39 clean** · generated tree drift-clean.
+
+**Boundary confirmed for the wave:** none of the three pulled `CliError`/`CliResult`
+into a generated crate — `fsutil_io` returns `std::io::Result`, `build_notice`
+returns `i32`, `discovery_core` returns `Option<String>`/`BTreeMap`, and each
+adapter maps to the caller's expected shape (or is a bare re-export). This validates
+the linking-architecture boundary rule: keep the hand-written `error` glue on the
+shell side, generated crates speak `std` types.

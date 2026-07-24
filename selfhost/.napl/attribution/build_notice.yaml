@@ -1,0 +1,83 @@
+module: build_notice
+target: rust
+entries:
+  - promptLines:
+      - 3
+      - 4
+    file: build_notice/src/lib.rs
+    lines:
+      - 1
+      - 4
+    note: "module doc: deprecated build prints notice, exits ok"
+  - promptLines:
+      - 19
+      - 21
+    file: build_notice/src/lib.rs
+    lines:
+      - 8
+      - 8
+    note: notice() -> String signature
+  - promptLines:
+      - 19
+      - 23
+    file: build_notice/src/lib.rs
+    lines:
+      - 9
+      - 11
+    note: exact deprecation message string, no trailing newline
+  - promptLines:
+      - 23
+      - 23
+    file: build_notice/src/lib.rs
+    lines:
+      - 10
+      - 10
+    note: "message body: em-dash, straight quotes, trailing period"
+  - promptLines:
+      - 25
+      - 25
+    file: build_notice/src/lib.rs
+    lines:
+      - 25
+      - 31
+    note: test asserting notice() equals exact string
+  - promptLines:
+      - 20
+      - 21
+    file: build_notice/src/lib.rs
+    lines:
+      - 33
+      - 36
+    note: "test: no trailing newline"
+  - promptLines:
+      - 29
+      - 30
+    file: build_notice/src/lib.rs
+    lines:
+      - 16
+      - 16
+    note: run() -> i32 signature
+  - promptLines:
+      - 29
+      - 30
+    file: build_notice/src/lib.rs
+    lines:
+      - 17
+      - 17
+    note: println! notice with newline to stdout
+  - promptLines:
+      - 30
+      - 30
+    file: build_notice/src/lib.rs
+    lines:
+      - 18
+      - 18
+    note: return exit code 0
+  - promptLines:
+      - 29
+      - 30
+    file: build_notice/src/lib.rs
+    lines:
+      - 38
+      - 41
+    note: "test: run returns zero"

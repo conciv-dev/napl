@@ -1274,3 +1274,99 @@ cause.
 | 4. `cargo clippy --workspace --all-targets` | **clean (0)** |
 | 5. `napl status` (selfhost/) | **36 / 36 clean** |
 | 6. workspace-root `cargo test` (`selfhost/.napl/src/rust`) | **419 / 419** |
+
+## Shell wave — self-hosting the `napl-cli` I/O surface
+
+The fixpoint above proved every *pure* module (all of `napl-core` and the extracted
+pure cores of `napl-cli`) regenerates from prose. The **shell wave** goes after the
+part the earlier phases deliberately left hand-written: the `napl-cli` **I/O shell
+itself** — the filesystem, subprocess, and orchestration plumbing — so the
+rust-final endgame (deleting every hand-written `.rs` body under `rust/crates`) is
+reachable. A shell does I/O, so its given/expect corpus is thin or empty; the
+**gate is the 48-scenario conformance corpus** (byte-identical goldens), which is
+the sole spec of observable CLI behavior. `docs/selfhost-map.md` → "Shell wave"
+carries the full remaining-inventory classification (a/b/c), the linking-architecture
+decision, and the six-batch order with per-batch conformance pins and flagged
+coverage gaps.
+
+### The linking architecture (decided, evidence-based)
+
+Generated shell crates integrate exactly as the stage1 core did — the least-glue
+path the existing seams already use:
+
+1. **The generated crate is the I/O entry function**, doing its own `std::fs`/
+   `std::process` work and returning `std` types (`io::Result`, `String`, `i32`
+   exit codes). It path-deps generated siblings, never a hand-written crate.
+2. **The hand-written module becomes a thin re-export/wrap adapter**; call sites and
+   `main.rs` are unchanged (the same public-surface-preservation that made stage1 a
+   zero-edit swap for `napl-cli`/`napl-lsp`).
+3. **The boundary rule:** keep hand-written types (`CliError`/`CliResult`) out of
+   generated crates — the adapter maps a generated-local error or plain string to the
+   caller's shape, the identical seam the schema adapters use. `error.rs` is
+   category-(c) glue that stays until the glue-collapse.
+4. **`main.rs` is the final glue-collapse target:** once every `cmd_*` is a generated
+   crate, `main.rs` (clap parse + dispatch) is the last hand-written piece and can
+   dispatch to the generated crates directly, deleting the re-export adapters and
+   `error.rs` together. The binary entry stays hand-written by design — the CLI analog
+   of `cmd_gen`'s irreducible I/O skeleton.
+
+### Batch 1 — the leaves and the first shell self-hosts (DONE)
+
+Three modules, each generated from a behavior-prose prompt in `selfhost/cli/`, each
+**converged on attempt 1 of 3**, each swapped in behind unchanged call sites,
+conformance **48/48 byte-identical** after every swap:
+
+| Generated crate | Replaces (napl-cli surface) | Class | Deps | Gate |
+| --- | --- | --- | --- | --- |
+| `fsutil_io` | `fsutil::{read_opt, mkdir_parent, write, set_mode, exists, *_MODE}` | thin I/O shell (leaf) | — | conformance (fs, transitive) + crate temp-file tests |
+| `build_notice` | `cmd_build::run` (deprecation notice + exit 0) | thinnest shell | — | `04-build-deprecated` + equivalence `notice()` |
+| `discovery_core` | `discovery::{declared_crate, find_duplicate_module, module_paths_from}` | pure-decision stragglers | `schemas_frontmatter` | `27-duplicate-module` + equivalence |
+
+- **`fsutil_io` is the first genuine shell self-host** and proves the boundary rule
+  end-to-end: the generated crate does its own `std::fs` reads/writes and unix-mode
+  sets and returns `std::io::Result`/`bool`/`u32`, so the `fsutil` swap is a bare
+  `pub use fsutil_io::*;` re-export — **no hand-written type crosses the seam**. Its
+  behavior has no given/expect corpus (it is I/O); it is gated by the conformance
+  suite (which reads and writes files in nearly every scenario) plus the crate's own
+  temp-file round-trip tests, kept in the shell as the regression net.
+- **`build_notice` proves the command-entry pattern:** the generated crate owns the
+  `println!` and returns an `i32` exit code (`run() -> i32`), the `cmd_build` shell
+  collapses to a one-line `Ok(build_notice::run())` adapter, `main.rs` is unchanged,
+  and the load-bearing notice string is byte-pinned both by `04-build-deprecated` and
+  by an equivalence assertion on `notice()`.
+- **`discovery_core` is the pure-straggler representative:** an extraction refactor
+  moved the filesystem reads into the `discovery` shell (which now builds
+  `(raw_contents, relative_path)` pairs) and lifted the three pure decisions —
+  `declared_crate`, the byte-exact duplicate-module verdict, and the `module -> path`
+  index — into a generated crate composing on `schemas_frontmatter`. The public
+  signatures are unchanged, so the `cmd_status`/`cmd_reconcile`/`cmd_gen` call sites
+  are untouched; the byte-exact duplicate error is pinned by `27-duplicate-module` and
+  the equivalence harness.
+
+### Gate results
+
+| Gate | Result |
+| --- | --- |
+| 1. Conformance (goldens untouched) | **48 / 48 byte-identical** |
+| 2. Equivalence harness | **231 / 231** (226 + `build_notice` 1 + `discovery_core` 4) |
+| 3. `cargo test --workspace` (rust/) | **247 / 247** (181 core + 45 cli + 16 lsp + 5 cross_check) |
+| 4. `cargo clippy --workspace --all-targets` | **clean (0)** |
+| 5. `napl status` (selfhost/) | **39 / 39 clean** |
+
+### Escape-hatch list
+
+**Empty** — all three batch-1 modules converged on attempt 1 and swapped in with
+conformance byte-identical. Flagged for later batches (not failures, coverage
+notes): `cmd_watch`'s live `notify` event loop (external crate + threads, only
+`80-watch-once` pins any of it) is the wave's most likely escape-hatch; `clock::now`'s
+wall-clock branch is inherently untestable and stays a hand-written env-read seam.
+
+### Verdict
+
+The shell wave is open and the boundary holds: the `napl-cli` I/O surface begins to
+self-host with the same mechanism as the pure core — generated crate behind an
+unchanged adapter — but gated by conformance byte-identity rather than unit vectors,
+because the behavior is I/O. `fsutil_io` is the proof a genuine filesystem shell can
+be generated from prose and swapped in with no type crossing the seam. What remains
+is the deeper batches (subprocess/state, the fs-walk classifiers, the command shells,
+and ultimately the `cmd_gen` I/O skeleton) plus the final `main`/`error` glue-collapse.
