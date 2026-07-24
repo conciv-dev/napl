@@ -1,6 +1,8 @@
 import init, {
   attribution_at_file_line,
   attribution_at_prompt_line,
+  body_line_to_doc_line,
+  doc_line_to_body_line,
   mapl_entries_at_prompt_line,
   mapl_parse,
   parse_frontmatter_diagnostics,
@@ -48,6 +50,14 @@ export function attributionAtFileLine(
   return JSON.parse(
     attribution_at_file_line(attribution, file, line),
   ) as AttributionSpan[]
+}
+
+export function docLineToBodyLine(content: string, docLine: number): number | null {
+  return JSON.parse(doc_line_to_body_line(content, docLine)) as number | null
+}
+
+export function bodyLineToDocLine(content: string, bodyLine: number): number | null {
+  return JSON.parse(body_line_to_doc_line(content, bodyLine)) as number | null
 }
 
 export function maplParse(content: string): MaplEntry[] {

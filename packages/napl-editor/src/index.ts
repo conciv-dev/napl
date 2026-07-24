@@ -1,8 +1,20 @@
 export {
   NaplEditor,
   type HighlightRange,
+  type NaplEditorApi,
   type NaplEditorProps,
 } from './NaplEditor.tsx';
+export {
+  languageForFilename,
+  resolveLanguage,
+  type EditorLanguage,
+} from './languages.ts';
+export {
+  naplDarkTheme,
+  naplLightTheme,
+  resolveEditorTheme,
+  type EditorTheme,
+} from './editor-theme.ts';
 export {
   PlaygroundShell,
   type PlaygroundFile,
@@ -15,7 +27,11 @@ export {
   type DiagnosticsSource,
   type EditorDiagnostic,
   type EditorSeverity,
+  type HoverCard,
+  type HoverCardExcerpt,
+  type HoverCardJump,
   type HoverContext,
+  type HoverResult,
   type HoverSource,
 } from './editor-extensions.ts';
 export {

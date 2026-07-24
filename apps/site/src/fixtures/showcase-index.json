@@ -2,56 +2,62 @@
   {
     "module": "body_lines",
     "target": "rust",
+    "dir": "core",
     "promptFile": "body_lines.napl",
     "fileCount": 2,
-    "attributionCount": 13,
+    "attributionCount": 10,
     "maplCount": 2,
-    "genCount": 2,
+    "genCount": 3,
     "summary": "Body lines"
   },
   {
     "module": "extensions",
     "target": "rust",
+    "dir": "core",
     "promptFile": "extensions.napl",
     "fileCount": 2,
-    "attributionCount": 15,
-    "maplCount": 2,
-    "genCount": 1,
+    "attributionCount": 21,
+    "maplCount": 1,
+    "genCount": 2,
     "summary": "Prompt and machine file extensions"
   },
   {
     "module": "hash",
     "target": "rust",
+    "dir": "core",
     "promptFile": "hash.napl",
     "fileCount": 2,
-    "attributionCount": 8,
-    "maplCount": 3,
-    "genCount": 1,
+    "attributionCount": 9,
+    "maplCount": 2,
+    "genCount": 3,
     "summary": "Content hashing"
   },
   {
     "module": "parse_output",
     "target": "rust",
+    "dir": "core",
     "promptFile": "parse_output.napl",
     "fileCount": 2,
-    "attributionCount": 11,
-    "maplCount": 1,
-    "genCount": 1,
+    "attributionCount": 10,
+    "maplCount": 2,
+    "genCount": 2,
     "summary": "Extracting YAML from an agent response"
   },
   {
     "module": "text_diff",
     "target": "rust",
+    "dir": "core",
     "promptFile": "text_diff.napl",
     "fileCount": 2,
-    "attributionCount": 16,
+    "attributionCount": 15,
     "maplCount": 2,
-    "genCount": 1,
+    "genCount": 2,
     "summary": "Line-oriented text diffing"
   },
   {
     "module": "schemas_ordered_map",
     "target": "rust",
+    "dir": "schemas",
     "promptFile": "schemas_ordered_map.napl",
     "fileCount": 2,
     "attributionCount": 20,
@@ -62,6 +68,7 @@
   {
     "module": "schemas_line_range",
     "target": "rust",
+    "dir": "schemas",
     "promptFile": "schemas_line_range.napl",
     "fileCount": 2,
     "attributionCount": 16,
@@ -72,6 +79,7 @@
   {
     "module": "schemas_ir",
     "target": "rust",
+    "dir": "schemas",
     "promptFile": "schemas_ir.napl",
     "fileCount": 2,
     "attributionCount": 18,
@@ -82,56 +90,62 @@
   {
     "module": "schemas_frontmatter",
     "target": "rust",
+    "dir": "schemas",
     "promptFile": "schemas_frontmatter.napl",
-    "fileCount": 2,
-    "attributionCount": 27,
+    "fileCount": 3,
+    "attributionCount": 18,
     "maplCount": 2,
-    "genCount": 1,
+    "genCount": 2,
     "summary": "Prompt frontmatter parsing"
   },
   {
     "module": "drift",
     "target": "rust",
+    "dir": "core",
     "promptFile": "drift.napl",
     "fileCount": 2,
-    "attributionCount": 20,
-    "maplCount": 3,
-    "genCount": 1,
+    "attributionCount": 18,
+    "maplCount": 2,
+    "genCount": 2,
     "summary": "Drift model and the guided drift report"
   },
   {
     "module": "guard",
     "target": "rust",
+    "dir": "core",
     "promptFile": "guard.napl",
     "fileCount": 2,
-    "attributionCount": 21,
-    "maplCount": 3,
-    "genCount": 1,
+    "attributionCount": 26,
+    "maplCount": 1,
+    "genCount": 2,
     "summary": "Guard-rail content and Claude settings merge"
   },
   {
     "module": "targets",
     "target": "rust",
+    "dir": "core",
     "promptFile": "targets.napl",
     "fileCount": 2,
-    "attributionCount": 29,
-    "maplCount": 3,
-    "genCount": 1,
+    "attributionCount": 20,
+    "maplCount": 1,
+    "genCount": 2,
     "summary": "Target adapters"
   },
   {
     "module": "scanner",
     "target": "rust",
+    "dir": "core",
     "promptFile": "scanner.napl",
     "fileCount": 2,
-    "attributionCount": 30,
-    "maplCount": 3,
-    "genCount": 1,
+    "attributionCount": 29,
+    "maplCount": 2,
+    "genCount": 2,
     "summary": "Prompt span scanner"
   },
   {
     "module": "schemas_lock",
     "target": "rust",
+    "dir": "schemas",
     "promptFile": "schemas_lock.napl",
     "fileCount": 2,
     "attributionCount": 28,
@@ -142,6 +156,7 @@
   {
     "module": "schemas_attribution",
     "target": "rust",
+    "dir": "schemas",
     "promptFile": "schemas_attribution.napl",
     "fileCount": 2,
     "attributionCount": 19,
@@ -152,6 +167,7 @@
   {
     "module": "schemas_ml",
     "target": "rust",
+    "dir": "schemas",
     "promptFile": "schemas_ml.napl",
     "fileCount": 2,
     "attributionCount": 23,
@@ -162,6 +178,7 @@
   {
     "module": "schemas_map",
     "target": "rust",
+    "dir": "schemas",
     "promptFile": "schemas_map.napl",
     "fileCount": 2,
     "attributionCount": 38,
@@ -172,6 +189,7 @@
   {
     "module": "blame",
     "target": "rust",
+    "dir": "core",
     "promptFile": "blame.napl",
     "fileCount": 2,
     "attributionCount": 21,
@@ -182,6 +200,7 @@
   {
     "module": "reverse",
     "target": "rust",
+    "dir": "core",
     "promptFile": "reverse.napl",
     "fileCount": 2,
     "attributionCount": 16,
@@ -192,6 +211,7 @@
   {
     "module": "schemas_journal",
     "target": "rust",
+    "dir": "schemas",
     "promptFile": "schemas_journal.napl",
     "fileCount": 2,
     "attributionCount": 15,
@@ -202,6 +222,7 @@
   {
     "module": "incremental",
     "target": "rust",
+    "dir": "core",
     "promptFile": "incremental.napl",
     "fileCount": 2,
     "attributionCount": 15,
@@ -212,6 +233,7 @@
   {
     "module": "yaml",
     "target": "rust",
+    "dir": "core",
     "promptFile": "yaml.napl",
     "fileCount": 2,
     "attributionCount": 30,
@@ -222,6 +244,7 @@
   {
     "module": "prompts",
     "target": "rust",
+    "dir": "core",
     "promptFile": "prompts.napl",
     "fileCount": 2,
     "attributionCount": 56,
@@ -232,6 +255,7 @@
   {
     "module": "clock_fmt",
     "target": "rust",
+    "dir": "cli",
     "promptFile": "clock_fmt.napl",
     "fileCount": 2,
     "attributionCount": 9,
@@ -242,6 +266,7 @@
   {
     "module": "paths_core",
     "target": "rust",
+    "dir": "cli",
     "promptFile": "paths_core.napl",
     "fileCount": 2,
     "attributionCount": 18,
@@ -252,6 +277,7 @@
   {
     "module": "statusclass_render",
     "target": "rust",
+    "dir": "cli",
     "promptFile": "statusclass_render.napl",
     "fileCount": 2,
     "attributionCount": 13,
@@ -262,6 +288,7 @@
   {
     "module": "driftdetect_replay",
     "target": "rust",
+    "dir": "cli",
     "promptFile": "driftdetect_replay.napl",
     "fileCount": 2,
     "attributionCount": 13,
@@ -272,6 +299,7 @@
   {
     "module": "snapshot_diff",
     "target": "rust",
+    "dir": "cli",
     "promptFile": "snapshot_diff.napl",
     "fileCount": 2,
     "attributionCount": 6,
@@ -282,6 +310,7 @@
   {
     "module": "snapshot_filter",
     "target": "rust",
+    "dir": "cli",
     "promptFile": "snapshot_filter.napl",
     "fileCount": 2,
     "attributionCount": 12,
@@ -292,16 +321,18 @@
   {
     "module": "blame_render",
     "target": "rust",
+    "dir": "cli",
     "promptFile": "blame_render.napl",
     "fileCount": 2,
-    "attributionCount": 15,
-    "maplCount": 2,
-    "genCount": 1,
+    "attributionCount": 18,
+    "maplCount": 1,
+    "genCount": 2,
     "summary": "Rendering `napl blame` output"
   },
   {
     "module": "watch_filter",
     "target": "rust",
+    "dir": "cli",
     "promptFile": "watch_filter.napl",
     "fileCount": 2,
     "attributionCount": 14,
@@ -312,6 +343,7 @@
   {
     "module": "reconcile_derive",
     "target": "rust",
+    "dir": "cli",
     "promptFile": "reconcile_derive.napl",
     "fileCount": 2,
     "attributionCount": 17,
@@ -322,6 +354,7 @@
   {
     "module": "gen_classify",
     "target": "rust",
+    "dir": "cli",
     "promptFile": "gen_classify.napl",
     "fileCount": 2,
     "attributionCount": 10,
@@ -332,6 +365,7 @@
   {
     "module": "gen_prompt_diff",
     "target": "rust",
+    "dir": "cli",
     "promptFile": "gen_prompt_diff.napl",
     "fileCount": 2,
     "attributionCount": 7,
@@ -342,6 +376,7 @@
   {
     "module": "gen_attribution_check",
     "target": "rust",
+    "dir": "cli",
     "promptFile": "gen_attribution_check.napl",
     "fileCount": 2,
     "attributionCount": 13,
@@ -352,6 +387,7 @@
   {
     "module": "gen_mode",
     "target": "rust",
+    "dir": "cli",
     "promptFile": "gen_mode.napl",
     "fileCount": 2,
     "attributionCount": 15,

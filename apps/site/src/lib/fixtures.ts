@@ -65,6 +65,7 @@ export interface ShowcaseModule {
 export interface ShowcaseIndexEntry {
   module: string
   target: string
+  dir: string
   promptFile: string
   fileCount: number
   attributionCount: number

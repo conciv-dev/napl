@@ -29,27 +29,15 @@
   "attribution": [
     {
       "promptLines": [
-        3,
-        7
-      ],
-      "file": "scanner/src/lib.rs",
-      "lines": [
-        1,
-        1
-      ],
-      "note": "module purpose header comment"
-    },
-    {
-      "promptLines": [
         19,
         25
       ],
       "file": "scanner/src/lib.rs",
       "lines": [
-        3,
-        13
+        75,
+        77
       ],
-      "note": "Position and Span structs, zero-based UTF-16 model"
+      "note": "UTF-16 length counting per position model"
     },
     {
       "promptLines": [
@@ -61,7 +49,7 @@
         69,
         73
       ],
-      "note": "split lines on \\n, strip trailing \\r"
+      "note": "split doc into lines, strip trailing CR"
     },
     {
       "promptLines": [
@@ -73,7 +61,7 @@
         3,
         13
       ],
-      "note": "Position/Span types with equality/copy"
+      "note": "Position and Span structs"
     },
     {
       "promptLines": [
@@ -169,7 +157,7 @@
         62,
         67
       ],
-      "note": "Target enum variants"
+      "note": "Target enum"
     },
     {
       "promptLines": [
@@ -190,22 +178,22 @@
       ],
       "file": "scanner/src/lib.rs",
       "lines": [
-        349,
+        347,
         366
       ],
-      "note": "frontmatter RegionSpan computation"
+      "note": "compute frontmatter RegionSpan"
     },
     {
       "promptLines": [
         59,
-        61
+        60
       ],
       "file": "scanner/src/lib.rs",
       "lines": [
         202,
-        212
+        214
       ],
-      "note": "walk inner lines tracking block-list state"
+      "note": "track block-list state while walking inner lines"
     },
     {
       "promptLines": [
@@ -217,7 +205,7 @@
         91,
         106
       ],
-      "note": "match_key regex-equivalent key detection"
+      "note": "key line regex match"
     },
     {
       "promptLines": [
@@ -229,7 +217,7 @@
         213,
         221
       ],
-      "note": "build FrontmatterKeyToken and key_end_char, clear block state"
+      "note": "emit FrontmatterKeyToken and key_end_char"
     },
     {
       "promptLines": [
@@ -241,7 +229,7 @@
         108,
         125
       ],
-      "note": "scalar_after_colon value parsing with quote stripping"
+      "note": "scalar value after colon parsing"
     },
     {
       "promptLines": [
@@ -250,22 +238,22 @@
       ],
       "file": "scanner/src/lib.rs",
       "lines": [
-        222,
+        224,
         234
       ],
-      "note": "module value handling via scalar rule"
+      "note": "module value extraction"
     },
     {
       "promptLines": [
         80,
-        82
+        94
       ],
       "file": "scanner/src/lib.rs",
       "lines": [
         235,
         252
       ],
-      "note": "deps/extends dispatch by source"
+      "note": "deps/extends dispatch to inline list/block/scalar"
     },
     {
       "promptLines": [
@@ -277,7 +265,7 @@
         151,
         200
       ],
-      "note": "parse_inline_list for bracketed dep lists"
+      "note": "inline list parsing for deps"
     },
     {
       "promptLines": [
@@ -289,19 +277,7 @@
         240,
         241
       ],
-      "note": "empty after colon opens block list state"
-    },
-    {
-      "promptLines": [
-        94,
-        94
-      ],
-      "file": "scanner/src/lib.rs",
-      "lines": [
-        242,
-        251
-      ],
-      "note": "single scalar dep value fallback"
+      "note": "mark open block list state"
     },
     {
       "promptLines": [
@@ -313,7 +289,7 @@
         127,
         149
       ],
-      "note": "match_block_item parses dash list item"
+      "note": "block list item line regex match"
     },
     {
       "promptLines": [
@@ -325,7 +301,7 @@
         255,
         275
       ],
-      "note": "consume block list items while block_state open"
+      "note": "emit DepToken for block list item"
     },
     {
       "promptLines": [
@@ -337,7 +313,7 @@
         372,
         399
       ],
-      "note": "body region presence/span with and without frontmatter"
+      "note": "compute body RegionSpan present/absent cases"
     },
     {
       "promptLines": [
@@ -347,9 +323,9 @@
       "file": "scanner/src/lib.rs",
       "lines": [
         280,
-        322
+        323
       ],
-      "note": "is_ref_char and scan_refs_in_line implementing @-reference scan"
+      "note": "scan @-references in body lines"
     },
     {
       "promptLines": [
@@ -361,11 +337,11 @@
         381,
         398
       ],
-      "note": "scanning refs starting from body/frontmatter-less start"
+      "note": "choose ref scan start line based on frontmatter presence"
     },
     {
       "promptLines": [
-        125,
+        123,
         129
       ],
       "file": "scanner/src/lib.rs",
@@ -373,7 +349,19 @@
         404,
         429
       ],
-      "note": "find_target_at_position precedence and span containment"
+      "note": "find_target_at_position precedence and containment"
+    },
+    {
+      "promptLines": [
+        443,
+        443
+      ],
+      "file": "scanner/src/lib.rs",
+      "lines": [
+        443,
+        443
+      ],
+      "note": "main reference document constant"
     },
     {
       "promptLines": [
@@ -382,45 +370,33 @@
       ],
       "file": "scanner/src/lib.rs",
       "lines": [
-        443,
+        446,
         500
       ],
-      "note": "main document worked-span test cases"
+      "note": "worked span assertions for main doc"
     }
   ],
-  "attributionYaml": "module: scanner\ntarget: rust\nentries:\n  - promptLines:\n      - 3\n      - 7\n    file: scanner/src/lib.rs\n    lines:\n      - 1\n      - 1\n    note: module purpose header comment\n  - promptLines:\n      - 19\n      - 25\n    file: scanner/src/lib.rs\n    lines:\n      - 3\n      - 13\n    note: Position and Span structs, zero-based UTF-16 model\n  - promptLines:\n      - 27\n      - 29\n    file: scanner/src/lib.rs\n    lines:\n      - 69\n      - 73\n    note: split lines on \\n, strip trailing \\r\n  - promptLines:\n      - 33\n      - 34\n    file: scanner/src/lib.rs\n    lines:\n      - 3\n      - 13\n    note: Position/Span types with equality/copy\n  - promptLines:\n      - 35\n      - 35\n    file: scanner/src/lib.rs\n    lines:\n      - 15\n      - 19\n    note: RegionSpan struct\n  - promptLines:\n      - 36\n      - 36\n    file: scanner/src/lib.rs\n    lines:\n      - 21\n      - 25\n    note: FrontmatterKeyToken struct\n  - promptLines:\n      - 37\n      - 37\n    file: scanner/src/lib.rs\n    lines:\n      - 27\n      - 31\n    note: ModuleValueToken struct\n  - promptLines:\n      - 38\n      - 38\n    file: scanner/src/lib.rs\n    lines:\n      - 33\n      - 37\n    note: DepSource enum\n  - promptLines:\n      - 39\n      - 39\n    file: scanner/src/lib.rs\n    lines:\n      - 39\n      - 44\n    note: DepToken struct\n  - promptLines:\n      - 40\n      - 40\n    file: scanner/src/lib.rs\n    lines:\n      - 46\n      - 50\n    note: RefToken struct\n  - promptLines:\n      - 41\n      - 41\n    file: scanner/src/lib.rs\n    lines:\n      - 52\n      - 60\n    note: ScanResult struct\n  - promptLines:\n      - 42\n      - 44\n    file: scanner/src/lib.rs\n    lines:\n      - 62\n      - 67\n    note: Target enum variants\n  - promptLines:\n      - 48\n      - 51\n    file: scanner/src/lib.rs\n    lines:\n      - 329\n      - 338\n    note: detect frontmatter open/close delimiters\n  - promptLines:\n      - 53\n      - 55\n    file: scanner/src/lib.rs\n    lines:\n      - 349\n      - 366\n    note: frontmatter RegionSpan computation\n  - promptLines:\n      - 59\n      - 61\n    file: scanner/src/lib.rs\n    lines:\n      - 202\n      - 212\n    note: walk inner lines tracking block-list state\n  - promptLines:\n      - 62\n      - 67\n    file: scanner/src/lib.rs\n    lines:\n      - 91\n      - 106\n    note: match_key regex-equivalent key detection\n  - promptLines:\n      - 62\n      - 67\n    file: scanner/src/lib.rs\n    lines:\n      - 213\n      - 221\n    note: build FrontmatterKeyToken and key_end_char, clear block state\n  - promptLines:\n      - 69\n      - 75\n    file: scanner/src/lib.rs\n    lines:\n      - 108\n      - 125\n    note: scalar_after_colon value parsing with quote stripping\n  - promptLines:\n      - 77\n      - 78\n    file: scanner/src/lib.rs\n    lines:\n      - 222\n      - 234\n    note: module value handling via scalar rule\n  - promptLines:\n      - 80\n      - 82\n    file: scanner/src/lib.rs\n    lines:\n      - 235\n      - 252\n    note: deps/extends dispatch by source\n  - promptLines:\n      - 83\n      - 91\n    file: scanner/src/lib.rs\n    lines:\n      - 151\n      - 200\n    note: parse_inline_list for bracketed dep lists\n  - promptLines:\n      - 92\n      - 93\n    file: scanner/src/lib.rs\n    lines:\n      - 240\n      - 241\n    note: empty after colon opens block list state\n  - promptLines:\n      - 94\n      - 94\n    file: scanner/src/lib.rs\n    lines:\n      - 242\n      - 251\n    note: single scalar dep value fallback\n  - promptLines:\n      - 96\n      - 101\n    file: scanner/src/lib.rs\n    lines:\n      - 127\n      - 149\n    note: match_block_item parses dash list item\n  - promptLines:\n      - 96\n      - 101\n    file: scanner/src/lib.rs\n    lines:\n      - 255\n      - 275\n    note: consume block list items while block_state open\n  - promptLines:\n      - 105\n      - 110\n    file: scanner/src/lib.rs\n    lines:\n      - 372\n      - 399\n    note: body region presence/span with and without frontmatter\n  - promptLines:\n      - 114\n      - 121\n    file: scanner/src/lib.rs\n    lines:\n      - 280\n      - 322\n    note: is_ref_char and scan_refs_in_line implementing @-reference scan\n  - promptLines:\n      - 114\n      - 116\n    file: scanner/src/lib.rs\n    lines:\n      - 381\n      - 398\n    note: scanning refs starting from body/frontmatter-less start\n  - promptLines:\n      - 125\n      - 129\n    file: scanner/src/lib.rs\n    lines:\n      - 404\n      - 429\n    note: find_target_at_position precedence and span containment\n  - promptLines:\n      - 145\n      - 152\n    file: scanner/src/lib.rs\n    lines:\n      - 443\n      - 500\n    note: main document worked-span test cases\n",
+  "attributionYaml": "module: scanner\ntarget: rust\nentries:\n  - promptLines:\n      - 19\n      - 25\n    file: scanner/src/lib.rs\n    lines:\n      - 75\n      - 77\n    note: UTF-16 length counting per position model\n  - promptLines:\n      - 27\n      - 29\n    file: scanner/src/lib.rs\n    lines:\n      - 69\n      - 73\n    note: split doc into lines, strip trailing CR\n  - promptLines:\n      - 33\n      - 34\n    file: scanner/src/lib.rs\n    lines:\n      - 3\n      - 13\n    note: Position and Span structs\n  - promptLines:\n      - 35\n      - 35\n    file: scanner/src/lib.rs\n    lines:\n      - 15\n      - 19\n    note: RegionSpan struct\n  - promptLines:\n      - 36\n      - 36\n    file: scanner/src/lib.rs\n    lines:\n      - 21\n      - 25\n    note: FrontmatterKeyToken struct\n  - promptLines:\n      - 37\n      - 37\n    file: scanner/src/lib.rs\n    lines:\n      - 27\n      - 31\n    note: ModuleValueToken struct\n  - promptLines:\n      - 38\n      - 38\n    file: scanner/src/lib.rs\n    lines:\n      - 33\n      - 37\n    note: DepSource enum\n  - promptLines:\n      - 39\n      - 39\n    file: scanner/src/lib.rs\n    lines:\n      - 39\n      - 44\n    note: DepToken struct\n  - promptLines:\n      - 40\n      - 40\n    file: scanner/src/lib.rs\n    lines:\n      - 46\n      - 50\n    note: RefToken struct\n  - promptLines:\n      - 41\n      - 41\n    file: scanner/src/lib.rs\n    lines:\n      - 52\n      - 60\n    note: ScanResult struct\n  - promptLines:\n      - 42\n      - 44\n    file: scanner/src/lib.rs\n    lines:\n      - 62\n      - 67\n    note: Target enum\n  - promptLines:\n      - 48\n      - 51\n    file: scanner/src/lib.rs\n    lines:\n      - 329\n      - 338\n    note: detect frontmatter open/close delimiters\n  - promptLines:\n      - 53\n      - 55\n    file: scanner/src/lib.rs\n    lines:\n      - 347\n      - 366\n    note: compute frontmatter RegionSpan\n  - promptLines:\n      - 59\n      - 60\n    file: scanner/src/lib.rs\n    lines:\n      - 202\n      - 214\n    note: track block-list state while walking inner lines\n  - promptLines:\n      - 62\n      - 67\n    file: scanner/src/lib.rs\n    lines:\n      - 91\n      - 106\n    note: key line regex match\n  - promptLines:\n      - 62\n      - 67\n    file: scanner/src/lib.rs\n    lines:\n      - 213\n      - 221\n    note: emit FrontmatterKeyToken and key_end_char\n  - promptLines:\n      - 69\n      - 75\n    file: scanner/src/lib.rs\n    lines:\n      - 108\n      - 125\n    note: scalar value after colon parsing\n  - promptLines:\n      - 77\n      - 78\n    file: scanner/src/lib.rs\n    lines:\n      - 224\n      - 234\n    note: module value extraction\n  - promptLines:\n      - 80\n      - 94\n    file: scanner/src/lib.rs\n    lines:\n      - 235\n      - 252\n    note: deps/extends dispatch to inline list/block/scalar\n  - promptLines:\n      - 83\n      - 91\n    file: scanner/src/lib.rs\n    lines:\n      - 151\n      - 200\n    note: inline list parsing for deps\n  - promptLines:\n      - 92\n      - 93\n    file: scanner/src/lib.rs\n    lines:\n      - 240\n      - 241\n    note: mark open block list state\n  - promptLines:\n      - 96\n      - 101\n    file: scanner/src/lib.rs\n    lines:\n      - 127\n      - 149\n    note: block list item line regex match\n  - promptLines:\n      - 96\n      - 101\n    file: scanner/src/lib.rs\n    lines:\n      - 255\n      - 275\n    note: emit DepToken for block list item\n  - promptLines:\n      - 105\n      - 110\n    file: scanner/src/lib.rs\n    lines:\n      - 372\n      - 399\n    note: compute body RegionSpan present/absent cases\n  - promptLines:\n      - 114\n      - 121\n    file: scanner/src/lib.rs\n    lines:\n      - 280\n      - 323\n    note: scan @-references in body lines\n  - promptLines:\n      - 114\n      - 116\n    file: scanner/src/lib.rs\n    lines:\n      - 381\n      - 398\n    note: choose ref scan start line based on frontmatter presence\n  - promptLines:\n      - 123\n      - 129\n    file: scanner/src/lib.rs\n    lines:\n      - 404\n      - 429\n    note: find_target_at_position precedence and containment\n  - promptLines:\n      - 443\n      - 443\n    file: scanner/src/lib.rs\n    lines:\n      - 443\n      - 443\n    note: main reference document constant\n  - promptLines:\n      - 145\n      - 152\n    file: scanner/src/lib.rs\n    lines:\n      - 446\n      - 500\n    note: worked span assertions for main doc\n",
   "mapl": [
     {
       "promptLines": [
-        59,
-        101
+        1,
+        166
       ],
-      "kind": "assumption",
+      "kind": "no-op",
       "severity": "warning",
-      "message": "Non-key, non-list-item lines inside an open block list don't reset it",
-      "reasoning": "The prompt says a key line clears block-list state and a matching `- item` line is consumed, but never says what happens to the block-list state when a frontmatter line is neither (e.g. a blank line, or a malformed dash with no following space). The agent's scan_frontmatter only clears block_state on a key-line match; any other non-matching line silently leaves the previously opened block-list state active, so a later valid `- item` line further down would still be attributed to that same deps/extends source. This was not verified against a worked example in the prompt.\n",
-      "suggestion": "State explicitly whether a non-key, non-list-item line (blank or malformed) inside an open block list closes the list or is simply skipped/ignored.\n"
+      "message": "Scanner crate already fully implements the prompt; no changes were needed.",
+      "reasoning": "Checked the workspace at .napl/src/rust: the `scanner` member crate already exists (Cargo.toml + src/lib.rs), is registered in the workspace root's members list, and `cargo test -p scanner` passes all 15 tests covering the position model, frontmatter detection, key/value/dep scanning, block lists, body/ref regions, UTF-16 offset handling for BMP/astral characters, and find_target_at_position precedence — matching the worked examples in the prompt exactly. The requirement was already satisfied by existing code, so the agent correctly made no changes.\n"
     },
     {
       "promptLines": [
-        83,
-        85
-      ],
-      "kind": "assumption",
-      "severity": "warning",
-      "message": "Inline list `]` search assumes the closing bracket follows the opening one",
-      "reasoning": "The prompt only specifies the \"no closing `]`\" fallback (use the string's end), but doesn't address the case where a `]` character exists before the first `[` (e.g. stray bracket in earlier text on the same line). The agent's parse_inline_list uses rfind(']') but only accepts it as the close if its byte index is greater than the open bracket's, otherwise falling back to the end of the string — an assumption not stated in the prompt.\n",
-      "suggestion": "Clarify: \"the last `]` after the first `[`\" (rather than just \"the last `]`\") to remove doubt about a `]` occurring earlier in the line. "
-    },
-    {
-      "promptLines": [
-        62,
-        67
+        11,
+        15
       ],
       "kind": "note",
       "severity": "info",
-      "message": "Key regex is ASCII-only; matched against byte indexing safely since key chars are single-byte",
-      "reasoning": "The key-matching implementation walks the line byte-by-byte and slices `line[key.len()+1..]` for the remainder after the colon. This is safe only because the key charset (A–Z, a–z, 0–9, `_`, `-`) and the colon are all single-byte ASCII, so byte length equals UTF-16/char length for that prefix — consistent with the prompt's charset restriction, just noting the implementation detail relies on it holding."
+      "message": "Workspace root and member list untouched, as required.",
+      "reasoning": "The prompt forbids touching anything outside `scanner/` and requires the crate be registered as a workspace member. Verified the root Cargo.toml's `members` array already lists \"scanner\" and no other files outside the scanner crate were modified, consistent with the \"leave it alone\" instruction."
     }
   ],
   "journal": [
@@ -441,6 +417,13 @@
           "patch": "@@ -0,0 +1,598 @@\n+// GENERATED BY NAPL from scanner.napl — edit the prompt, not this file\n+\n+#[derive(Debug, Clone, Copy, PartialEq, Eq)]\n+pub struct Position {\n+    pub line: usize,\n+    pub character: usize,\n+}\n+\n+#[derive(Debug, Clone, Copy, PartialEq, Eq)]\n+pub struct Span {\n+    pub start: Position,\n+    pub end: Position,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct RegionSpan {\n+    pub present: bool,\n+    pub span: Option<Span>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct FrontmatterKeyToken {\n+    pub key: String,\n+    pub key_span: Span,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct ModuleValueToken {\n+    pub value: String,\n+    pub span: Span,\n+}\n+\n+#[derive(Debug, Clone, Copy, PartialEq, Eq)]\n+pub enum DepSource {\n+    Deps,\n+    Extends,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct DepToken {\n+    pub value: String,\n+    pub span: Span,\n+    pub source: DepSource,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct RefToken {\n+    pub module: String,\n+    pub span: Span,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct ScanResult {\n+    pub frontmatter: RegionSpan,\n+    pub body: RegionSpan,\n+    pub keys: Vec<FrontmatterKeyToken>,\n+    pub module_value: Option<ModuleValueToken>,\n+    pub deps: Vec<DepToken>,\n+    pub refs: Vec<RefToken>,\n+}\n+\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub enum Target {\n+    ModuleValue { module: String, span: Span },\n+    Dep { module: String, span: Span, source: DepSource },\n+    Ref { module: String, span: Span },\n+}\n+\n+fn split_lines(text: &str) -> Vec<&str> {\n+    text.split('\\n')\n+        .map(|line| line.strip_suffix('\\r').unwrap_or(line))\n+        .collect()\n+}\n+\n+fn utf16_len(s: &str) -> usize {\n+    s.chars().map(|c| c.len_utf16()).sum()\n+}\n+\n+fn strip_quotes(s: &str) -> (String, bool) {\n+    let bytes = s.as_bytes();\n+    if bytes.len() >= 2 {\n+        let first = bytes[0];\n+        let last = bytes[bytes.len() - 1];\n+        if (first == b'\\'' || first == b'\"') && first == last {\n+            return (s[1..s.len() - 1].to_string(), true);\n+        }\n+    }\n+    (s.to_string(), false)\n+}\n+\n+fn match_key(line: &str) -> Option<&str> {\n+    let bytes = line.as_bytes();\n+    let mut i = 0;\n+    while i < bytes.len() {\n+        let b = bytes[i];\n+        let is_key_char = b.is_ascii_alphanumeric() || b == b'_' || b == b'-';\n+        if !is_key_char {\n+            break;\n+        }\n+        i += 1;\n+    }\n+    if i == 0 || i >= bytes.len() || bytes[i] != b':' {\n+        return None;\n+    }\n+    Some(&line[..i])\n+}\n+\n+fn scalar_after_colon(rest: &str, key_end_char: usize) -> Option<(String, usize, usize)> {\n+    let leading_ws: usize = rest\n+        .chars()\n+        .take_while(|c| c.is_whitespace())\n+        .map(|c| c.len_utf16())\n+        .sum();\n+    let trimmed = rest.trim();\n+    if trimmed.is_empty() {\n+        return None;\n+    }\n+    let mut start = key_end_char + leading_ws;\n+    let (value, quoted) = strip_quotes(trimmed);\n+    if quoted {\n+        start += 1;\n+    }\n+    let end = start + utf16_len(&value);\n+    Some((value, start, end))\n+}\n+\n+fn match_block_item(line: &str) -> Option<(usize, usize, String)> {\n+    let chars: Vec<char> = line.chars().collect();\n+    let mut idx = 0;\n+    let mut indent_units = 0usize;\n+    while idx < chars.len() && chars[idx].is_whitespace() {\n+        indent_units += chars[idx].len_utf16();\n+        idx += 1;\n+    }\n+    if idx >= chars.len() || chars[idx] != '-' {\n+        return None;\n+    }\n+    idx += 1;\n+    let mut space_count = 0usize;\n+    while idx < chars.len() && chars[idx].is_whitespace() {\n+        space_count += 1;\n+        idx += 1;\n+    }\n+    if space_count == 0 {\n+        return None;\n+    }\n+    let rest: String = chars[idx..].iter().collect();\n+    Some((indent_units, space_count, rest))\n+}\n+\n+fn parse_inline_list(rest: &str, key_end_char: usize, line_idx: usize, source: DepSource) -> Vec<DepToken> {\n+    let mut result = Vec::new();\n+    let open_byte = match rest.find('[') {\n+        Some(p) => p,\n+        None => return result,\n+    };\n+    let close_byte = match rest.rfind(']') {\n+        Some(p) if p > open_byte => p,\n+        _ => rest.len(),\n+    };\n+    let inner = &rest[open_byte + 1..close_byte];\n+    let open_utf16_offset = utf16_len(&rest[..open_byte]);\n+    let base_column = key_end_char + open_utf16_offset + 1;\n+\n+    let mut segments: Vec<(usize, usize)> = Vec::new();\n+    let mut seg_start = 0usize;\n+    for (idx, c) in inner.char_indices() {\n+        if c == ',' {\n+            segments.push((seg_start, idx));\n+            seg_start = idx + c.len_utf8();\n+        }\n+    }\n+    segments.push((seg_start, inner.len()));\n+\n+    for (s, e) in segments {\n+        let raw_item = &inner[s..e];\n+        let trimmed = raw_item.trim();\n+        if trimmed.is_empty() {\n+            continue;\n+        }\n+        let lead_ws_bytes = raw_item.len() - raw_item.trim_start().len();\n+        let leading_ws_units = utf16_len(&raw_item[..lead_ws_bytes]);\n+        let item_offset_units = utf16_len(&inner[..s]) + leading_ws_units;\n+        let (value, quoted) = strip_quotes(trimmed);\n+        let mut start = base_column + item_offset_units;\n+        if quoted {\n+            start += 1;\n+        }\n+        let end = start + utf16_len(&value);\n+        result.push(DepToken {\n+            value,\n+            span: Span {\n+                start: Position { line: line_idx, character: start },\n+                end: Position { line: line_idx, character: end },\n+            },\n+            source,\n+        });\n+    }\n+    result\n+}\n+\n+fn scan_frontmatter(\n+    lines: &[&str],\n+    start_idx: usize,\n+) -> (Vec<FrontmatterKeyToken>, Option<ModuleValueToken>, Vec<DepToken>) {\n+    let mut keys = Vec::new();\n+    let mut module_value = None;\n+    let mut deps = Vec::new();\n+    let mut block_state: Option<DepSource> = None;\n+\n+    for (offset, line) in lines.iter().enumerate() {\n+        let i = start_idx + offset;\n+        if let Some(key) = match_key(line) {\n+            block_state = None;\n+            let key_len = utf16_len(key);\n+            let key_span = Span {\n+                start: Position { line: i, character: 0 },\n+                end: Position { line: i, character: key_len },\n+            };\n+            keys.push(FrontmatterKeyToken { key: key.to_string(), key_span });\n+            let key_end_char = key_len + 1;\n+            let rest = &line[key.len() + 1..];\n+            match key {\n+                \"module\" => {\n+                    if let Some((value, start, end)) = scalar_after_colon(rest, key_end_char) {\n+                        module_value = Some(ModuleValueToken {\n+                            value,\n+                            span: Span {\n+                                start: Position { line: i, character: start },\n+                                end: Position { line: i, character: end },\n+                            },\n+                        });\n+                    }\n+                }\n+                \"deps\" | \"extends\" => {\n+                    let source = if key == \"deps\" { DepSource::Deps } else { DepSource::Extends };\n+                    let trimmed_rest = rest.trim();\n+                    if trimmed_rest.starts_with('[') {\n+                        deps.extend(parse_inline_list(rest, key_end_char, i, source));\n+                    } else if trimmed_rest.is_empty() {\n+                        block_state = Some(source);\n+                    } else if let Some((value, start, end)) = scalar_after_colon(rest, key_end_char) {\n+                        deps.push(DepToken {\n+                            value,\n+                            span: Span {\n+                                start: Position { line: i, character: start },\n+                                end: Position { line: i, character: end },\n+                            },\n+                            source,\n+                        });\n+                    }\n+                }\n+                _ => {}\n+            }\n+        } else if let Some(source) = block_state {\n+            if let Some((indent_units, space_count, rest)) = match_block_item(line) {\n+                let trimmed = rest.trim();\n+                if !trimmed.is_empty() {\n+                    let (value, quoted) = strip_quotes(trimmed);\n+                    let mut start = indent_units + 1 + space_count;\n+                    if quoted {\n+                        start += 1;\n+                    }\n+                    let end = start + utf16_len(&value);\n+                    deps.push(DepToken {\n+                        value,\n+                        span: Span {\n+                            start: Position { line: i, character: start },\n+                            end: Position { line: i, character: end },\n+                        },\n+                        source,\n+                    });\n+                }\n+            }\n+        }\n+    }\n+    (keys, module_value, deps)\n+}\n+\n+fn is_ref_char(c: char) -> bool {\n+    c.is_ascii_alphanumeric() || c == '_' || c == '/' || c == '-'\n+}\n+\n+fn scan_refs_in_line(line: &str, line_idx: usize) -> Vec<RefToken> {\n+    let mut refs = Vec::new();\n+    let chars: Vec<char> = line.chars().collect();\n+    let mut col = 0usize;\n+    let mut i = 0usize;\n+    while i < chars.len() {\n+        let c = chars[i];\n+        if c == '@' {\n+            let mut j = i + 1;\n+            let mut name = String::new();\n+            while j < chars.len() && is_ref_char(chars[j]) {\n+                name.push(chars[j]);\n+                j += 1;\n+            }\n+            if !name.is_empty() {\n+                let mut token_len = c.len_utf16();\n+                for k in i + 1..j {\n+                    token_len += chars[k].len_utf16();\n+                }\n+                let start_col = col;\n+                let end_col = start_col + token_len;\n+                refs.push(RefToken {\n+                    module: name,\n+                    span: Span {\n+                        start: Position { line: line_idx, character: start_col },\n+                        end: Position { line: line_idx, character: end_col },\n+                    },\n+                });\n+                for k in i..j {\n+                    col += chars[k].len_utf16();\n+                }\n+                i = j;\n+                continue;\n+            }\n+        }\n+        col += c.len_utf16();\n+        i += 1;\n+    }\n+    refs\n+}\n+\n+pub fn scan(text: &str) -> ScanResult {\n+    let lines = split_lines(text);\n+    let last_idx = lines.len() - 1;\n+\n+    let first_trimmed = lines[0].trim_end();\n+    let mut close: Option<usize> = None;\n+    if first_trimmed == \"---\" {\n+        for idx in 1..lines.len() {\n+            if lines[idx].trim_end() == \"---\" {\n+                close = Some(idx);\n+                break;\n+            }\n+        }\n+    }\n+\n+    let mut keys = Vec::new();\n+    let mut module_value = None;\n+    let mut deps = Vec::new();\n+    let mut refs = Vec::new();\n+    let frontmatter;\n+    let body;\n+\n+    if let Some(close_idx) = close {\n+        let inner_lines = &lines[1..close_idx];\n+        if inner_lines.is_empty() {\n+            frontmatter = RegionSpan {\n+                present: true,\n+                span: Some(Span {\n+                    start: Position { line: 1, character: 0 },\n+                    end: Position { line: 1, character: 0 },\n+                }),\n+            };\n+        } else {\n+            let last_inner_idx = close_idx - 1;\n+            frontmatter = RegionSpan {\n+                present: true,\n+                span: Some(Span {\n+                    start: Position { line: 1, character: 0 },\n+                    end: Position { line: last_inner_idx, character: utf16_len(lines[last_inner_idx]) },\n+                }),\n+            };\n+        }\n+        let (k, mv, d) = scan_frontmatter(inner_lines, 1);\n+        keys = k;\n+        module_value = mv;\n+        deps = d;\n+\n+        let body_start = close_idx + 1;\n+        if body_start < lines.len() {\n+            body = RegionSpan {\n+                present: true,\n+                span: Some(Span {\n+                    start: Position { line: body_start, character: 0 },\n+                    end: Position { line: last_idx, character: utf16_len(lines[last_idx]) },\n+                }),\n+            };\n+            for idx in body_start..lines.len() {\n+                refs.extend(scan_refs_in_line(lines[idx], idx));\n+            }\n+        } else {\n+            body = RegionSpan { present: false, span: None };\n+        }\n+    } else {\n+        frontmatter = RegionSpan { present: false, span: None };\n+        body = RegionSpan {\n+            present: true,\n+            span: Some(Span {\n+                start: Position { line: 0, character: 0 },\n+                end: Position { line: last_idx, character: utf16_len(lines[last_idx]) },\n+            }),\n+        };\n+        for idx in 0..lines.len() {\n+            refs.extend(scan_refs_in_line(lines[idx], idx));\n+        }\n+    }\n+\n+    ScanResult { frontmatter, body, keys, module_value, deps, refs }\n+}\n+\n+fn pos_lt(a: Position, b: Position) -> bool {\n+    (a.line, a.character) < (b.line, b.character)\n+}\n+\n+fn span_contains(span: &Span, pos: Position) -> bool {\n+    !pos_lt(pos, span.start) && !pos_lt(span.end, pos)\n+}\n+\n+pub fn find_target_at_position(scan: &ScanResult, position: Position) -> Option<Target> {\n+    if let Some(mv) = &scan.module_value {\n+        if span_contains(&mv.span, position) {\n+            return Some(Target::ModuleValue { module: mv.value.clone(), span: mv.span });\n+        }\n+    }\n+    for dep in &scan.deps {\n+        if span_contains(&dep.span, position) {\n+            return Some(Target::Dep { module: dep.value.clone(), span: dep.span, source: dep.source });\n+        }\n+    }\n+    for r in &scan.refs {\n+        if span_contains(&r.span, position) {\n+            return Some(Target::Ref { module: r.module.clone(), span: r.span });\n+        }\n+    }\n+    None\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    fn pos(line: usize, character: usize) -> Position {\n+        Position { line, character }\n+    }\n+\n+    fn span(sl: usize, sc: usize, el: usize, ec: usize) -> Span {\n+        Span { start: pos(sl, sc), end: pos(el, ec) }\n+    }\n+\n+    const MAIN_DOC: &str = \"---\\nmodule: auth/session\\ndeps: [auth/tokens, auth/users]\\ntargets: [typescript]\\n---\\n# Session\\n\\nManage sessions. See @auth/tokens and @auth/users for details.\\nRefreshes via @auth/session.\\n\";\n+\n+    #[test]\n+    fn main_doc_module_value() {\n+        let result = scan(MAIN_DOC);\n+        let mv = result.module_value.expect(\"module value present\");\n+        assert_eq!(mv.value, \"auth/session\");\n+        assert_eq!(mv.span, span(1, 8, 1, 20));\n+    }\n+\n+    #[test]\n+    fn main_doc_deps() {\n+        let result = scan(MAIN_DOC);\n+        assert_eq!(result.deps.len(), 2);\n+        assert_eq!(result.deps[0].value, \"auth/tokens\");\n+        assert_eq!(result.deps[0].source, DepSource::Deps);\n+        assert_eq!(result.deps[0].span, span(2, 7, 2, 18));\n+        assert_eq!(result.deps[1].value, \"auth/users\");\n+        assert_eq!(result.deps[1].span.start, pos(2, 20));\n+        assert_eq!(result.deps[1].span.end, pos(2, 30));\n+    }\n+\n+    #[test]\n+    fn main_doc_refs() {\n+        let result = scan(MAIN_DOC);\n+        let names: Vec<&str> = result.refs.iter().map(|r| r.module.as_str()).collect();\n+        assert_eq!(names, vec![\"auth/tokens\", \"auth/users\", \"auth/session\"]);\n+        assert_eq!(result.refs[0].span, span(7, 21, 7, 33));\n+    }\n+\n+    #[test]\n+    fn main_doc_regions() {\n+        let result = scan(MAIN_DOC);\n+        assert!(result.frontmatter.present);\n+        assert_eq!(result.frontmatter.span.unwrap().start, pos(1, 0));\n+        assert_eq!(result.frontmatter.span.unwrap().end.line, 3);\n+        assert!(result.body.present);\n+        assert_eq!(result.body.span.unwrap().start.line, 5);\n+    }\n+\n+    #[test]\n+    fn main_doc_find_target() {\n+        let result = scan(MAIN_DOC);\n+        match find_target_at_position(&result, pos(1, 10)) {\n+            Some(Target::ModuleValue { module, .. }) => assert_eq!(module, \"auth/session\"),\n+            other => panic!(\"unexpected: {:?}\", other),\n+        }\n+        match find_target_at_position(&result, pos(2, 10)) {\n+            Some(Target::Dep { module, source, .. }) => {\n+                assert_eq!(module, \"auth/tokens\");\n+                assert_eq!(source, DepSource::Deps);\n+            }\n+            other => panic!(\"unexpected: {:?}\", other),\n+        }\n+        match find_target_at_position(&result, pos(7, 25)) {\n+            Some(Target::Ref { module, .. }) => assert_eq!(module, \"auth/tokens\"),\n+            other => panic!(\"unexpected: {:?}\", other),\n+        }\n+        assert!(find_target_at_position(&result, pos(5, 0)).is_none());\n+    }\n+\n+    #[test]\n+    fn block_list_deps() {\n+        let doc = \"---\\nmodule: a\\ndeps:\\n  - one\\n  - \\\"two/x\\\"\\nextends: base\\n---\\nbody\\n\";\n+        let result = scan(doc);\n+        assert_eq!(result.deps.len(), 3);\n+\n+        assert_eq!(result.deps[0].source, DepSource::Deps);\n+        assert_eq!(result.deps[0].value, \"one\");\n+        assert_eq!(result.deps[0].span, span(3, 4, 3, 7));\n+\n+        assert_eq!(result.deps[1].source, DepSource::Deps);\n+        assert_eq!(result.deps[1].value, \"two/x\");\n+        assert_eq!(result.deps[1].span.start, pos(4, 5));\n+\n+        assert_eq!(result.deps[2].source, DepSource::Extends);\n+        assert_eq!(result.deps[2].value, \"base\");\n+        assert_eq!(result.deps[2].span.start, pos(5, 9));\n+    }\n+\n+    #[test]\n+    fn empty_inline_list() {\n+        let doc = \"---\\nmodule: greeting\\ndeps: []\\n---\\nbody\\n\";\n+        let result = scan(doc);\n+        assert!(result.deps.is_empty());\n+        assert_eq!(result.module_value.unwrap().value, \"greeting\");\n+    }\n+\n+    #[test]\n+    fn astral_emoji_ref_offset() {\n+        let doc = \"---\\nmodule: m\\n---\\n\\u{1F600}\\u{1F600}@auth/x\\n\";\n+        let result = scan(doc);\n+        assert_eq!(result.refs.len(), 1);\n+        assert_eq!(result.refs[0].module, \"auth/x\");\n+        assert_eq!(result.refs[0].span, span(3, 4, 3, 11));\n+    }\n+\n+    #[test]\n+    fn bmp_char_ref_offset() {\n+        let doc = \"---\\nmodule: m\\n---\\n\\u{00E9}@x/y\\n\";\n+        let result = scan(doc);\n+        assert_eq!(result.refs.len(), 1);\n+        assert_eq!(result.refs[0].span.start, pos(3, 1));\n+    }\n+\n+    #[test]\n+    fn no_frontmatter_body_present() {\n+        let doc = \"# just a heading\\nwith @a/b ref\\n\";\n+        let result = scan(doc);\n+        assert!(!result.frontmatter.present);\n+        assert!(result.body.present);\n+        assert_eq!(result.body.span.unwrap().start, pos(0, 0));\n+        assert_eq!(result.refs.len(), 1);\n+        assert_eq!(result.refs[0].module, \"a/b\");\n+    }\n+\n+    #[test]\n+    fn frontmatter_with_no_body_after() {\n+        // trailing \"\\n\" still yields one empty body line, so body is present but empty\n+        let doc = \"---\\nmodule: a\\n---\\n\";\n+        let result = scan(doc);\n+        assert!(result.frontmatter.present);\n+        assert!(result.body.present);\n+        assert_eq!(result.body.span.unwrap(), span(3, 0, 3, 0));\n+    }\n+\n+    #[test]\n+    fn frontmatter_with_truly_nothing_after() {\n+        let doc = \"---\\nmodule: a\\n---\";\n+        let result = scan(doc);\n+        assert!(result.frontmatter.present);\n+        assert!(!result.body.present);\n+    }\n+\n+    #[test]\n+    fn bare_at_is_not_a_ref() {\n+        let doc = \"hello @ world\\n\";\n+        let result = scan(doc);\n+        assert!(result.refs.is_empty());\n+    }\n+\n+    #[test]\n+    fn dash_without_space_is_not_block_item() {\n+        let doc = \"---\\nmodule: a\\ndeps:\\n  -nospace\\n---\\nbody\\n\";\n+        let result = scan(doc);\n+        assert!(result.deps.is_empty());\n+    }\n+\n+    #[test]\n+    fn crlf_lines_behave_like_lf() {\n+        let doc = \"---\\r\\nmodule: a\\r\\n---\\r\\nbody\\r\\n\";\n+        let result = scan(doc);\n+        assert!(result.frontmatter.present);\n+        assert_eq!(result.module_value.unwrap().value, \"a\");\n+    }\n+}"
         }
       ]
+    },
+    {
+      "gen": 48,
+      "timestamp": "2026-07-24T12:32:32.287Z",
+      "mode": "incremental",
+      "promptHash": "2cc1cdc421bebc56913433d93fbd3892c3c7a60802b3045f7a01961e03b4b180",
+      "files": []
     }
   ],
   "lock": [
@@ -490,27 +473,15 @@
         "entries": [
           {
             "promptLines": [
-              3,
-              7
-            ],
-            "file": "scanner/src/lib.rs",
-            "lines": [
-              1,
-              1
-            ],
-            "note": "module purpose header comment"
-          },
-          {
-            "promptLines": [
               19,
               25
             ],
             "file": "scanner/src/lib.rs",
             "lines": [
-              3,
-              13
+              75,
+              77
             ],
-            "note": "Position and Span structs, zero-based UTF-16 model"
+            "note": "UTF-16 length counting per position model"
           },
           {
             "promptLines": [
@@ -522,7 +493,7 @@
               69,
               73
             ],
-            "note": "split lines on \\n, strip trailing \\r"
+            "note": "split doc into lines, strip trailing CR"
           },
           {
             "promptLines": [
@@ -534,7 +505,7 @@
               3,
               13
             ],
-            "note": "Position/Span types with equality/copy"
+            "note": "Position and Span structs"
           },
           {
             "promptLines": [
@@ -630,7 +601,7 @@
               62,
               67
             ],
-            "note": "Target enum variants"
+            "note": "Target enum"
           },
           {
             "promptLines": [
@@ -651,22 +622,22 @@
             ],
             "file": "scanner/src/lib.rs",
             "lines": [
-              349,
+              347,
               366
             ],
-            "note": "frontmatter RegionSpan computation"
+            "note": "compute frontmatter RegionSpan"
           },
           {
             "promptLines": [
               59,
-              61
+              60
             ],
             "file": "scanner/src/lib.rs",
             "lines": [
               202,
-              212
+              214
             ],
-            "note": "walk inner lines tracking block-list state"
+            "note": "track block-list state while walking inner lines"
           },
           {
             "promptLines": [
@@ -678,7 +649,7 @@
               91,
               106
             ],
-            "note": "match_key regex-equivalent key detection"
+            "note": "key line regex match"
           },
           {
             "promptLines": [
@@ -690,7 +661,7 @@
               213,
               221
             ],
-            "note": "build FrontmatterKeyToken and key_end_char, clear block state"
+            "note": "emit FrontmatterKeyToken and key_end_char"
           },
           {
             "promptLines": [
@@ -702,7 +673,7 @@
               108,
               125
             ],
-            "note": "scalar_after_colon value parsing with quote stripping"
+            "note": "scalar value after colon parsing"
           },
           {
             "promptLines": [
@@ -711,22 +682,22 @@
             ],
             "file": "scanner/src/lib.rs",
             "lines": [
-              222,
+              224,
               234
             ],
-            "note": "module value handling via scalar rule"
+            "note": "module value extraction"
           },
           {
             "promptLines": [
               80,
-              82
+              94
             ],
             "file": "scanner/src/lib.rs",
             "lines": [
               235,
               252
             ],
-            "note": "deps/extends dispatch by source"
+            "note": "deps/extends dispatch to inline list/block/scalar"
           },
           {
             "promptLines": [
@@ -738,7 +709,7 @@
               151,
               200
             ],
-            "note": "parse_inline_list for bracketed dep lists"
+            "note": "inline list parsing for deps"
           },
           {
             "promptLines": [
@@ -750,19 +721,7 @@
               240,
               241
             ],
-            "note": "empty after colon opens block list state"
-          },
-          {
-            "promptLines": [
-              94,
-              94
-            ],
-            "file": "scanner/src/lib.rs",
-            "lines": [
-              242,
-              251
-            ],
-            "note": "single scalar dep value fallback"
+            "note": "mark open block list state"
           },
           {
             "promptLines": [
@@ -774,7 +733,7 @@
               127,
               149
             ],
-            "note": "match_block_item parses dash list item"
+            "note": "block list item line regex match"
           },
           {
             "promptLines": [
@@ -786,7 +745,7 @@
               255,
               275
             ],
-            "note": "consume block list items while block_state open"
+            "note": "emit DepToken for block list item"
           },
           {
             "promptLines": [
@@ -798,7 +757,7 @@
               372,
               399
             ],
-            "note": "body region presence/span with and without frontmatter"
+            "note": "compute body RegionSpan present/absent cases"
           },
           {
             "promptLines": [
@@ -808,9 +767,9 @@
             "file": "scanner/src/lib.rs",
             "lines": [
               280,
-              322
+              323
             ],
-            "note": "is_ref_char and scan_refs_in_line implementing @-reference scan"
+            "note": "scan @-references in body lines"
           },
           {
             "promptLines": [
@@ -822,11 +781,11 @@
               381,
               398
             ],
-            "note": "scanning refs starting from body/frontmatter-less start"
+            "note": "choose ref scan start line based on frontmatter presence"
           },
           {
             "promptLines": [
-              125,
+              123,
               129
             ],
             "file": "scanner/src/lib.rs",
@@ -834,7 +793,19 @@
               404,
               429
             ],
-            "note": "find_target_at_position precedence and span containment"
+            "note": "find_target_at_position precedence and containment"
+          },
+          {
+            "promptLines": [
+              443,
+              443
+            ],
+            "file": "scanner/src/lib.rs",
+            "lines": [
+              443,
+              443
+            ],
+            "note": "main reference document constant"
           },
           {
             "promptLines": [
@@ -843,10 +814,10 @@
             ],
             "file": "scanner/src/lib.rs",
             "lines": [
-              443,
+              446,
               500
             ],
-            "note": "main document worked-span test cases"
+            "note": "worked span assertions for main doc"
           }
         ]
       },
@@ -855,14 +826,13 @@
         "path": "scanner.mapl",
         "entry": {
           "promptLines": [
-            59,
-            101
+            1,
+            166
           ],
-          "kind": "assumption",
+          "kind": "no-op",
           "severity": "warning",
-          "message": "Non-key, non-list-item lines inside an open block list don't reset it",
-          "reasoning": "The prompt says a key line clears block-list state and a matching `- item` line is consumed, but never says what happens to the block-list state when a frontmatter line is neither (e.g. a blank line, or a malformed dash with no following space). The agent's scan_frontmatter only clears block_state on a key-line match; any other non-matching line silently leaves the previously opened block-list state active, so a later valid `- item` line further down would still be attributed to that same deps/extends source. This was not verified against a worked example in the prompt.\n",
-          "suggestion": "State explicitly whether a non-key, non-list-item line (blank or malformed) inside an open block list closes the list or is simply skipped/ignored.\n"
+          "message": "Scanner crate already fully implements the prompt; no changes were needed.",
+          "reasoning": "Checked the workspace at .napl/src/rust: the `scanner` member crate already exists (Cargo.toml + src/lib.rs), is registered in the workspace root's members list, and `cargo test -p scanner` passes all 15 tests covering the position model, frontmatter detection, key/value/dep scanning, block lists, body/ref regions, UTF-16 offset handling for BMP/astral characters, and find_target_at_position precedence — matching the worked examples in the prompt exactly. The requirement was already satisfied by existing code, so the agent correctly made no changes.\n"
         }
       },
       {
@@ -870,28 +840,13 @@
         "path": "scanner.mapl",
         "entry": {
           "promptLines": [
-            83,
-            85
-          ],
-          "kind": "assumption",
-          "severity": "warning",
-          "message": "Inline list `]` search assumes the closing bracket follows the opening one",
-          "reasoning": "The prompt only specifies the \"no closing `]`\" fallback (use the string's end), but doesn't address the case where a `]` character exists before the first `[` (e.g. stray bracket in earlier text on the same line). The agent's parse_inline_list uses rfind(']') but only accepts it as the close if its byte index is greater than the open bracket's, otherwise falling back to the end of the string — an assumption not stated in the prompt.\n",
-          "suggestion": "Clarify: \"the last `]` after the first `[`\" (rather than just \"the last `]`\") to remove doubt about a `]` occurring earlier in the line. "
-        }
-      },
-      {
-        "type": "mapl-entry",
-        "path": "scanner.mapl",
-        "entry": {
-          "promptLines": [
-            62,
-            67
+            11,
+            15
           ],
           "kind": "note",
           "severity": "info",
-          "message": "Key regex is ASCII-only; matched against byte indexing safely since key chars are single-byte",
-          "reasoning": "The key-matching implementation walks the line byte-by-byte and slices `line[key.len()+1..]` for the remainder after the colon. This is safe only because the key charset (A–Z, a–z, 0–9, `_`, `-`) and the colon are all single-byte ASCII, so byte length equals UTF-16/char length for that prefix — consistent with the prompt's charset restriction, just noting the implementation detail relies on it holding."
+          "message": "Workspace root and member list untouched, as required.",
+          "reasoning": "The prompt forbids touching anything outside `scanner/` and requires the crate be registered as a workspace member. Verified the root Cargo.toml's `members` array already lists \"scanner\" and no other files outside the scanner crate were modified, consistent with the \"leave it alone\" instruction."
         }
       },
       {

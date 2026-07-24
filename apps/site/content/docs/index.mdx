@@ -7,21 +7,7 @@ NAPL asks one question: **what if the prompt _was_ the source code?**
 
 You don't write code. You write what you mean, in English, in a `.napl` file:
 
-```napl title="greeting.napl"
----
-module: greeting
-targets: [typescript]
-tests:
-  - name: greets by name
-    given: { name: World }
-    expect: { message: "Hello, World!" }
----
-# Greeting
-
-Expose a `greet` function that takes a person's name and returns a greeting
-of the form `Hello, <name>!`. Leading and trailing whitespace in the name is
-trimmed. An empty or whitespace-only name is rejected with an error.
-```
+<NaplExample module="greeting" filename="greeting.napl" />
 
 The example is live — the prompt tab is editable with the CLI's own validator squiggling errors as you type, and the code tab is what `napl gen typescript` generated from it. Try deleting the `module:` line. When you run it for real, the agent:
 

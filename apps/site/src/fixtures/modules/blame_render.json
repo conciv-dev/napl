@@ -8,9 +8,9 @@
   "prompt": {
     "file": "blame_render.napl",
     "path": "cli/blame_render.napl",
-    "content": "---\nmodule: blame_render\ndeps: [blame, schemas_journal]\ntargets: [rust]\ntests:\n  - name: mode_str maps every journal mode to its lowercase label\n    given: { modes: [full, incremental, reconcile] }\n    expect: { labels: [\"full\", \"incremental\", \"reconcile\"] }\n  - name: a blame row is two-space separated\n    given:\n      line: { line: 4, gen: 7, timestamp: \"2026-07-24T00:00:00.000Z\", module: \"greeting\", text: \"export function greet() {\" }\n    expect: { row: \"gen #7  2026-07-24T00:00:00.000Z  greeting  export function greet() {\" }\n  - name: why_line is initial generation for an empty diff\n    given: { prompt_diff: \"\" }\n    expect: { why: \"initial generation\" }\n  - name: why_line reports the first added prompt line\n    given: { prompt_diff: \"@@ -1,1 +1,2 @@\\n context\\n+the new behavior line\\n\" }\n    expect: { why: \"the new behavior line\" }\n  - name: rendering a missing gen exits one with a not-found message\n    given: { entries: [{ gen: 1 }], gen: 9 }\n    expect: { text: \"napl blame: no journal entry for gen #9\", exit_code: 1 }\n  - name: rendering an initial full gen with no files\n    given:\n      entry: { gen: 1, timestamp: \"2026-07-24T00:00:00.000Z\", module: \"greeting\", target: \"typescript\", mode: full, prompt_diff: \"\", files: [] }\n      gen: 1\n    expect:\n      text: \"gen #1  2026-07-24T00:00:00.000Z  greeting (typescript)  mode: full\\n\\nprompt edit:\\n  initial generation\\n\\nfiles touched:\\n  (none)\"\n      exit_code: 0\n---\n# Rendering `napl blame` output\n\nThis module is the **pure** rendering core of the CLI's blame command: given\njournal and blame data that the I/O shell has already read from disk, it produces\nthe exact text the command prints. It is pure — no filesystem access, no process\nspawning. The shell reads the journal, computes blame, then calls these functions\nand prints their strings.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `blame_render/`: `blame_render/Cargo.toml`\n(package name `blame_render`) and `blame_render/src/lib.rs`. Touch nothing\noutside `blame_render/`. Ensure `cargo test` passes from the workspace root\nbefore finishing.\n\n## Builds on the `blame` and `schemas_journal` modules of this workspace\n\nThis module composes on two **generated sibling member crates** in the same\nworkspace — not on crates.io dependencies and not on any hand-written crate. Add\npath dependencies on them in your `Cargo.toml`:\n\n- `blame` lives at `../blame`. Use its public `BlameLine` struct (fields `line:\n  usize`, `gen: i64`, `timestamp: String`, `module: String`, `text: String`) and\n  its public `first_prompt_diff_line(prompt_diff: &str) -> String` function. Do\n  not reimplement either.\n- `schemas_journal` lives at `../schemas_journal`. Use its public `JournalEntry`\n  struct (fields include `gen: i64`, `timestamp: String`, `module: String`,\n  `target: String`, `prompt_diff: String`, `mode: JournalMode`, and `files:\n  Vec<JournalFile>` where each `JournalFile` has a `path: String` field) and its\n  public `JournalMode` enum (variants `Full`, `Incremental`, `Reconcile`). Do not\n  reimplement them.\n\nDepending on a sibling by path only reads it; leave both sibling crates\nuntouched.\n\n## `mode_str(mode: JournalMode) -> &'static str`\n\nMap a journal mode to its lowercase label: `Full` → `\"full\"`, `Incremental` →\n`\"incremental\"`, `Reconcile` → `\"reconcile\"`.\n\n## `format_blame_row(entry: &BlameLine) -> String`\n\nRender one blame row as exactly `\"gen #{gen}  {timestamp}  {module}  {text}\"`,\nwhere each `{…}` is the corresponding `BlameLine` field and the separators are\n**two spaces**. For a line with `gen = 7`, `timestamp =\n\"2026-07-24T00:00:00.000Z\"`, `module = \"greeting\"`, `text = \"export function\ngreet() {\"`, the row is\n`gen #7  2026-07-24T00:00:00.000Z  greeting  export function greet() {`.\n\n## `why_line(prompt_diff: &str) -> String`\n\nExplain why a line exists. Call `blame::first_prompt_diff_line(prompt_diff)`; if\nthe result is the empty string, return `\"initial generation\"`, otherwise return\nthe result unchanged. So an empty prompt diff yields `\"initial generation\"`, and a\ndiff whose first added hunk line is `the new behavior line` yields `the new\nbehavior line`.\n\n## `render_blame_gen(entries: &[JournalEntry], gen: i64) -> BlameGenRender`\n\nExpose a public struct `BlameGenRender` with public fields `text: String` and\n`exit_code: i32`. This function renders the single-generation summary the command\nprints for `napl blame --gen <n>`.\n\nFind the first entry in `entries` whose `gen` equals the requested `gen`.\n\n**When no entry matches**, return `BlameGenRender { text: format!(\"napl blame: no\njournal entry for gen #{gen}\"), exit_code: 1 }` — the text is exactly\n`napl blame: no journal entry for gen #{gen}` with the requested number.\n\n**When an entry matches**, build the text as a sequence of lines joined by single\nnewlines (`\\n`), with **no trailing newline**, and `exit_code: 0`. The lines are,\nin order:\n\n1. `gen #{gen}  {timestamp}  {module} ({target})  mode: {mode}` — the entry's\n   `gen`, `timestamp`, `module`, `target`, and `mode_str(entry.mode)`, with two\n   spaces between the segments and the target in parentheses.\n2. an empty line.\n3. `prompt edit:`.\n4. the prompt-diff block: if `entry.prompt_diff` is empty **after trimming\n   surrounding whitespace**, a single line `  initial generation` (two leading\n   spaces); otherwise, split `entry.prompt_diff` on `\\n` and emit one line per\n   piece, each prefixed with two spaces (so a trailing newline in the diff yields a\n   final `  ` two-space line).\n5. an empty line.\n6. `files touched:`.\n7. the files block: if `entry.files` is empty, a single line `  (none)` (two\n   leading spaces); otherwise one line per file, each `  {path}` (two leading\n   spaces then the file's `path`).\n\nFor an entry with `gen = 1`, `timestamp = \"2026-07-24T00:00:00.000Z\"`, `module =\n\"greeting\"`, `target = \"typescript\"`, `mode = Full`, an empty `prompt_diff`, and\nno files, the text is exactly:\n\n`gen #1  2026-07-24T00:00:00.000Z  greeting (typescript)  mode: full\\n\\nprompt edit:\\n  initial generation\\n\\nfiles touched:\\n  (none)`\n\nThe shell prints this text with a single trailing newline and exits with\n`exit_code`.\n"
+    "content": "---\nmodule: blame_render\ndeps: [blame, schemas_journal]\ntargets: [rust]\ntests:\n  - name: mode_str maps every journal mode to its lowercase label\n    given: { modes: [full, incremental, reconcile, move] }\n    expect: { labels: [\"full\", \"incremental\", \"reconcile\", \"move\"] }\n  - name: a blame row is two-space separated\n    given:\n      line: { line: 4, gen: 7, timestamp: \"2026-07-24T00:00:00.000Z\", module: \"greeting\", text: \"export function greet() {\" }\n    expect: { row: \"gen #7  2026-07-24T00:00:00.000Z  greeting  export function greet() {\" }\n  - name: why_line is initial generation for an empty diff\n    given: { prompt_diff: \"\" }\n    expect: { why: \"initial generation\" }\n  - name: why_line reports the first added prompt line\n    given: { prompt_diff: \"@@ -1,1 +1,2 @@\\n context\\n+the new behavior line\\n\" }\n    expect: { why: \"the new behavior line\" }\n  - name: rendering a missing gen exits one with a not-found message\n    given: { entries: [{ gen: 1 }], gen: 9 }\n    expect: { text: \"napl blame: no journal entry for gen #9\", exit_code: 1 }\n  - name: rendering an initial full gen with no files\n    given:\n      entry: { gen: 1, timestamp: \"2026-07-24T00:00:00.000Z\", module: \"greeting\", target: \"typescript\", mode: full, prompt_diff: \"\", files: [] }\n      gen: 1\n    expect:\n      text: \"gen #1  2026-07-24T00:00:00.000Z  greeting (typescript)  mode: full\\n\\nprompt edit:\\n  initial generation\\n\\nfiles touched:\\n  (none)\"\n      exit_code: 0\n---\n# Rendering `napl blame` output\n\nThis module is the **pure** rendering core of the CLI's blame command: given\njournal and blame data that the I/O shell has already read from disk, it produces\nthe exact text the command prints. It is pure — no filesystem access, no process\nspawning. The shell reads the journal, computes blame, then calls these functions\nand prints their strings.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `blame_render/`: `blame_render/Cargo.toml`\n(package name `blame_render`) and `blame_render/src/lib.rs`. Touch nothing\noutside `blame_render/`. Ensure `cargo test` passes from the workspace root\nbefore finishing.\n\n## Builds on the `blame` and `schemas_journal` modules of this workspace\n\nThis module composes on two **generated sibling member crates** in the same\nworkspace — not on crates.io dependencies and not on any hand-written crate. Add\npath dependencies on them in your `Cargo.toml`:\n\n- `blame` lives at `../blame`. Use its public `BlameLine` struct (fields `line:\n  usize`, `gen: i64`, `timestamp: String`, `module: String`, `text: String`) and\n  its public `first_prompt_diff_line(prompt_diff: &str) -> String` function. Do\n  not reimplement either.\n- `schemas_journal` lives at `../schemas_journal`. Use its public `JournalEntry`\n  struct (fields include `gen: i64`, `timestamp: String`, `module: String`,\n  `target: String`, `prompt_diff: String`, `mode: JournalMode`, and `files:\n  Vec<JournalFile>` where each `JournalFile` has a `path: String` field) and its\n  public `JournalMode` enum (variants `Full`, `Incremental`, `Reconcile`,\n  `Move`). Do not reimplement them.\n\nDepending on a sibling by path only reads it; leave both sibling crates\nuntouched.\n\n## `mode_str(mode: JournalMode) -> &'static str`\n\nMap a journal mode to its lowercase label: `Full` → `\"full\"`, `Incremental` →\n`\"incremental\"`, `Reconcile` → `\"reconcile\"`, `Move` → `\"move\"`. The `Move`\nvariant records a location-heal (a generated file moved to track a renamed\nprompt); it renders as the lowercase label `\"move\"`, and the match over\n`JournalMode` is exhaustive so every variant — including `Move` — is handled.\n\n## `format_blame_row(entry: &BlameLine) -> String`\n\nRender one blame row as exactly `\"gen #{gen}  {timestamp}  {module}  {text}\"`,\nwhere each `{…}` is the corresponding `BlameLine` field and the separators are\n**two spaces**. For a line with `gen = 7`, `timestamp =\n\"2026-07-24T00:00:00.000Z\"`, `module = \"greeting\"`, `text = \"export function\ngreet() {\"`, the row is\n`gen #7  2026-07-24T00:00:00.000Z  greeting  export function greet() {`.\n\n## `why_line(prompt_diff: &str) -> String`\n\nExplain why a line exists. Call `blame::first_prompt_diff_line(prompt_diff)`; if\nthe result is the empty string, return `\"initial generation\"`, otherwise return\nthe result unchanged. So an empty prompt diff yields `\"initial generation\"`, and a\ndiff whose first added hunk line is `the new behavior line` yields `the new\nbehavior line`.\n\n## `render_blame_gen(entries: &[JournalEntry], gen: i64) -> BlameGenRender`\n\nExpose a public struct `BlameGenRender` with public fields `text: String` and\n`exit_code: i32`. This function renders the single-generation summary the command\nprints for `napl blame --gen <n>`.\n\nFind the first entry in `entries` whose `gen` equals the requested `gen`.\n\n**When no entry matches**, return `BlameGenRender { text: format!(\"napl blame: no\njournal entry for gen #{gen}\"), exit_code: 1 }` — the text is exactly\n`napl blame: no journal entry for gen #{gen}` with the requested number.\n\n**When an entry matches**, build the text as a sequence of lines joined by single\nnewlines (`\\n`), with **no trailing newline**, and `exit_code: 0`. The lines are,\nin order:\n\n1. `gen #{gen}  {timestamp}  {module} ({target})  mode: {mode}` — the entry's\n   `gen`, `timestamp`, `module`, `target`, and `mode_str(entry.mode)`, with two\n   spaces between the segments and the target in parentheses.\n2. an empty line.\n3. `prompt edit:`.\n4. the prompt-diff block: if `entry.prompt_diff` is empty **after trimming\n   surrounding whitespace**, a single line `  initial generation` (two leading\n   spaces); otherwise, split `entry.prompt_diff` on `\\n` and emit one line per\n   piece, each prefixed with two spaces (so a trailing newline in the diff yields a\n   final `  ` two-space line).\n5. an empty line.\n6. `files touched:`.\n7. the files block: if `entry.files` is empty, a single line `  (none)` (two\n   leading spaces); otherwise one line per file, each `  {path}` (two leading\n   spaces then the file's `path`).\n\nFor an entry with `gen = 1`, `timestamp = \"2026-07-24T00:00:00.000Z\"`, `module =\n\"greeting\"`, `target = \"typescript\"`, `mode = Full`, an empty `prompt_diff`, and\nno files, the text is exactly:\n\n`gen #1  2026-07-24T00:00:00.000Z  greeting (typescript)  mode: full\\n\\nprompt edit:\\n  initial generation\\n\\nfiles touched:\\n  (none)`\n\nThe shell prints this text with a single trailing newline and exits with\n`exit_code`.\n"
   },
-  "promptAtGen": "# Rendering `napl blame` output\n\nThis module is the **pure** rendering core of the CLI's blame command: given\njournal and blame data that the I/O shell has already read from disk, it produces\nthe exact text the command prints. It is pure — no filesystem access, no process\nspawning. The shell reads the journal, computes blame, then calls these functions\nand prints their strings.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `blame_render/`: `blame_render/Cargo.toml`\n(package name `blame_render`) and `blame_render/src/lib.rs`. Touch nothing\noutside `blame_render/`. Ensure `cargo test` passes from the workspace root\nbefore finishing.\n\n## Builds on the `blame` and `schemas_journal` modules of this workspace\n\nThis module composes on two **generated sibling member crates** in the same\nworkspace — not on crates.io dependencies and not on any hand-written crate. Add\npath dependencies on them in your `Cargo.toml`:\n\n- `blame` lives at `../blame`. Use its public `BlameLine` struct (fields `line:\n  usize`, `gen: i64`, `timestamp: String`, `module: String`, `text: String`) and\n  its public `first_prompt_diff_line(prompt_diff: &str) -> String` function. Do\n  not reimplement either.\n- `schemas_journal` lives at `../schemas_journal`. Use its public `JournalEntry`\n  struct (fields include `gen: i64`, `timestamp: String`, `module: String`,\n  `target: String`, `prompt_diff: String`, `mode: JournalMode`, and `files:\n  Vec<JournalFile>` where each `JournalFile` has a `path: String` field) and its\n  public `JournalMode` enum (variants `Full`, `Incremental`, `Reconcile`). Do not\n  reimplement them.\n\nDepending on a sibling by path only reads it; leave both sibling crates\nuntouched.\n\n## `mode_str(mode: JournalMode) -> &'static str`\n\nMap a journal mode to its lowercase label: `Full` → `\"full\"`, `Incremental` →\n`\"incremental\"`, `Reconcile` → `\"reconcile\"`.\n\n## `format_blame_row(entry: &BlameLine) -> String`\n\nRender one blame row as exactly `\"gen #{gen}  {timestamp}  {module}  {text}\"`,\nwhere each `{…}` is the corresponding `BlameLine` field and the separators are\n**two spaces**. For a line with `gen = 7`, `timestamp =\n\"2026-07-24T00:00:00.000Z\"`, `module = \"greeting\"`, `text = \"export function\ngreet() {\"`, the row is\n`gen #7  2026-07-24T00:00:00.000Z  greeting  export function greet() {`.\n\n## `why_line(prompt_diff: &str) -> String`\n\nExplain why a line exists. Call `blame::first_prompt_diff_line(prompt_diff)`; if\nthe result is the empty string, return `\"initial generation\"`, otherwise return\nthe result unchanged. So an empty prompt diff yields `\"initial generation\"`, and a\ndiff whose first added hunk line is `the new behavior line` yields `the new\nbehavior line`.\n\n## `render_blame_gen(entries: &[JournalEntry], gen: i64) -> BlameGenRender`\n\nExpose a public struct `BlameGenRender` with public fields `text: String` and\n`exit_code: i32`. This function renders the single-generation summary the command\nprints for `napl blame --gen <n>`.\n\nFind the first entry in `entries` whose `gen` equals the requested `gen`.\n\n**When no entry matches**, return `BlameGenRender { text: format!(\"napl blame: no\njournal entry for gen #{gen}\"), exit_code: 1 }` — the text is exactly\n`napl blame: no journal entry for gen #{gen}` with the requested number.\n\n**When an entry matches**, build the text as a sequence of lines joined by single\nnewlines (`\\n`), with **no trailing newline**, and `exit_code: 0`. The lines are,\nin order:\n\n1. `gen #{gen}  {timestamp}  {module} ({target})  mode: {mode}` — the entry's\n   `gen`, `timestamp`, `module`, `target`, and `mode_str(entry.mode)`, with two\n   spaces between the segments and the target in parentheses.\n2. an empty line.\n3. `prompt edit:`.\n4. the prompt-diff block: if `entry.prompt_diff` is empty **after trimming\n   surrounding whitespace**, a single line `  initial generation` (two leading\n   spaces); otherwise, split `entry.prompt_diff` on `\\n` and emit one line per\n   piece, each prefixed with two spaces (so a trailing newline in the diff yields a\n   final `  ` two-space line).\n5. an empty line.\n6. `files touched:`.\n7. the files block: if `entry.files` is empty, a single line `  (none)` (two\n   leading spaces); otherwise one line per file, each `  {path}` (two leading\n   spaces then the file's `path`).\n\nFor an entry with `gen = 1`, `timestamp = \"2026-07-24T00:00:00.000Z\"`, `module =\n\"greeting\"`, `target = \"typescript\"`, `mode = Full`, an empty `prompt_diff`, and\nno files, the text is exactly:\n\n`gen #1  2026-07-24T00:00:00.000Z  greeting (typescript)  mode: full\\n\\nprompt edit:\\n  initial generation\\n\\nfiles touched:\\n  (none)`\n\nThe shell prints this text with a single trailing newline and exits with\n`exit_code`.\n",
+  "promptAtGen": "# Rendering `napl blame` output\n\nThis module is the **pure** rendering core of the CLI's blame command: given\njournal and blame data that the I/O shell has already read from disk, it produces\nthe exact text the command prints. It is pure — no filesystem access, no process\nspawning. The shell reads the journal, computes blame, then calls these functions\nand prints their strings.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `blame_render/`: `blame_render/Cargo.toml`\n(package name `blame_render`) and `blame_render/src/lib.rs`. Touch nothing\noutside `blame_render/`. Ensure `cargo test` passes from the workspace root\nbefore finishing.\n\n## Builds on the `blame` and `schemas_journal` modules of this workspace\n\nThis module composes on two **generated sibling member crates** in the same\nworkspace — not on crates.io dependencies and not on any hand-written crate. Add\npath dependencies on them in your `Cargo.toml`:\n\n- `blame` lives at `../blame`. Use its public `BlameLine` struct (fields `line:\n  usize`, `gen: i64`, `timestamp: String`, `module: String`, `text: String`) and\n  its public `first_prompt_diff_line(prompt_diff: &str) -> String` function. Do\n  not reimplement either.\n- `schemas_journal` lives at `../schemas_journal`. Use its public `JournalEntry`\n  struct (fields include `gen: i64`, `timestamp: String`, `module: String`,\n  `target: String`, `prompt_diff: String`, `mode: JournalMode`, and `files:\n  Vec<JournalFile>` where each `JournalFile` has a `path: String` field) and its\n  public `JournalMode` enum (variants `Full`, `Incremental`, `Reconcile`,\n  `Move`). Do not reimplement them.\n\nDepending on a sibling by path only reads it; leave both sibling crates\nuntouched.\n\n## `mode_str(mode: JournalMode) -> &'static str`\n\nMap a journal mode to its lowercase label: `Full` → `\"full\"`, `Incremental` →\n`\"incremental\"`, `Reconcile` → `\"reconcile\"`, `Move` → `\"move\"`. The `Move`\nvariant records a location-heal (a generated file moved to track a renamed\nprompt); it renders as the lowercase label `\"move\"`, and the match over\n`JournalMode` is exhaustive so every variant — including `Move` — is handled.\n\n## `format_blame_row(entry: &BlameLine) -> String`\n\nRender one blame row as exactly `\"gen #{gen}  {timestamp}  {module}  {text}\"`,\nwhere each `{…}` is the corresponding `BlameLine` field and the separators are\n**two spaces**. For a line with `gen = 7`, `timestamp =\n\"2026-07-24T00:00:00.000Z\"`, `module = \"greeting\"`, `text = \"export function\ngreet() {\"`, the row is\n`gen #7  2026-07-24T00:00:00.000Z  greeting  export function greet() {`.\n\n## `why_line(prompt_diff: &str) -> String`\n\nExplain why a line exists. Call `blame::first_prompt_diff_line(prompt_diff)`; if\nthe result is the empty string, return `\"initial generation\"`, otherwise return\nthe result unchanged. So an empty prompt diff yields `\"initial generation\"`, and a\ndiff whose first added hunk line is `the new behavior line` yields `the new\nbehavior line`.\n\n## `render_blame_gen(entries: &[JournalEntry], gen: i64) -> BlameGenRender`\n\nExpose a public struct `BlameGenRender` with public fields `text: String` and\n`exit_code: i32`. This function renders the single-generation summary the command\nprints for `napl blame --gen <n>`.\n\nFind the first entry in `entries` whose `gen` equals the requested `gen`.\n\n**When no entry matches**, return `BlameGenRender { text: format!(\"napl blame: no\njournal entry for gen #{gen}\"), exit_code: 1 }` — the text is exactly\n`napl blame: no journal entry for gen #{gen}` with the requested number.\n\n**When an entry matches**, build the text as a sequence of lines joined by single\nnewlines (`\\n`), with **no trailing newline**, and `exit_code: 0`. The lines are,\nin order:\n\n1. `gen #{gen}  {timestamp}  {module} ({target})  mode: {mode}` — the entry's\n   `gen`, `timestamp`, `module`, `target`, and `mode_str(entry.mode)`, with two\n   spaces between the segments and the target in parentheses.\n2. an empty line.\n3. `prompt edit:`.\n4. the prompt-diff block: if `entry.prompt_diff` is empty **after trimming\n   surrounding whitespace**, a single line `  initial generation` (two leading\n   spaces); otherwise, split `entry.prompt_diff` on `\\n` and emit one line per\n   piece, each prefixed with two spaces (so a trailing newline in the diff yields a\n   final `  ` two-space line).\n5. an empty line.\n6. `files touched:`.\n7. the files block: if `entry.files` is empty, a single line `  (none)` (two\n   leading spaces); otherwise one line per file, each `  {path}` (two leading\n   spaces then the file's `path`).\n\nFor an entry with `gen = 1`, `timestamp = \"2026-07-24T00:00:00.000Z\"`, `module =\n\"greeting\"`, `target = \"typescript\"`, `mode = Full`, an empty `prompt_diff`, and\nno files, the text is exactly:\n\n`gen #1  2026-07-24T00:00:00.000Z  greeting (typescript)  mode: full\\n\\nprompt edit:\\n  initial generation\\n\\nfiles touched:\\n  (none)`\n\nThe shell prints this text with a single trailing newline and exits with\n`exit_code`.\n",
   "summary": "Rendering `napl blame` output",
   "files": [
     {
@@ -30,146 +30,134 @@
     {
       "promptLines": [
         38,
-        41
+        44
       ],
       "file": "blame_render/src/lib.rs",
       "lines": [
         10,
-        17
+        18
       ],
-      "note": "mode_str maps JournalMode to lowercase label"
+      "note": "mode_str maps JournalMode to lowercase label, exhaustive match"
     },
     {
       "promptLines": [
-        43,
-        50
-      ],
-      "file": "blame_render/src/lib.rs",
-      "lines": [
-        19,
-        25
-      ],
-      "note": "format_blame_row builds \"gen"
-    },
-    {
-      "promptLines": [
-        52,
-        58
-      ],
-      "file": "blame_render/src/lib.rs",
-      "lines": [
-        27,
-        35
-      ],
-      "note": "why_line falls back to \"initial generation\" on empty diff line"
-    },
-    {
-      "promptLines": [
-        60,
-        64
-      ],
-      "file": "blame_render/src/lib.rs",
-      "lines": [
-        37,
-        45
-      ],
-      "note": "BlameGenRender struct and render_blame_gen signature"
-    },
-    {
-      "promptLines": [
-        66,
-        66
-      ],
-      "file": "blame_render/src/lib.rs",
-      "lines": [
         46,
+        53
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        20,
+        26
+      ],
+      "note": "format_blame_row renders gen/timestamp/module/text row"
+    },
+    {
+      "promptLines": [
+        55,
+        61
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        28,
+        36
+      ],
+      "note": "why_line delegates to blame::first_prompt_diff_line, defaults to initial generation"
+    },
+    {
+      "promptLines": [
+        63,
+        68
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        38,
         46
       ],
-      "note": "find first entry matching gen"
+      "note": "BlameGenRender struct and render_blame_gen signature/entry lookup"
     },
     {
       "promptLines": [
-        68,
-        70
-      ],
-      "file": "blame_render/src/lib.rs",
-      "lines": [
-        46,
-        51
-      ],
-      "note": "no-match branch returns error text and exit_code 1"
-    },
-    {
-      "promptLines": [
-        72,
-        78
-      ],
-      "file": "blame_render/src/lib.rs",
-      "lines": [
-        53,
-        62
-      ],
-      "note": "build header line with gen/timestamp/module/target/mode"
-    },
-    {
-      "promptLines": [
-        79,
-        80
-      ],
-      "file": "blame_render/src/lib.rs",
-      "lines": [
-        63,
-        64
-      ],
-      "note": "blank line then \"prompt edit:\" label"
-    },
-    {
-      "promptLines": [
-        81,
-        85
-      ],
-      "file": "blame_render/src/lib.rs",
-      "lines": [
-        66,
-        72
-      ],
-      "note": "trimmed-empty check and per-line two-space-prefixed diff rendering"
-    },
-    {
-      "promptLines": [
-        86,
-        87
-      ],
-      "file": "blame_render/src/lib.rs",
-      "lines": [
-        74,
-        75
-      ],
-      "note": "blank line then \"files touched:\" label"
-    },
-    {
-      "promptLines": [
-        88,
-        90
-      ],
-      "file": "blame_render/src/lib.rs",
-      "lines": [
-        77,
-        83
-      ],
-      "note": "empty-files \"(none)\" case vs per-file path lines"
-    },
-    {
-      "promptLines": [
-        72,
+        69,
         73
       ],
       "file": "blame_render/src/lib.rs",
       "lines": [
-        85,
+        47,
+        52
+      ],
+      "note": "no matching entry returns error text with exit_code 1"
+    },
+    {
+      "promptLines": [
+        75,
+        81
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        54,
+        63
+      ],
+      "note": "build lines vec, header line with gen/timestamp/module/target/mode"
+    },
+    {
+      "promptLines": [
+        82,
+        83
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        64,
+        65
+      ],
+      "note": "empty line then 'prompt edit:' label"
+    },
+    {
+      "promptLines": [
+        84,
         88
       ],
-      "note": "join lines with newline, no trailing newline, exit_code 0"
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        67,
+        73
+      ],
+      "note": "prompt-diff block: trimmed-empty check vs split on newline with two-space prefix"
+    },
+    {
+      "promptLines": [
+        89,
+        90
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        75,
+        76
+      ],
+      "note": "empty line then 'files touched:' label"
+    },
+    {
+      "promptLines": [
+        91,
+        93
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        78,
+        84
+      ],
+      "note": "files block: (none) placeholder or one line per file path"
+    },
+    {
+      "promptLines": [
+        75,
+        76
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        86,
+        89
+      ],
+      "note": "join lines with single newline, no trailing newline, exit_code 0"
     },
     {
       "promptLines": [
@@ -181,7 +169,7 @@
         7,
         7
       ],
-      "note": "import BlameLine from sibling blame crate"
+      "note": "import BlameLine from blame sibling crate"
     },
     {
       "promptLines": [
@@ -193,43 +181,80 @@
         8,
         8
       ],
-      "note": "import JournalEntry/JournalMode from schemas_journal crate"
+      "note": "import JournalEntry and JournalMode from schemas_journal sibling crate"
     },
     {
       "promptLines": [
-        92,
-        96
+        95,
+        99
       ],
       "file": "blame_render/src/lib.rs",
       "lines": [
-        165,
-        173
+        166,
+        175
       ],
-      "note": "test matching example empty-diff-no-files rendering"
-    }
-  ],
-  "attributionYaml": "module: blame_render\ntarget: rust\nentries:\n  - promptLines:\n      - 38\n      - 41\n    file: blame_render/src/lib.rs\n    lines:\n      - 10\n      - 17\n    note: mode_str maps JournalMode to lowercase label\n  - promptLines:\n      - 43\n      - 50\n    file: blame_render/src/lib.rs\n    lines:\n      - 19\n      - 25\n    note: format_blame_row builds \"gen\n  - promptLines:\n      - 52\n      - 58\n    file: blame_render/src/lib.rs\n    lines:\n      - 27\n      - 35\n    note: why_line falls back to \"initial generation\" on empty diff line\n  - promptLines:\n      - 60\n      - 64\n    file: blame_render/src/lib.rs\n    lines:\n      - 37\n      - 45\n    note: BlameGenRender struct and render_blame_gen signature\n  - promptLines:\n      - 66\n      - 66\n    file: blame_render/src/lib.rs\n    lines:\n      - 46\n      - 46\n    note: find first entry matching gen\n  - promptLines:\n      - 68\n      - 70\n    file: blame_render/src/lib.rs\n    lines:\n      - 46\n      - 51\n    note: no-match branch returns error text and exit_code 1\n  - promptLines:\n      - 72\n      - 78\n    file: blame_render/src/lib.rs\n    lines:\n      - 53\n      - 62\n    note: build header line with gen/timestamp/module/target/mode\n  - promptLines:\n      - 79\n      - 80\n    file: blame_render/src/lib.rs\n    lines:\n      - 63\n      - 64\n    note: blank line then \"prompt edit:\" label\n  - promptLines:\n      - 81\n      - 85\n    file: blame_render/src/lib.rs\n    lines:\n      - 66\n      - 72\n    note: trimmed-empty check and per-line two-space-prefixed diff rendering\n  - promptLines:\n      - 86\n      - 87\n    file: blame_render/src/lib.rs\n    lines:\n      - 74\n      - 75\n    note: blank line then \"files touched:\" label\n  - promptLines:\n      - 88\n      - 90\n    file: blame_render/src/lib.rs\n    lines:\n      - 77\n      - 83\n    note: empty-files \"(none)\" case vs per-file path lines\n  - promptLines:\n      - 72\n      - 73\n    file: blame_render/src/lib.rs\n    lines:\n      - 85\n      - 88\n    note: join lines with newline, no trailing newline, exit_code 0\n  - promptLines:\n      - 24\n      - 27\n    file: blame_render/src/lib.rs\n    lines:\n      - 7\n      - 7\n    note: import BlameLine from sibling blame crate\n  - promptLines:\n      - 28\n      - 33\n    file: blame_render/src/lib.rs\n    lines:\n      - 8\n      - 8\n    note: import JournalEntry/JournalMode from schemas_journal crate\n  - promptLines:\n      - 92\n      - 96\n    file: blame_render/src/lib.rs\n    lines:\n      - 165\n      - 173\n    note: test matching example empty-diff-no-files rendering\n",
-  "mapl": [
-    {
-      "promptLines": [
-        28,
-        33
-      ],
-      "kind": "assumption",
-      "severity": "warning",
-      "message": "JournalEntry test fixture includes a `prompt_hash: String` field not mentioned in the prompt.",
-      "reasoning": "The prompt says JournalEntry's \"fields include\" gen, timestamp, module, target, prompt_diff, mode, and files — wording that implies the list is non-exhaustive. The agent's test helper constructs entries with an extra `prompt_hash: String` field, assuming this extra field exists on the real schemas_journal::JournalEntry struct and just wasn't called out since it's irrelevant to rendering. This is a reasonable read of \"fields include\" but was never confirmed against the actual sibling crate.\n",
-      "suggestion": "List JournalEntry's full field set explicitly (or say \"at least these fields, plus possibly others you can ignore\") so implementers don't have to guess whether unlisted fields exist.\n"
+      "note": "test verifying exact example output for empty diff, no files"
     },
     {
       "promptLines": [
-        11,
-        16
+        50,
+        53
       ],
-      "kind": "note",
-      "severity": "info",
-      "message": "Cargo.toml contents (package name, path deps, workspace registration) aren't shown in the diff, only lib.rs.",
-      "reasoning": "The prompt requires creating blame_render/Cargo.toml with path dependencies on ../blame and ../schemas_journal, and running `cargo test` from the workspace root. The provided change list only shows lib.rs; Cargo.toml's contents weren't surfaced for review, so correctness of the manifest (package name, path deps, workspace member registration) is taken on the agent's final-message claim that \"10 tests pass\" rather than directly verified here."
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        132,
+        145
+      ],
+      "note": "test verifying format_blame_row example row"
+    },
+    {
+      "promptLines": [
+        57,
+        61
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        147,
+        156
+      ],
+      "note": "tests for why_line empty and non-empty diff"
+    },
+    {
+      "promptLines": [
+        84,
+        88
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        177,
+        207
+      ],
+      "note": "tests for whitespace-only diff, multiline diff+files, trailing newline case"
+    },
+    {
+      "promptLines": [
+        69,
+        69
+      ],
+      "file": "blame_render/src/lib.rs",
+      "lines": [
+        209,
+        218
+      ],
+      "note": "test that first matching gen entry is picked"
+    }
+  ],
+  "attributionYaml": "module: blame_render\ntarget: rust\nentries:\n  - promptLines:\n      - 38\n      - 44\n    file: blame_render/src/lib.rs\n    lines:\n      - 10\n      - 18\n    note: mode_str maps JournalMode to lowercase label, exhaustive match\n  - promptLines:\n      - 46\n      - 53\n    file: blame_render/src/lib.rs\n    lines:\n      - 20\n      - 26\n    note: format_blame_row renders gen/timestamp/module/text row\n  - promptLines:\n      - 55\n      - 61\n    file: blame_render/src/lib.rs\n    lines:\n      - 28\n      - 36\n    note: why_line delegates to blame::first_prompt_diff_line, defaults to initial generation\n  - promptLines:\n      - 63\n      - 68\n    file: blame_render/src/lib.rs\n    lines:\n      - 38\n      - 46\n    note: BlameGenRender struct and render_blame_gen signature/entry lookup\n  - promptLines:\n      - 69\n      - 73\n    file: blame_render/src/lib.rs\n    lines:\n      - 47\n      - 52\n    note: no matching entry returns error text with exit_code 1\n  - promptLines:\n      - 75\n      - 81\n    file: blame_render/src/lib.rs\n    lines:\n      - 54\n      - 63\n    note: build lines vec, header line with gen/timestamp/module/target/mode\n  - promptLines:\n      - 82\n      - 83\n    file: blame_render/src/lib.rs\n    lines:\n      - 64\n      - 65\n    note: empty line then 'prompt edit:' label\n  - promptLines:\n      - 84\n      - 88\n    file: blame_render/src/lib.rs\n    lines:\n      - 67\n      - 73\n    note: \"prompt-diff block: trimmed-empty check vs split on newline with two-space prefix\"\n  - promptLines:\n      - 89\n      - 90\n    file: blame_render/src/lib.rs\n    lines:\n      - 75\n      - 76\n    note: empty line then 'files touched:' label\n  - promptLines:\n      - 91\n      - 93\n    file: blame_render/src/lib.rs\n    lines:\n      - 78\n      - 84\n    note: \"files block: (none) placeholder or one line per file path\"\n  - promptLines:\n      - 75\n      - 76\n    file: blame_render/src/lib.rs\n    lines:\n      - 86\n      - 89\n    note: join lines with single newline, no trailing newline, exit_code 0\n  - promptLines:\n      - 24\n      - 27\n    file: blame_render/src/lib.rs\n    lines:\n      - 7\n      - 7\n    note: import BlameLine from blame sibling crate\n  - promptLines:\n      - 28\n      - 33\n    file: blame_render/src/lib.rs\n    lines:\n      - 8\n      - 8\n    note: import JournalEntry and JournalMode from schemas_journal sibling crate\n  - promptLines:\n      - 95\n      - 99\n    file: blame_render/src/lib.rs\n    lines:\n      - 166\n      - 175\n    note: test verifying exact example output for empty diff, no files\n  - promptLines:\n      - 50\n      - 53\n    file: blame_render/src/lib.rs\n    lines:\n      - 132\n      - 145\n    note: test verifying format_blame_row example row\n  - promptLines:\n      - 57\n      - 61\n    file: blame_render/src/lib.rs\n    lines:\n      - 147\n      - 156\n    note: tests for why_line empty and non-empty diff\n  - promptLines:\n      - 84\n      - 88\n    file: blame_render/src/lib.rs\n    lines:\n      - 177\n      - 207\n    note: tests for whitespace-only diff, multiline diff+files, trailing newline case\n  - promptLines:\n      - 69\n      - 69\n    file: blame_render/src/lib.rs\n    lines:\n      - 209\n      - 218\n    note: test that first matching gen entry is picked\n",
+  "mapl": [
+    {
+      "promptLines": [
+        38,
+        44
+      ],
+      "kind": "no-op",
+      "severity": "warning",
+      "message": "mode_str already handles Move variant exhaustively — no change needed.",
+      "reasoning": "Prompt spends extra emphasis explaining the Move variant (\"records a location-heal... exhaustive so every variant — including Move — is handled\"), suggesting this was a spot the author worried might get missed. Checked ./.napl/src/rust/blame_render/src/lib.rs directly: the match over JournalMode already covers Full, Incremental, Reconcile, and Move (mapping to \"move\"), and a test (mode_str_maps_all_variants) asserts all four. Nothing needed changing."
     }
   ],
   "journal": [
@@ -250,6 +275,13 @@
           "patch": "@@ -0,0 +1,217 @@\n+//! Rendering `napl blame` output.\n+//!\n+//! Pure rendering core for the CLI's blame command: given journal and blame\n+//! data the I/O shell has already read from disk, produces the exact text\n+//! the command prints. No filesystem access, no process spawning.\n+\n+use blame::BlameLine;\n+use schemas_journal::{JournalEntry, JournalMode};\n+\n+/// Map a journal mode to its lowercase label.\n+pub fn mode_str(mode: JournalMode) -> &'static str {\n+    match mode {\n+        JournalMode::Full => \"full\",\n+        JournalMode::Incremental => \"incremental\",\n+        JournalMode::Reconcile => \"reconcile\",\n+    }\n+}\n+\n+/// Render one blame row.\n+pub fn format_blame_row(entry: &BlameLine) -> String {\n+    format!(\n+        \"gen #{}  {}  {}  {}\",\n+        entry.gen, entry.timestamp, entry.module, entry.text\n+    )\n+}\n+\n+/// Explain why a line exists.\n+pub fn why_line(prompt_diff: &str) -> String {\n+    let line = blame::first_prompt_diff_line(prompt_diff);\n+    if line.is_empty() {\n+        \"initial generation\".to_string()\n+    } else {\n+        line\n+    }\n+}\n+\n+/// The result of rendering a single-generation blame summary.\n+#[derive(Debug, Clone, PartialEq, Eq)]\n+pub struct BlameGenRender {\n+    pub text: String,\n+    pub exit_code: i32,\n+}\n+\n+/// Render the single-generation summary for `napl blame --gen <n>`.\n+pub fn render_blame_gen(entries: &[JournalEntry], gen: i64) -> BlameGenRender {\n+    let Some(entry) = entries.iter().find(|e| e.gen == gen) else {\n+        return BlameGenRender {\n+            text: format!(\"napl blame: no journal entry for gen #{gen}\"),\n+            exit_code: 1,\n+        };\n+    };\n+\n+    let mut lines: Vec<String> = Vec::new();\n+\n+    lines.push(format!(\n+        \"gen #{}  {}  {} ({})  mode: {}\",\n+        entry.gen,\n+        entry.timestamp,\n+        entry.module,\n+        entry.target,\n+        mode_str(entry.mode)\n+    ));\n+    lines.push(String::new());\n+    lines.push(\"prompt edit:\".to_string());\n+\n+    if entry.prompt_diff.trim().is_empty() {\n+        lines.push(\"  initial generation\".to_string());\n+    } else {\n+        for piece in entry.prompt_diff.split('\\n') {\n+            lines.push(format!(\"  {piece}\"));\n+        }\n+    }\n+\n+    lines.push(String::new());\n+    lines.push(\"files touched:\".to_string());\n+\n+    if entry.files.is_empty() {\n+        lines.push(\"  (none)\".to_string());\n+    } else {\n+        for file in &entry.files {\n+            lines.push(format!(\"  {}\", file.path));\n+        }\n+    }\n+\n+    BlameGenRender {\n+        text: lines.join(\"\\n\"),\n+        exit_code: 0,\n+    }\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+    use schemas_journal::JournalFile;\n+\n+    fn entry(\n+        gen: i64,\n+        prompt_diff: &str,\n+        mode: JournalMode,\n+        files: Vec<JournalFile>,\n+    ) -> JournalEntry {\n+        JournalEntry {\n+            gen,\n+            timestamp: \"2026-07-24T00:00:00.000Z\".to_string(),\n+            module: \"greeting\".to_string(),\n+            target: \"typescript\".to_string(),\n+            prompt_hash: \"hash\".to_string(),\n+            prompt_diff: prompt_diff.to_string(),\n+            mode,\n+            files,\n+        }\n+    }\n+\n+    fn file(path: &str) -> JournalFile {\n+        JournalFile {\n+            path: path.to_string(),\n+            patch: String::new(),\n+            hash_before: None,\n+            hash_after: \"hash\".to_string(),\n+        }\n+    }\n+\n+    #[test]\n+    fn mode_str_maps_all_variants() {\n+        assert_eq!(mode_str(JournalMode::Full), \"full\");\n+        assert_eq!(mode_str(JournalMode::Incremental), \"incremental\");\n+        assert_eq!(mode_str(JournalMode::Reconcile), \"reconcile\");\n+    }\n+\n+    #[test]\n+    fn format_blame_row_renders_expected_line() {\n+        let line = BlameLine {\n+            line: 1,\n+            gen: 7,\n+            timestamp: \"2026-07-24T00:00:00.000Z\".to_string(),\n+            module: \"greeting\".to_string(),\n+            text: \"export function greet() {\".to_string(),\n+        };\n+        assert_eq!(\n+            format_blame_row(&line),\n+            \"gen #7  2026-07-24T00:00:00.000Z  greeting  export function greet() {\"\n+        );\n+    }\n+\n+    #[test]\n+    fn why_line_empty_diff_returns_initial_generation() {\n+        assert_eq!(why_line(\"\"), \"initial generation\");\n+    }\n+\n+    #[test]\n+    fn why_line_non_empty_diff_returns_first_prompt_diff_line() {\n+        let diff = \"--- a\\n+++ b\\n@@ -1,2 +1,2 @@\\n-old line\\n+the new behavior line\\n\";\n+        assert_eq!(why_line(diff), \"the new behavior line\");\n+    }\n+\n+    #[test]\n+    fn render_blame_gen_no_matching_entry() {\n+        let entries = vec![entry(1, \"\", JournalMode::Full, vec![])];\n+        let result = render_blame_gen(&entries, 5);\n+        assert_eq!(result.exit_code, 1);\n+        assert_eq!(result.text, \"napl blame: no journal entry for gen #5\");\n+    }\n+\n+    #[test]\n+    fn render_blame_gen_empty_diff_no_files() {\n+        let entries = vec![entry(1, \"\", JournalMode::Full, vec![])];\n+        let result = render_blame_gen(&entries, 1);\n+        assert_eq!(result.exit_code, 0);\n+        assert_eq!(\n+            result.text,\n+            \"gen #1  2026-07-24T00:00:00.000Z  greeting (typescript)  mode: full\\n\\nprompt edit:\\n  initial generation\\n\\nfiles touched:\\n  (none)\"\n+        );\n+    }\n+\n+    #[test]\n+    fn render_blame_gen_whitespace_only_diff_treated_as_empty() {\n+        let entries = vec![entry(1, \"   \\n  \", JournalMode::Full, vec![])];\n+        let result = render_blame_gen(&entries, 1);\n+        assert!(result.text.contains(\"prompt edit:\\n  initial generation\"));\n+    }\n+\n+    #[test]\n+    fn render_blame_gen_multiline_diff_and_files() {\n+        let diff = \"line one\\nline two\";\n+        let entries = vec![entry(\n+            2,\n+            diff,\n+            JournalMode::Incremental,\n+            vec![file(\"src/a.ts\"), file(\"src/b.ts\")],\n+        )];\n+        let result = render_blame_gen(&entries, 2);\n+        assert_eq!(result.exit_code, 0);\n+        assert_eq!(\n+            result.text,\n+            \"gen #2  2026-07-24T00:00:00.000Z  greeting (typescript)  mode: incremental\\n\\nprompt edit:\\n  line one\\n  line two\\n\\nfiles touched:\\n  src/a.ts\\n  src/b.ts\"\n+        );\n+    }\n+\n+    #[test]\n+    fn render_blame_gen_diff_with_trailing_newline_yields_final_blank_prefixed_line() {\n+        let diff = \"line one\\n\";\n+        let entries = vec![entry(3, diff, JournalMode::Reconcile, vec![])];\n+        let result = render_blame_gen(&entries, 3);\n+        assert!(result.text.contains(\"prompt edit:\\n  line one\\n  \\n\\nfiles touched:\"));\n+    }\n+\n+    #[test]\n+    fn render_blame_gen_picks_first_matching_gen() {\n+        let entries = vec![\n+            entry(1, \"\", JournalMode::Full, vec![]),\n+            entry(2, \"\", JournalMode::Full, vec![]),\n+        ];\n+        let result = render_blame_gen(&entries, 2);\n+        assert_eq!(result.exit_code, 0);\n+        assert!(result.text.starts_with(\"gen #2\"));\n+    }\n+}"
         }
       ]
+    },
+    {
+      "gen": 40,
+      "timestamp": "2026-07-24T12:10:43.654Z",
+      "mode": "incremental",
+      "promptHash": "e97118c4bf71f4f22a034d9d6d1c3f196540fdcedc94fc8583fd0fdd14cc2a9a",
+      "files": []
     }
   ],
   "lock": [
@@ -265,7 +297,7 @@
   "session": {
     "task": "napl gen rust → blame_render",
     "files": {
-      "blame_render.napl": "---\nmodule: blame_render\ndeps: [blame, schemas_journal]\ntargets: [rust]\ntests:\n  - name: mode_str maps every journal mode to its lowercase label\n    given: { modes: [full, incremental, reconcile] }\n    expect: { labels: [\"full\", \"incremental\", \"reconcile\"] }\n  - name: a blame row is two-space separated\n    given:\n      line: { line: 4, gen: 7, timestamp: \"2026-07-24T00:00:00.000Z\", module: \"greeting\", text: \"export function greet() {\" }\n    expect: { row: \"gen #7  2026-07-24T00:00:00.000Z  greeting  export function greet() {\" }\n  - name: why_line is initial generation for an empty diff\n    given: { prompt_diff: \"\" }\n    expect: { why: \"initial generation\" }\n  - name: why_line reports the first added prompt line\n    given: { prompt_diff: \"@@ -1,1 +1,2 @@\\n context\\n+the new behavior line\\n\" }\n    expect: { why: \"the new behavior line\" }\n  - name: rendering a missing gen exits one with a not-found message\n    given: { entries: [{ gen: 1 }], gen: 9 }\n    expect: { text: \"napl blame: no journal entry for gen #9\", exit_code: 1 }\n  - name: rendering an initial full gen with no files\n    given:\n      entry: { gen: 1, timestamp: \"2026-07-24T00:00:00.000Z\", module: \"greeting\", target: \"typescript\", mode: full, prompt_diff: \"\", files: [] }\n      gen: 1\n    expect:\n      text: \"gen #1  2026-07-24T00:00:00.000Z  greeting (typescript)  mode: full\\n\\nprompt edit:\\n  initial generation\\n\\nfiles touched:\\n  (none)\"\n      exit_code: 0\n---\n# Rendering `napl blame` output\n\nThis module is the **pure** rendering core of the CLI's blame command: given\njournal and blame data that the I/O shell has already read from disk, it produces\nthe exact text the command prints. It is pure — no filesystem access, no process\nspawning. The shell reads the journal, computes blame, then calls these functions\nand prints their strings.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `blame_render/`: `blame_render/Cargo.toml`\n(package name `blame_render`) and `blame_render/src/lib.rs`. Touch nothing\noutside `blame_render/`. Ensure `cargo test` passes from the workspace root\nbefore finishing.\n\n## Builds on the `blame` and `schemas_journal` modules of this workspace\n\nThis module composes on two **generated sibling member crates** in the same\nworkspace — not on crates.io dependencies and not on any hand-written crate. Add\npath dependencies on them in your `Cargo.toml`:\n\n- `blame` lives at `../blame`. Use its public `BlameLine` struct (fields `line:\n  usize`, `gen: i64`, `timestamp: String`, `module: String`, `text: String`) and\n  its public `first_prompt_diff_line(prompt_diff: &str) -> String` function. Do\n  not reimplement either.\n- `schemas_journal` lives at `../schemas_journal`. Use its public `JournalEntry`\n  struct (fields include `gen: i64`, `timestamp: String`, `module: String`,\n  `target: String`, `prompt_diff: String`, `mode: JournalMode`, and `files:\n  Vec<JournalFile>` where each `JournalFile` has a `path: String` field) and its\n  public `JournalMode` enum (variants `Full`, `Incremental`, `Reconcile`). Do not\n  reimplement them.\n\nDepending on a sibling by path only reads it; leave both sibling crates\nuntouched.\n\n## `mode_str(mode: JournalMode) -> &'static str`\n\nMap a journal mode to its lowercase label: `Full` → `\"full\"`, `Incremental` →\n`\"incremental\"`, `Reconcile` → `\"reconcile\"`.\n\n## `format_blame_row(entry: &BlameLine) -> String`\n\nRender one blame row as exactly `\"gen #{gen}  {timestamp}  {module}  {text}\"`,\nwhere each `{…}` is the corresponding `BlameLine` field and the separators are\n**two spaces**. For a line with `gen = 7`, `timestamp =\n\"2026-07-24T00:00:00.000Z\"`, `module = \"greeting\"`, `text = \"export function\ngreet() {\"`, the row is\n`gen #7  2026-07-24T00:00:00.000Z  greeting  export function greet() {`.\n\n## `why_line(prompt_diff: &str) -> String`\n\nExplain why a line exists. Call `blame::first_prompt_diff_line(prompt_diff)`; if\nthe result is the empty string, return `\"initial generation\"`, otherwise return\nthe result unchanged. So an empty prompt diff yields `\"initial generation\"`, and a\ndiff whose first added hunk line is `the new behavior line` yields `the new\nbehavior line`.\n\n## `render_blame_gen(entries: &[JournalEntry], gen: i64) -> BlameGenRender`\n\nExpose a public struct `BlameGenRender` with public fields `text: String` and\n`exit_code: i32`. This function renders the single-generation summary the command\nprints for `napl blame --gen <n>`.\n\nFind the first entry in `entries` whose `gen` equals the requested `gen`.\n\n**When no entry matches**, return `BlameGenRender { text: format!(\"napl blame: no\njournal entry for gen #{gen}\"), exit_code: 1 }` — the text is exactly\n`napl blame: no journal entry for gen #{gen}` with the requested number.\n\n**When an entry matches**, build the text as a sequence of lines joined by single\nnewlines (`\\n`), with **no trailing newline**, and `exit_code: 0`. The lines are,\nin order:\n\n1. `gen #{gen}  {timestamp}  {module} ({target})  mode: {mode}` — the entry's\n   `gen`, `timestamp`, `module`, `target`, and `mode_str(entry.mode)`, with two\n   spaces between the segments and the target in parentheses.\n2. an empty line.\n3. `prompt edit:`.\n4. the prompt-diff block: if `entry.prompt_diff` is empty **after trimming\n   surrounding whitespace**, a single line `  initial generation` (two leading\n   spaces); otherwise, split `entry.prompt_diff` on `\\n` and emit one line per\n   piece, each prefixed with two spaces (so a trailing newline in the diff yields a\n   final `  ` two-space line).\n5. an empty line.\n6. `files touched:`.\n7. the files block: if `entry.files` is empty, a single line `  (none)` (two\n   leading spaces); otherwise one line per file, each `  {path}` (two leading\n   spaces then the file's `path`).\n\nFor an entry with `gen = 1`, `timestamp = \"2026-07-24T00:00:00.000Z\"`, `module =\n\"greeting\"`, `target = \"typescript\"`, `mode = Full`, an empty `prompt_diff`, and\nno files, the text is exactly:\n\n`gen #1  2026-07-24T00:00:00.000Z  greeting (typescript)  mode: full\\n\\nprompt edit:\\n  initial generation\\n\\nfiles touched:\\n  (none)`\n\nThe shell prints this text with a single trailing newline and exits with\n`exit_code`.\n"
+      "blame_render.napl": "---\nmodule: blame_render\ndeps: [blame, schemas_journal]\ntargets: [rust]\ntests:\n  - name: mode_str maps every journal mode to its lowercase label\n    given: { modes: [full, incremental, reconcile, move] }\n    expect: { labels: [\"full\", \"incremental\", \"reconcile\", \"move\"] }\n  - name: a blame row is two-space separated\n    given:\n      line: { line: 4, gen: 7, timestamp: \"2026-07-24T00:00:00.000Z\", module: \"greeting\", text: \"export function greet() {\" }\n    expect: { row: \"gen #7  2026-07-24T00:00:00.000Z  greeting  export function greet() {\" }\n  - name: why_line is initial generation for an empty diff\n    given: { prompt_diff: \"\" }\n    expect: { why: \"initial generation\" }\n  - name: why_line reports the first added prompt line\n    given: { prompt_diff: \"@@ -1,1 +1,2 @@\\n context\\n+the new behavior line\\n\" }\n    expect: { why: \"the new behavior line\" }\n  - name: rendering a missing gen exits one with a not-found message\n    given: { entries: [{ gen: 1 }], gen: 9 }\n    expect: { text: \"napl blame: no journal entry for gen #9\", exit_code: 1 }\n  - name: rendering an initial full gen with no files\n    given:\n      entry: { gen: 1, timestamp: \"2026-07-24T00:00:00.000Z\", module: \"greeting\", target: \"typescript\", mode: full, prompt_diff: \"\", files: [] }\n      gen: 1\n    expect:\n      text: \"gen #1  2026-07-24T00:00:00.000Z  greeting (typescript)  mode: full\\n\\nprompt edit:\\n  initial generation\\n\\nfiles touched:\\n  (none)\"\n      exit_code: 0\n---\n# Rendering `napl blame` output\n\nThis module is the **pure** rendering core of the CLI's blame command: given\njournal and blame data that the I/O shell has already read from disk, it produces\nthe exact text the command prints. It is pure — no filesystem access, no process\nspawning. The shell reads the journal, computes blame, then calls these functions\nand prints their strings.\n\n## Where this code lives\n\nThe working directory is a Cargo workspace whose root manifest is written and\nowned by the toolchain — leave it alone. Create this module as its own member\ncrate in a subdirectory named `blame_render/`: `blame_render/Cargo.toml`\n(package name `blame_render`) and `blame_render/src/lib.rs`. Touch nothing\noutside `blame_render/`. Ensure `cargo test` passes from the workspace root\nbefore finishing.\n\n## Builds on the `blame` and `schemas_journal` modules of this workspace\n\nThis module composes on two **generated sibling member crates** in the same\nworkspace — not on crates.io dependencies and not on any hand-written crate. Add\npath dependencies on them in your `Cargo.toml`:\n\n- `blame` lives at `../blame`. Use its public `BlameLine` struct (fields `line:\n  usize`, `gen: i64`, `timestamp: String`, `module: String`, `text: String`) and\n  its public `first_prompt_diff_line(prompt_diff: &str) -> String` function. Do\n  not reimplement either.\n- `schemas_journal` lives at `../schemas_journal`. Use its public `JournalEntry`\n  struct (fields include `gen: i64`, `timestamp: String`, `module: String`,\n  `target: String`, `prompt_diff: String`, `mode: JournalMode`, and `files:\n  Vec<JournalFile>` where each `JournalFile` has a `path: String` field) and its\n  public `JournalMode` enum (variants `Full`, `Incremental`, `Reconcile`,\n  `Move`). Do not reimplement them.\n\nDepending on a sibling by path only reads it; leave both sibling crates\nuntouched.\n\n## `mode_str(mode: JournalMode) -> &'static str`\n\nMap a journal mode to its lowercase label: `Full` → `\"full\"`, `Incremental` →\n`\"incremental\"`, `Reconcile` → `\"reconcile\"`, `Move` → `\"move\"`. The `Move`\nvariant records a location-heal (a generated file moved to track a renamed\nprompt); it renders as the lowercase label `\"move\"`, and the match over\n`JournalMode` is exhaustive so every variant — including `Move` — is handled.\n\n## `format_blame_row(entry: &BlameLine) -> String`\n\nRender one blame row as exactly `\"gen #{gen}  {timestamp}  {module}  {text}\"`,\nwhere each `{…}` is the corresponding `BlameLine` field and the separators are\n**two spaces**. For a line with `gen = 7`, `timestamp =\n\"2026-07-24T00:00:00.000Z\"`, `module = \"greeting\"`, `text = \"export function\ngreet() {\"`, the row is\n`gen #7  2026-07-24T00:00:00.000Z  greeting  export function greet() {`.\n\n## `why_line(prompt_diff: &str) -> String`\n\nExplain why a line exists. Call `blame::first_prompt_diff_line(prompt_diff)`; if\nthe result is the empty string, return `\"initial generation\"`, otherwise return\nthe result unchanged. So an empty prompt diff yields `\"initial generation\"`, and a\ndiff whose first added hunk line is `the new behavior line` yields `the new\nbehavior line`.\n\n## `render_blame_gen(entries: &[JournalEntry], gen: i64) -> BlameGenRender`\n\nExpose a public struct `BlameGenRender` with public fields `text: String` and\n`exit_code: i32`. This function renders the single-generation summary the command\nprints for `napl blame --gen <n>`.\n\nFind the first entry in `entries` whose `gen` equals the requested `gen`.\n\n**When no entry matches**, return `BlameGenRender { text: format!(\"napl blame: no\njournal entry for gen #{gen}\"), exit_code: 1 }` — the text is exactly\n`napl blame: no journal entry for gen #{gen}` with the requested number.\n\n**When an entry matches**, build the text as a sequence of lines joined by single\nnewlines (`\\n`), with **no trailing newline**, and `exit_code: 0`. The lines are,\nin order:\n\n1. `gen #{gen}  {timestamp}  {module} ({target})  mode: {mode}` — the entry's\n   `gen`, `timestamp`, `module`, `target`, and `mode_str(entry.mode)`, with two\n   spaces between the segments and the target in parentheses.\n2. an empty line.\n3. `prompt edit:`.\n4. the prompt-diff block: if `entry.prompt_diff` is empty **after trimming\n   surrounding whitespace**, a single line `  initial generation` (two leading\n   spaces); otherwise, split `entry.prompt_diff` on `\\n` and emit one line per\n   piece, each prefixed with two spaces (so a trailing newline in the diff yields a\n   final `  ` two-space line).\n5. an empty line.\n6. `files touched:`.\n7. the files block: if `entry.files` is empty, a single line `  (none)` (two\n   leading spaces); otherwise one line per file, each `  {path}` (two leading\n   spaces then the file's `path`).\n\nFor an entry with `gen = 1`, `timestamp = \"2026-07-24T00:00:00.000Z\"`, `module =\n\"greeting\"`, `target = \"typescript\"`, `mode = Full`, an empty `prompt_diff`, and\nno files, the text is exactly:\n\n`gen #1  2026-07-24T00:00:00.000Z  greeting (typescript)  mode: full\\n\\nprompt edit:\\n  initial generation\\n\\nfiles touched:\\n  (none)`\n\nThe shell prints this text with a single trailing newline and exits with\n`exit_code`.\n"
     },
     "events": [
       {
@@ -300,146 +332,134 @@
           {
             "promptLines": [
               38,
-              41
+              44
             ],
             "file": "blame_render/src/lib.rs",
             "lines": [
               10,
-              17
+              18
             ],
-            "note": "mode_str maps JournalMode to lowercase label"
+            "note": "mode_str maps JournalMode to lowercase label, exhaustive match"
           },
           {
             "promptLines": [
-              43,
-              50
-            ],
-            "file": "blame_render/src/lib.rs",
-            "lines": [
-              19,
-              25
-            ],
-            "note": "format_blame_row builds \"gen"
-          },
-          {
-            "promptLines": [
-              52,
-              58
-            ],
-            "file": "blame_render/src/lib.rs",
-            "lines": [
-              27,
-              35
-            ],
-            "note": "why_line falls back to \"initial generation\" on empty diff line"
-          },
-          {
-            "promptLines": [
-              60,
-              64
-            ],
-            "file": "blame_render/src/lib.rs",
-            "lines": [
-              37,
-              45
-            ],
-            "note": "BlameGenRender struct and render_blame_gen signature"
-          },
-          {
-            "promptLines": [
-              66,
-              66
-            ],
-            "file": "blame_render/src/lib.rs",
-            "lines": [
               46,
+              53
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              20,
+              26
+            ],
+            "note": "format_blame_row renders gen/timestamp/module/text row"
+          },
+          {
+            "promptLines": [
+              55,
+              61
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              28,
+              36
+            ],
+            "note": "why_line delegates to blame::first_prompt_diff_line, defaults to initial generation"
+          },
+          {
+            "promptLines": [
+              63,
+              68
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              38,
               46
             ],
-            "note": "find first entry matching gen"
+            "note": "BlameGenRender struct and render_blame_gen signature/entry lookup"
           },
           {
             "promptLines": [
-              68,
-              70
-            ],
-            "file": "blame_render/src/lib.rs",
-            "lines": [
-              46,
-              51
-            ],
-            "note": "no-match branch returns error text and exit_code 1"
-          },
-          {
-            "promptLines": [
-              72,
-              78
-            ],
-            "file": "blame_render/src/lib.rs",
-            "lines": [
-              53,
-              62
-            ],
-            "note": "build header line with gen/timestamp/module/target/mode"
-          },
-          {
-            "promptLines": [
-              79,
-              80
-            ],
-            "file": "blame_render/src/lib.rs",
-            "lines": [
-              63,
-              64
-            ],
-            "note": "blank line then \"prompt edit:\" label"
-          },
-          {
-            "promptLines": [
-              81,
-              85
-            ],
-            "file": "blame_render/src/lib.rs",
-            "lines": [
-              66,
-              72
-            ],
-            "note": "trimmed-empty check and per-line two-space-prefixed diff rendering"
-          },
-          {
-            "promptLines": [
-              86,
-              87
-            ],
-            "file": "blame_render/src/lib.rs",
-            "lines": [
-              74,
-              75
-            ],
-            "note": "blank line then \"files touched:\" label"
-          },
-          {
-            "promptLines": [
-              88,
-              90
-            ],
-            "file": "blame_render/src/lib.rs",
-            "lines": [
-              77,
-              83
-            ],
-            "note": "empty-files \"(none)\" case vs per-file path lines"
-          },
-          {
-            "promptLines": [
-              72,
+              69,
               73
             ],
             "file": "blame_render/src/lib.rs",
             "lines": [
-              85,
+              47,
+              52
+            ],
+            "note": "no matching entry returns error text with exit_code 1"
+          },
+          {
+            "promptLines": [
+              75,
+              81
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              54,
+              63
+            ],
+            "note": "build lines vec, header line with gen/timestamp/module/target/mode"
+          },
+          {
+            "promptLines": [
+              82,
+              83
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              64,
+              65
+            ],
+            "note": "empty line then 'prompt edit:' label"
+          },
+          {
+            "promptLines": [
+              84,
               88
             ],
-            "note": "join lines with newline, no trailing newline, exit_code 0"
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              67,
+              73
+            ],
+            "note": "prompt-diff block: trimmed-empty check vs split on newline with two-space prefix"
+          },
+          {
+            "promptLines": [
+              89,
+              90
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              75,
+              76
+            ],
+            "note": "empty line then 'files touched:' label"
+          },
+          {
+            "promptLines": [
+              91,
+              93
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              78,
+              84
+            ],
+            "note": "files block: (none) placeholder or one line per file path"
+          },
+          {
+            "promptLines": [
+              75,
+              76
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              86,
+              89
+            ],
+            "note": "join lines with single newline, no trailing newline, exit_code 0"
           },
           {
             "promptLines": [
@@ -451,7 +471,7 @@
               7,
               7
             ],
-            "note": "import BlameLine from sibling blame crate"
+            "note": "import BlameLine from blame sibling crate"
           },
           {
             "promptLines": [
@@ -463,19 +483,67 @@
               8,
               8
             ],
-            "note": "import JournalEntry/JournalMode from schemas_journal crate"
+            "note": "import JournalEntry and JournalMode from schemas_journal sibling crate"
           },
           {
             "promptLines": [
-              92,
-              96
+              95,
+              99
             ],
             "file": "blame_render/src/lib.rs",
             "lines": [
-              165,
-              173
+              166,
+              175
             ],
-            "note": "test matching example empty-diff-no-files rendering"
+            "note": "test verifying exact example output for empty diff, no files"
+          },
+          {
+            "promptLines": [
+              50,
+              53
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              132,
+              145
+            ],
+            "note": "test verifying format_blame_row example row"
+          },
+          {
+            "promptLines": [
+              57,
+              61
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              147,
+              156
+            ],
+            "note": "tests for why_line empty and non-empty diff"
+          },
+          {
+            "promptLines": [
+              84,
+              88
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              177,
+              207
+            ],
+            "note": "tests for whitespace-only diff, multiline diff+files, trailing newline case"
+          },
+          {
+            "promptLines": [
+              69,
+              69
+            ],
+            "file": "blame_render/src/lib.rs",
+            "lines": [
+              209,
+              218
+            ],
+            "note": "test that first matching gen entry is picked"
           }
         ]
       },
@@ -484,28 +552,13 @@
         "path": "blame_render.mapl",
         "entry": {
           "promptLines": [
-            28,
-            33
+            38,
+            44
           ],
-          "kind": "assumption",
+          "kind": "no-op",
           "severity": "warning",
-          "message": "JournalEntry test fixture includes a `prompt_hash: String` field not mentioned in the prompt.",
-          "reasoning": "The prompt says JournalEntry's \"fields include\" gen, timestamp, module, target, prompt_diff, mode, and files — wording that implies the list is non-exhaustive. The agent's test helper constructs entries with an extra `prompt_hash: String` field, assuming this extra field exists on the real schemas_journal::JournalEntry struct and just wasn't called out since it's irrelevant to rendering. This is a reasonable read of \"fields include\" but was never confirmed against the actual sibling crate.\n",
-          "suggestion": "List JournalEntry's full field set explicitly (or say \"at least these fields, plus possibly others you can ignore\") so implementers don't have to guess whether unlisted fields exist.\n"
-        }
-      },
-      {
-        "type": "mapl-entry",
-        "path": "blame_render.mapl",
-        "entry": {
-          "promptLines": [
-            11,
-            16
-          ],
-          "kind": "note",
-          "severity": "info",
-          "message": "Cargo.toml contents (package name, path deps, workspace registration) aren't shown in the diff, only lib.rs.",
-          "reasoning": "The prompt requires creating blame_render/Cargo.toml with path dependencies on ../blame and ../schemas_journal, and running `cargo test` from the workspace root. The provided change list only shows lib.rs; Cargo.toml's contents weren't surfaced for review, so correctness of the manifest (package name, path deps, workspace member registration) is taken on the agent's final-message claim that \"10 tests pass\" rather than directly verified here."
+          "message": "mode_str already handles Move variant exhaustively — no change needed.",
+          "reasoning": "Prompt spends extra emphasis explaining the Move variant (\"records a location-heal... exhaustive so every variant — including Move — is handled\"), suggesting this was a spot the author worried might get missed. Checked ./.napl/src/rust/blame_render/src/lib.rs directly: the match over JournalMode already covers Full, Incremental, Reconcile, and Move (mapping to \"move\"), and a test (mode_str_maps_all_variants) asserts all four. Nothing needed changing."
         }
       },
       {

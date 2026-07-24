@@ -2,6 +2,8 @@ import {
   createReplayEngine,
   PlaygroundShell,
   type EditorDiagnostic,
+  type HighlightRange,
+  type HoverCard,
   type HoverContext,
   type PlaygroundFile,
   type ReplayEngine,
@@ -9,12 +11,14 @@ import {
 } from '@napl/editor'
 import '@napl/editor/styles.css'
 import {useCallback, useEffect, useMemo, useRef, useState, type ReactElement} from 'react'
+import {useTheme} from 'next-themes'
+import {ensureNaplWasm, parseFrontmatterDiagnostics} from '@/lib/napl-wasm.browser'
 import {
-  attributionAtFileLine,
-  attributionAtPromptLine,
-  ensureNaplWasm,
-  parseFrontmatterDiagnostics,
-} from '@/lib/napl-wasm.browser'
+  excerptFromContent,
+  promptHighlightsFor,
+  resolveGeneratedHover,
+  resolvePromptHover,
+} from '@/lib/attribution'
 import type {ShowcaseModule} from '@/lib/fixtures'
 import {ReplayMargin} from './replay-margin'
 
@@ -22,19 +26,30 @@ export interface NaplPlaygroundClientProps {
   module: ShowcaseModule
   compact?: boolean
   speed?: number
+  showGen?: boolean
+  readOnly?: boolean
 }
 
 export function NaplPlaygroundClient({
   module,
   compact = false,
   speed = 1,
+  showGen = true,
+  readOnly = false,
 }: NaplPlaygroundClientProps): ReactElement {
   const [wasmReady, setWasmReady] = useState(false)
   const [prompt, setPrompt] = useState(module.prompt.content)
   const [snapshot, setSnapshot] = useState<ReplaySnapshot | null>(null)
   const [activeFile, setActiveFile] = useState(module.prompt.file)
+  const [promptHighlight, setPromptHighlight] = useState<HighlightRange[]>([])
+  const [genHighlight, setGenHighlight] = useState<Record<string, HighlightRange[]>>({})
   const activeFileRef = useRef(activeFile)
   activeFileRef.current = activeFile
+  const promptRef = useRef(prompt)
+  promptRef.current = prompt
+
+  const {resolvedTheme} = useTheme()
+  const theme = resolvedTheme === 'light' ? 'light' : 'dark'
 
   const engineRef = useRef<ReplayEngine | null>(null)
   if (!engineRef.current) {
@@ -71,26 +86,55 @@ export function NaplPlaygroundClient({
   )
 
   const hover = useCallback(
-    (context: HoverContext): string | null => {
+    (context: HoverContext): HoverCard | null => {
       if (!wasmReady || !module.attributionYaml) return null
-      const line = context.line + 1
       if (activeFileRef.current === module.prompt.file) {
-        const spans = attributionAtPromptLine(module.attributionYaml, line)
-        if (spans.length === 0) return null
-        return spans
-          .map((span) => `→ ${span.file}:${span.lines.start}–${span.lines.end}\n${span.note}`)
-          .join('\n\n')
-      }
-      const spans = attributionAtFileLine(module.attributionYaml, activeFileRef.current, line)
-      if (spans.length === 0) return null
-      return spans
-        .map(
-          (span) =>
-            `← prompt ${span.prompt_lines.start}–${span.prompt_lines.end}\n${span.note}`,
+        const spans = resolvePromptHover(
+          context.content,
+          module.attributionYaml,
+          module.promptAtGen,
+          context.line,
         )
-        .join('\n\n')
+        const chosen = spans[0]
+        if (!chosen) return null
+        setPromptHighlight(promptHighlightsFor(spans))
+        const grouped: Record<string, HighlightRange[]> = {}
+        for (const span of spans) {
+          ;(grouped[span.file] ??= []).push(span.lines)
+        }
+        setGenHighlight(grouped)
+        const excerptFile = module.files.find((file) => file.path === chosen.file)
+        return {
+          kind: 'card',
+          heading: 'Produces',
+          excerpt: excerptFile
+            ? {code: excerptFromContent(excerptFile.content, chosen.lines), caption: chosen.note}
+            : undefined,
+          meta: `${chosen.file} · lines ${chosen.lines[0]}–${chosen.lines[1]}`,
+          jump: {label: 'Open generated tab ↵', onJump: () => setActiveFile(chosen.file)},
+        }
+      }
+      const active = activeFileRef.current
+      const spans = resolveGeneratedHover(
+        promptRef.current,
+        module.attributionYaml,
+        module.promptAtGen,
+        active,
+        context.line,
+      )
+      const chosen = spans[0]
+      if (!chosen) return null
+      setPromptHighlight([chosen.promptDocLines])
+      setGenHighlight({[active]: [chosen.lines]})
+      return {
+        kind: 'card',
+        heading: 'Comes from the prompt',
+        quote: chosen.sentence || undefined,
+        meta: `Prompt · lines ${chosen.promptLines[0]}–${chosen.promptLines[1]} · ${chosen.note}`,
+        jump: {label: 'Open prompt tab ↵', onJump: () => setActiveFile(module.prompt.file)},
+      }
     },
-    [wasmReady, module.attributionYaml, module.prompt.file],
+    [wasmReady, module.attributionYaml, module.prompt.file, module.promptAtGen, module.files],
   )
 
   const editedPaths = useMemo(
@@ -103,18 +147,26 @@ export function NaplPlaygroundClient({
     [module.session],
   )
 
+  const replaying = snapshot
+    ? snapshot.playing || (snapshot.position > 0 && !snapshot.done)
+    : false
+
   const files = useMemo<PlaygroundFile[]>(() => {
     const generated = module.files.map((file) => ({
       name: file.path,
       language: 'source' as const,
-      content: editedPaths.has(file.path) ? state?.files[file.path] ?? '' : file.content,
+      content:
+        editedPaths.has(file.path) && replaying ? state?.files[file.path] ?? '' : file.content,
       readOnly: true,
     }))
     return [
-      {name: module.prompt.file, language: 'napl' as const, content: prompt},
+      {name: module.prompt.file, language: 'napl' as const, content: prompt, readOnly},
       ...generated,
     ]
-  }, [module.files, module.prompt.file, prompt, state, editedPaths])
+  }, [module.files, module.prompt.file, prompt, state, editedPaths, replaying, readOnly])
+
+  const activeHighlight =
+    activeFile === module.prompt.file ? promptHighlight : genHighlight[activeFile] ?? []
 
   const onGen = useCallback(() => {
     if (running) {
@@ -142,37 +194,41 @@ export function NaplPlaygroundClient({
 
   return (
     <div className="napl-playground" data-testid="napl-playground-root" data-playground-root={module.module}>
-      <div className="napl-playground__toolbar">
-        <button
-          type="button"
-          className="napl-playground__gen"
-          onClick={onGen}
-          disabled={!wasmReady}
-        >
-          {running ? 'Pause' : started && !snapshot?.done ? 'Resume gen' : 'Run gen'}
-        </button>
-        <button type="button" className="napl-playground__ghost" onClick={onReset}>
-          Reset
-        </button>
-        <input
-          className="napl-playground__scrub"
-          type="range"
-          min={0}
-          max={engine.length}
-          value={snapshot?.position ?? 0}
-          onChange={(event) => onScrub(Number(event.target.value))}
-          aria-label="Replay position"
-        />
-        <span className="napl-playground__status">
-          {wasmReady
-            ? `${snapshot?.position ?? 0}/${engine.length} · ${module.target}`
-            : 'loading wasm…'}
-        </span>
-      </div>
+      {showGen ? (
+        <div className="napl-playground__toolbar">
+          <button
+            type="button"
+            className="napl-playground__gen"
+            onClick={onGen}
+            disabled={!wasmReady || engine.length === 0}
+          >
+            {running ? 'Pause' : started && !snapshot?.done ? 'Resume' : 'Generate'}
+          </button>
+          <button type="button" className="napl-playground__ghost" onClick={onReset}>
+            Reset
+          </button>
+          <input
+            className="napl-playground__scrub"
+            type="range"
+            min={0}
+            max={engine.length}
+            value={snapshot?.position ?? 0}
+            onChange={(event) => onScrub(Number(event.target.value))}
+            aria-label="Replay position"
+          />
+          <span className="napl-playground__status">
+            {wasmReady
+              ? `${snapshot?.position ?? 0}/${engine.length}${module.target ? ` · ${module.target}` : ''}`
+              : 'loading wasm…'}
+          </span>
+        </div>
+      ) : null}
       <PlaygroundShell
         title={`${module.module}.napl`}
         files={files}
         activeFile={activeFile}
+        theme={theme}
+        highlightRanges={activeHighlight}
         onActiveFileChange={setActiveFile}
         onFileChange={(name, content) => {
           if (name === module.prompt.file) setPrompt(content)

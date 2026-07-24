@@ -6,6 +6,7 @@ import {TypeTable} from 'fumadocs-ui/components/type-table'
 import {Accordion, Accordions} from 'fumadocs-ui/components/accordion'
 import {Mermaid} from './mermaid'
 import {NaplPlayground} from './playground/napl-playground'
+import {NaplExample} from './napl-example/napl-example'
 import type {MDXComponents} from 'mdx/types'
 
 function getMDXComponents(components?: MDXComponents) {
@@ -20,6 +21,7 @@ function getMDXComponents(components?: MDXComponents) {
     Accordions,
     Mermaid,
     NaplPlayground,
+    NaplExample,
     ...components,
   } satisfies MDXComponents
 }

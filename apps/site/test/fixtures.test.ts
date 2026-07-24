@@ -75,3 +75,25 @@ describe('generated showcase fixtures', () => {
     expect(greeting.files.some((file) => file.path.endsWith('greeting.ts'))).toBe(true)
   })
 })
+
+describe('attribution hover mapping (the wasm path the playground uses)', () => {
+  it('maps a generated line back to its owning prompt sentence, both directions', async () => {
+    const wasm = await import('@napl/wasm')
+    await wasm.initNaplWasm()
+    const greeting = readJson<{attributionYaml: string; prompt: {content: string}}>(
+      resolve(fixturesDir, 'modules', 'greeting.json'),
+    )
+
+    const reverse = wasm.attributionAtFileLine(greeting.attributionYaml, 'src/greeting.ts', 6)
+    expect(reverse.length).toBeGreaterThan(0)
+    const promptBodyLine = reverse[0]!.prompt_lines.start
+
+    const forward = wasm.attributionAtPromptLine(greeting.attributionYaml, promptBodyLine)
+    expect(forward.some((span) => span.file === 'src/greeting.ts')).toBe(true)
+
+    const docLine = wasm.bodyLineToDocLine(greeting.prompt.content, promptBodyLine)
+    expect(docLine).not.toBeNull()
+    const roundTrip = wasm.docLineToBodyLine(greeting.prompt.content, docLine as number)
+    expect(roundTrip).toBe(promptBodyLine)
+  })
+})

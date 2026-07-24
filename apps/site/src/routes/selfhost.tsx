@@ -10,25 +10,20 @@ export const Route = createFileRoute('/selfhost')({
 function Selfhost() {
   return (
     <HomeLayout {...baseOptions()}>
-      <main className="flex flex-col px-6 py-12 gap-8 max-w-6xl mx-auto w-full">
-        <header className="flex flex-col gap-3">
-          <span className="text-sm font-mono uppercase tracking-widest text-fd-muted-foreground">
-            Self-host showcase
-          </span>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-            NAPL generating its own toolchain
-          </h1>
-          <p className="text-fd-muted-foreground max-w-3xl">
-            Every module below is a real self-hosted NAPL prompt that generated a Rust crate. The
-            prompt is on the left, the generated code on the right. Hover a prompt sentence to see the
-            lines it produced, hover generated code to jump back to its prompt, and replay the exact
-            generation the toolchain recorded. All data is derived from the repository&apos;s journal,
-            attribution, and machine-layer state.{' '}
-            <Link to="/docs/$" params={{_splat: 'selfhost'}} className="underline">
-              Read the self-host story
-            </Link>
-            .
+      <main className="flex w-full flex-col gap-3 px-4 py-4 lg:px-6">
+        <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h1 className="text-xl font-semibold tracking-tight">Self-host showcase</h1>
+          <p className="text-sm text-fd-muted-foreground">
+            36 modules of NAPL&apos;s own toolchain, each generated into Rust from a prompt — hover to
+            trace attribution both ways, replay the real generation.
           </p>
+          <Link
+            to="/docs/$"
+            params={{_splat: 'selfhost'}}
+            className="text-sm font-medium text-fd-primary underline-offset-4 hover:underline"
+          >
+            Read the story →
+          </Link>
         </header>
         <ShowcaseBrowser />
       </main>

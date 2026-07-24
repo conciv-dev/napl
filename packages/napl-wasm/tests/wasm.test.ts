@@ -82,15 +82,25 @@ describe('@napl/wasm bindings over real selfhost fixtures', () => {
     expect(map.lines.length).toBeGreaterThan(0);
   });
 
-  it('parses a real .mapl document into severity-tagged entries', async () => {
-    const content = await read('selfhost/.napl/mapl/body_lines.mapl');
-    const entries = maplParse(content);
-    expect(entries.length).toBeGreaterThan(0);
-    const assumption = entries.find((entry) => entry.kind === 'assumption');
-    const note = entries.find((entry) => entry.kind === 'note');
-    expect(assumption?.severity).toBe('warning');
-    expect(note?.severity).toBe('info');
-    expect(entries.every((entry) => entry.prompt_lines.start >= 1)).toBe(true);
+  it('parses real .mapl documents with the kind-to-severity invariant', async () => {
+    const severityForKind: Record<string, string> = {
+      ambiguity: 'error',
+      assumption: 'warning',
+      'no-op': 'warning',
+      note: 'info',
+    };
+    const modules = ['body_lines', 'schemas_journal', 'reverse', 'targets'];
+    const seenKinds = new Set<string>();
+    for (const moduleName of modules) {
+      const entries = maplParse(await read(`selfhost/.napl/mapl/${moduleName}.mapl`));
+      expect(entries.length).toBeGreaterThan(0);
+      for (const entry of entries) {
+        seenKinds.add(entry.kind);
+        expect(entry.severity).toBe(severityForKind[entry.kind]);
+        expect(entry.prompt_lines.start).toBeGreaterThanOrEqual(1);
+      }
+    }
+    expect(seenKinds.size).toBeGreaterThan(1);
   });
 
   it('looks up attribution in both directions', async () => {

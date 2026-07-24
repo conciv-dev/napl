@@ -6,6 +6,9 @@
       "outputs": ["dist/**", ".wrangler/**"]
     },
     "typecheck": {},
-    "test": {}
+    "test": {},
+    "test:e2e": {
+      "cache": false
+    }
   }
 }

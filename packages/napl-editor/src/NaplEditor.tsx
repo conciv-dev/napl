@@ -8,24 +8,32 @@ import {
 } from '@codemirror/state';
 import { Decoration, EditorView } from '@codemirror/view';
 import { basicSetup } from 'codemirror';
-import { useEffect, useRef, type ReactElement } from 'react';
+import { useEffect, useRef, type MutableRefObject, type ReactElement } from 'react';
 import {
   naplHover,
   naplLinter,
   type DiagnosticsSource,
   type HoverSource,
 } from './editor-extensions.ts';
-import { naplLanguage } from './napl-language.ts';
+import { resolveLanguage, type EditorLanguage } from './languages.ts';
+import { resolveEditorTheme, type EditorTheme } from './editor-theme.ts';
 
 export type HighlightRange = [number, number];
+
+export interface NaplEditorApi {
+  scrollToLine: (line: number) => void;
+}
 
 export interface NaplEditorProps {
   value: string;
   onChange?: (value: string) => void;
   readOnly?: boolean;
+  language?: EditorLanguage;
+  theme?: EditorTheme;
   diagnostics?: DiagnosticsSource;
   hover?: HoverSource;
   highlightRanges?: HighlightRange[];
+  apiRef?: MutableRefObject<NaplEditorApi | null>;
   className?: string;
 }
 
@@ -75,9 +83,12 @@ export const NaplEditor = ({
   value,
   onChange,
   readOnly = false,
+  language = 'napl',
+  theme = 'dark',
   diagnostics,
   hover,
   highlightRanges,
+  apiRef,
   className,
 }: NaplEditorProps): ReactElement => {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -86,6 +97,8 @@ export const NaplEditor = ({
   const diagnosticsRef = useRef(diagnostics);
   const hoverRef = useRef(hover);
   const readOnlyCompartment = useRef(new Compartment());
+  const languageCompartment = useRef(new Compartment());
+  const themeCompartment = useRef(new Compartment());
 
   onChangeRef.current = onChange;
   diagnosticsRef.current = diagnostics;
@@ -101,7 +114,8 @@ export const NaplEditor = ({
         doc: value,
         extensions: [
           basicSetup,
-          naplLanguage(),
+          languageCompartment.current.of(resolveLanguage(language)),
+          themeCompartment.current.of(resolveEditorTheme(theme)),
           highlightField,
           highlightPlugin,
           readOnlyCompartment.current.of(readOnlyExtension(readOnly)),
@@ -121,9 +135,25 @@ export const NaplEditor = ({
       parent: host,
     });
     viewRef.current = view;
+    if (apiRef) {
+      apiRef.current = {
+        scrollToLine: (line) => {
+          const current = viewRef.current;
+          if (!current) {
+            return;
+          }
+          const target = Math.min(Math.max(line, 1), current.state.doc.lines);
+          const pos = current.state.doc.line(target).from;
+          current.dispatch({ effects: EditorView.scrollIntoView(pos, { y: 'center' }) });
+        },
+      };
+    }
     return () => {
       view.destroy();
       viewRef.current = null;
+      if (apiRef) {
+        apiRef.current = null;
+      }
     };
   }, []);
 
@@ -147,6 +177,26 @@ export const NaplEditor = ({
       effects: readOnlyCompartment.current.reconfigure(readOnlyExtension(readOnly)),
     });
   }, [readOnly]);
+
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view) {
+      return;
+    }
+    view.dispatch({
+      effects: languageCompartment.current.reconfigure(resolveLanguage(language)),
+    });
+  }, [language]);
+
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view) {
+      return;
+    }
+    view.dispatch({
+      effects: themeCompartment.current.reconfigure(resolveEditorTheme(theme)),
+    });
+  }, [theme]);
 
   useEffect(() => {
     const view = viewRef.current;

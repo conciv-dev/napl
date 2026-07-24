@@ -1,6 +1,8 @@
 import { useState, type ReactElement, type ReactNode } from 'react';
-import { NaplEditor } from './NaplEditor.tsx';
+import { NaplEditor, type HighlightRange } from './NaplEditor.tsx';
 import type { DiagnosticsSource, HoverSource } from './editor-extensions.ts';
+import { languageForFilename, type EditorLanguage } from './languages.ts';
+import type { EditorTheme } from './editor-theme.ts';
 
 export type PlaygroundLanguage = 'napl' | 'source' | 'mapl';
 
@@ -18,9 +20,17 @@ export interface PlaygroundShellProps {
   onFileChange?: (name: string, content: string) => void;
   diagnostics?: DiagnosticsSource;
   hover?: HoverSource;
+  highlightRanges?: HighlightRange[];
+  theme?: EditorTheme;
   output?: ReactNode;
   title?: string;
 }
+
+const editorLanguageForFile = (file: PlaygroundFile): EditorLanguage => {
+  if (file.language === 'napl') return 'napl';
+  if (file.language === 'mapl') return 'mapl';
+  return languageForFilename(file.name);
+};
 
 const languageLabel = (language: PlaygroundLanguage | undefined): string => {
   switch (language) {
@@ -40,6 +50,8 @@ export const PlaygroundShell = ({
   onFileChange,
   diagnostics,
   hover,
+  highlightRanges,
+  theme = 'dark',
   output,
   title,
 }: PlaygroundShellProps): ReactElement => {
@@ -94,8 +106,11 @@ export const PlaygroundShell = ({
               key={current.name}
               value={current.content}
               readOnly={current.readOnly ?? !isPrompt}
+              language={editorLanguageForFile(current)}
+              theme={theme}
               diagnostics={isPrompt ? diagnostics : undefined}
               hover={hover}
+              highlightRanges={highlightRanges}
               onChange={(next) => onFileChange?.(current.name, next)}
             />
           ) : null}

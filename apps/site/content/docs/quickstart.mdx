@@ -35,18 +35,7 @@ Writes `.napl/`, `lock.json`, an example prompt, and the guard rails that keep g
 
 ### Write a prompt
 
-```napl title="greeting.napl"
----
-module: greeting
-targets: [typescript]
-tests:
-  - name: greets by name
-    given: { name: World }
-    expect: { message: "Hello, World!" }
----
-Expose a `greet` function that returns `Hello, <name>!`. Trim whitespace
-in the name. Reject an empty name with an error.
-```
+<NaplExample module="greeting" filename="greeting.napl" />
 
 Markdown prose plus YAML frontmatter; the tests are data, and they gate the build. This example is editable — delete the `tests:` key and watch the validator object before you ever run the CLI. The second tab is the code it generated.
 

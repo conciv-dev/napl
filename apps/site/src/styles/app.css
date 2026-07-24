@@ -1,14 +1,80 @@
 @import 'tailwindcss';
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/jetbrains-mono';
 
 @custom-variant dark (&:is(.dark *));
 
+:root {
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --fd-font-sans: var(--font-sans);
+  --fd-font-mono: var(--font-mono);
+  --napl-mono: var(--font-mono);
+}
+
 html {
   scrollbar-gutter: stable;
+  font-family: var(--font-sans);
+}
+
+body {
+  font-family: var(--font-sans);
 }
 
 html > body[data-scroll-locked] {
   margin-right: 0 !important;
   --removed-body-scroll-bar-size: 0px !important;
+}
+
+.napl-example-mount {
+  display: block;
+  margin: 1.25rem 0;
+}
+
+.napl-example .napl-playground {
+  box-shadow: 0 6px 18px -12px rgba(15, 23, 42, 0.22);
+}
+
+.napl-example .napl-playground__body {
+  grid-template-columns: 1fr;
+  min-height: 180px;
+}
+
+.napl-example .napl-playground__margin {
+  display: none;
+}
+
+.napl-example--static,
+.napl-example__pre {
+  border: 1px solid var(--fd-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.napl-example__label {
+  padding: 8px 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fd-muted-foreground);
+  background: var(--fd-secondary);
+  border-bottom: 1px solid var(--fd-border);
+}
+
+.napl-example__pre {
+  margin: 0;
+  padding: 14px 16px;
+  overflow-x: auto;
+  background: var(--fd-card);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.napl-example__placeholder {
+  padding: 16px;
+  font-size: 13px;
+  color: var(--fd-muted-foreground);
+  background: var(--fd-card);
 }

@@ -391,6 +391,9 @@ const run = async () => {
     .map((module) => ({
       module: module.module,
       target: module.target,
+      dir: module.prompt.path.includes('/')
+        ? module.prompt.path.slice(0, module.prompt.path.indexOf('/'))
+        : 'root',
       promptFile: module.prompt.file,
       fileCount: module.files.length,
       attributionCount: module.attribution.length,
