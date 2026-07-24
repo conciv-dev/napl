@@ -1,0 +1,50 @@
+---
+title: napl watch
+description: Watch prompt files and auto-run gen for changed modules on save.
+icon: Eye
+---
+
+Watch prompt files and auto-run gen for changed modules on save. Saving a `.napl` file triggers an
+incremental [gen](/docs/cli/gen) for just the affected module — the diff-scoped session that makes
+gen-on-save cheap.
+
+```bash
+napl watch <target>
+```
+
+```text title="usage"
+Usage: napl watch [OPTIONS] <TARGET>
+
+Arguments:
+  <TARGET>  Target language (e.g. typescript, react)
+
+Options:
+  -m, --module <MODULE>      Scope the run to a single module by name
+      --debounce <DEBOUNCE>  Debounce window in milliseconds before a settled change triggers gen [default: 400]
+      --once                 Process the currently-pending changes once, then exit
+  -h, --help                 Print help
+```
+
+## Flags
+
+<TypeTable
+  type={{
+    "--module, -m": {
+      description: "Scope the watch to a single module by name.",
+      type: "string",
+    },
+    "--debounce": {
+      description: "Debounce window in milliseconds before a settled change triggers gen.",
+      type: "number",
+      default: "400",
+    },
+    "--once": {
+      description: "Process the currently-pending changes once, then exit.",
+      type: "flag",
+    },
+  }}
+/>
+
+The same test and attribution gates from the full gen loop apply on every triggered run. The editor
+extension surfaces progress; `genOnSave` can be disabled there, and manual `napl gen` always remains
+available.

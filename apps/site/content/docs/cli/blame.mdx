@@ -1,0 +1,41 @@
+---
+title: napl blame
+description: Git-blame-style line history for a generated file, reconstructed by replaying the journal patches.
+icon: History
+---
+
+Git-blame-style line history for a generated file. Under the semantic attribution sits a mechanical,
+append-only record: every successful `napl gen` appends one line to `.napl/journal.jsonl` — the gen
+number, the timestamp, the prompt diff, and a per-file patch. `napl blame` replays those patches to
+reconstruct, for each current line, the gen that last touched it.
+
+```bash
+napl blame <file>
+```
+
+```text title="usage"
+Usage: napl blame [OPTIONS] [FILE]
+
+Arguments:
+  [FILE]  A generated file under .napl/src/<target>/
+
+Options:
+  -l, --line <LINE>  Blame only a single 1-based line
+  -g, --gen <GEN>    Print the summary of a single gen journal entry
+  -v, --verbose      Also show the prompt edit that caused each line
+  -h, --help         Print help
+```
+
+## Examples
+
+```bash
+napl blame .napl/src/react/greeting.tsx              # per line: the gen that last touched it
+napl blame .napl/src/react/greeting.tsx --line 19 -v # one line, plus the prompt edit that caused it
+napl blame --gen 12                                  # one gen's summary: module, prompt diff, files
+```
+
+The replay is the same algorithm class as `git blame`: untouched lines keep the oldest gen, a line
+moved down by an insertion above keeps its gen, and a modified line moves to the editing gen. In the
+editor, the mechanical line (`caused by gen #12 · 2026-07-23 · prompt edit: …`) shows first, with
+the semantic "implements this sentence" content kept right below it. Pre-journal repos simply omit
+the mechanical line.

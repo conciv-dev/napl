@@ -1,0 +1,71 @@
+---
+title: Prompt format
+description: A .napl prompt is markdown prose with a YAML frontmatter. The frontmatter is machine-facing metadata; the body is the contract passed to the coding agent.
+icon: FileText
+---
+
+A NAPL prompt lives in a `.napl` file (its own extension, not `.napl.md`, so editors bind the
+NAPL grammar and language server to it). It has two parts: a **YAML frontmatter** for
+machine-facing metadata, and a **markdown prose body** that is the actual contract handed to the
+coding agent.
+
+```napl title="auth/session.napl"
+---
+module: auth/session          # required — module name (may be a path)
+deps: [auth/tokens]           # optional — dependency module names
+targets: [typescript]         # optional — targets to generate for
+tests:                        # optional — given/expect test cases as data
+  - name: expired token rejected
+    given: { token: expired }
+    expect: { error: SESSION_EXPIRED }
+---
+Manage user sessions. Sessions expire after 30 minutes of inactivity.
+Refreshing a session extends it. An expired token is rejected with
+SESSION_EXPIRED, never silently renewed.
+```
+
+## Frontmatter fields
+
+<TypeTable
+  type={{
+    module: {
+      description: "Module name. Required. May be a path like auth/session.",
+      type: "string",
+    },
+    deps: {
+      description: "Dependency module names, forming the import graph.",
+      type: "string[]",
+    },
+    targets: {
+      description: "Target languages to generate for, e.g. typescript, react.",
+      type: "string[]",
+    },
+    tests: {
+      description: "Test cases as data — given/expect pairs that gate every generation.",
+      type: "Test[]",
+    },
+  }}
+/>
+
+A prompt may declare several modules over time, and a later prompt may amend an existing module.
+Ownership of source files is one module to many files; sharing happens at the interface level via
+the dependency graph.
+
+## The body is the contract
+
+Everything below the frontmatter is prose. Write what the code must _do_, not how to write it —
+name the public API and describe behavior and edge cases, and leave every implementation choice to
+the agent. Where the prose leaves something open, the [machine layer](/docs/guide/machine-layer)
+records the assumption the model made rather than hiding it.
+
+## Tests are first-class
+
+Test cases live in the frontmatter as `given` / `expect` data. They are not documentation — they
+**gate every generation**. The agent iterates until they pass in the target's native test
+framework, or the build fails loudly. See [The gen loop](/docs/guide/gen-loop) for how tests fit
+into a run.
+
+<Callout>
+  Tests that can't be expressed as given/expect data (for example "retries with backoff") are an
+  open question — for now, describe such behavior in the prose contract.
+</Callout>

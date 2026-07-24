@@ -1,0 +1,12 @@
+{
+  "pages": [
+    "---Getting started---",
+    "index",
+    "---Language guide---",
+    "...guide",
+    "---Toolchain---",
+    "...cli",
+    "---Self-host---",
+    "selfhost"
+  ]
+}

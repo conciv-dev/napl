@@ -1,0 +1,7 @@
+.source/
+.wrangler/
+.output/
+.nitro/
+.tanstack/
+dist/
+worker-configuration.d.ts

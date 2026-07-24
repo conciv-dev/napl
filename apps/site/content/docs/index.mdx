@@ -1,0 +1,107 @@
+---
+title: What is NAPL
+description: NAPL Ain't a Programming Language. The prompt is the source of truth; a coding agent generates and locks per-target code, attributed line by line and gated by tests.
+icon: Rocket
+---
+
+NAPL asks one question: **what if the prompt _was_ the source code?** You don't write code —
+you write what you mean, in English, in a `.napl` file. A coding agent turns that prose into
+real code for each target language, runs its tests until green, and then does the part nobody
+else does: it **proves the connection** between your sentences and the code, and locks the code
+read-only. The English stays the source of truth; the code becomes a build artifact —
+inspectable, tested, and traceable, but not hand-edited.
+
+```napl title="greeting.napl"
+---
+module: greeting
+targets: [typescript]
+tests:
+  - name: greets by name
+    given: { name: World }
+    expect: { message: "Hello, World!" }
+---
+# Greeting
+
+Expose a `greet` function that takes a person's name and returns a friendly
+greeting message of the form `Hello, <name>!`. Leading and trailing whitespace
+in the name is trimmed. An empty or whitespace-only name is rejected with an error.
+```
+
+Run `napl gen typescript` and that file is handed to a full coding agent. It scaffolds the
+project, writes the implementation and its tests, and iterates until they pass. Then the
+toolchain attributes every generated file to the prompt that caused it, maps each sentence to the
+exact lines that implement it, and locks the result.
+
+## The three disciplines
+
+<Cards>
+  <Card
+    title="Prompts are files"
+    href="/docs/guide/prompt-format"
+    description="Markdown prose with a YAML frontmatter — versioned and reviewed, not chat history."
+  />
+  <Card
+    title="Attribution is a hard gate"
+    href="/docs/guide/gen-loop"
+    description="If the toolchain can't map generated code back to your sentences, the build fails."
+  />
+  <Card
+    title="Drift is a compile error"
+    href="/docs/guide/drift-and-reconcile"
+    description="Generated code is locked read-only. Un-prompted edits fail napl status and CI."
+  />
+  <Card
+    title="The machine layer"
+    href="/docs/guide/machine-layer"
+    description="The compile is a dialogue: the model writes assumptions and ambiguities back into the margin."
+  />
+  <Card
+    title="Two spellings, one dialogue"
+    href="/docs/guide/emoji-aliases"
+    description="`.napl` / `.🧑` for the human, `.mapl` / `.🤖` for the machine — byte-identical to every tool."
+  />
+  <Card
+    title="Self-host pilot"
+    href="/docs/selfhost"
+    description="NAPL generating a module of its own Rust toolchain from a prompt, proven by an equivalence gate."
+  />
+</Cards>
+
+## The layers
+
+```
+prompt files (*.napl)              ← what humans read, write, review
+        │  napl gen <target>   (agentic LLM session — writes src directly)
+        ▼
+target code (.napl/src/<target>/)  ← real code, locked read-only after tests pass
+        │  observed diff → attribution
+        ▼
+map (.napl/map.json)               ← prompt ↔ file attribution, from reality
+IR (.napl/ir/*.yaml)               ← derived contract layer (signatures + tests)
+attribution (.napl/attribution/*)  ← derived prompt-line ↔ code-line mappings
+```
+
+- **Prompt files** (`*.napl`) — markdown prose with YAML frontmatter. The frontmatter is
+  machine-facing metadata; the body is the contract in prose.
+- **Target code** (`.napl/src/<target>/`) — a per-target directory the agent owns, made
+  read-only (`0444`) once its tests pass. Build artifacts are excluded from attribution and never locked.
+- **IR** (`.napl/ir/<module>.yaml`) — derived after gen: module name, deps, exported types,
+  function signatures with prose behavior contracts, and test cases. Contracts, not implementation.
+- **Attribution** (`.napl/attribution/<module>.yaml`) — derived after gen: maps prompt-body line
+  ranges to the source line ranges that implement them.
+
+`.napl/map.json` records the prompt ↔ file attribution and every locked content hash used for
+staleness and drift detection. `.napl/lock.json` pins the model id and the LLM backend. `.napl/`
+is committed by design.
+
+<Callout>
+  Status: wild experiment. This is a bet on a question — can English be a real programming
+  language if the toolchain enforces the discipline compilers used to? — not a production tool.
+  Expect sharp edges.
+</Callout>
+
+## No API key
+
+The coding-agent backend is your existing [Claude Code](https://claude.ai/code) login. `napl gen`
+verifies the `claude` binary is on your `PATH` before doing any work. See
+[Install](/docs/cli/install) to get the `napl` binary, then [napl init](/docs/cli/init) to start a project.

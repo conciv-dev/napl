@@ -1,0 +1,64 @@
+---
+title: napl gen
+description: Run a coding agent that writes target code from prompts, then lock and derive IR + attribution.
+icon: Sparkles
+---
+
+Run a coding agent that writes target code from prompts, then lock and derive IR + attribution. This
+is the [gen loop](/docs/guide/gen-loop) — snapshot, agent, test gate, attribution gate, lock.
+
+```bash
+napl gen <target>
+```
+
+```text title="usage"
+Usage: napl gen [OPTIONS] <TARGET>
+
+Arguments:
+  <TARGET>  Target language (e.g. typescript, react)
+
+Options:
+  -f, --force            Regenerate every prompt even when the prompt has not changed
+      --full             Force from-scratch generation instead of automatic incremental mode
+  -m, --module <MODULE>  Scope the run to a single module by name
+  -h, --help             Print help
+```
+
+## Behavior
+
+For each prompt whose content hash changed for that target (or all, with `--force`), `napl gen`
+snapshots the target src tree, runs a `claude` coding agent (cwd = `.napl/src/<target>/`) that may
+scaffold and edit many files, then diffs the tree and attributes changed files to the prompt. It
+runs the target's test command; on failure it feeds the output back to the agent and retries (up to
+3 times) before failing loudly. On green it derives the IR (best-effort) and the span attribution
+(a hard gate, retried up to 3 times). Only if attribution succeeds are the files locked `0444` and
+hashes recorded.
+
+Before running any agent, `napl gen` checks every module of the target for
+[drift](/docs/guide/drift-and-reconcile) and hard-blocks with a guided report if in-scope files
+carry un-prompted edits.
+
+## Flags
+
+<TypeTable
+  type={{
+    "--force, -f": {
+      description: "Regenerate every prompt even when the prompt has not changed. Also the way to discard a drifted edit — the prompt wins.",
+      type: "flag",
+    },
+    "--full": {
+      description: "Force from-scratch generation instead of automatic incremental mode.",
+      type: "flag",
+    },
+    "--module, -m": {
+      description: "Scope the run to a single module by name.",
+      type: "string",
+    },
+  }}
+/>
+
+## Incremental mode
+
+By default `napl gen` runs incrementally: the agent receives only the prompt diff and the
+attribution entries for changed lines, and is instructed to make minimal edits to owned regions. A
+full scaffold happens only when no prior gen exists. Use `--full` to override.

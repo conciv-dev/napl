@@ -1,0 +1,33 @@
+---
+title: napl init
+description: Create the .napl/ structure, lock.json, and an example prompt.
+icon: FolderPlus
+---
+
+Create the `.napl/` structure, `lock.json`, and an example prompt.
+
+```bash
+napl init
+```
+
+```text title="usage"
+Usage: napl init
+
+Options:
+  -h, --help  Print help
+```
+
+## What it writes
+
+- The `.napl/` directory that holds all derived state (`map.json`, `journal.jsonl`, `src/`,
+  `ir/`, `attribution/`, `mapl/`).
+- `.napl/lock.json`, pinning the model (`claude-sonnet-5`) and the backend (`claude-cli` by default).
+- An example prompt to start from.
+- Guard rails into each generated tree: `AGENTS.md` + `CLAUDE.md`, a project `.claude/settings.json`
+  that denies file-editing tools on `.napl/src/**`, and a POSIX `pre-commit` hook that runs
+  `napl status`. `init` merge-updates an existing `.claude/settings.json` without clobbering other
+  keys, and never overwrites an existing pre-commit hook.
+
+`.napl/` is committed by design — it is the durable record of every gen. See
+[Drift and reconcile](/docs/guide/drift-and-reconcile) for how the guard rails make the drift wall
+asymmetric between humans and AI agents.

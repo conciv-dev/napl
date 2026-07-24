@@ -1,0 +1,88 @@
+---
+title: Self-host
+description: NAPL generating a module of its own Rust toolchain from a prompt, proven by an equivalence gate. The stage0 loop, run end-to-end on one real module.
+icon: Recycle
+---
+
+The endgame for NAPL is to rewrite its own toolchain as `.napl` modules that target Rust, with the
+current hand-written Rust binary acting as **stage0** — the compiler that generates the next
+toolchain from prompts. The self-host pilot proves that loop end-to-end on one small, self-contained
+module before committing to the full rewrite. It is a proof, not the rewrite.
+
+## The stage0 loop, as run
+
+```
+selfhost/body_lines.napl            ← behavior prose + the module's tests as given/expect data
+        │  stage0 binary: napl gen rust  (claude-cli agent, cwd = .napl/src/rust/)
+        ▼
+selfhost/.napl/src/rust/            ← real Rust crate the agent wrote, locked 0444 after cargo test
+        │  gate: cargo test  (the rust target adapter's test command)
+        ▼
+attribution / ir / mapl / journal   ← derived; napl status → clean
+        │
+        ▼
+selfhost/equivalence/               ← the hand-written module's exact unit-test corpus, replayed
+                                       against the generated crate  →  5/5 pass
+```
+
+Everything above is driven by the same stage0 binary the conformance corpus gates
+(`rust/target/release/napl`). The only toolchain change the pilot required was making `rust` a
+first-class target.
+
+## Chosen pilot module: `body_lines`
+
+`body_lines` (frontmatter/body line-offset math) was picked because it is self-contained: pure
+string and number logic with no unicode constants, no configuration parameters, and no cross-module
+aliases. Its contract is three functions and one struct — small enough to describe in a page of
+prose, rich enough to have real edge cases (CRLF stripping, empty body, out-of-range and negative
+document lines). The prompt names the public API and describes what each function must do; it is
+**not** a copy of the Rust source, and leaves every implementation choice to the agent.
+
+## Pilot results
+
+`napl gen rust` converged on **attempt 1 of 3**:
+
+- The agent scaffolded a `body_lines` crate (`Cargo.toml` + `src/lib.rs`, 195 lines including its
+  own 15-test suite) and `cargo test` passed first try.
+- Span attribution derived **9 mappings** (prompt lines → code ranges) and locked both source files
+  `0444`.
+- The machine layer recorded **3 entries** — all `assumption` / `note`, honestly flagging what the
+  prose left open: the implementation language, the integer type of `body_start_line`, and the
+  `Option<u64>` return type with checked arithmetic.
+- `napl status` → `clean`; the journal recorded gen #1.
+
+The one behavioral gap the prose left open (the return type) is visible in the
+[machine layer](/docs/guide/machine-layer), not hidden.
+
+## Equivalence evidence
+
+The equivalence gate is a separate cargo project that depends on the generated crate by path and
+runs the hand-written `napl-core` `body_lines` corpus — the exact same input→output cases the
+hand-written module asserts for itself — against the generated code.
+
+| Hand-written test case | Result |
+| --- | --- |
+| `locates_body_start_after_frontmatter` | pass |
+| `maps_doc_lines_to_body_lines` (incl. out-of-range → None) | pass |
+| `numbers_lines_1_based` | pass |
+| `no_frontmatter_treats_all_as_body` | pass |
+| `empty_body_after_frontmatter` | pass |
+
+**5/5 pass.** The one signature difference — generated `body_line_for_doc_line` returns
+`Option<u64>` where the hand-written returns `Option<usize>` — is bridged by comparing the numeric
+values. That is the whole point: the fixpoint is **behavioral, not byte- or type-identical**. Two
+independently-written implementations of the same prompt agree on every observable case.
+
+## The escape-hatch list
+
+Not every module will gen cleanly. Scaling keeps a shrinking **escape-hatch list**: modules that
+stay hand-written because the current stage0 plus prompt cannot reproduce their behavior under the
+equivalence gate. A module leaves the list only when its prompt drives a generation that passes its
+corpus. The list is the honest measure of how much of the toolchain actually self-hosts — the goal
+is to shrink it, never to hide a failure by pinning byte-output.
+
+<Callout>
+  An interactive showcase — the module browser with prompt on the left, generated Rust on the right,
+  attribution hover-linking both directions, gen-blame timeline, and mapl margin notes — is coming.
+  For now this page is the prose companion to that work.
+</Callout>

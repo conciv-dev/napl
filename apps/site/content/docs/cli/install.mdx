@@ -1,0 +1,67 @@
+---
+title: Install
+description: The toolchain is a single native binary, napl. Install it via npm, curl, or cargo.
+icon: Download
+---
+
+The toolchain is a single native binary, `napl`. Pick whichever channel suits you.
+
+## npm
+
+Installs a matching prebuilt binary via `optionalDependencies`, no build step:
+
+```bash
+npm i -g napl-lang     # global `napl` on your PATH
+napl --help
+
+npx napl-lang init     # or run once, without installing
+```
+
+## curl
+
+Downloads the release binary into `~/.local/bin`, or `$NAPL_INSTALL`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/conciv-dev/napl/main/install.sh | sh
+```
+
+## cargo
+
+Build from source:
+
+```bash
+cargo install --git https://github.com/conciv-dev/napl napl-cli
+```
+
+Prebuilt binaries cover macOS (arm64, x64), Linux glibc (x64, arm64), and Windows x64. On any other
+platform, install from source with cargo.
+
+## Backends
+
+Model calls read the model id and the backend from `.napl/lock.json`. The **coding agent** always
+runs via the `claude` CLI; the backend selects how the derived IR and attribution completions are
+made. `napl init` selects `claude-cli` by default.
+
+- **`claude-cli`** (default) — shells out to the [Claude Code](https://claude.ai/code) CLI,
+  reusing your existing login. No API key needed. `gen` verifies `claude` is on your `PATH` before
+  doing any work.
+- **`anthropic-api`** — makes the derived-artifact completions via the Anthropic API directly.
+  Requires `ANTHROPIC_API_KEY`.
+
+```json title=".napl/lock.json"
+{
+  "model": "claude-sonnet-5",
+  "backend": "anthropic-api"
+}
+```
+
+An existing `lock.json` without a `backend` field is treated as `claude-cli`.
+
+## Quickstart
+
+```bash
+npx napl-lang init         # create .napl/, lock.json, and an example prompt
+# ...write or edit *.napl prompt files...
+npx napl-lang gen react    # coding agent writes .napl/src/react/, runs tests, locks + derives IR
+npx napl-lang status       # clean / prompt-stale / DRIFT
+```

@@ -1,0 +1,68 @@
+---
+title: The machine layer
+description: The compile is a dialogue. Alongside code, the model writes back in the margin of your prompt — ambiguities, assumptions, notes, and no-ops — in a .mapl file.
+icon: MessageSquare
+---
+
+`napl gen` doesn't only emit code. Alongside it, the model writes back — in the margin of your
+prompt. Every module gets a machine counterpart at `.napl/mapl/<module>.mapl` recording where your
+English was unclear, what the model assumed, and why the code came out the way it did. The compile
+is a dialogue: you write English, the machine answers in the margin, and ambiguity becomes a
+first-class compile diagnostic.
+
+## The four entry kinds
+
+Every `.mapl` entry carries the prompt lines it refers to, a `kind`, a human-facing `message`, the
+model's `reasoning`, and optionally a suggested rewording.
+
+<TypeTable
+  type={{
+    ambiguity: {
+      description: "The prompt words were unclear. Surfaces as a red squiggle, like a syntax error, with a suggested rewording.",
+      type: "error",
+    },
+    assumption: {
+      description: "A decision the prompt left open. Surfaces as a warning.",
+      type: "warning",
+    },
+    "no-op": {
+      description: "The prompt changed but produced no code change; the entry must say why. A changed prompt with an empty diff and no explanation fails the gen.",
+      type: "warning",
+    },
+    note: {
+      description: "Hover-visible reasoning about why the code is shaped the way it is.",
+      type: "info",
+    },
+  }}
+/>
+
+## In the file
+
+A `.mapl` file is the model's side of the dialogue, regenerated on every compile:
+
+```mapl title="greeting.mapl"
+- promptLines: [12, 14]
+  kind: assumption
+  message: Return type left unspecified
+  reasoning: >
+    The prose says "returns a friendly greeting message" but does not name the
+    return type. Chose a plain string; a structured result was not requested.
+- promptLines: [16]
+  kind: note
+  message: Empty-name rejection uses a thrown Error
+  reasoning: >
+    "rejected with an error" maps to throwing rather than a Result type, matching
+    the target's idiomatic error handling.
+```
+
+## Why no-op matters
+
+A changed prompt with an empty code diff and no `no-op` explanation **fails the gen**. Silently
+reporting "clean" without implementing your change is forbidden — the model must account for why a
+prompt edit produced no code change.
+
+## In the editor
+
+Open the `.napl` file and the answers surface inline: `ambiguity` as a red squiggle on the exact
+words, `assumption` and `no-op` as warnings, and `note` as hover-visible reasoning. The two voices
+have names — see [Two spellings, one dialogue](/docs/guide/emoji-aliases).

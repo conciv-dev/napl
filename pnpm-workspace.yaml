@@ -8,5 +8,6 @@ packages:
 # scripts; everything else is blocked by strictDepBuilds (default on in pnpm 11).
 allowBuilds:
   esbuild: true
-  sharp: set this to true or false
-  workerd: set this to true or false
+  lightningcss: true
+  sharp: false
+  workerd: true

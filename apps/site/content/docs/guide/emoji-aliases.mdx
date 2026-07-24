@@ -1,0 +1,42 @@
+---
+title: Emoji aliases
+description: Two voices, two spellings. .napl / .🧑 is what the human writes; .mapl / .🤖 is the machine's reply. Every spelling is byte-identical to every tool.
+icon: Smile
+---
+
+The two sides of the dialogue have names. The human speaks in `.napl`; the machine answers in
+`.mapl`. Each also has emoji aliases, and **both spellings in a pair are byte-identical and fully
+equivalent to every tool** — discovery, the LSP, the grammar, and the VS Code extension all register
+every alias.
+
+| Side | Canonical | Emoji aliases | The voice |
+| ---- | --------- | ------------- | --------- |
+| **The human speaks** | `.napl` | `.🧑` `.🧓` `.👤` `.👨` `.👩` `.🧒` | what you write |
+| **The machine answers** | `.mapl` | `.🤖` | its margin notes |
+
+So `greeting.🧑` is what you write and `greeting.🤖` is the machine's reply — the ambiguities,
+assumptions, and reasoning from the latest compile.
+
+## A curated, single-codepoint list
+
+The human aliases are a designed, curated single-codepoint list (`.🧑` `.🧓` `.👤` `.👨` `.👩`
+`.🧒`). Single-codepoint is deliberate: ZWJ sequences (like `.👨‍💻`) are rejected so filenames stay
+filesystem-safe and round-trip cleanly across tools and shells. Emoji filenames require a UTF-8
+filesystem, which every modern OS provides (APFS, ext4, NTFS, Btrfs).
+
+Override the list in `.napl/lock.json` with a `promptAliases` array — each entry starts with `.`,
+one or two code points after the dot, no ZWJ:
+
+```json title=".napl/lock.json"
+{
+  "model": "claude-sonnet-5",
+  "promptAliases": [".🧑", ".🧓"]
+}
+```
+
+## The mirror rule
+
+A prompt may use any alias; the module name and all derived state (the `.napl/` layout, `map.json`
+paths, the journal) simply record the actual filename. `napl gen` writes the machine file as
+canonical `.mapl` for a canonical `.napl` prompt, and mirrors the choice — writing `.🤖` — when the
+prompt uses an emoji alias. Reading always accepts both spellings on both sides.

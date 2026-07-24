@@ -1,0 +1,36 @@
+---
+title: napl lsp
+description: Start the language server over stdio, used by editor extensions.
+icon: Plug
+---
+
+Start the language server over stdio. This is the process editor extensions spawn; you rarely run it
+by hand.
+
+```bash
+napl lsp
+```
+
+```text title="usage"
+Usage: napl lsp
+
+Options:
+  -h, --help  Print help
+```
+
+## What the server provides
+
+Built on `map.json` and `.napl/attribution/*.yaml`, the language server powers the features that
+make hidden generated code feel safe:
+
+- **Hover a prompt sentence** → see the exact generated lines that implement it.
+- **Go-to-definition** → jump into `.napl/src/` at the implementing line.
+- **Reverse navigation** → from generated code, jump back to the causing prompt sentence(s); a
+  CodeLens above each function names its owning prompt span.
+- **Machine-layer diagnostics** → `ambiguity` as a red squiggle, `assumption` / `no-op` as warnings,
+  `note` on hover — see [The machine layer](/docs/guide/machine-layer).
+- **Prompt blame on hover** → the mechanical `caused by gen #N …` line, above the semantic
+  attribution.
+
+The server is bundled by the VS Code extension, which registers every `.napl` / `.mapl` spelling and
+their [emoji aliases](/docs/guide/emoji-aliases).

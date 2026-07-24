@@ -1,0 +1,26 @@
+---
+title: napl test
+description: Run the generated tests for a target without regenerating.
+icon: FlaskConical
+---
+
+Run the generated tests for a target inside `.napl/src/<target>/` without regenerating.
+
+```bash
+napl test [target]
+```
+
+```text title="usage"
+Usage: napl test [TARGET]
+
+Arguments:
+  [TARGET]  Target language [default: typescript]
+
+Options:
+  -h, --help  Print help
+```
+
+The target defaults to `typescript`. This runs the target's own test command (for example
+`vitest run`, or `cargo test` for the Rust target) against the already-generated code — no agent
+runs and nothing is regenerated. It is the fast way to confirm locked code still passes, separate
+from the full [gen loop](/docs/guide/gen-loop) where tests are a gate.

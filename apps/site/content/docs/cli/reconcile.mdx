@@ -1,0 +1,36 @@
+---
+title: napl reconcile
+description: Fold drifted src edits back into the prompt, then leave the module stale for regen.
+icon: GitMerge
+---
+
+Fold drifted src edits back into the prompt, then leave the module stale for regen. This is the
+sanctioned path for a deliberate edit to generated code — it turns your change into a prompt change
+so the prose stays the source of truth.
+
+```bash
+napl reconcile <target>
+```
+
+```text title="usage"
+Usage: napl reconcile [OPTIONS] <TARGET>
+
+Arguments:
+  <TARGET>  Target language (e.g. typescript, react)
+
+Options:
+  -m, --module <MODULE>  Scope the run to a single module by name
+  -h, --help             Print help
+```
+
+## How it works
+
+`napl reconcile` takes the delta between a drifted file and its generated baseline (a deterministic
+diff, since the baseline is always recorded) and asks the model to translate it into a proposed
+prompt amendment — including test-case updates when behavior changed. It never silently rewrites
+your words. After you accept, the prompt is updated and the module is left **stale**, so the next
+`napl gen` regenerates it; the regen must reproduce the patched behavior, proven by the tests.
+
+`napl reconcile` is resolution #1 of the three [drift](/docs/guide/drift-and-reconcile) fixes. If
+both the src and the prompt changed since the last gen, that is a three-way conflict, surfaced
+explicitly and never silently merged.
