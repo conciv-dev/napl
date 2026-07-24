@@ -8,7 +8,9 @@ import type { Scenario } from './types.ts';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(HERE, '..', '..');
-const CLI_PATH = join(REPO_ROOT, 'packages', 'cli', 'dist', 'cli.js');
+// The Rust binary is the toolchain: the corpus is its acceptance gate. NAPL_BIN
+// overrides it (e.g. to point at a debug build or an alternate path).
+const RUST_BIN = join(REPO_ROOT, 'rust', 'target', 'release', 'napl');
 const FAKE_BIN = join(REPO_ROOT, 'conformance', 'fake-claude');
 const DEFAULT_NOW = '2026-07-23T00:00:00.000Z';
 
@@ -48,7 +50,7 @@ function walkFiles(base: string, dir: string, out: Map<string, ActualFile>): voi
 }
 
 export function cliPath(): string {
-  return CLI_PATH;
+  return RUST_BIN;
 }
 
 function writeSetup(workdir: string, setup: Record<string, string> | undefined, cwd: string, runnerPid: number): void {
@@ -109,7 +111,9 @@ export function executeScenario(scenario: Scenario, options: ExecuteOptions = {}
       env[key] = applyTemplate(value, { cwd: realWork, runnerPid });
     }
 
-    const proc = spawnSync('node', [CLI_PATH, ...scenario.run], {
+    const override = process.env.NAPL_BIN;
+    const command = override !== undefined && override !== '' ? override : RUST_BIN;
+    const proc = spawnSync(command, scenario.run, {
       cwd: realWork,
       env,
       encoding: 'utf8',

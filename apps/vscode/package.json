@@ -69,7 +69,6 @@
     "vscode-languageclient": "^9.0.1"
   },
   "devDependencies": {
-    "@napl/lsp": "workspace:*",
     "@types/node": "^26.1.1",
     "@types/vscode": "^1.75.0",
     "esbuild": "^0.24.0",

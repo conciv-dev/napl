@@ -1,0 +1,21 @@
+[package]
+name = "napl-cli"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "napl"
+path = "src/main.rs"
+
+[dependencies]
+napl-core = { path = "../napl-core" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+thiserror = { workspace = true }
+clap = { version = "4", features = ["derive"] }
+
+[lints]
+workspace = true

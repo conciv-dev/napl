@@ -2,7 +2,7 @@
   "name": "@napl/monorepo",
   "version": "0.1.0",
   "private": true,
-  "description": "Prompts are the source of truth: a coding agent generates and locks per-target code, attributed line by line.",
+  "description": "Prompts are the source of truth: a coding agent generates and locks per-target code, attributed line by line. The Rust toolchain lives in rust/; the conformance corpus is its acceptance gate.",
   "type": "module",
   "license": "MIT",
   "engines": {
@@ -10,10 +10,6 @@
   },
   "packageManager": "pnpm@11.7.0",
   "scripts": {
-    "build": "turbo run build",
-    "typecheck": "turbo run typecheck",
-    "test": "turbo run test",
-    "check": "turbo run build typecheck test",
     "conformance": "turbo run conformance"
   },
   "devDependencies": {

@@ -8,8 +8,15 @@
 
 pub mod blame;
 pub mod body_lines;
+pub mod drift;
 pub mod extensions;
+pub mod guard;
 pub mod hash;
+pub mod incremental;
+pub mod parse_output;
+pub mod prompts;
 pub mod scanner;
 pub mod schemas;
+pub mod targets;
 pub mod text_diff;
+pub mod yaml;

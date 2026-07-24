@@ -1,19 +1,8 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
-  "globalDependencies": ["pnpm-workspace.yaml", "tsconfig.base.json"],
+  "globalDependencies": ["pnpm-workspace.yaml"],
   "tasks": {
-    "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
-    },
-    "typecheck": {
-      "dependsOn": ["^build"]
-    },
-    "test": {
-      "dependsOn": ["^build", "build"]
-    },
     "conformance": {
-      "dependsOn": ["^build"],
       "cache": false
     }
   }
