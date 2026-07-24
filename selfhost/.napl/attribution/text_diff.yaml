@@ -1,0 +1,131 @@
+module: text_diff
+target: rust
+entries:
+  - promptLines:
+      - 9
+      - 14
+    file: text_diff/src/lib.rs
+    lines:
+      - 1
+      - 6
+    note: crate location/header comment marker
+  - promptLines:
+      - 18
+      - 23
+    file: text_diff/src/lib.rs
+    lines:
+      - 38
+      - 55
+    note: to_lines implementation with CRLF handling
+  - promptLines:
+      - 27
+      - 29
+    file: text_diff/src/lib.rs
+    lines:
+      - 125
+      - 130
+    note: unified_diff and unified_diff_with_context entrypoints
+  - promptLines:
+      - 31
+      - 35
+    file: text_diff/src/lib.rs
+    lines:
+      - 64
+      - 122
+    note: LCS alignment producing context/del/ins entries with line numbers
+  - promptLines:
+      - 37
+      - 39
+    file: text_diff/src/lib.rs
+    lines:
+      - 135
+      - 161
+    note: mark entries within context of a change, group into hunks
+  - promptLines:
+      - 39
+      - 46
+    file: text_diff/src/lib.rs
+    lines:
+      - 163
+      - 205
+    note: compute hunk header counts/starts and emit prefixed lines
+  - promptLines:
+      - 47
+      - 49
+    file: text_diff/src/lib.rs
+    lines:
+      - 198
+      - 207
+    note: marker prefixes and newline-joined output, empty diff case
+  - promptLines:
+      - 51
+      - 53
+    file: text_diff/src/lib.rs
+    lines:
+      - 345
+      - 358
+    note: tests preserving empty/full insertion/deletion/identical behavior
+  - promptLines:
+      - 57
+      - 61
+    file: text_diff/src/lib.rs
+    lines:
+      - 227
+      - 229
+    note: empty/whitespace diff yields no hunks
+  - promptLines:
+      - 58
+      - 60
+    file: text_diff/src/lib.rs
+    lines:
+      - 211
+      - 223
+    note: header regex-shape parsing into four numbers
+  - promptLines:
+      - 59
+      - 61
+    file: text_diff/src/lib.rs
+    lines:
+      - 232
+      - 242
+    note: split diff into lines, start new hunk on header match
+  - promptLines:
+      - 61
+      - 64
+    file: text_diff/src/lib.rs
+    lines:
+      - 244
+      - 256
+    note: classify first char as context/del/ins/ignored, push hunk line
+  - promptLines:
+      - 66
+      - 72
+    file: text_diff/src/lib.rs
+    lines:
+      - 8
+      - 31
+    note: Hunk, HunkLine, HunkKind data model
+  - promptLines:
+      - 76
+      - 83
+    file: text_diff/src/lib.rs
+    lines:
+      - 262
+      - 306
+    note: apply_hunks reconstruction walking original lines and hunk lines
+  - promptLines:
+      - 85
+      - 87
+    file: text_diff/src/lib.rs
+    lines:
+      - 443
+      - 467
+    note: roundtrip property tests
+  - promptLines:
+      - 11
+      - 13
+    file: text_diff/src/lib.rs
+    lines:
+      - 1
+      - 1
+    note: generated-from marker referencing separate crate manifest requirement

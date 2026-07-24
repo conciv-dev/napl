@@ -1,0 +1,91 @@
+module: parse_output
+target: rust
+entries:
+  - promptLines:
+      - 17
+      - 19
+    file: parse_output/src/lib.rs
+    lines:
+      - 6
+      - 11
+    note: extract_yaml public entry, dispatches to fence finder or trims whole text
+  - promptLines:
+      - 21
+      - 25
+    file: parse_output/src/lib.rs
+    lines:
+      - 13
+      - 21
+    note: "finds fenced block: opening fence, discards opening line, extracts content up to closing backticks"
+  - promptLines:
+      - 21
+      - 23
+    file: parse_output/src/lib.rs
+    lines:
+      - 23
+      - 28
+    note: locates first fence line start (at text start or after a newline)
+  - promptLines:
+      - 23
+      - 25
+    file: parse_output/src/lib.rs
+    lines:
+      - 15
+      - 18
+    note: skips opening fence line including its terminating newline to find content start
+  - promptLines:
+      - 25
+      - 25
+    file: parse_output/src/lib.rs
+    lines:
+      - 19
+      - 20
+    note: content runs up to next occurrence of three backticks
+  - promptLines:
+      - 26
+      - 26
+    file: parse_output/src/lib.rs
+    lines:
+      - 8
+      - 8
+    note: trims surrounding whitespace of extracted fence content
+  - promptLines:
+      - 28
+      - 30
+    file: parse_output/src/lib.rs
+    lines:
+      - 9
+      - 9
+    note: falls back to trimming whole text when no complete fenced block found
+  - promptLines:
+      - 28
+      - 30
+    file: parse_output/src/lib.rs
+    lines:
+      - 14
+      - 20
+    note: returns None (no fence) when opening fence or closing fence missing
+  - promptLines:
+      - 34
+      - 36
+    file: parse_output/src/lib.rs
+    lines:
+      - 35
+      - 38
+    note: "test: fenced block with yaml info string"
+  - promptLines:
+      - 37
+      - 38
+    file: parse_output/src/lib.rs
+    lines:
+      - 41
+      - 44
+    note: "test: bare fence with no info string"
+  - promptLines:
+      - 39
+      - 40
+    file: parse_output/src/lib.rs
+    lines:
+      - 47
+      - 50
+    note: "test: plain text with no fence trimmed"

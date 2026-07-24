@@ -1,0 +1,16 @@
+module: extensions
+target: rust
+entries:
+  - promptLines:
+      - 36
+      - 40
+    kind: assumption
+    message: Return types for prompt_extensions/machine_extensions left unspecified; agent picked Vec<String> vs Vec<&'static str>.
+    reasoning: "Prompt says prompt_extensions(aliases) \"returns\" a list and machine_extensions() \"returns\" a list but never states element ownership. Agent made prompt_extensions return Vec<String> (owned, since it must merge borrowed aliases with owned defaults) but machine_extensions return Vec<&'static str> (borrowed, since both entries are static). This split is reasonable but not dictated by the prompt, and callers unifying the two lists would need to know this.\n"
+    suggestion: State explicitly whether prompt_extensions and machine_extensions return owned Strings or &'static str slices.
+  - promptLines:
+      - 10
+      - 15
+    kind: note
+    message: Crate scaffold (Cargo.toml, no workspace manifest, root untouched) matches instructions per agent's final message.
+    reasoning: Only src/lib.rs changes were included in the diff shown; the agent's final message states Cargo.toml was also created and the root body_lines crate and workspace manifest constraints were respected. Recorded as a note since compliance can't be directly verified from the supplied change listing.

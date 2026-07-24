@@ -1,0 +1,32 @@
+# Content hashing
+
+This module computes a stable content hash used across the toolchain to detect
+whether a file's contents have changed. It is pure: no I/O, no dependencies on
+other project modules.
+
+## Where this code lives
+
+The working directory already contains a generated `body_lines` crate at its
+root — leave it completely untouched. Create this module as a **new, separate
+Rust library crate in a subdirectory named `hash/`**: `hash/Cargo.toml` (package
+name `hash`) and `hash/src/lib.rs`. Do not add a workspace manifest and do not
+modify anything outside `hash/`. Ensure `cargo test` passes from inside `hash/`.
+
+## `content_hash(content)`
+
+Return the SHA-256 digest of the UTF-8 bytes of `content`, encoded as a
+lowercase hexadecimal string. This must match exactly what a standard SHA-256
+implementation produces — for example, the string `hello` hashes to
+`2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824`.
+
+Properties that must hold:
+
+- **Deterministic**: the same input always yields the same digest.
+- **Distinguishing**: different inputs yield different digests.
+- **Shape**: the result is always 64 characters, each a lowercase hex digit
+  (`0`–`9`, `a`–`f`) with no uppercase.
+
+SHA-256 is a standard cryptographic hash; use a well-established crate for it
+(this is a case where an external dependency is genuinely required) rather than
+reimplementing the algorithm.
+</content>

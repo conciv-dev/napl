@@ -1,0 +1,67 @@
+module: hash
+target: rust
+entries:
+  - promptLines:
+      - 11
+      - 12
+    file: hash/src/lib.rs
+    lines:
+      - 1
+      - 1
+    note: generated file marker, new separate crate hash/
+  - promptLines:
+      - 15
+      - 21
+    file: hash/src/lib.rs
+    lines:
+      - 5
+      - 10
+    note: content_hash computes lowercase hex SHA-256 digest
+  - promptLines:
+      - 17
+      - 18
+    file: hash/src/lib.rs
+    lines:
+      - 8
+      - 9
+    note: SHA-256 digest bytes formatted as lowercase hex
+  - promptLines:
+      - 19
+      - 20
+    file: hash/src/lib.rs
+    lines:
+      - 17
+      - 22
+    note: test verifies known SHA-256 vector for 'hello'
+  - promptLines:
+      - 24
+      - 24
+    file: hash/src/lib.rs
+    lines:
+      - 24
+      - 27
+    note: deterministic same-input same-digest test
+  - promptLines:
+      - 25
+      - 25
+    file: hash/src/lib.rs
+    lines:
+      - 29
+      - 32
+    note: different inputs yield different digests test
+  - promptLines:
+      - 26
+      - 27
+    file: hash/src/lib.rs
+    lines:
+      - 34
+      - 48
+    note: "shape checks: 64-char lowercase hex digest"
+  - promptLines:
+      - 29
+      - 31
+    file: hash/src/lib.rs
+    lines:
+      - 3
+      - 3
+    note: uses sha2 external crate instead of reimplementing

@@ -12,10 +12,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "body_lines"
-version = "0.1.0"
-
-[[package]]
 name = "cfg-if"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -51,21 +47,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "equivalence"
-version = "0.1.0"
-dependencies = [
- "body_lines",
- "extensions",
- "hash",
- "parse_output",
- "text_diff",
-]
-
-[[package]]
-name = "extensions"
-version = "0.1.0"
-
-[[package]]
 name = "generic-array"
 version = "0.14.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -89,10 +70,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2"
 
 [[package]]
-name = "parse_output"
-version = "0.1.0"
-
-[[package]]
 name = "sha2"
 version = "0.10.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -102,10 +79,6 @@ dependencies = [
  "cpufeatures",
  "digest",
 ]
-
-[[package]]
-name = "text_diff"
-version = "0.1.0"
 
 [[package]]
 name = "typenum"

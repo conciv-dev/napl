@@ -1,0 +1,84 @@
+module: text_diff
+deps: []
+types:
+  - name: HunkKind
+    description: 'Enum of hunk-line kinds: Context (unchanged line present in both texts), Del (line only in "before"), Ins (line only in "after").
+'
+  - name: HunkLine
+    description: "One line within a hunk. Public fields: kind (HunkKind) and text (the line's content, without its marker prefix).\n"
+  - name: Hunk
+    description: "One parsed unified-diff hunk. Public fields: old_start, old_count, new_start, new_count (unsigned integers from the hunk header), and lines (ordered vector of HunkLine).\n"
+functions:
+  - name: to_lines
+    signature: "to_lines(text: string) -> string[]"
+    behavior: "Splits text into its lines as owned strings. Empty input yields an empty list. Otherwise a single trailing line terminator (\"\\n\" or \"\\r\\n\") is stripped first, then the remainder is split on \"\\n\"; a \"\\r\" immediately preceding a split \"\\n\" is removed with it, but a lone \"\\r\" not followed by \"\\n\" remains part of the line's content. Examples: \"a\\nb\\n\" and \"a\\nb\" both -> [\"a\",\"b\"]; \"a\\r\\nb\\r\\n\" -> [\"a\",\"b\"]; \"a\\rb\\n\" -> [\"a\\rb\"].\n"
+  - name: unified_diff
+    signature: "unified_diff(before: string, after: string) -> string"
+    behavior: "Returns a unified diff of `before` vs `after` with 3 lines of surrounding context. Equivalent to unified_diff_with_context(before, after, 3). Returns empty string when before and after have identical lines.\n"
+  - name: unified_diff_with_context
+    signature: "unified_diff_with_context(before: string, after: string, context: uint) -> string"
+    behavior: "Splits before/after via to_lines and aligns them with a longest-common-subsequence algorithm: matching lines become context entries (tracking a 1-based line number in both before and after), lines only in before become deletions (1-based before line number), lines only in after become insertions (1-based after line number). An entry is included in the output if it lies within `context` positions (inclusive) of some deletion or insertion. Maximal runs of consecutive included entries form hunks. Each hunk is emitted as a header line \"@@ -oldStart,oldCount +newStart,newCount @@\" followed by one line per entry, prefixed with a marker: \" \" for context, \"-\" for deletion, \"+\" for insertion, then the entry's text. oldStart is the before-line-number of the hunk's first non-insertion entry (0 if none); oldCount is the number of context+deletion entries in the hunk. newStart/newCount are the mirror computed over after/context+insertion entries. All emitted lines are joined with \"\\n\". If there are no hunks (inputs produce no differing lines), returns the empty string. Preserves exact behavior: diffing \"\" into \"a\\nb\\n\" yields \"@@ -0,0 +1,2 @@\\n+a\\n+b\"; diffing \"a\\nb\\n\" into \"\" yields \"@@ -1,2 +0,0 @@\\n-a\\n-b\"; identical inputs yield \"\".\n"
+  - name: parse_hunks
+    signature: "parse_hunks(diff: string) -> Hunk[]"
+    behavior: "Parses a unified-diff string into its Hunk list. A diff that is empty or all-whitespace yields no hunks. The diff is split into lines using the same CRLF-aware rule as to_lines. A line matching header shape \"@@ -A,B +C,D @@\" (A,B,C,D non-negative integers) starts a new hunk with those four numbers and an initially empty lines list. Any other line, while a hunk is open, becomes one of that hunk's lines: its first character selects the kind (' ' -> Context, '-' -> Del, '+' -> Ins, any other first character causes the line to be ignored), and the remainder of the line after that first character becomes the HunkLine's text. Lines encountered before any header are ignored.\n"
+  - name: apply_hunks
+    signature: "apply_hunks(before: string, hunks: Hunk[]) -> string"
+    behavior: "Reconstructs a target text from `before` and a list of parsed hunks. Splits before via to_lines and walks the hunks in order: before each hunk, copies original lines up to the hunk's old_start (1-based; treated as the current position when old_start is 0) into the output. For each hunk line: a Context line copies the corresponding original line if one remains, otherwise falls back to the hunk line's own text, and advances the read position by one; a Del line advances the read position by one without emitting output; an Ins line emits its text without advancing the read position. After all hunks, copies any remaining original lines. The result lines are joined with \"\\n\". Round-trip guarantee: for any before/after strings, applying parse_hunks(unified_diff(before, after)) to before reproduces to_lines(after) joined with \"\\n\".\n"
+tests:
+  - name: to_lines_empty
+    given: text = ""
+    expect: returns []
+  - name: to_lines_trailing_newline
+    given: text = "a\nb\n" or "a\nb"
+    expect: returns ["a", "b"] in both cases
+  - name: to_lines_crlf
+    given: text = "a\r\nb\r\n" or "a\r\nb"
+    expect: returns ["a", "b"] in both cases
+  - name: to_lines_lone_cr
+    given: text = "a\rb\n"
+    expect: returns ["a\rb"] (single line, CR retained since not before a split newline)
+  - name: to_lines_no_trailing_newline
+    given: text = "hello"
+    expect: returns ["hello"]
+  - name: to_lines_blank_lines
+    given: text = "a\n\nb\n"
+    expect: returns ["a", "", "b"]
+  - name: unified_diff_empty_to_content
+    given: before = "", after = "a\nb\n"
+    expect: "@@ -0,0 +1,2 @@\n+a\n+b"
+  - name: unified_diff_content_to_empty
+    given: before = "a\nb\n", after = ""
+    expect: "@@ -1,2 +0,0 @@\n-a\n-b"
+  - name: unified_diff_identical
+    given: before = after = "a\nb\n" (and both "")
+    expect: returns "" in both cases
+  - name: unified_diff_mixed
+    given: before = "a\nb\nc\nd\ne\n", after = "a\nb\nC\nd\ne\n"
+    expect: "@@ -1,5 +1,5 @@\n a\n b\n-c\n+C\n d\n e"
+  - name: unified_diff_insert_and_delete
+    given: before = "one\ntwo\nthree\n", after = "one\ntwo-and-a-half\ntwo\nthree\n"
+    expect: parsing the diff and applying hunks to before reproduces to_lines(after).join("\n")
+  - name: unified_diff_with_context_narrow
+    given: 'before = "a\nb\nc\nd\ne\nf\ng\nh\ni\n", after = "a\nB\nc\nd\ne\nf\ng\nH\ni\n", context = 1
+'
+    expect: 'two separate hunks: "@@ -1,3 +1,3 @@\n a\n-b\n+B\n c\n@@ -7,3 +7,3 @@\n g\n-h\n+H\n i" (changes stay split at context 1, would merge at default context 3)
+'
+  - name: parse_hunks_example
+    given: diff = "@@ -1,3 +1,3 @@\n a\n-b\n+B\n c"
+    expect: 'one hunk with old_start=1, old_count=3, new_start=1, new_count=3, and lines [Context "a", Del "b", Ins "B", Context "c"]
+'
+  - name: parse_hunks_empty_and_whitespace
+    given: diff = "" or "   \n  \n"
+    expect: returns [] in both cases
+  - name: parse_hunks_ignores_unknown_lines
+    given: diff = "@@ -1,1 +1,1 @@\n a\n?noise\n"
+    expect: one hunk with a single Context line "a"; the "?noise" line is ignored
+  - name: apply_hunks_example
+    given: before = "a\nb\nc\n", hunks parsed from "@@ -1,3 +1,3 @@\n a\n-b\n+B\n c"
+    expect: "a\nB\nc"
+  - name: apply_hunks_no_hunks_copies_all
+    given: before = "a\nb\nc\n", hunks = []
+    expect: "a\nb\nc"
+  - name: roundtrip_property
+    given: "various before/after pairs including empty<->content, identical texts, single-line changes, multiple far-apart changes, full reorders, full replacements, and adding a trailing line without a terminator\n"
+    expect: for every pair, apply_hunks(before, parse_hunks(unified_diff(before, after))) equals to_lines(after).join("\n")

@@ -1,0 +1,9 @@
+module: parse_output
+target: rust
+entries:
+  - promptLines:
+      - 28
+      - 30
+    kind: ambiguity
+    message: "'no closing three backticks after a newline' is grammatically ambiguous."
+    reasoning: "Line 28-30 can be read two ways: (a) the opening fence line itself has no trailing newline (fence and content glued on one line), or (b) a newline exists after the opening fence but no closing"

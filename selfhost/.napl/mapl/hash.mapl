@@ -1,0 +1,21 @@
+module: hash
+target: rust
+entries:
+  - promptLines:
+      - 9
+      - 13
+    kind: note
+    message: New crate laid out exactly as spec'd; body_lines untouched, no workspace manifest added.
+    reasoning: Prompt gave explicit paths (hash/Cargo.toml, hash/src/lib.rs) and constraints (no workspace manifest, don't touch outside hash/). Agent followed precisely — nothing left to infer.
+  - promptLines:
+      - 15
+      - 20
+    kind: assumption
+    message: Implemented via sha2 crate's Sha256::digest + per-byte hex format, matching example vector.
+    reasoning: Prompt gives one example (hello -> digest) but doesn't mandate exact code shape. Agent chose sha2 crate and format!("{byte:02x}") collect — standard, verified against given vector.
+  - promptLines:
+      - 22
+      - 27
+    kind: note
+    message: Test suite covers determinism, distinguishing inputs, and 64-char lowercase hex shape as separate tests.
+    reasoning: Prompt lists three properties; agent wrote one test per property plus the known vector, satisfying "cargo test passes" requirement.

@@ -5,3 +5,7 @@ edition = "2021"
 
 [dependencies]
 body_lines = { path = "../.napl/src/rust" }
+extensions = { path = "../.napl/src/rust/extensions" }
+hash = { path = "../.napl/src/rust/hash" }
+parse_output = { path = "../.napl/src/rust/parse_output" }
+text_diff = { path = "../.napl/src/rust/text_diff" }

@@ -16,6 +16,70 @@
           ]
         }
       }
+    },
+    "extensions.napl": {
+      "module": "extensions",
+      "promptHash": "53b3004a36ec7d3e18f21eccb7133d6620a90346ccabac373e809fc5de8cb56b",
+      "declaredTargets": [
+        "rust"
+      ],
+      "targets": {
+        "rust": {
+          "promptHashAtGen": "53b3004a36ec7d3e18f21eccb7133d6620a90346ccabac373e809fc5de8cb56b",
+          "files": [
+            ".napl/src/rust/extensions/Cargo.toml",
+            ".napl/src/rust/extensions/src/lib.rs"
+          ]
+        }
+      }
+    },
+    "hash.napl": {
+      "module": "hash",
+      "promptHash": "8e6d0d3bf608d29abc67791f92bc0e9c97daaedd4915a15a8d11f13a9a9b95b8",
+      "declaredTargets": [
+        "rust"
+      ],
+      "targets": {
+        "rust": {
+          "promptHashAtGen": "8e6d0d3bf608d29abc67791f92bc0e9c97daaedd4915a15a8d11f13a9a9b95b8",
+          "files": [
+            ".napl/src/rust/hash/Cargo.toml",
+            ".napl/src/rust/hash/src/lib.rs"
+          ]
+        }
+      }
+    },
+    "parse_output.napl": {
+      "module": "parse_output",
+      "promptHash": "5f61ddd58df5a9c4e3e795e4f32b4465f89afb5aed39439934fa70bd36f25242",
+      "declaredTargets": [
+        "rust"
+      ],
+      "targets": {
+        "rust": {
+          "promptHashAtGen": "5f61ddd58df5a9c4e3e795e4f32b4465f89afb5aed39439934fa70bd36f25242",
+          "files": [
+            ".napl/src/rust/parse_output/Cargo.toml",
+            ".napl/src/rust/parse_output/src/lib.rs"
+          ]
+        }
+      }
+    },
+    "text_diff.napl": {
+      "module": "text_diff",
+      "promptHash": "c12f6b2d040adc808d408f71fc27f225312be710a4088acef49a678e58ed21e2",
+      "declaredTargets": [
+        "rust"
+      ],
+      "targets": {
+        "rust": {
+          "promptHashAtGen": "c12f6b2d040adc808d408f71fc27f225312be710a4088acef49a678e58ed21e2",
+          "files": [
+            ".napl/src/rust/text_diff/Cargo.toml",
+            ".napl/src/rust/text_diff/src/lib.rs"
+          ]
+        }
+      }
     }
   },
   "files": {
@@ -31,6 +95,62 @@
       "hash": "6953db4bae90a68d73f5722f7ca47b3b3606771cd74b768afa96c0531a0590fb",
       "prompts": [
         "body_lines.napl"
+      ]
+    },
+    ".napl/src/rust/extensions/Cargo.toml": {
+      "target": "rust",
+      "hash": "1e5450cfc6f881b6b27bb47aaf68f388c4666df1bae946cf664d60599e874c8a",
+      "prompts": [
+        "extensions.napl"
+      ]
+    },
+    ".napl/src/rust/extensions/src/lib.rs": {
+      "target": "rust",
+      "hash": "5a4c066920d1d42d04c18d34821bbb4b1b8834e7433d94300d0352b3976d1ce8",
+      "prompts": [
+        "extensions.napl"
+      ]
+    },
+    ".napl/src/rust/hash/Cargo.toml": {
+      "target": "rust",
+      "hash": "8762f6782dfe056ccb8f5331ff49186fd058be913020eb6231f62bae474e4f36",
+      "prompts": [
+        "hash.napl"
+      ]
+    },
+    ".napl/src/rust/hash/src/lib.rs": {
+      "target": "rust",
+      "hash": "c43ed4485041d8909086749b3899377fb41bd6fa712e7ee6b1e19a96243c9821",
+      "prompts": [
+        "hash.napl"
+      ]
+    },
+    ".napl/src/rust/parse_output/Cargo.toml": {
+      "target": "rust",
+      "hash": "fd33dfc100eef137d231a3a69d6ba3ca47fa79c58a30536442f673813d5e1413",
+      "prompts": [
+        "parse_output.napl"
+      ]
+    },
+    ".napl/src/rust/parse_output/src/lib.rs": {
+      "target": "rust",
+      "hash": "45604f1ccc9a35ebfb276d693fe0452fb7c54ec6e34c4c40e8c23f6a547f275f",
+      "prompts": [
+        "parse_output.napl"
+      ]
+    },
+    ".napl/src/rust/text_diff/Cargo.toml": {
+      "target": "rust",
+      "hash": "c15fd6accdee0af844f9fcb0155309887f50ec5bc07f2312171a8f689e38554d",
+      "prompts": [
+        "text_diff.napl"
+      ]
+    },
+    ".napl/src/rust/text_diff/src/lib.rs": {
+      "target": "rust",
+      "hash": "707c356b93434f1a3ccfb24c84e736d45f9d62b7e65c6bc89ad361999dbfdee3",
+      "prompts": [
+        "text_diff.napl"
       ]
     }
   }

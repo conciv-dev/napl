@@ -1,0 +1,123 @@
+module: extensions
+target: rust
+entries:
+  - promptLines:
+      - 21
+      - 21
+    file: extensions/src/lib.rs
+    lines:
+      - 3
+      - 4
+    note: canonical prompt extension constant
+  - promptLines:
+      - 22
+      - 22
+    file: extensions/src/lib.rs
+    lines:
+      - 6
+      - 7
+    note: canonical machine extension constant
+  - promptLines:
+      - 23
+      - 24
+    file: extensions/src/lib.rs
+    lines:
+      - 9
+      - 10
+    note: machine alias robot-face emoji constant
+  - promptLines:
+      - 28
+      - 32
+    file: extensions/src/lib.rs
+    lines:
+      - 12
+      - 20
+    note: curated single-person emoji aliases in codepoint order
+  - promptLines:
+      - 31
+      - 32
+    file: extensions/src/lib.rs
+    lines:
+      - 22
+      - 25
+    note: default_prompt_aliases returns curated set as owned strings
+  - promptLines:
+      - 36
+      - 38
+    file: extensions/src/lib.rs
+    lines:
+      - 27
+      - 35
+    note: prompt_extensions builds canonical plus given or curated aliases
+  - promptLines:
+      - 39
+      - 40
+    file: extensions/src/lib.rs
+    lines:
+      - 37
+      - 40
+    note: machine_extensions returns canonical then emoji alias
+  - promptLines:
+      - 44
+      - 45
+    file: extensions/src/lib.rs
+    lines:
+      - 42
+      - 45
+    note: is_prompt_file suffix test over prompt_extensions
+  - promptLines:
+      - 46
+      - 47
+    file: extensions/src/lib.rs
+    lines:
+      - 47
+      - 50
+    note: is_machine_file suffix test over machine_extensions
+  - promptLines:
+      - 49
+      - 55
+    file: extensions/src/lib.rs
+    lines:
+      - 43
+      - 44
+    note: exact whole-codepoint suffix match, no partial composite match
+  - promptLines:
+      - 51
+      - 53
+    file: extensions/src/lib.rs
+    lines:
+      - 134
+      - 139
+    note: test for composite emoji sequence not matching single alias
+  - promptLines:
+      - 54
+      - 54
+    file: extensions/src/lib.rs
+    lines:
+      - 142
+      - 146
+    note: test robot emoji is machine not prompt
+  - promptLines:
+      - 57
+      - 58
+    file: extensions/src/lib.rs
+    lines:
+      - 30
+      - 33
+    note: explicit alias override replaces curated aliases entirely
+  - promptLines:
+      - 57
+      - 58
+    file: extensions/src/lib.rs
+    lines:
+      - 126
+      - 131
+    note: test override excludes curated aliases
+  - promptLines:
+      - 62
+      - 65
+    file: extensions/src/lib.rs
+    lines:
+      - 52
+      - 59
+    note: machine_extension_for_prompt mirrors prompt spelling, static str return
