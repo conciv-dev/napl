@@ -1,0 +1,26 @@
+{
+  "name": "@napl-lang/binary-linux-arm64-gnu",
+  "version": "0.1.0",
+  "private": true,
+  "description": "napl binary for Linux arm64 glibc (aarch64-unknown-linux-gnu).",
+  "license": "MIT",
+  "homepage": "https://github.com/conciv-dev/napl",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/conciv-dev/napl",
+    "directory": "npm/binary-linux-arm64-gnu"
+  },
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "libc": [
+    "glibc"
+  ],
+  "files": [
+    "napl",
+    "README.md"
+  ]
+}

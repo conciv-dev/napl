@@ -1,0 +1,23 @@
+{
+  "name": "@napl-lang/binary-win32-x64",
+  "version": "0.1.0",
+  "private": true,
+  "description": "napl binary for Windows x64 (x86_64-pc-windows-msvc).",
+  "license": "MIT",
+  "homepage": "https://github.com/conciv-dev/napl",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/conciv-dev/napl",
+    "directory": "npm/binary-win32-x64"
+  },
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "files": [
+    "napl.exe",
+    "README.md"
+  ]
+}

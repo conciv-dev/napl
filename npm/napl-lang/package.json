@@ -1,0 +1,38 @@
+{
+  "name": "napl-lang",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NAPL — prompts are the source of truth. Installs the napl toolchain binary for your platform.",
+  "keywords": [
+    "napl",
+    "prompts",
+    "codegen",
+    "cli",
+    "agent"
+  ],
+  "homepage": "https://github.com/conciv-dev/napl",
+  "bugs": "https://github.com/conciv-dev/napl/issues",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/conciv-dev/napl",
+    "directory": "npm/napl-lang"
+  },
+  "bin": {
+    "napl": "bin/napl.js"
+  },
+  "files": [
+    "bin/napl.js",
+    "README.md"
+  ],
+  "optionalDependencies": {
+    "@napl-lang/binary-darwin-arm64": "0.1.0",
+    "@napl-lang/binary-darwin-x64": "0.1.0",
+    "@napl-lang/binary-linux-x64-gnu": "0.1.0",
+    "@napl-lang/binary-linux-arm64-gnu": "0.1.0",
+    "@napl-lang/binary-win32-x64": "0.1.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -233,13 +233,41 @@ attribution (.napl/attribution/*)  ← derived prompt-line ↔ code-line mapping
 locked content hash used for staleness and drift detection. `.napl/lock.json` pins
 the model id and the LLM backend. `.napl/` is committed by design.
 
+## Install
+
+The toolchain is a single native binary, `napl`. Pick whichever channel suits you.
+
+**npm** (installs a matching prebuilt binary via `optionalDependencies`, no build step):
+
+```bash
+npm i -g napl-lang     # global `napl` on your PATH
+napl --help
+
+npx napl-lang init     # or run once, without installing
+```
+
+**curl** (downloads the release binary into `~/.local/bin`, or `$NAPL_INSTALL`):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/conciv-dev/napl/main/install.sh | sh
+```
+
+**cargo** (build from source):
+
+```bash
+cargo install --git https://github.com/conciv-dev/napl napl-cli
+```
+
+Prebuilt binaries cover macOS (arm64, x64), Linux glibc (x64, arm64), and Windows x64.
+On any other platform, install from source with cargo.
+
 ## Quickstart
 
 ```bash
-npx napl init              # create .napl/, lock.json (backend: claude-cli), and examples/greeting.napl
+npx napl-lang init         # create .napl/, lock.json (backend: claude-cli), and examples/greeting.napl
 # ...write or edit *.napl prompt files...
-npx napl gen react         # coding agent writes .napl/src/react/, runs its tests, locks + derives IR
-npx napl status            # clean / prompt-stale / DRIFT
+npx napl-lang gen react    # coding agent writes .napl/src/react/, runs its tests, locks + derives IR
+npx napl-lang status       # clean / prompt-stale / DRIFT
 ```
 
 ## Backends

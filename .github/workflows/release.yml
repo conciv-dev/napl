@@ -1,0 +1,159 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build ${{ matrix.suffix }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            suffix: darwin-arm64
+            cross: false
+            ext: ""
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            suffix: darwin-x64
+            cross: false
+            ext: ""
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            suffix: linux-x64-gnu
+            cross: false
+            ext: ""
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            suffix: linux-arm64-gnu
+            cross: true
+            ext: ""
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            suffix: win32-x64
+            cross: false
+            ext: ".exe"
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install cross
+        if: matrix.cross
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cross
+
+      - name: Build (cargo)
+        if: ${{ !matrix.cross }}
+        working-directory: rust
+        run: cargo build --release --locked -p napl-cli --target ${{ matrix.target }}
+
+      - name: Build (cross)
+        if: matrix.cross
+        working-directory: rust
+        run: cross build --release --locked -p napl-cli --target ${{ matrix.target }}
+
+      - name: Stage binary
+        working-directory: rust
+        run: |
+          mkdir -p "${GITHUB_WORKSPACE}/dist"
+          cp "target/${{ matrix.target }}/release/napl${{ matrix.ext }}" \
+             "${GITHUB_WORKSPACE}/dist/napl-${{ matrix.target }}${{ matrix.ext }}"
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: napl-${{ matrix.target }}
+          path: dist/napl-${{ matrix.target }}${{ matrix.ext }}
+          if-no-files-found: error
+
+  publish-npm:
+    name: Publish npm packages
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    env:
+      NPM_CONFIG_PROVENANCE: "true"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Download binaries
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: napl-*
+          merge-multiple: true
+
+      - name: Place binaries into platform packages
+        run: |
+          set -eu
+          place() {
+            triple="$1"; suffix="$2"
+            cp "artifacts/napl-${triple}" "npm/binary-${suffix}/napl"
+            chmod +x "npm/binary-${suffix}/napl"
+          }
+          place aarch64-apple-darwin       darwin-arm64
+          place x86_64-apple-darwin        darwin-x64
+          place x86_64-unknown-linux-gnu   linux-x64-gnu
+          place aarch64-unknown-linux-gnu  linux-arm64-gnu
+          cp "artifacts/napl-x86_64-pc-windows-msvc.exe" "npm/binary-win32-x64/napl.exe"
+
+      - name: Publish platform packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -eu
+          for suffix in darwin-arm64 darwin-x64 linux-x64-gnu linux-arm64-gnu win32-x64; do
+            (cd "npm/binary-${suffix}" && npm pkg delete private && npm publish --provenance --access public)
+          done
+
+      - name: Publish main package
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: cd npm/napl-lang && npm pkg delete private && npm publish --provenance --access public
+
+  github-release:
+    name: GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download binaries
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          pattern: napl-*
+          merge-multiple: true
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: gh release create "${TAG}" release-assets/* --title "napl ${TAG}" --generate-notes

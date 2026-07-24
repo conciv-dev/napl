@@ -1,0 +1,23 @@
+{
+  "name": "@napl-lang/binary-darwin-arm64",
+  "version": "0.1.0",
+  "private": true,
+  "description": "napl binary for macOS arm64 (aarch64-apple-darwin).",
+  "license": "MIT",
+  "homepage": "https://github.com/conciv-dev/napl",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/conciv-dev/napl",
+    "directory": "npm/binary-darwin-arm64"
+  },
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "files": [
+    "napl",
+    "README.md"
+  ]
+}
