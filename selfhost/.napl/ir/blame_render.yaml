@@ -4,61 +4,48 @@ deps:
   - schemas_journal
 types:
   - name: BlameGenRender
-    description: "Result of rendering a single-generation blame summary. Public structure with two fields: text (the exact string the command prints, no trailing newline) and exit_code (integer status code, 0 on success, 1 when no matching entry exists).\n"
+    description: "Result of rendering a single-generation blame summary. Public struct with two public fields: text (String) the exact text to print, and exit_code (i32) the process exit status (0 on success, 1 when no matching entry)."
 functions:
   - name: mode_str
-    signature: "mode_str(mode: JournalMode) -> string (static lowercase label)"
-    behavior: 'Maps a journal mode to its lowercase label. Full -> "full", Incremental -> "incremental", Reconcile -> "reconcile", Move -> "move". Exhaustive over every JournalMode variant, including the Move location-heal variant.
-'
+    signature: "mode_str(mode: JournalMode) -> &'static str"
+    behavior: Maps a JournalMode to its lowercase label. Full -> "full", Incremental -> "incremental", Reconcile -> "reconcile", Move -> "move". Match is exhaustive over all variants including Move (the location-heal variant).
   - name: format_blame_row
-    signature: "format_blame_row(entry: BlameLine) -> string"
-    behavior: "Renders one blame row as exactly \"gen #{gen}  {timestamp}  {module}  {text}\" using the entry's fields, with two spaces between each segment. Pure formatting; no lookups or side effects.\n"
+    signature: "format_blame_row(entry: &BlameLine) -> String"
+    behavior: 'Renders one blame row as exactly "gen #{gen}  {timestamp}  {module}  {text}" using the corresponding BlameLine fields, with two spaces between each segment. No leading or trailing separators.'
   - name: why_line
-    signature: "why_line(prompt_diff: string) -> string"
-    behavior: 'Explains why a line exists. Calls blame::first_prompt_diff_line on the prompt diff; if that result is the empty string, returns "initial generation", otherwise returns the result unchanged.
-'
+    signature: "why_line(prompt_diff: &str) -> String"
+    behavior: Explains why a line exists. Delegates to blame::first_prompt_diff_line on prompt_diff; if that result is the empty string, returns "initial generation", otherwise returns the result unchanged.
   - name: render_blame_gen
-    signature: "render_blame_gen(entries: list<JournalEntry>, gen: i64) -> BlameGenRender"
-    behavior: 'Renders the single-generation summary for `napl blame --gen <n>`. Finds the first entry whose gen equals the requested gen. When none matches, returns text "napl blame: no journal entry for gen #{gen}" with exit_code 1. When one matches, returns exit_code 0 and text built from lines joined by single newlines with no trailing newline, in order: (1) "gen #{gen}  {timestamp}  {module} ({target})  mode: {mode_str(mode)}" with two-space separators and target in parentheses; (2) an empty line; (3) "prompt edit:"; (4) the prompt-diff block — if prompt_diff is empty after trimming surrounding whitespace, a single line "  initial generation"; otherwise one line per piece of prompt_diff split on newline, each prefixed with two spaces (so a trailing newline yields a final two-space line); (5) an empty line; (6) "files touched:"; (7) the files block — "  (none)" if files is empty, otherwise one two-space-prefixed line per file path.
-'
+    signature: "render_blame_gen(entries: &[JournalEntry], gen: i64) -> BlameGenRender"
+    behavior: 'Renders the single-generation summary for `napl blame --gen <n>`. Finds the first entry whose gen equals the requested gen. If none matches, returns text exactly "napl blame: no journal entry for gen #{gen}" and exit_code 1. If one matches, returns exit_code 0 and text built from lines joined by single newlines with no trailing newline, in order: (1) header "gen #{gen}  {timestamp}  {module} ({target})  mode: {mode_str(mode)}" with two-space separators and target in parentheses; (2) empty line; (3) "prompt edit:"; (4) prompt-diff block — if prompt_diff is empty after trimming surrounding whitespace, one line "  initial generation" (two leading spaces), otherwise prompt_diff split on newline with each piece prefixed by two spaces (a trailing newline yields a final two-space line); (5) empty line; (6) "files touched:"; (7) files block — if files empty, one line "  (none)", otherwise one "  {path}" line per file (two leading spaces).'
 tests:
   - name: mode_str_maps_all_variants
-    given: Each JournalMode variant Full, Incremental, Reconcile, Move.
-    expect: 'Returns "full", "incremental", "reconcile", "move" respectively.
-'
+    given: Each JournalMode variant (Full, Incremental, Reconcile, Move)
+    expect: mode_str returns "full", "incremental", "reconcile", "move" respectively.
   - name: format_blame_row_renders_expected_line
-    given: 'A BlameLine with gen 7, timestamp "2026-07-24T00:00:00.000Z", module "greeting", text "export function greet() {".
-'
-    expect: 'Returns "gen #7  2026-07-24T00:00:00.000Z  greeting  export function greet() {".
-'
+    given: BlameLine with gen=7, timestamp="2026-07-24T00:00:00.000Z", module="greeting", text="export function greet() {".
+    expect: 'Returns "gen #7  2026-07-24T00:00:00.000Z  greeting  export function greet() {".'
   - name: why_line_empty_diff_returns_initial_generation
-    given: An empty prompt diff string.
+    given: An empty prompt diff string
     expect: Returns "initial generation".
   - name: why_line_non_empty_diff_returns_first_prompt_diff_line
-    given: 'A diff whose first added hunk line is "the new behavior line".
-'
+    given: A diff whose first added hunk line is "the new behavior line"
     expect: Returns "the new behavior line".
   - name: render_blame_gen_no_matching_entry
-    given: Entries containing only gen 1, requesting gen 5.
-    expect: 'exit_code 1 and text "napl blame: no journal entry for gen #5".
-'
+    given: Entries containing only gen 1; requested gen 5
+    expect: 'exit_code 1 and text "napl blame: no journal entry for gen #5".'
   - name: render_blame_gen_empty_diff_no_files
-    given: 'A single entry gen 1, timestamp "2026-07-24T00:00:00.000Z", module "greeting", target "typescript", mode Full, empty prompt_diff, no files; requesting gen 1.
-'
-    expect: 'exit_code 0 and text "gen #1  2026-07-24T00:00:00.000Z  greeting (typescript)  mode: full\n\nprompt edit:\n  initial generation\n\nfiles touched:\n  (none)".
-'
+    given: Single entry gen=1, timestamp="2026-07-24T00:00:00.000Z", module="greeting", target="typescript", mode=Full, empty prompt_diff, no files; requested gen 1
+    expect: 'exit_code 0 and text exactly "gen #1  2026-07-24T00:00:00.000Z  greeting (typescript)  mode: full\n\nprompt edit:\n  initial generation\n\nfiles touched:\n  (none)".'
   - name: render_blame_gen_whitespace_only_diff_treated_as_empty
-    given: An entry with a whitespace-only prompt_diff "   \n  ", requesting its gen.
-    expect: Text contains "prompt edit:\n  initial generation".
+    given: An entry whose prompt_diff is whitespace only ("   \n  "); requested gen 1
+    expect: Text contains "prompt edit:\n  initial generation" (whitespace-only diff treated as empty after trimming).
   - name: render_blame_gen_multiline_diff_and_files
-    given: 'An entry gen 2, mode Incremental, prompt_diff "line one\nline two", files "src/a.ts" and "src/b.ts"; requesting gen 2.
-'
-    expect: 'exit_code 0 and text "gen #2  2026-07-24T00:00:00.000Z  greeting (typescript)  mode: incremental\n\nprompt edit:\n  line one\n  line two\n\nfiles touched:\n  src/a.ts\n  src/b.ts".
-'
+    given: Entry gen=2, mode=Incremental, prompt_diff="line one\nline two", files "src/a.ts" and "src/b.ts"; requested gen 2
+    expect: 'exit_code 0 and text exactly "gen #2  2026-07-24T00:00:00.000Z  greeting (typescript)  mode: incremental\n\nprompt edit:\n  line one\n  line two\n\nfiles touched:\n  src/a.ts\n  src/b.ts".'
   - name: render_blame_gen_diff_with_trailing_newline_yields_final_blank_prefixed_line
-    given: 'An entry gen 3, mode Reconcile, prompt_diff "line one\n" with trailing newline; requesting gen 3.
-'
-    expect: Text contains "prompt edit:\n  line one\n  \n\nfiles touched:".
+    given: Entry gen=3, mode=Reconcile, prompt_diff="line one\n", no files; requested gen 3
+    expect: Text contains "prompt edit:\n  line one\n  \n\nfiles touched:" — the trailing newline produces a final two-space line.
   - name: render_blame_gen_picks_first_matching_gen
-    given: Two entries both selectable, requesting gen 2.
-    expect: 'exit_code 0 and text starts with "gen #2".'
+    given: Two entries with gens 1 and 2; requested gen 2
+    expect: exit_code 0 and text starts with "gen

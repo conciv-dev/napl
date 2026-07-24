@@ -1177,3 +1177,100 @@ that "rust-final deletion" must **not** delete:
 None of these are self-host units under the current gates; deleting `rust-final`
 means deleting any *remaining hand-written module bodies whose behavior is now proven
 generated*, not this I/O skeleton.
+
+## Deps-enforcement slice — gen-time sibling-dependency gate (2026-07-24)
+
+The fixpoint above proved every module regenerates byte-identically *given a correct
+prompt*. This slice closes the gap the fixpoint could not see: a prompt that leaves
+the sibling-crate relationship implicit lets a regen agent quietly **reimplement** a
+sibling's types instead of depending on them — still compiling, still passing tests,
+but no longer composing on the workspace. The slice adds a machine gate and hardens
+the prompts against that failure mode.
+
+### What is enforced
+
+After a generated module's `cargo test` passes, gen inspects the `[dependencies]`
+table of that module's generated `Cargo.toml`. Every **path dependency on a sibling
+member crate** must also be declared in the prompt's `deps:` frontmatter. An
+undeclared sibling path-dep fails the gen attempt (it retries with explicit feedback,
+then fails the run). Non-sibling (crates.io) deps are not policed; a declared-but-unused
+dep is not an error; grouped crates whose `Cargo.toml` the toolchain owns are skipped.
+
+The pinned error (stderr, as `napl: {message}`):
+
+> gen failed for module '{module}' ({target}): the generated Cargo.toml declares a
+> path dependency on the sibling crate '{dep}', which is not declared in the prompt's
+> `deps:` frontmatter — declare it in `deps:` or remove the dependency.
+
+### The pure/shell split
+
+The decision is a pure function pair — `cargo_path_dep_crates(cargo_toml: &str)`
+(parses only `[dependencies]`, returns the sorted path-dep crate names) and
+`check_declared_deps(module, target, path_dep_crates, declared)` (the pure verdict,
+carrying the pinned message). Only the `Cargo.toml` read lives in the I/O shell
+(`deps_gate_error`). The pure core is written to be a future `.napl` module; the shell
+stays hand-written, matching the campaign's pure/IO discipline.
+
+### Conformance 47 → 48
+
+New scenario `81-gen-undeclared-dep`: an agent writes `adder/Cargo.toml` with a path
+dep on `helper` but leaves `deps:` empty; the run must exit 1, print the per-attempt
+`undeclared sibling dependency in Cargo.toml` lines, emit the pinned stderr message,
+and leave the tree unlocked with no attribution/map/journal/gen.lock written. The 47
+existing goldens are byte-identical; the corpus is now **48 / 48**.
+
+### The prose-trim policy — dep-enumeration is redundant, behavioral imperatives are spec
+
+Fifteen "Builds on…" prompt sections carried verbose dependency prose. The slice
+trimmed the **redundant** half and kept the **load-bearing** half, on a sharp rule:
+
+- **WHERE a dependency exists = redundant.** "Add a path dependency on `../foo` in
+  your `Cargo.toml`; it is a workspace sibling, not a crates.io dependency, so add it
+  even though the general guidance is to avoid outside dependencies." The `deps:`
+  frontmatter and the generated task text (`Declared dependencies: …`) already carry
+  this. Trimmed.
+- **HOW to relate to it = spec, must stay.** "Use its public API — do not reimplement
+  its types or logic, and do not depend on any hand-written crate." This is the only
+  thing standing between the agent and a local reimplementation. Kept (or restored in
+  compact one-sentence form where a prior trim had removed it).
+
+### The `incremental` regression — the campaign's honest finding
+
+The first pass of the trim was too aggressive. On `incremental` it deleted the entire
+imperative — *"Add a path dependency on each in your `Cargo.toml`… use their public
+API, and do not reimplement their logic or depend on any hand-written crate"* — leaving
+the two sibling bullets as pure type **descriptions**. On regen (journal gen #93) the
+agent did exactly what an unconstrained prompt invites: it **reimplemented** `LineRange`
+and `AttributionEntry` locally in `incremental/src/lib.rs` and emptied its `Cargo.toml`
+`[dependencies]` (dropping `schemas_line_range` + `schemas_attribution`). It compiled
+and passed tests — a silent loss of composition that only a human diff caught.
+
+The fix: the regressed gen #93 was **reverted** to its pre-#93 accepted state (generated
+crate, per-module metadata, and the surgical removal of just the #93 journal line and
+the `incremental` entry in `map.json`; the shared journal/map files' good #87–#92
+entries were preserved). The audit of all 15 prompts then restored the compact
+"use-the-sibling / don't-reimplement" imperative in the **9** prompts whose trim had
+removed the only statement of it (`incremental`, `blame`, `prompts`, `yaml`,
+`schemas_attribution`, `schemas_journal`, `schemas_lock`, `schemas_map`, `schemas_ml`);
+the other **6** (`blame_render`, `gen_attribution_check`, `gen_prompt_diff`,
+`reconcile_derive`, `reverse`, `driftdetect_replay`) kept the trim because their
+per-dependency bullets still carry an explicit "Use its public X … do not reimplement"
+directive. All 14 prompt-stale modules then regenerated as **clean no-ops** (journal
+gens #93–#106, 0 file patches each) — `incremental` included, this time depending on its
+siblings rather than reimplementing them.
+
+The lesson is the reusable one: **a prompt that only *describes* a sibling's types
+invites reimplementation; a prompt must *instruct* the agent to depend on and use them.**
+The machine gate catches the Cargo.toml symptom; the prompt imperative prevents the
+cause.
+
+### Gate results (post-slice)
+
+| Gate | Result |
+| --- | --- |
+| 1. Conformance (new `81-gen-undeclared-dep`; 47 goldens untouched) | **48 / 48** |
+| 2. Equivalence harness | **226 / 226** |
+| 3. `cargo test --workspace` (rust/) | **all green** |
+| 4. `cargo clippy --workspace --all-targets` | **clean (0)** |
+| 5. `napl status` (selfhost/) | **36 / 36 clean** |
+| 6. workspace-root `cargo test` (`selfhost/.napl/src/rust`) | **419 / 419** |

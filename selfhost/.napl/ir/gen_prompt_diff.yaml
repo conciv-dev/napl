@@ -4,15 +4,15 @@ deps:
 types: []
 functions:
   - name: compute_prompt_diff
-    signature: "compute_prompt_diff(prior_body: Option<&str>, body: &str) -> String"
-    behavior: "Pure function (no filesystem, no process spawning) that derives the unified prompt diff recorded in a journal entry. Postcondition: when prior_body is Some(prior) and prior differs from body, returns diff_body_lines(prior, body).unified (the unified field of the sibling incremental module's body-line diff between prior and current bodies). Otherwise — when prior_body is None, or the prior body equals the current body — returns the empty string. Does not reimplement diffing; delegates to incremental::diff_body_lines.\n"
+    signature: "compute_prompt_diff(prior_body: Option<Text>, body: Text) -> Text"
+    behavior: "Pure derivation of the unified prompt-body diff recorded in a journal entry; no filesystem access and no process spawning. When prior_body is present and the prior body differs from the current body, returns the unified diff text obtained from incremental.diff_body_lines(prior, body).unified. Otherwise — when prior_body is absent, or when the prior body equals the current body — returns the empty string.\n"
 tests:
   - name: no_prior_body_returns_empty
-    given: prior_body is None and body is "body"
-    expect: returns empty string ""
+    given: prior_body is absent (None) and body is "body"
+    expect: returns the empty string ""
   - name: unchanged_body_returns_empty
-    given: prior_body is Some("body") equal to body "body"
-    expect: returns empty string ""
+    given: prior_body is present and equal to body ("body", "body")
+    expect: returns the empty string ""
   - name: changed_body_returns_unified_diff
-    given: prior_body is Some("old line") and body is "new line"
-    expect: returns diff_body_lines("old line", "new line").unified, which is non-empty
+    given: prior_body is present and differs from body ("old line", "new line")
+    expect: returns diff_body_lines("old line", "new line").unified, which equals the non-empty unified diff between the two bodies

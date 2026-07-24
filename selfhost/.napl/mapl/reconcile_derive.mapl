@@ -3,14 +3,19 @@ target: rust
 entries:
   - promptLines:
       - 1
-      - 66
+      - 59
     kind: no-op
-    message: No changes made — existing reconcile_derive crate already matches the spec exactly.
-    reasoning: The coding agent reported NO CHANGES. Per its final message the crate already exists as a workspace member (reconcile_derive/Cargo.toml + src/lib.rs) with path dependencies on drift, prompts, and text_diff, and both editable_drifted and build_reconcile_files already implement the specified editability rule, ordering, and diff-selection behavior. All 6 existing tests pass, so no source edits were needed to satisfy the contract.
+    message: No source change — code already satisfies the identical target behavior.
+    reasoning: Changes were "NO CHANGES". Per the agent, the prompt diff removed only prose scaffolding (dependency-setup guidance and a "leave siblings untouched" note), not behavioral requirements. The bullet list of dependency types, the `editable_drifted` spec, and the `build_reconcile_files` spec were all unchanged, and the existing `reconcile_derive` crate already realizes that behavior. `cargo test -p reconcile_derive` reports 6 passed, 0 failed, so no edit was warranted.
   - promptLines:
-      - 56
-      - 58
+      - 27
+      - 30
     kind: note
-    message: The `None`-current fallback to `unified_diff("", "")` is unreachable by construction.
-    reasoning: "The spec both restricts build_reconcile_files to editable files (which always have `current: Some`) and then describes fallback behavior for a `None` current, noting parenthetically that this never happens. This defensive branch is dead code given the editability rule; it is harmless but cannot be exercised by any valid input, so no test can meaningfully cover it."
-    suggestion: Clarify whether the `None`-current handling is intended purely as a defensive default (document it as unreachable) or drop it, since editable files are guaranteed to have `Some` current.
+    message: Removed "add path deps" instruction still implies Cargo.toml path deps must stay.
+    reasoning: The surviving spec still requires using `DriftedFile`, `ReconcileFile`, and `unified_diff` from sibling crates. Code using them cannot compile without the path dependencies in `reconcile_derive/Cargo.toml`. Deleting the prose instruction to add those deps does not delete the requirement; the agent correctly left the manifest untouched. Worth surfacing that the requirement now lives only implicitly in the "use these types" bullets.
+  - promptLines:
+      - 48
+      - 51
+    kind: note
+    message: Fallback branch unified_diff("", current) is unreachable for editable files.
+    reasoning: An editable file always has `current == Some` (line 51 states this), yet the diff-building rule specifies a `None`-current fallback treated as empty string. The dead branch is harmless and matches the spec, but the prompt itself flags the redundancy ("though an editable file always has Some current"). No action needed; recorded so the author knows the parenthetical describes an unreachable path.

@@ -2,14 +2,14 @@ module: gen_attribution_check
 target: rust
 entries:
   - promptLines:
-      - 1
-      - 54
+      - 20
+      - 25
     kind: no-op
-    message: No changes made — existing crate already matches the prompt exactly.
-    reasoning: "Agent reported the prompt diff was empty: gen_attribution_check crate, Cargo.toml, lib.rs, the assert_attribution_sane signature, both exact error messages, and ordering all already present. All 6 tests pass, so no edits were needed. Cannot independently confirm test run from this layer, but the agent claims the target state was already satisfied."
+    message: No changes — diff removed only explanatory prose, existing code already conforms.
+    reasoning: Agent reported NO CHANGES. Diff deleted two prose paragraphs about schemas_attribution being a sibling crate and about adding a path dependency in Cargo.toml. Neither changed behavior. Surviving binding bullet (use public Attribution/AttributionEntry, don't reimplement) plus the assert_attribution_sane spec (both error messages, ordering, all four cases) byte-identical to before. Existing source already has correct path dep and passes 6 tests covering every case. Editing would violate minimal-edit discipline. Zero-change outcome correct for a docs-only diff.
   - promptLines:
-      - 34
-      - 47
+      - 27
+      - 46
     kind: note
-    message: Exact error-message strings and file-substitution format are pinned; verify existing code matches byte-for-byte.
-    reasoning: Prompt demands two verbatim error messages, one with the offending file path wrapped in straight double quotes. Since no changes were made, correctness rests entirely on the pre-existing code already producing these exact strings. Worth a human byte-level check that the empty-diff claim holds against lines 41 and 45-47.
+    message: Spec fully deterministic — both error strings, ordering, and all four cases pinned exactly.
+    reasoning: "assert_attribution_sane is specified exhaustively: exact error messages, quote style, file substitution, first-violation ordering, and the four boundary cases (empty/empty→Ok, nonempty/empty→err1, in-set→Ok, out-of-set→err2). No ambiguity. Confirms nothing new needed to implement."

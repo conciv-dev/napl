@@ -3,14 +3,20 @@ target: rust
 entries:
   - promptLines:
       - 1
-      - 53
+      - 47
     kind: no-op
-    message: No changes — existing crate already implements reconstruct_file_content as specified.
-    reasoning: Agent reported the prompt diff was empty and the code already matches the target; all 5 tests pass. The driftdetect_replay crate, its Cargo.toml path deps on schemas_journal and text_diff, and the reconstruct_file_content replay logic (sort by gen, apply hunks, return Option) were already present and satisfy the contract, so no edits were needed.
+    message: No changes — existing crate already satisfies the prompt; edit was doc-only cleanup.
+    reasoning: 'Changes were "NO CHANGES". Per the coding agent, the prompt edit only deleted one redundant explanatory paragraph about the two path dependencies; every fact it stated survives elsewhere (the schemas_journal/text_diff bullets still mandate the path deps, and the "depend only on generated siblings" clause is preserved in the intro). Function signature, gen-order replay, and None-on-untouched behavior are unchanged, and lib.rs + Cargo.toml already match. Tests: 5 passed, 0 failed. So no source edit was warranted.'
   - promptLines:
-      - 54
-      - 54
+      - 48
+      - 48
     kind: ambiguity
-    message: Stray `</content>` tag at end of prompt body looks like an accidental insertion.
-    reasoning: Line 54 is a lone `</content>` closing tag with no matching opening tag anywhere in the prompt. Reads like leftover markup from an editing/templating step, not a requirement. Harmless here (no code depends on it), but worth removing so it is not mistaken for content.
-    suggestion: Delete line 54 (`</content>`).
+    message: Stray `</content>` tag on line 48 looks like an accidental insertion.
+    reasoning: Line 48 is a lone `</content>` closing tag with no matching opening tag anywhere in the prompt body. It reads like leftover markup from a copy/paste or templating step, not part of the requirement prose. It has no effect on the reconstructed module but should be removed to avoid confusion.
+    suggestion: Delete line 48 (`</content>`).
+  - promptLines:
+      - 42
+      - 47
+    kind: note
+    message: Empty-base insertion semantics rely on text_diff applying a hunk to "".
+    reasoning: The spec says the first patch applies to the empty string (base "" when no content yet). Correctness of the "line one\nline two" example depends on text_diff's apply_hunks handling an empty base as a pure insertion. The agent reported tests pass, so this holds for the current text_diff, but it is an implicit contract between the two crates worth noting.

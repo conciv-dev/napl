@@ -56,14 +56,7 @@ relative to this crate). It exposes a public type `LineRange` with public `start
 and `end` fields (`u32`), a `new(start, end)` constructor, equality, copy, and a
 serde `Deserialize` performing exactly that normalization.
 
-Add a path dependency on that sibling member crate in your `Cargo.toml` (depend
-on the `schemas_line_range` crate by path — it lives at `../schemas_line_range`)
-and use its `LineRange` for the line-range field below. Do **not** reimplement
-line-range parsing here, and do not depend on any hand-written crate — depend
-only on the generated sibling `schemas_line_range` member crate. This sibling
-path dependency is part of the same workspace, not an external crates.io
-dependency, so add it even though the general guidance is to avoid outside
-dependencies.
+Use that generated sibling crate's `LineRange` for the line-range field below — do not reimplement line-range parsing here, and do not depend on any hand-written crate.
 
 ## The types
 

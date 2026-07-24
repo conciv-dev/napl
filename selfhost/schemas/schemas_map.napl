@@ -63,14 +63,7 @@ insertion-ordered string-keyed map — with `new`, `len`, `is_empty`,
 `(&String, &V)` in insertion order), `keys`, and `values`, plus serde
 `Serialize`/`Deserialize` that round-trips as a JSON object preserving key order.
 
-Add a path dependency on that sibling member crate in your `Cargo.toml` (depend
-on the `schemas_ordered_map` crate by path — it lives at `../schemas_ordered_map`)
-and use its `OrderedMap<V>` for every ordered-map field below. Do **not**
-reimplement an ordered map here, and do not depend on any hand-written crate —
-depend only on the generated sibling `schemas_ordered_map` member crate. This
-sibling path dependency is part of the same workspace, not an external crates.io
-dependency, so add it even though the general guidance is to avoid outside
-dependencies.
+Use that generated sibling crate's `OrderedMap<V>` for every ordered-map field below — do not reimplement an ordered map here, and do not depend on any hand-written crate.
 
 ## The types
 

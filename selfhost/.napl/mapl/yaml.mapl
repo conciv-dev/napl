@@ -2,14 +2,15 @@ module: yaml
 target: rust
 entries:
   - promptLines:
-      - 9
-      - 15
+      - 19
+      - 20
     kind: no-op
-    message: No source produced — module already exists and its 18 tests pass.
-    reasoning: "The prompt directs creating a new member crate (yaml/Cargo.toml, yaml/src/lib.rs) and ensuring `cargo test` passes. The coding agent reported an empty diff, claiming the code already matches the prompt and all 18 tests pass. Nothing was written because the requirement was already satisfied by pre-existing source in the workspace.\n"
+    message: Reworded dependency paragraph is semantically identical to prior text; existing code already satisfies it.
+    reasoning: 'Prompt change was prose-only: the old wording told the author to "Add a path dependency on each in your Cargo.toml … read their public fields … do not reimplement them or depend on any hand-written crate." The new line drops the explicit how-to ("Add a path dependency…") but keeps the three operative constraints — read sibling public types/fields, do not reimplement, do not depend on hand-written crates. All three are already met: lib.rs imports and reads the public fields of Attribution/Ir/Ml/MlKind/LineRange, reimplements none, and Cargo.toml carries path deps only on the four generated sibling crates plus serde_json. Correct realization is byte-identical, so no edit warranted.'
   - promptLines:
-      - 1
-      - 7
+      - 19
+      - 19
     kind: note
-    message: Whole spec landed as NO CHANGES — verify the existing crate truly matches this contract.
-    reasoning: The prompt reads as a from-scratch build (value model, scalar heuristics, block-style document rendering, four serializers), yet the compile produced zero edits. If a prior build already implemented this exactly, NO CHANGES is correct; but a NO-CHANGES result for an entire module spec is worth confirming — the passing 18 tests should be checked to actually cover the byte-for-byte block-style and scalar-heuristic requirements (empty map `{}`, single-quote branch, core float/int resolution, `no-op` kind mapping) rather than a subset.
+    message: New wording keeps "read sibling public types" but drops the explicit "add path dependency" step it depends on.
+    reasoning: Reading each sibling crate's public types is impossible without a path dependency in yaml/Cargo.toml, yet the reworded line no longer states that prerequisite outright. Compilation still forces the deps to exist, so behavior is unchanged — but a reader following only the new line could miss that the path deps are mandatory rather than optional.
+    suggestion: Read each generated sibling crate's public types and fields to drive serialization (add a path dependency on each in yaml/Cargo.toml) — do not reimplement any of them here, and do not depend on any hand-written crate.

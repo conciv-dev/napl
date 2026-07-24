@@ -2,20 +2,15 @@ module: schemas_journal
 target: rust
 entries:
   - promptLines:
-      - 15
-      - 16
+      - 18
+      - 28
     kind: no-op
-    message: NO CHANGES — existing code already realizes every prompt clause.
-    reasoning: 'Agent produced an empty diff. It reports the pre-existing schemas_journal crate already satisfies all requirements — serde types with renamed fields (hashBefore/hashAfter/promptHash/promptDiff), #[serde(default)] on files, JournalMode incl. Move with lowercase serialization, two-phase parse with byte-exact "(invalid JSON)" branch and "({reason})" branch, validation, next_gen_number, file_history, file_patch, and path deps on text_diff + blame siblings. Agent states `cargo test -p schemas_journal` passed 14/14. Nothing to compile because the contract was already met.'
+    message: Reworded "Builds on two modules" section is prose-only; existing code already satisfies it.
+    reasoning: "Changes were \"NO CHANGES\". The prompt diff condensed the sibling-crate instruction from \"Add a path dependency on each in your Cargo.toml … use their public API, do not reimplement, no hand-written crate\" to \"Use each generated sibling crate's public API — do not reimplement its types or logic here, and do not depend on any hand-written crate.\" Both demand the same behavior: consume text_diff and blame via public API, no reimplementation, no hand-written-crate dep. Existing Cargo.toml already carries path deps on ../text_diff and ../blame plus serde/serde_json, and lib.rs uses text_diff::unified_diff and blame::BlameSourceEntry. Requirement already met, nothing to edit. Tests pass 14/14.\n"
   - promptLines:
-      - 45
-      - 50
+      - 20
+      - 20
     kind: note
-    message: JournalMode `Move` variant carries an unusually specific semantic that is easy to misimplement.
-    reasoning: The Move variant is described as a "location-heal" — a relocated generated file whose content was unchanged or drifted under a different filename, with the file entry's patch describing the move. This is richer domain semantics than the other three modes and is not exercised by any serde/validation logic in the module (Move behaves identically to other modes at the parse layer). Worth confirming the existing code's Move variant matches this intent, since serialization ("move") is the only observable behavior and the prose semantics can't be verified by the type alone.
-  - promptLines:
-      - 85
-      - 93
-    kind: assumption
-    message: The "({reason})" branch reason text is unpinned; exact serde/validation message is implementation-defined.
-    reasoning: The prompt fixes only the shared prefix and surrounding parentheses for the deserialize/validation failure branch, leaving {reason} as "the deserialize/validation message". The existing code's exact wording for validation rejections (gen<1, empty module/target/path) is therefore an unspecified choice. Assumed the current messages are acceptable since only the prefix and parentheses are load-bearing.
+    message: New wording drops the explicit "add a path dependency" instruction, leaving the dependency mechanism implicit.
+    reasoning: "Old prompt named the path dependency directly; new prompt only says \"use the public API.\" Reaching a generated sibling crate's public API still requires a path dependency, so behavior is unchanged — but the mechanism is now inferred rather than stated. Fine here since the code already had the path deps, but a fresh compile could theoretically pick a different linkage.\n"
+    suggestion: Use each generated sibling crate's public API via a path dependency in this crate's Cargo.toml — do not reimplement its types or logic, and do not depend on any hand-written crate.

@@ -18,12 +18,6 @@ Ensure `cargo test` passes from the workspace root before finishing.
 
 ## Builds on two modules of this workspace
 
-Both are sibling member crates generated into this same workspace. Add a path
-dependency on each in your `Cargo.toml` (they are workspace siblings, not external
-crates.io dependencies, so add them even though the general guidance is to avoid
-outside dependencies), use their public API, and do **not** reimplement their
-logic or depend on any hand-written crate — depend only on the generated siblings.
-
 - **`schemas_journal`** (`../schemas_journal`): exposes the journal serde types.
   You need `JournalEntry` — a public struct with (among others) a public field
   `gen: i64` and a public field `files: Vec<JournalFile>`, where `JournalFile` has

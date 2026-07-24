@@ -407,6 +407,32 @@ prompt drives a passing generation.
 - **Fixpoint run (2026-07-24):** *(empty)* — all 36 modules force-regenerated under
   the opus engine, every one on attempt 1, byte-identical no-ops; stage2 passed the
   full battery (conformance 47/47, equivalence 226/226). No module left stale.
+- **Deps-enforcement slice (2026-07-24):** *(empty)* — the 14 prompt-stale modules
+  (9 prompt-restored + 5 kept-trimmed but never-regenned) all regenerated as clean
+  no-ops (journal gens #93–#106, 0 file patches). No module left stale, no escape-hatch
+  opened; `incremental` regenerated depending on its siblings.
+
+## Deps-enforcement gate — undeclared sibling path-dep fails gen (2026-07-24)
+
+A gen-time gate now rejects a generated module whose `Cargo.toml` `[dependencies]`
+declares a **path dependency on a sibling member crate** that is not listed in the
+prompt's `deps:` frontmatter (crates.io deps unpoliced; declared-but-unused allowed;
+grouped/toolchain-owned crates skipped). Pure verdict = `cargo_path_dep_crates` +
+`check_declared_deps` (a future `.napl` module); only the `Cargo.toml` read is I/O
+shell. Conformance grew **47 → 48** (`81-gen-undeclared-dep`).
+
+The paired hardening is a **prose-trim policy** applied to the 15 "Builds on…" prompt
+sections: **WHERE a dep exists** (the "add a path dep on `../foo`, it's a workspace
+sibling" enumeration) is redundant with `deps:` + the generated task text and was
+trimmed; **HOW to relate to it** ("use its public API — do not reimplement its types
+or logic") is spec and must stay. The campaign's honest finding: the first trim was
+too aggressive on `incremental` and deleted the whole imperative, so its regen (gen
+#93) **reimplemented** `LineRange`/`AttributionEntry` and dropped both sibling deps —
+compiling and passing tests, a silent loss of composition. It was **reverted** to the
+pre-#93 accepted state (surgically preserving the shared journal/map `#87–#92`
+entries), the imperative was restored in compact form in the 9 prompts that had lost
+it, and all 14 stale modules regenerated as no-ops. Detail: `selfhost.md` →
+"Deps-enforcement slice".
 
 ## Layout note (RESOLVED in slice 2 — Cargo workspace)
 
@@ -427,5 +453,3 @@ locked, not drift-checked. Every module — `body_lines` included — is now a u
 member crate at `.napl/src/rust/<module>/`, and the in-gen `cargo test` runs at the
 workspace root, covering **all 13 members** in one gate. The shared equivalence
 harness (`selfhost/equivalence/`) remains the behavioral cross-module gate.
-</content>
-</invoke>

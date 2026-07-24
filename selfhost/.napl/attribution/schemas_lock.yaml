@@ -8,82 +8,122 @@ entries:
     lines:
       - 3
       - 3
-    note: brings in serde derive traits
+    note: imports serde traits
   - promptLines:
-      - 25
-      - 27
-    file: schemas_lock/src/lib.rs
-    lines:
-      - 138
-      - 138
-    note: calls extensions crate default_prompt_aliases
-  - promptLines:
-      - 38
-      - 41
+      - 31
+      - 34
     file: schemas_lock/src/lib.rs
     lines:
       - 11
       - 16
-    note: Backend enum, kebab-case, copy/eq derives
+    note: Backend enum with two variants
   - promptLines:
-      - 42
-      - 43
+      - 32
+      - 33
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 12
+      - 12
+    note: kebab-case serde rename
+  - promptLines:
+      - 34
+      - 34
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 11
+      - 11
+    note: derives Eq and Copy
+  - promptLines:
+      - 35
+      - 36
     file: schemas_lock/src/lib.rs
     lines:
       - 18
       - 24
-    note: AgentPreset enum, lowercase serde
+    note: AgentPreset enum three variants
   - promptLines:
-      - 44
-      - 48
+      - 36
+      - 36
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 19
+      - 19
+    note: lowercase serde rename
+  - promptLines:
+      - 37
+      - 41
     file: schemas_lock/src/lib.rs
     lines:
       - 26
       - 32
-    note: AgentConfig struct, deny_unknown_fields, optional command
+    note: AgentConfig struct
   - promptLines:
-      - 45
-      - 46
+      - 37
+      - 37
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 29
+      - 29
+    note: public preset field
+  - promptLines:
+      - 38
+      - 39
     file: schemas_lock/src/lib.rs
     lines:
       - 30
       - 31
-    note: command skipped when None, defaults None
+    note: optional command, skipped/default None
   - promptLines:
-      - 46
-      - 48
+      - 39
+      - 41
     file: schemas_lock/src/lib.rs
     lines:
       - 27
       - 27
     note: deny unknown fields
   - promptLines:
-      - 49
-      - 50
+      - 42
+      - 46
     file: schemas_lock/src/lib.rs
     lines:
       - 34
-      - 36
-    note: HlLock struct with model String
+      - 43
+    note: HlLock struct
   - promptLines:
-      - 50
-      - 50
+      - 42
+      - 42
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 36
+      - 36
+    note: public model string
+  - promptLines:
+      - 43
+      - 43
     file: schemas_lock/src/lib.rs
     lines:
       - 37
       - 38
-    note: backend defaults to claude-cli when absent
+    note: backend defaults to claude-cli
   - promptLines:
-      - 51
-      - 52
+      - 43
+      - 43
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 45
+      - 47
+    note: default backend value fn
+  - promptLines:
+      - 44
+      - 45
     file: schemas_lock/src/lib.rs
     lines:
       - 39
       - 40
-    note: promptAliases camelCase key, omitted when absent
+    note: prompt_aliases camelCase key, omitted when absent
   - promptLines:
-      - 53
-      - 53
+      - 46
+      - 46
     file: schemas_lock/src/lib.rs
     lines:
       - 41
@@ -94,140 +134,140 @@ entries:
       - 50
     file: schemas_lock/src/lib.rs
     lines:
-      - 45
-      - 47
-    note: default_backend_value helper
-  - promptLines:
-      - 57
-      - 57
-    file: schemas_lock/src/lib.rs
-    lines:
       - 7
       - 7
     note: DEFAULT_MODEL constant
   - promptLines:
-      - 58
-      - 58
+      - 51
+      - 51
     file: schemas_lock/src/lib.rs
     lines:
       - 8
       - 8
     note: DEFAULT_BACKEND constant
   - promptLines:
-      - 59
-      - 59
+      - 52
+      - 52
     file: schemas_lock/src/lib.rs
     lines:
       - 9
       - 9
     note: DEFAULT_AGENT_PRESET constant
   - promptLines:
-      - 60
-      - 60
+      - 53
+      - 53
     file: schemas_lock/src/lib.rs
     lines:
       - 49
       - 54
-    note: "default_agent_config: claude preset, no command"
+    note: "default_agent_config: claude, no command"
   - promptLines:
-      - 64
-      - 67
+      - 57
+      - 60
     file: schemas_lock/src/lib.rs
     lines:
       - 113
       - 114
-    note: parse_lock deserializes JSON, error not panic
+    note: parse_lock deserialize with error mapping
   - promptLines:
-      - 69
-      - 69
+      - 62
+      - 62
     file: schemas_lock/src/lib.rs
     lines:
       - 116
       - 118
-    note: empty model is validation error
+    note: empty model validation error
   - promptLines:
-      - 70
-      - 70
+      - 63
+      - 63
     file: schemas_lock/src/lib.rs
     lines:
       - 120
       - 126
-    note: validate each prompt alias if present
+    note: validate each prompt alias
   - promptLines:
-      - 71
-      - 71
+      - 64
+      - 64
     file: schemas_lock/src/lib.rs
     lines:
       - 128
       - 130
     note: validate agent if present
   - promptLines:
-      - 64
-      - 64
+      - 68
+      - 75
     file: schemas_lock/src/lib.rs
     lines:
-      - 132
-      - 132
-    note: returns validated lock
+      - 83
+      - 95
+    note: is_valid_prompt_alias
   - promptLines:
-      - 77
-      - 77
+      - 70
+      - 70
     file: schemas_lock/src/lib.rs
     lines:
       - 84
       - 86
-    note: alias must start with dot
+    note: must start with dot
   - promptLines:
-      - 78
-      - 79
+      - 71
+      - 72
     file: schemas_lock/src/lib.rs
     lines:
       - 87
       - 90
     note: 1 or 2 code points after dot
   - promptLines:
-      - 80
-      - 82
+      - 73
+      - 75
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 91
+      - 93
+    note: reject ZWJ anywhere
+  - promptLines:
+      - 73
+      - 73
     file: schemas_lock/src/lib.rs
     lines:
       - 5
       - 5
     note: ZWJ constant U+200D
   - promptLines:
-      - 80
       - 82
+      - 87
     file: schemas_lock/src/lib.rs
     lines:
-      - 91
-      - 93
-    note: reject aliases containing ZWJ
+      - 97
+      - 111
+    note: validate_agent_config by preset
   - promptLines:
-      - 91
-      - 92
+      - 84
+      - 85
     file: schemas_lock/src/lib.rs
     lines:
       - 99
       - 102
-    note: custom preset requires non-empty command
+    note: custom requires non-empty command
   - promptLines:
-      - 93
-      - 94
+      - 86
+      - 87
     file: schemas_lock/src/lib.rs
     lines:
       - 103
       - 109
     note: claude/codex must not carry command
   - promptLines:
-      - 100
-      - 102
+      - 93
+      - 95
     file: schemas_lock/src/lib.rs
     lines:
       - 135
       - 139
     note: resolve_prompt_aliases override or curated default
   - promptLines:
-      - 103
-      - 104
+      - 96
+      - 97
     file: schemas_lock/src/lib.rs
     lines:
       - 141

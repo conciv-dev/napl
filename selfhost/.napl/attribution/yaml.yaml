@@ -2,314 +2,314 @@ module: yaml
 target: rust
 entries:
   - promptLines:
-      - 43
-      - 45
+      - 40
+      - 42
     file: yaml/src/lib.rs
     lines:
       - 9
       - 18
-    note: public Yaml enum with all variants
+    note: public Yaml enum with variants
   - promptLines:
-      - 51
-      - 51
+      - 48
+      - 48
     file: yaml/src/lib.rs
     lines:
       - 114
       - 116
-    note: empty string renders as two double quotes
+    note: empty string renders as two quotes
   - promptLines:
-      - 52
-      - 53
+      - 49
+      - 50
     file: yaml/src/lib.rs
     lines:
       - 117
       - 119
     note: plain-representable renders verbatim
   - promptLines:
-      - 54
-      - 56
+      - 51
+      - 53
     file: yaml/src/lib.rs
     lines:
       - 120
       - 122
-    note: single-quote branch doubling apostrophes
+    note: single-quote branch when has quote, no apostrophe
   - promptLines:
-      - 57
-      - 58
+      - 54
+      - 55
     file: yaml/src/lib.rs
     lines:
       - 123
-      - 136
-    note: double-quote branch escaping specials
+      - 135
+    note: double-quoted with escapes
   - promptLines:
-      - 60
-      - 60
-    file: yaml/src/lib.rs
-    lines:
-      - 85
-      - 111
-    note: is_plain_representable predicate
-  - promptLines:
-      - 62
-      - 62
+      - 59
+      - 59
     file: yaml/src/lib.rs
     lines:
       - 86
       - 90
-    note: reject leading/trailing whitespace
+    note: first/last char not whitespace
   - promptLines:
-      - 63
-      - 64
-    file: yaml/src/lib.rs
-    lines:
-      - 91
-      - 93
-    note: reject newline or control char
-  - promptLines:
-      - 63
-      - 64
+      - 60
+      - 61
     file: yaml/src/lib.rs
     lines:
       - 23
       - 25
-    note: control-char definition
+    note: control char definition
   - promptLines:
-      - 65
-      - 66
+      - 60
+      - 61
     file: yaml/src/lib.rs
     lines:
-      - 94
-      - 96
-    note: reject leading indicator characters
+      - 91
+      - 93
+    note: reject newline and control chars
   - promptLines:
-      - 65
-      - 66
+      - 62
+      - 63
     file: yaml/src/lib.rs
     lines:
       - 20
       - 21
-    note: leading indicator character set
+    note: leading indicator char set
   - promptLines:
-      - 67
-      - 69
+      - 62
+      - 63
+    file: yaml/src/lib.rs
+    lines:
+      - 94
+      - 96
+    note: reject leading indicator
+  - promptLines:
+      - 64
+      - 66
     file: yaml/src/lib.rs
     lines:
       - 97
       - 103
-    note: "handle -,?,: with space second char"
+    note: dash/question/colon needs non-space second char
   - promptLines:
-      - 70
-      - 71
+      - 67
+      - 68
     file: yaml/src/lib.rs
     lines:
       - 104
       - 106
-    note: "reject ': ', trailing ':', ' #'"
+    note: reject colon-space, trailing colon, space-hash
   - promptLines:
-      - 72
-      - 72
+      - 69
+      - 69
     file: yaml/src/lib.rs
     lines:
       - 107
       - 109
-    note: reject non-string resolving values
+    note: reject if resolves as non-string
   - promptLines:
-      - 74
-      - 76
+      - 71
+      - 73
     file: yaml/src/lib.rs
     lines:
       - 77
       - 83
-    note: resolves_as_non_string literals plus int/float
+    note: resolves_as_non_string literals check
   - promptLines:
-      - 78
-      - 80
-    file: yaml/src/lib.rs
-    lines:
-      - 31
-      - 40
-    note: core integer parsing hex/oct/dec
-  - promptLines:
-      - 81
-      - 87
-    file: yaml/src/lib.rs
-    lines:
-      - 42
       - 75
-    note: core float parsing inf/nan/mantissa/exponent
-  - promptLines:
-      - 78
-      - 82
+      - 75
     file: yaml/src/lib.rs
     lines:
       - 27
       - 29
     note: strip single leading sign
   - promptLines:
-      - 95
-      - 96
+      - 75
+      - 77
+    file: yaml/src/lib.rs
+    lines:
+      - 31
+      - 40
+    note: "core integer: hex/octal/decimal"
+  - promptLines:
+      - 78
+      - 79
+    file: yaml/src/lib.rs
+    lines:
+      - 42
+      - 49
+    note: core float inf/nan bodies
+  - promptLines:
+      - 80
+      - 82
+    file: yaml/src/lib.rs
+    lines:
+      - 50
+      - 65
+    note: split on e/E, mantissa with dot and digits
+  - promptLines:
+      - 83
+      - 84
+    file: yaml/src/lib.rs
+    lines:
+      - 67
+      - 72
+    note: exponent must be digits with optional sign
+  - promptLines:
+      - 92
+      - 93
     file: yaml/src/lib.rs
     lines:
       - 138
       - 147
     note: non-string scalar rendering
   - promptLines:
-      - 100
-      - 102
+      - 97
+      - 99
     file: yaml/src/lib.rs
     lines:
       - 204
       - 215
-    note: to_yaml_document joins lines with trailing newline
+    note: to_yaml_document joins lines, trailing newline
   - promptLines:
+      - 101
       - 104
-      - 107
     file: yaml/src/lib.rs
     lines:
       - 205
       - 211
-    note: root map/seq empty vs block vs scalar
+    note: empty/non-empty map/seq/scalar dispatch
   - promptLines:
-      - 109
-      - 111
+      - 106
+      - 107
     file: yaml/src/lib.rs
     lines:
       - 157
       - 161
-    note: emit_map iterating entries with key scalar
+    note: emit_map over entries, key rendered
   - promptLines:
-      - 112
-      - 113
+      - 109
+      - 110
     file: yaml/src/lib.rs
     lines:
       - 163
       - 166
-    note: map value non-empty sequence block
+    note: "non-empty seq value: key then block indent+2"
   - promptLines:
-      - 114
-      - 115
+      - 111
+      - 112
     file: yaml/src/lib.rs
     lines:
       - 167
       - 170
-    note: map value non-empty map block
+    note: "non-empty map value: key then block indent+2"
   - promptLines:
-      - 116
-      - 118
+      - 113
+      - 115
     file: yaml/src/lib.rs
     lines:
       - 171
       - 173
-    note: map value inline scalar line
+    note: scalar/inline value on one line
   - promptLines:
-      - 116
-      - 118
+      - 113
+      - 115
     file: yaml/src/lib.rs
     lines:
       - 149
       - 155
-    note: inline_scalar empty seq/map else scalar
+    note: inline_scalar for empty seq/map else scalar
   - promptLines:
-      - 120
-      - 121
+      - 117
+      - 117
     file: yaml/src/lib.rs
     lines:
       - 179
-      - 183
-    note: emit_seq iterating items
+      - 182
+    note: emit_seq over items
   - promptLines:
+      - 119
       - 122
-      - 125
     file: yaml/src/lib.rs
     lines:
       - 184
       - 191
-    note: seq item non-empty map turned into '- ' first line
+    note: "non-empty map item: strip first line indent into dash"
   - promptLines:
-      - 126
-      - 127
+      - 123
+      - 124
     file: yaml/src/lib.rs
     lines:
       - 192
       - 195
-    note: seq item non-empty sequence block
+    note: "non-empty seq item: dash then inner block"
   - promptLines:
-      - 128
-      - 129
+      - 125
+      - 126
     file: yaml/src/lib.rs
     lines:
       - 196
       - 198
-    note: seq item inline scalar dash line
+    note: scalar item as dash line
   - promptLines:
-      - 131
-      - 131
+      - 128
+      - 128
     file: yaml/src/lib.rs
     lines:
       - 158
       - 158
-    note: indent spaces for map
+    note: indent as spaces
   - promptLines:
-      - 131
-      - 131
-    file: yaml/src/lib.rs
-    lines:
-      - 180
-      - 180
-    note: indent spaces for seq
-  - promptLines:
-      - 135
-      - 136
+      - 132
+      - 133
     file: yaml/src/lib.rs
     lines:
       - 217
       - 219
-    note: line_range builds Seq of two Ints
+    note: line_range builds Seq of Ints
   - promptLines:
-      - 138
-      - 143
+      - 135
+      - 140
     file: yaml/src/lib.rs
     lines:
       - 230
       - 249
-    note: attribution_to_yaml document map
+    note: attribution_to_yaml map with ordered keys
   - promptLines:
-      - 159
-      - 164
+      - 156
+      - 161
     file: yaml/src/lib.rs
     lines:
       - 251
       - 274
     note: ml_to_yaml with optional suggestion
   - promptLines:
-      - 161
-      - 162
+      - 158
+      - 159
     file: yaml/src/lib.rs
     lines:
       - 221
       - 228
-    note: ml kind string mapping
+    note: MlKind to kind string mapping
   - promptLines:
       - 163
-      - 163
-    file: yaml/src/lib.rs
-    lines:
-      - 262
-      - 264
-    note: push suggestion only when Some
-  - promptLines:
-      - 166
-      - 171
+      - 168
     file: yaml/src/lib.rs
     lines:
       - 290
       - 332
-    note: ir_to_yaml document map
+    note: ir_to_yaml map with ordered keys
   - promptLines:
+      - 170
       - 173
-      - 176
     file: yaml/src/lib.rs
     lines:
       - 276
       - 288
-    note: json_to_yaml converts serde_json Value
+    note: json_to_yaml conversion
+  - promptLines:
+      - 171
+      - 172
+    file: yaml/src/lib.rs
+    lines:
+      - 280
+      - 283
+    note: number exact i64 else float

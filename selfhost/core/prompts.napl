@@ -44,10 +44,7 @@ crate in a subdirectory named `prompts/`: `prompts/Cargo.toml` (package name
 
 ## Builds on four modules of this workspace
 
-Each is a sibling member crate generated into this same workspace. Add a path
-dependency on each in your `Cargo.toml` (workspace siblings, not external
-crates.io dependencies), use their public API, and do **not** reimplement them or
-depend on any hand-written crate.
+Use each generated sibling crate's public API — do not reimplement its types or logic here, and do not depend on any hand-written crate.
 
 - **`schemas_frontmatter`** (`../schemas_frontmatter`): `Frontmatter` with public
   fields `module: String`, `deps: Vec<String>`, `targets: Vec<String>`, `tests`.

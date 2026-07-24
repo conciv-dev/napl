@@ -2,22 +2,16 @@ module: blame_render
 target: rust
 entries:
   - promptLines:
+      - 18
+      - 29
+    kind: no-op
+    message: No source change — prompt edit dropped only redundant prose; dep wiring still mandated and already realized.
+    reasoning: 'Changes were "NO CHANGES". The prompt diff removed two non-normative paragraphs that merely explained adding path dependencies in Cargo.toml and told the author to leave sibling crates untouched. Every normative requirement survived byte-identical: these bullets still mandate using blame::BlameLine, blame::first_prompt_diff_line, schemas_journal::JournalEntry and JournalMode, which forces the crate to keep its path deps on ../blame and ../schemas_journal — removing them would break compilation. Existing source already satisfies the current prompt (cargo test -p blame_render: 10 passed). Editing would move code away from the prompt, so a no-op regen is correct.
+'
+  - promptLines:
       - 11
       - 16
-    kind: no-op
-    message: Crate said to be "created" but agent made NO CHANGES — module already present and matching spec.
-    reasoning: 'The prompt reads as a creation task ("Create this module as its own member crate ... blame_render/Cargo.toml and blame_render/src/lib.rs"), yet the agent produced NO CHANGES, reporting that the code already exists, matches every function spec exactly, and all 10 tests pass. Nothing was written because the requirement was already satisfied by pre-existing source. Worth confirming the crate truly exists at blame_render/ and that `cargo test` from the workspace root passes, since a creation prompt yielding zero diff is surprising.
-'
-  - promptLines:
-      - 84
-      - 88
     kind: note
-    message: prompt_diff emptiness uses trimmed check here, but why_line relies on blame::first_prompt_diff_line's own empty result.
-    reasoning: 'render_blame_gen decides "initial generation" by trimming surrounding whitespace on entry.prompt_diff (line 84), while why_line (lines 57-59) decides emptiness from the return of blame::first_prompt_diff_line without an explicit trim. The two "empty" notions are defined by different mechanisms; they likely agree but are not the same test. Since NO CHANGES were made this was not exercised — flagging so the author confirms both paths behave as intended.
-'
-  - promptLines:
-      - 86
-      - 88
-    kind: assumption
-    message: Trailing newline in a non-empty prompt_diff yields a final two-space line — confirm this is intended output.
-    reasoning: Line 87-88 states that splitting prompt_diff on "\n" and prefixing each piece with two spaces means "a trailing newline in the diff yields a final `  ` two-space line." This produces a dangling two-space line in the rendered block. The prompt asserts it explicitly, so it was treated as intended rather than an oversight, but it is unusual output worth a second look.
+    message: Cargo.toml path deps on sibling crates are implied, never stated in the surviving prompt body.
+    reasoning: "The prose that explicitly instructed adding path dependencies was removed in this prompt revision. The requirement now survives only implicitly: to call the sibling crates' public items (lines 18-29) the crate must depend on them. A future edit that trims the module bullets could silently drop the only remaining signal that these path deps must exist. Worth surfacing so the dependency requirement is made explicit if the bullets ever change.\n"
+    suggestion: 'Add one line under "Where this code lives": "blame_render/Cargo.toml must declare path dependencies on the sibling crates ../blame and ../schemas_journal."'

@@ -2,22 +2,14 @@ module: blame
 target: rust
 entries:
   - promptLines:
-      - 1
-      - 100
+      - 35
+      - 35
     kind: no-op
-    message: No changes made — existing blame/ crate already matches the full prompt.
-    reasoning: 'The changes were "NO CHANGES". Per the coding agent, the prompt diff was empty (no behavior change requested) and the existing blame/ member crate already implements the module exactly as specified — the public types, apply_patch_to_blame, blame_file, blame_line_at, and first_prompt_diff_line — with all 16 tests passing. Nothing needed to be edited because the source already satisfied every requirement.
-'
+    message: New negative constraint already satisfied by existing code; nothing to change.
+    reasoning: 'Line 35 adds a constraint — use the generated text_diff sibling crate for all hunk parsing, line splitting, and diffing, and depend on no hand-written crate. Existing blame/Cargo.toml depends only on text_diff = { path = "../text_diff" }, and blame/src/lib.rs already imports parse_hunks/to_lines/HunkKind from text_diff and uses text_diff::unified_diff in tests. No hunk-parsing, line-splitting, or diff logic is reimplemented in the module. Constraint is a fixpoint; editing anything would only violate minimal-edit discipline. cargo test -p blame: 16 passed.'
   - promptLines:
-      - 64
-      - 67
+      - 35
+      - 35
     kind: note
-    message: old_start - 1 with 'saturating at 0' guards a hunk header reporting old_start 0.
-    reasoning: 'The copy-up loop condition `old_idx < hunk.old_start - 1` is computed on usize; the parenthetical "saturating at 0" is what keeps a hunk with old_start == 0 from underflowing to usize::MAX. This is a subtle but load-bearing detail; worth confirming the implementation actually uses saturating_sub rather than plain subtraction.
-'
-  - promptLines:
-      - 96
-      - 99
-    kind: note
-    message: Marker-stripping via "everything after the first character" assumes each body line has a 1-char marker.
-    reasoning: first_prompt_diff_line takes text as everything after the first character of each post-header line. An empty body line (length 0) has no first character to strip; the spec relies on trimmed-empty lines being skipped afterward, so behavior on a zero-length line depends on the implementation slicing safely rather than panicking. Flagging as a correctness edge to confirm, not a defect.
+    message: Constraint is verifiable but not enforced by any test — regression could slip.
+    reasoning: The "do not reimplement / do not depend on any hand-written crate" rule is a structural constraint with no automated check. Current code complies, but nothing prevents a future regeneration from adding a hand-written dependency or inlining diff logic. Worth surfacing that compliance rests on review, not on a test gate.

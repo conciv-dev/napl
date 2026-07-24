@@ -3,66 +3,63 @@ deps:
   - schemas_ordered_map
 types:
   - name: PromptTargetRecord
-    description: 'Per-target record inside a prompt entry. Fields: prompt_hash_at_gen (optional string, JSON key "promptHashAtGen", omitted when absent/None, defaults None); files (list of string paths, defaults empty); unattributed (optional bool, JSON key "unattributed", omitted when None, defaults None). Serializable, cloneable, equatable.
-'
+    description: "Per-target record inside a prompt entry. Fields: prompt_hash_at_gen (optional string, JSON key promptHashAtGen, omitted when absent, defaults to none); files (list of strings, defaults to empty); unattributed (optional boolean, omitted when absent, defaults to none). Serializable, equatable, cloneable.\n"
   - name: PromptRecord
-    description: 'A prompt entry keyed by its relative path. Fields: module (string); prompt_hash (string, JSON key "promptHash"); declared_targets (list of string, JSON key "declaredTargets", defaults empty); targets (insertion-ordered map of target name to PromptTargetRecord, defaults empty). Serializable, cloneable, equatable.
-'
+    description: "A prompt entry. Fields: module (string); prompt_hash (string, JSON key promptHash); declared_targets (list of strings, JSON key declaredTargets, defaults to empty); targets (insertion-ordered map of string to PromptTargetRecord, defaults to empty). Serializable, equatable, cloneable.\n"
   - name: FileRecord
-    description: "A file entry keyed by its path recording reverse attribution. Fields: target (string); hash (string); prompts (list of prompt relative-keys, defaults empty). Serializable, cloneable, equatable.\n"
+    description: "A file entry recording reverse attribution. Fields: target (string); hash (string); prompts (list of strings, defaults to empty). Serializable, equatable, cloneable.\n"
   - name: NaplMap
-    description: "The whole v2 map. Fields: version (unsigned int, defaults 2 when absent); prompts (insertion-ordered map of prompt key to PromptRecord, defaults empty); files (insertion-ordered map of file path to FileRecord, defaults empty). Round-trips through JSON preserving key order.\n"
+    description: "The whole v2 map. Fields: version (unsigned integer, defaults to 2); prompts (insertion-ordered map of string to PromptRecord, defaults to empty); files (insertion-ordered map of string to FileRecord, defaults to empty). Serializes as JSON preserving key order. Serializable, equatable, cloneable.\n"
   - name: ModuleFile
-    description: "Plain data pair of a module-owned file: target (string) and file_path (string). Cloneable, equatable; no serialization.\n"
+    description: "Plain data pair. Fields: target (string), file_path (string). Equatable, cloneable; no serde.\n"
   - name: FileInput
-    description: "Plain input describing a generated file: file_path (string) and hash (string). Cloneable, equatable; no serialization.\n"
+    description: "Plain input describing a generated file. Fields: file_path (string), hash (string). Equatable, cloneable; no serde.\n"
   - name: AttributionInput
-    description: "Plain input for a successful attribution: rel (prompt key), module, prompt_hash, target, declared_targets (list of string), and files (list of FileInput). Cloneable, equatable.\n"
+    description: "Plain input for a successful generation. Fields: rel (string), module (string), prompt_hash (string), target (string), declared_targets (list of strings), files (list of FileInput). Equatable, cloneable; no serde.\n"
   - name: UnattributedInput
-    description: "Plain input for an unattributed generation: rel (prompt key), module, prompt_hash, target, declared_targets (list of string), and files (list of string paths). Cloneable, equatable.\n"
+    description: "Plain input for an unattributable generation. Fields: rel (string), module (string), prompt_hash (string), target (string), declared_targets (list of strings), files (list of strings). Equatable, cloneable; no serde.\n"
 functions:
   - name: empty_map
     signature: empty_map() -> NaplMap
     behavior: "Returns a fresh map with version 2, empty prompts, and empty files.\n"
   - name: parse_map
     signature: "parse_map(raw: string) -> Result<NaplMap, error>"
-    behavior: 'Deserializes a JSON string into a NaplMap. If version is not 2, returns a validation error "unsupported map version". Corrupt JSON returns a deserialization error. Never panics.
+    behavior: 'Deserializes a JSON string into a NaplMap. Corrupt JSON yields a deserialization error. If the parsed version is not 2, yields a validation error with message "unsupported map version". Absent fields fall back to their defaults. Never panics.
 '
   - name: map_to_json
     signature: "map_to_json(map: &NaplMap) -> string"
-    behavior: "Pretty-prints the map as JSON and appends exactly one trailing newline. Postcondition: the output re-parses to a map equal to the input.\n"
+    behavior: "Pretty-prints the map as JSON and appends a single trailing newline. Round-trips: the result re-parses via parse_map into a map equal to the input.\n"
   - name: prompts_for_module
-    signature: "prompts_for_module(map: &NaplMap, module: string) -> [string]"
-    behavior: "Returns the relative prompt keys whose record module equals the given module, in insertion order.\n"
+    signature: "prompts_for_module(map: &NaplMap, module: string) -> list<string>"
+    behavior: "Returns the relative prompt keys whose record's module equals the given module, in insertion order.\n"
   - name: has_module
     signature: "has_module(map: &NaplMap, module: string) -> bool"
-    behavior: "Returns true iff at least one prompt record has module equal to the given module.\n"
+    behavior: "Returns whether any prompt record belongs to the given module.\n"
   - name: declared_targets_for_module
-    signature: "declared_targets_for_module(map: &NaplMap, module: string) -> [string]"
+    signature: "declared_targets_for_module(map: &NaplMap, module: string) -> list<string>"
     behavior: "Returns the union of declared_targets across the module's prompt records, deduplicated, in first-seen order.\n"
   - name: files_for_module
-    signature: "files_for_module(map: &NaplMap, module: string) -> [ModuleFile]"
-    behavior: "For each of the module's prompts, for each (target, target_record) in insertion order, yields each file_path in target_record.files as a ModuleFile, deduplicated by the (target, file_path) pair, in first-seen order.\n"
+    signature: "files_for_module(map: &NaplMap, module: string) -> list<ModuleFile>"
+    behavior: "For each prompt of the module, for each (target, target_record) pair in insertion order, emits each file path in target_record.files as a ModuleFile, deduplicated by the (target, file_path) pair, in first-seen order.\n"
   - name: is_prompt_gen_stale
     signature: "is_prompt_gen_stale(record: Option<&PromptRecord>, target: string, prompt_hash: string, force: bool) -> bool"
-    behavior: "Returns true if force; else true if record is absent; else true if the record has no sub-record for target; else true if that sub-record's unattributed is Some(true); else true if its prompt_hash_at_gen is absent or differs from prompt_hash; otherwise false.\n"
+    behavior: "Returns true if force; else true if record is absent; else true if the record has no sub-record for target; else true if that sub-record's unattributed is true; else true if its prompt_hash_at_gen is absent or differs from prompt_hash; otherwise false.\n"
   - name: record_attribution
-    signature: "record_attribution(map: &mut NaplMap, input: &AttributionInput)"
-    behavior: "Records a successful generation, mutating map in place. For each prior file of the input.target sub-record not present in the new file paths, detaches it. Sets the input.target sub-record to prompt_hash_at_gen = Some(prompt_hash), files = new paths in order, unattributed = None, preserving other targets. Stores the prompt record under input.rel with module, prompt_hash, declared_targets, and updated targets. For each new file, ensures a FileRecord at its path with target = input.target, hash = that file's hash, and prompts including input.rel (appended once if absent, preserving existing prompts for shared files).\n"
+    signature: "record_attribution(map: &mut NaplMap, input: &AttributionInput) -> ()"
+    behavior: "Mutates map in place to record a successful generation. Detaches every prior file of the input.target sub-record that is not among the new file paths (detach: remove input.rel from the file's prompts, dropping the file entry when no prompts remain). Sets the input.target sub-record to prompt_hash_at_gen = some(input.prompt_hash), files = new file paths in order, unattributed = none, keeping other targets. Stores the prompt record under input.rel with module, prompt_hash, declared_targets, and the updated targets. For each new file, ensures a FileRecord under its path with target = input.target, hash = that file's hash, and prompts containing input.rel (appended once if absent, preserving existing prompts).\n"
   - name: record_unattributed
-    signature: "record_unattributed(map: &mut NaplMap, input: &UnattributedInput)"
-    behavior: "Records a generation that produced files but could not be attributed, mutating map in place. Detaches every prior file of the input.target sub-record. Sets that sub-record to prompt_hash_at_gen = None, files = input.files, unattributed = Some(true), preserving other targets, and stores the prompt record under input.rel. Does not create FileRecord entries. (Detaching removes rel from a file's prompts, dropping the file entry when no prompts remain.)\n"
+    signature: "record_unattributed(map: &mut NaplMap, input: &UnattributedInput) -> ()"
+    behavior: "Mutates map in place to record an unattributable generation. Detaches every prior file of the input.target sub-record. Sets that sub-record to prompt_hash_at_gen = none, files = input.files, unattributed = some(true), keeping other targets, and stores the prompt record under input.rel with module, prompt_hash, declared_targets, and the updated targets. Does not create any FileRecord entries.\n"
 tests:
   - name: empty_map_has_version_2_and_no_entries
     given: A map produced by empty_map.
-    expect: version equals 2; prompts is empty; files is empty.
+    expect: version equals 2, prompts is empty, and files is empty.
   - name: map_round_trips_through_json
-    given: 'An empty map with one attribution recorded (rel "a.napl", module "m", prompt_hash "h1", target "rust", one file "src/a.rs"/"fh1"), then serialized via map_to_json.
-'
-    expect: The JSON ends with a newline and re-parses to a map equal to the original.
+    given: "An empty map with one attribution recorded (prompt a.napl, module m, target rust, one file src/a.rs).\n"
+    expect: "map_to_json output ends with a newline and parse_map of that output equals the original map.\n"
   - name: parse_map_rejects_unsupported_version
     given: JSON with version 3 and empty prompts/files.
-    expect: parse_map returns an error equal to "unsupported map version".
+    expect: parse_map errors with message "unsupported map version".
   - name: parse_map_rejects_corrupt_json
     given: The malformed string "{not json".
     expect: parse_map returns an error.
@@ -70,23 +67,18 @@ tests:
     given: JSON containing only version 2.
     expect: The parsed map has empty prompts and empty files.
   - name: prompt_target_record_omits_none_fields_in_json
-    given: A PromptTargetRecord with prompt_hash_at_gen None, files ["a.rs"], unattributed None.
-    expect: JSON is exactly {"files":["a.rs"]} (None fields omitted).
+    given: 'A PromptTargetRecord with prompt_hash_at_gen none, files ["a.rs"], unattributed none.
+'
+    expect: Serialized JSON is exactly {"files":["a.rs"]}.
   - name: prompts_for_module_returns_matching_keys_in_order
-    given: 'Three attributions recorded: "a.napl"/module "m1", "b.napl"/module "m2", "c.napl"/module "m1".
-'
-    expect: 'prompts_for_module("m1") is ["a.napl", "c.napl"] in order; has_module("m1") is true; has_module("nope") is false.
-'
+    given: "Attributions for a.napl (module m1), b.napl (module m2), c.napl (module m1) in that order.\n"
+    expect: "prompts_for_module(m1) equals [a.napl, c.napl]; has_module(m1) is true; has_module(nope) is false.\n"
   - name: declared_targets_for_module_deduplicates_in_first_seen_order
-    given: 'Two attributions for module "m" with declared_targets ["rust","ts"] and ["ts","go"].
-'
-    expect: declared_targets_for_module("m") is ["rust", "ts", "go"].
+    given: "Module m with prompt a.napl declaring [rust, ts] and prompt b.napl declaring [ts, go].\n"
+    expect: declared_targets_for_module(m) equals [rust, ts, go].
   - name: files_for_module_dedupes_by_target_and_path
-    given: 'Attribution "a.napl" for module "m" target "rust" with files src/a.rs and src/b.rs, then attribution "b.napl" for module "m" target "rust" with file src/a.rs.
-'
-    expect: 'files_for_module("m") is [{rust, src/a.rs}, {rust, src/b.rs}], deduped by (target, file_path).
-'
+    given: "Module m with prompt a.napl (target rust) generating src/a.rs and src/b.rs, and prompt b.napl (target rust) generating src/a.rs again.\n"
+    expect: "files_for_module(m) equals [(rust, src/a.rs), (rust, src/b.rs)], deduplicated by target and path.\n"
   - name: is_prompt_gen_stale_covers_all_cases
-    given: 'Absent record with force true/false; a record whose "rust" sub-record has prompt_hash_at_gen "h1"; and a record whose "rust" sub-record is marked unattributed Some(true).
-'
-    expect: Stale when force; stale when record absent; not stale for matching target and hash; stale on hash mismatch; stale for a missing target; stale when the sub-record is unattributed.
+    given: "Absent record with force true or false; a record with target rust, prompt_hash_at_gen h1, unattributed none; and a record with target rust, prompt_hash_at_gen none, unattributed some(true).\n"
+    expect: Absent record is stale regardless of force; matching hash h1 is not stale; differing hash h2 is stale; missing target ts is stale; the unattributed target is stale.

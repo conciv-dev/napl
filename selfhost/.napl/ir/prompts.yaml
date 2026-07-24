@@ -6,19 +6,58 @@ deps:
   - targets
 types:
   - name: DepSummary
-    description: "Structural record pairing a dependency module name with a short prose summary of it, used to give context about sibling modules when building a full-generation task prompt. Fields: module (string), summary (string). Equality/clone/debug supported.\n"
+    description: "Value object naming another module and a one-line summary of it. Fields: module (string), summary (string). Comparable and cloneable."
   - name: IncrementalTaskInput
-    description: "Input bundle for building an incremental-update task prompt. Fields: module (string, the module name), diff (string, unified diff of the prompt body change), intersecting_entries (list of AttributionEntry identifying code regions that implement the changed prompt lines), owned_files (list of file paths owned by the module).\n"
+    description: "Inputs for an incremental update task. Fields: module (string), diff (string, unified diff of the prompt change), intersecting_entries (list of AttributionEntry describing owned code regions overlapping the changed prompt lines), owned_files (list of file path strings owned by the module)."
   - name: ReconcileFile
-    description: "Pairing of a source file path with a diff of hand-edits observed in it (baseline vs current), used when reconciling hand edits back into the prompt. Fields: file (string), diff (string). Equality/clone/debug supported.\n"
+    description: "One file's recorded-to-current source diff for reconciliation. Fields: file (string path), diff (string). Comparable and cloneable."
 functions:
   - name: last_chars
-    signature: "last_chars(text: String, count: UnsignedInt) -> String"
-    behavior: "Returns the last `count` Unicode characters (scalar values, not bytes) of `text`. If `text` has `count` or fewer characters, returns `text` unchanged in full. Pure, no I/O.\n"
+    signature: "last_chars(text: string, count: integer) -> string"
+    behavior: "Returns the last count characters of text measured in Unicode scalar values, not bytes. If text has count or fewer characters, returns text unchanged. Postcondition: result character count is min(count, len(text))."
   - name: build_agent_task
-    signature: "build_agent_task(adapter: TargetAdapter, frontmatter: Frontmatter, body: String, deps: List<DepSummary>, failure: Optional<String>) -> String"
-    behavior: "Assembles the full-generation coding-agent task prompt as newline-joined lines. Always includes: an intro naming frontmatter.module as the module being implemented as real runnable source code; a directive to write/edit files and scaffold the project; a statement that the prompt is the durable source of truth; a blank line; \"Target idiom guidance:\" followed by adapter.idiom_guidance verbatim; a blank line; \"Module: {frontmatter.module}\". If frontmatter.deps is non-empty, appends a line \"Declared dependencies: \" followed by the deps joined with \", \". If the `deps` parameter (DepSummary list) is non-empty, appends a blank line, a header line \"Other modules in this project (for context, do not reimplement them):\", then one \"- {module}: {summary}\" line per DepSummary, in input order. Then always: a blank line; \"Specification to implement (implement exactly this behavior):\"; a line of three double-quote characters; `body` trimmed of surrounding whitespace; another line of three double-quote characters; a blank line; \"Requirements:\"; a line requiring `adapter.test_command_label` to pass from the directory; a line requiring a real test suite covering the described behavior; a line requiring only functions/hooks, named exports, and no dead code; a line forbidding edits under node_modules in favor of the package manager. If `failure` is present, appends the failure block: a blank line, a line stating a previous attempt FAILED its tests and instructing to fix code/tests, a line about making the suite pass with test output following, a line of three backticks, the failure text trimmed and truncated to the last 6000 characters via last_chars, and a closing line of three backticks. Pure function; returns a single String with lines joined by \"\\n\". No trailing newline beyond what's implied by the joined lines.\n"
+    signature: "build_agent_task(adapter: TargetAdapter, frontmatter: Frontmatter, body: string, deps: list<DepSummary>, failure: optional<string>) -> string"
+    behavior: "Assembles the full-generation coding-agent prompt as newline-joined lines. Includes the module name, the adapter's idiom guidance, and the trimmed body between triple-quote fences. Emits a 'Declared dependencies' line only when frontmatter.deps is non-empty. Emits an 'Other modules in this project' block listing each DepSummary only when deps is non-empty. Uses the adapter's test_command_label in the requirements. When failure is present, appends the failure block whose captured output is the failure text trimmed then capped to its last 6000 characters. Pure: no I/O."
   - name: build_incremental_task
-    signature: "build_incremental_task(adapter: TargetAdapter, frontmatter: Frontmatter, body: String, input: IncrementalTaskInput, failure: Optional<String>) -> String"
-    behavior: 'Assembles the incremental-update coding-agent task prompt as newline-joined lines. Always includes: an intro naming frontmatter.module as the module receiving an INCREMENTAL update; statements that the source already exists and passes tests, that the prompt (durable source of truth) has changed, and that edits must be minimal and not restructure untouched code or reformat unrelated files; a blank line; "Target idiom guidance:" followed by adapter.idiom_guidance; a blank line; "Unified diff of the prompt change (old vs new prompt body):"; a fenced-diff opening line ("'
-tests: []
+    signature: "build_incremental_task(adapter: TargetAdapter, frontmatter: Frontmatter, body: string, input: IncrementalTaskInput, failure: optional<string>) -> string"
+    behavior: "Assembles the incremental-update coding-agent prompt as newline-joined lines. Includes the module name, idiom guidance, a fenced diff block containing input.diff trimmed, the trimmed body between triple-quote fences, and requirements using the adapter's test_command_label. Emits an owned-code-regions block only when input.intersecting_entries is non-empty, one line per entry formatted '- {file} lines {start}-{end}' with an optional ' — {note}' suffix when the entry note is non-empty. Emits an owned-files block only when input.owned_files is non-empty. When failure is present, appends the same failure block as build_agent_task. Pure: no I/O."
+  - name: build_reconcile_task
+    signature: "build_reconcile_task(module: string, prompt_file: string, body: string, files: list<ReconcileFile>) -> string"
+    behavior: "Assembles the reconcile prompt as newline-joined lines instructing amendment of the named prompt file only. Names the module and prompt_file, includes the trimmed body between triple-quote fences, and for each ReconcileFile emits a '=== FILE: {file} ===' header followed by a fenced diff block containing the file diff trimmed. Ends with a fixed requirements block. Pure: no I/O."
+  - name: build_change_required_retry
+    signature: "build_change_required_retry(base_task: string) -> string"
+    behavior: "Returns base_task followed by an empty line and a fixed CRITICAL escalation paragraph stating that a prior attempt made no source changes though the prompt requires one, and demanding real edits or a clear justification. Pure: no I/O."
+  - name: build_ir_derivation_user
+    signature: "build_ir_derivation_user(module: string, body: string, files: string) -> string"
+    behavior: "Returns the IR-derivation user prompt: the module name, the trimmed body between triple-quote fences, and the files string appended verbatim (not trimmed) after an 'Implementing source files:' heading."
+  - name: build_attribution_user
+    signature: "build_attribution_user(module: string, numbered_body: string, files: string) -> string"
+    behavior: "Returns the attribution user prompt: the module name, the numbered_body verbatim under a '1-based line numbers' heading, and the files verbatim under an 'Implementing source files (1-based line numbers):' heading."
+  - name: build_attribution_repair
+    signature: "build_attribution_repair(previous_output: string, error_message: string) -> string"
+    behavior: Returns a repair prompt rejecting the previous response. The quoted previous response is previous_output trimmed, then capped to its first 4000 characters, then trimmed again. Includes a fixed instruction demanding a single fenced yaml code block, echoes the trimmed-and-capped previous response between fences, and appends the validation error_message verbatim.
+  - name: build_ml_derivation_user
+    signature: "build_ml_derivation_user(module: string, numbered_body: string, change_summary: string, agent_output: string) -> string"
+    behavior: "Returns the machine-layer derivation user prompt: the module name, the numbered_body, the change_summary (or 'NO CHANGES'), and the agent's final message between triple-quote fences. The final message is agent_output trimmed then capped to its last 4000 characters via last_chars; when that result is empty the literal '(no output captured)' is used instead."
+tests:
+  - name: last_chars_returns_whole_text_when_shorter_than_count
+    given: Text no longer than count characters, e.g. last_chars("hello", 10) and last_chars("hello", 5).
+    expect: Returns the whole text "hello" unchanged.
+  - name: last_chars_returns_suffix_by_character_not_byte
+    given: Multi-byte Unicode text, e.g. last_chars("héllo world", 5) and last_chars("日本語のテキスト", 3).
+    expect: 'Returns the last count characters by scalar value: "world" and "キスト".'
+  - name: build_agent_task_minimal_shape
+    given: A rust adapter, frontmatter module "auth/session" with no deps, body "Do the thing.\n", empty deps, and no failure.
+    expect: "Produces exactly the minimal task: intro lines, idiom guidance, 'Module: auth/session', the trimmed body fenced by triple quotes, and the requirements block using \"cargo test\", with no dependency or failure sections."
+  - name: build_agent_task_includes_declared_deps_and_context_deps
+    given: 'Frontmatter with deps ["dep-a", "dep-b"] and DepSummary list [dep-a: "does a", dep-b: "does b"].'
+    expect: "Output contains 'Declared dependencies: dep-a, dep-b', the 'Other modules in this project (for context, do not reimplement them):' heading, and lines '- dep-a: does a' and '- dep-b: does b'."
+  - name: build_agent_task_appends_failure_block
+    given: A failure argument "  boom\nstack trace  ".
+    expect: Output ends with the failure block whose fenced captured output is the trimmed failure text "boom\nstack trace".
+  - name: build_agent_task_truncates_long_failure_to_6000_chars
+    given: A failure string of 7000 'x' characters.
+    expect: Output contains a fenced block of exactly 6000 'x' characters and does not contain 6001 consecutive 'x' characters.
+  - name: build_incremental_task_minimal_shape
+    given: A rust adapter, frontmatter module "m", body "New body.", input with diff "-old\n+new" and no intersecting entries or owned files, and no failure.
+    expect: Output starts with 'You are a coding agent making an INCREMENTAL update to the existing module "m"'.

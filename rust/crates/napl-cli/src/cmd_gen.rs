@@ -306,9 +306,67 @@ fn lock_attributed(attributed: &[Attributed]) -> CliResult<()> {
     Ok(())
 }
 
+struct DepsGate {
+    module: String,
+    target: String,
+    cargo_toml_path: std::path::PathBuf,
+    declared: Vec<String>,
+}
+
+fn cargo_path_dep_crates(cargo_toml: &str) -> Vec<String> {
+    let mut deps: Vec<String> = Vec::new();
+    let mut in_dependencies = false;
+    for line in cargo_toml.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with('[') {
+            in_dependencies = trimmed == "[dependencies]";
+            continue;
+        }
+        if !in_dependencies || trimmed.is_empty() || trimmed.starts_with('#') {
+            continue;
+        }
+        let Some((name, value)) = trimmed.split_once('=') else {
+            continue;
+        };
+        let value = value.trim_start();
+        if value.starts_with('{') && value.contains("path") {
+            let name = name.trim();
+            if !name.is_empty() {
+                deps.push(name.to_string());
+            }
+        }
+    }
+    deps.sort();
+    deps.dedup();
+    deps
+}
+
+fn check_declared_deps(
+    module: &str,
+    target: &str,
+    path_dep_crates: &[String],
+    declared: &[String],
+) -> Result<(), String> {
+    for dep in path_dep_crates {
+        if !declared.iter().any(|d| d == dep) {
+            return Err(format!(
+                "gen failed for module '{module}' ({target}): the generated Cargo.toml declares a path dependency on the sibling crate '{dep}', which is not declared in the prompt's `deps:` frontmatter — declare it in `deps:` or remove the dependency."
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn deps_gate_error(gate: &DepsGate) -> Option<String> {
+    let cargo_toml = std::fs::read_to_string(&gate.cargo_toml_path).unwrap_or_default();
+    let path_deps = cargo_path_dep_crates(&cargo_toml);
+    check_declared_deps(&gate.module, &gate.target, &path_deps, &gate.declared).err()
+}
+
 struct AttemptResult {
     ok: bool,
     output: String,
+    gate_error: Option<String>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -321,9 +379,11 @@ fn run_attempts(
     plan: &TaskPlan,
     engine: &AgentEngine,
     crate_note: Option<&str>,
+    deps_gate: Option<&DepsGate>,
 ) -> CliResult<AttemptResult> {
     let mut failure: Option<String> = None;
     let mut output = String::new();
+    let mut gate_error: Option<String> = None;
     for attempt in 1..=MAX_ATTEMPTS {
         println!("  attempt {attempt}/{MAX_ATTEMPTS}: running coding agent");
         let mut task = build_task(adapter, frontmatter, body, plan, failure.as_deref());
@@ -335,13 +395,32 @@ fn run_attempts(
         let cmd = adapter.test_command(&target_dir.to_string_lossy());
         let result = run_command(&cmd.command, &cmd.args, target_dir);
         if result.code == 0 {
+            if let Some(gate) = deps_gate {
+                if let Some(err) = deps_gate_error(gate) {
+                    println!(
+                        "  attempt {attempt}/{MAX_ATTEMPTS}: undeclared sibling dependency in Cargo.toml"
+                    );
+                    gate_error = Some(err.clone());
+                    failure = Some(err);
+                    continue;
+                }
+            }
             println!("  attempt {attempt}/{MAX_ATTEMPTS}: tests passed");
-            return Ok(AttemptResult { ok: true, output });
+            return Ok(AttemptResult {
+                ok: true,
+                output,
+                gate_error: None,
+            });
         }
+        gate_error = None;
         failure = Some(result.output);
         println!("  attempt {attempt}/{MAX_ATTEMPTS}: tests failed");
     }
-    Ok(AttemptResult { ok: false, output })
+    Ok(AttemptResult {
+        ok: false,
+        output,
+        gate_error,
+    })
 }
 
 fn retry_for_change(
@@ -737,6 +816,21 @@ fn run_gen_locked(
             )
         });
 
+        let deps_gate = if adapter.workspace_layout && declared_crate.is_none() {
+            let declared: Vec<String> = crate_deps
+                .get(&member_dir)
+                .map(|s| s.iter().cloned().collect())
+                .unwrap_or_default();
+            Some(DepsGate {
+                module: module.clone(),
+                target: target.to_string(),
+                cargo_toml_path: target_dir.join(&member_dir).join("Cargo.toml"),
+                declared,
+            })
+        } else {
+            None
+        };
+
         let before = snapshot_hashes(&target_dir, &filter)?;
         let prior_contents = snapshot_contents(&target_dir, &filter)?;
         let attempt = run_attempts(
@@ -748,8 +842,12 @@ fn run_gen_locked(
             &builder.plan,
             engine,
             crate_note.as_deref(),
+            deps_gate.as_ref(),
         )?;
         if !attempt.ok {
+            if let Some(message) = attempt.gate_error {
+                return Err(CliError::new(message));
+            }
             return Err(CliError::new(format!(
                 "code generation failed for module '{module}' ({target}) after {MAX_ATTEMPTS} attempts."
             )));
@@ -1340,6 +1438,27 @@ mod tests {
         assert!(!can_incremental(false, false, false, true));
         assert!(!can_incremental(false, true, true, true));
         assert!(!can_incremental(false, true, false, false));
+    }
+
+    #[test]
+    fn cargo_path_dep_crates_extracts_only_path_deps_in_dependencies() {
+        let manifest = "[package]\nname = \"blame\"\n\n[dependencies]\ntext_diff = { path = \"../text_diff\" }\nserde = { version = \"1\", features = [\"derive\"] }\nsha2 = \"0.10\"\n\n[dev-dependencies]\nhelper = { path = \"../helper\" }\n";
+        assert_eq!(
+            cargo_path_dep_crates(manifest),
+            vec!["text_diff".to_string()]
+        );
+    }
+
+    #[test]
+    fn check_declared_deps_accepts_declared_and_rejects_undeclared() {
+        assert_eq!(
+            check_declared_deps("blame", "rust", &["text_diff".to_string()], &["text_diff".to_string()]),
+            Ok(())
+        );
+        assert_eq!(
+            check_declared_deps("adder", "rust", &["helper".to_string()], &[]),
+            Err("gen failed for module 'adder' (rust): the generated Cargo.toml declares a path dependency on the sibling crate 'helper', which is not declared in the prompt's `deps:` frontmatter — declare it in `deps:` or remove the dependency.".to_string())
+        );
     }
 
     #[test]

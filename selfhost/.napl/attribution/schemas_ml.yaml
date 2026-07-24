@@ -2,226 +2,210 @@ module: schemas_ml
 target: rust
 entries:
   - promptLines:
-      - 3
-      - 4
+      - 6
+      - 6
     file: schemas_ml/src/lib.rs
     lines:
       - 4
       - 4
     note: brings in serde Deserialize
   - promptLines:
-      - 19
-      - 27
+      - 25
+      - 29
     file: schemas_ml/src/lib.rs
     lines:
       - 3
       - 3
     note: imports LineRange from sibling crate
   - promptLines:
-      - 42
-      - 45
+      - 35
+      - 38
     file: schemas_ml/src/lib.rs
     lines:
       - 6
       - 13
-    note: MlKind enum, copy/eq, kebab-case
+    note: MlKind enum, kebab-case, copy/eq/deserialize
   - promptLines:
-      - 44
-      - 45
+      - 37
+      - 38
     file: schemas_ml/src/lib.rs
     lines:
       - 7
       - 7
-    note: kebab-case rename gives no-op spelling
+    note: kebab-case rename incl no-op spelling
   - promptLines:
-      - 44
+      - 39
       - 45
-    file: schemas_ml/src/lib.rs
-    lines:
-      - 12
-      - 12
-    note: NoOp variant
-  - promptLines:
-      - 46
-      - 52
     file: schemas_ml/src/lib.rs
     lines:
       - 19
       - 29
-    note: MlEntry struct, clone/eq deserialize
+    note: MlEntry struct, clone/eq/deserialize
   - promptLines:
-      - 48
-      - 48
+      - 41
+      - 41
     file: schemas_ml/src/lib.rs
     lines:
       - 21
       - 22
-    note: prompt_lines renamed promptLines, LineRange type
+    note: prompt_lines with promptLines JSON key
   - promptLines:
-      - 49
-      - 49
+      - 42
+      - 42
     file: schemas_ml/src/lib.rs
     lines:
       - 23
       - 23
     note: kind field
   - promptLines:
-      - 50
-      - 50
+      - 43
+      - 43
     file: schemas_ml/src/lib.rs
     lines:
       - 24
       - 24
     note: message field
   - promptLines:
-      - 51
-      - 51
+      - 44
+      - 44
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 25
+      - 26
+    note: reasoning defaults to empty string
+  - promptLines:
+      - 44
+      - 44
     file: schemas_ml/src/lib.rs
     lines:
       - 15
       - 17
     note: default_reasoning returns empty string
   - promptLines:
-      - 51
-      - 51
-    file: schemas_ml/src/lib.rs
-    lines:
-      - 25
-      - 26
-    note: reasoning defaults to empty
-  - promptLines:
-      - 52
-      - 52
+      - 45
+      - 45
     file: schemas_ml/src/lib.rs
     lines:
       - 27
       - 28
-    note: suggestion Option defaults None
+    note: suggestion defaults to None
   - promptLines:
-      - 53
-      - 57
+      - 46
+      - 50
     file: schemas_ml/src/lib.rs
     lines:
       - 31
       - 37
     note: Ml document struct
   - promptLines:
-      - 55
-      - 55
+      - 48
+      - 48
     file: schemas_ml/src/lib.rs
     lines:
       - 33
       - 33
     note: module field
   - promptLines:
-      - 56
-      - 56
+      - 49
+      - 49
     file: schemas_ml/src/lib.rs
     lines:
       - 34
       - 34
     note: target field
   - promptLines:
-      - 57
-      - 57
+      - 50
+      - 50
     file: schemas_ml/src/lib.rs
     lines:
       - 35
       - 36
-    note: entries default empty vec
+    note: entries defaults to empty vec
   - promptLines:
-      - 61
-      - 62
+      - 54
+      - 60
     file: schemas_ml/src/lib.rs
     lines:
       - 60
-      - 61
-    note: validate_ml deserializes into Ml
+      - 76
+    note: validate_ml function
   - promptLines:
-      - 62
-      - 63
+      - 54
+      - 58
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 61
+      - 61
+    note: deserialize into Ml, error on failure
+  - promptLines:
+      - 55
+      - 55
     file: schemas_ml/src/lib.rs
     lines:
       - 63
       - 65
-    note: module must not be empty
+    note: reject empty module
   - promptLines:
-      - 62
-      - 63
+      - 55
+      - 55
     file: schemas_ml/src/lib.rs
     lines:
       - 66
       - 68
-    note: target must not be empty
+    note: reject empty target
   - promptLines:
-      - 63
-      - 63
+      - 56
+      - 56
     file: schemas_ml/src/lib.rs
     lines:
       - 69
       - 73
-    note: every entry message not empty
+    note: reject empty entry message
   - promptLines:
-      - 64
-      - 65
-    file: schemas_ml/src/lib.rs
-    lines:
-      - 61
-      - 61
-    note: structural invalid maps to parse error
-  - promptLines:
-      - 65
-      - 65
-    file: schemas_ml/src/lib.rs
-    lines:
-      - 39
       - 58
-    note: MlError type, rejection not panic
+      - 58
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 40
+      - 58
+    note: MlError type for rejection, not panic
   - promptLines:
-      - 68
-      - 68
+      - 61
+      - 64
     file: schemas_ml/src/lib.rs
     lines:
       - 78
-      - 78
-    note: parse_ml_entries signature
+      - 93
+    note: parse_ml_entries function
   - promptLines:
-      - 69
-      - 69
+      - 62
+      - 62
     file: schemas_ml/src/lib.rs
     lines:
       - 79
       - 81
     note: non-array returns empty list
   - promptLines:
-      - 70
-      - 70
+      - 63
+      - 63
     file: schemas_ml/src/lib.rs
     lines:
       - 83
       - 84
-    note: deserialize array of entries
+    note: deserialize as list of entries
   - promptLines:
-      - 70
-      - 71
+      - 63
+      - 64
     file: schemas_ml/src/lib.rs
     lines:
       - 86
       - 90
-    note: validate each entry message non-empty
+    note: validate each non-empty message
   - promptLines:
-      - 75
-      - 77
+      - 68
+      - 70
     file: schemas_ml/src/lib.rs
     lines:
       - 95
       - 100
-    note: return entries covering body_line in order
-  - promptLines:
-      - 76
-      - 77
-    file: schemas_ml/src/lib.rs
-    lines:
-      - 98
-      - 98
-    note: inclusive range coverage filter
+    note: ml_entries_at_body_line filters covering ranges in order

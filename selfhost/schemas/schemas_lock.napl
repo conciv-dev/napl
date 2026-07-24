@@ -85,14 +85,7 @@ directory (so `../extensions` relative to this crate). It exposes a public
 function `default_prompt_aliases() -> Vec<String>` returning the curated default
 list of prompt-alias strings.
 
-Add a path dependency on that sibling member crate in your `Cargo.toml`
-(depend on the `extensions` crate by path — it lives one directory up and over,
-at `../extensions`) and call its `default_prompt_aliases()` for the curated
-default below. Do **not** reimplement the curated alias list here, and do not
-depend on any hand-written crate — depend only on the generated sibling
-`extensions` member crate. This sibling path dependency is part of the same
-workspace, not an external crates.io dependency, so add it even though the
-general guidance is to avoid outside dependencies.
+Call that generated sibling crate's `default_prompt_aliases()` for the curated default below — do not reimplement the alias list here, and do not depend on any hand-written crate.
 
 ## The value types
 

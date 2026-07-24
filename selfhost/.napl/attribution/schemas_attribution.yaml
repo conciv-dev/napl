@@ -3,6 +3,14 @@ target: rust
 entries:
   - promptLines:
       - 3
+      - 4
+    file: schemas_attribution/src/lib.rs
+    lines:
+      - 10
+      - 26
+    note: serde types for attribution document
+  - promptLines:
+      - 5
       - 6
     file: schemas_attribution/src/lib.rs
     lines:
@@ -10,194 +18,194 @@ entries:
       - 4
     note: brings in serde Deserialize
   - promptLines:
-      - 19
-      - 28
+      - 25
+      - 27
     file: schemas_attribution/src/lib.rs
     lines:
       - 3
       - 3
-    note: imports LineRange from sibling crate
+    note: imports sibling LineRange type
   - promptLines:
-      - 30
-      - 34
-    file: schemas_attribution/src/lib.rs
-    lines:
-      - 3
-      - 3
-    note: uses schemas_line_range path-dep type
-  - promptLines:
-      - 43
-      - 44
+      - 36
+      - 37
     file: schemas_attribution/src/lib.rs
     lines:
       - 10
       - 11
-    note: AttributionEntry struct, derives eq/clone/deser
+    note: AttributionEntry derives Clone/Eq/Deserialize
   - promptLines:
-      - 45
-      - 45
+      - 38
+      - 38
     file: schemas_attribution/src/lib.rs
     lines:
       - 12
       - 13
-    note: prompt_lines renamed to promptLines
+    note: prompt_lines renamed promptLines
   - promptLines:
-      - 46
-      - 46
+      - 39
+      - 39
     file: schemas_attribution/src/lib.rs
     lines:
       - 14
       - 14
-    note: "file: String field"
+    note: file field
   - promptLines:
-      - 47
-      - 47
+      - 40
+      - 40
     file: schemas_attribution/src/lib.rs
     lines:
       - 15
       - 15
-    note: "lines: LineRange field"
+    note: lines LineRange field
   - promptLines:
-      - 48
-      - 48
+      - 41
+      - 41
     file: schemas_attribution/src/lib.rs
     lines:
       - 6
       - 8
-    note: default_note returns empty string
+    note: default note is empty string
   - promptLines:
-      - 48
-      - 48
+      - 41
+      - 41
     file: schemas_attribution/src/lib.rs
     lines:
       - 16
       - 17
-    note: note defaults via default_note
+    note: note defaults when absent
   - promptLines:
-      - 49
-      - 50
+      - 42
+      - 43
     file: schemas_attribution/src/lib.rs
     lines:
       - 20
       - 21
-    note: Attribution struct, derives eq/clone/deser
+    note: Attribution derives Clone/Eq/Deserialize
   - promptLines:
-      - 51
-      - 51
+      - 44
+      - 44
     file: schemas_attribution/src/lib.rs
     lines:
       - 22
       - 22
-    note: "module: String field"
+    note: module field
   - promptLines:
-      - 52
-      - 52
+      - 44
+      - 44
     file: schemas_attribution/src/lib.rs
     lines:
       - 23
       - 23
-    note: "target: String field"
+    note: target field
   - promptLines:
-      - 53
-      - 53
+      - 46
+      - 46
     file: schemas_attribution/src/lib.rs
     lines:
       - 24
       - 25
-    note: entries defaults to empty vec
+    note: entries default to empty
   - promptLines:
-      - 57
-      - 57
+      - 55
+      - 56
+    file: schemas_attribution/src/lib.rs
+    lines:
+      - 28
+      - 47
+    note: error enum, rejection not panic
+  - promptLines:
+      - 50
+      - 50
     file: schemas_attribution/src/lib.rs
     lines:
       - 49
       - 49
     note: validate_attribution signature
   - promptLines:
-      - 58
-      - 58
+      - 51
+      - 51
     file: schemas_attribution/src/lib.rs
     lines:
       - 50
       - 51
     note: deserialize value into Attribution
   - promptLines:
-      - 59
-      - 59
+      - 51
+      - 52
     file: schemas_attribution/src/lib.rs
     lines:
       - 53
       - 55
-    note: reject empty module
+    note: module must not be empty
   - promptLines:
-      - 59
-      - 59
+      - 51
+      - 52
     file: schemas_attribution/src/lib.rs
     lines:
       - 56
       - 58
-    note: reject empty target
+    note: target must not be empty
   - promptLines:
-      - 59
-      - 60
+      - 52
+      - 55
     file: schemas_attribution/src/lib.rs
     lines:
       - 59
       - 63
-    note: reject entry with empty file
+    note: every entry file not empty
   - promptLines:
-      - 61
-      - 61
+      - 65
+      - 65
     file: schemas_attribution/src/lib.rs
     lines:
-      - 51
-      - 51
-    note: malformed value is parse error
+      - 65
+      - 65
+    note: returns validated attribution
   - promptLines:
-      - 63
-      - 63
-    file: schemas_attribution/src/lib.rs
-    lines:
-      - 28
-      - 47
-    note: AttributionError enum + Display, error not panic
-  - promptLines:
-      - 64
-      - 64
+      - 57
+      - 57
     file: schemas_attribution/src/lib.rs
     lines:
       - 68
       - 70
     note: parse_attribution_entries signature
   - promptLines:
-      - 65
-      - 65
+      - 58
+      - 58
     file: schemas_attribution/src/lib.rs
     lines:
       - 71
       - 73
     note: non-array returns empty list
   - promptLines:
-      - 66
-      - 66
+      - 59
+      - 59
     file: schemas_attribution/src/lib.rs
     lines:
       - 75
-      - 82
-    note: deserialize list, validate each file
+      - 76
+    note: deserialize list of entries
   - promptLines:
-      - 67
-      - 68
+      - 59
+      - 61
     file: schemas_attribution/src/lib.rs
     lines:
-      - 76
-      - 76
-    note: malformed list is parse error
-  - promptLines:
-      - 76
       - 78
+      - 82
+    note: validate each entry non-empty file
+  - promptLines:
+      - 69
+      - 69
     file: schemas_attribution/src/lib.rs
     lines:
       - 87
-      - 98
-    note: entries_at_body_line filters by range containment
+      - 90
+    note: entries_at_body_line signature
+  - promptLines:
+      - 70
+      - 71
+    file: schemas_attribution/src/lib.rs
+    lines:
+      - 91
+      - 97
+    note: filter entries containing body_line in order

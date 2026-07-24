@@ -60,14 +60,7 @@ generated as a sibling member crate in the `schemas_line_range/` directory (so
 `new(start, end)` constructor, equality, copy, and a serde `Deserialize` that
 performs exactly the normalization above.
 
-Add a path dependency on that sibling member crate in your `Cargo.toml` (depend
-on the `schemas_line_range` crate by path — it lives at `../schemas_line_range`)
-and use its `LineRange` for every line-range field below. Do **not** reimplement
-line-range parsing here, and do not depend on any hand-written crate — depend
-only on the generated sibling `schemas_line_range` member crate. This sibling
-path dependency is part of the same workspace, not an external crates.io
-dependency, so add it even though the general guidance is to avoid outside
-dependencies.
+Use that generated sibling crate's `LineRange` for every line range below — do not reimplement line-range parsing here, and do not depend on any hand-written crate.
 
 ## The types
 

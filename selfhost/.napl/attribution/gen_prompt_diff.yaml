@@ -2,58 +2,58 @@ module: gen_prompt_diff
 target: rust
 entries:
   - promptLines:
-      - 31
-      - 31
-    file: gen_prompt_diff/src/lib.rs
-    lines:
-      - 3
-      - 3
-    note: "compute_prompt_diff signature: Option<&str> prior, &str body → String"
-  - promptLines:
-      - 23
+      - 24
       - 24
     file: gen_prompt_diff/src/lib.rs
     lines:
+      - 3
+      - 3
+    note: "compute_prompt_diff signature: Option<&str> prior, &str body, returns String"
+  - promptLines:
+      - 19
+      - 20
+    file: gen_prompt_diff/src/lib.rs
+    lines:
       - 1
       - 1
-    note: imports diff_body_lines from incremental sibling crate
+    note: imports diff_body_lines from incremental crate
+  - promptLines:
+      - 29
+      - 31
+    file: gen_prompt_diff/src/lib.rs
+    lines:
+      - 5
+      - 5
+    note: Some(prior) differing from body returns unified diff field
+  - promptLines:
+      - 32
+      - 33
+    file: gen_prompt_diff/src/lib.rs
+    lines:
+      - 6
+      - 6
+    note: None or unchanged body returns empty string
+  - promptLines:
+      - 4
+      - 4
+    file: gen_prompt_diff/src/lib.rs
+    lines:
+      - 4
+      - 7
+    note: pure match with no I/O
+  - promptLines:
+      - 35
+      - 35
+    file: gen_prompt_diff/src/lib.rs
+    lines:
+      - 14
+      - 22
+    note: "tests: None and unchanged body both return empty"
   - promptLines:
       - 36
-      - 38
+      - 36
     file: gen_prompt_diff/src/lib.rs
     lines:
-      - 5
-      - 5
-    note: Some(prior) and prior != body → return diff_body_lines(prior, body).unified
-  - promptLines:
-      - 39
-      - 40
-    file: gen_prompt_diff/src/lib.rs
-    lines:
-      - 6
-      - 6
-    note: None or unchanged body → empty string
-  - promptLines:
-      - 42
-      - 42
-    file: gen_prompt_diff/src/lib.rs
-    lines:
-      - 15
-      - 17
-    note: "test: (None, body) → empty"
-  - promptLines:
-      - 42
-      - 42
-    file: gen_prompt_diff/src/lib.rs
-    lines:
-      - 20
-      - 22
-    note: "test: (Some(body), body) unchanged → empty"
-  - promptLines:
-      - 43
-      - 43
-    file: gen_prompt_diff/src/lib.rs
-    lines:
-      - 25
+      - 24
       - 30
-    note: "test: changed body → unified diff"
+    note: "test: changed body returns unified diff"

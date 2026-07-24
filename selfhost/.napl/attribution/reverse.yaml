@@ -2,184 +2,168 @@ module: reverse
 target: rust
 entries:
   - promptLines:
-      - 45
-      - 46
+      - 36
+      - 37
     file: reverse/src/lib.rs
     lines:
       - 7
       - 7
     note: GENERATED_PREFIX constant
   - promptLines:
-      - 47
-      - 48
+      - 38
+      - 39
     file: reverse/src/lib.rs
     lines:
       - 8
       - 8
     note: DRIFT_LENS_PREFIX constant
   - promptLines:
-      - 52
-      - 53
+      - 43
+      - 44
     file: reverse/src/lib.rs
     lines:
       - 10
       - 14
     note: GeneratedPathInfo struct with target and target_rel_path
   - promptLines:
-      - 55
-      - 55
+      - 46
+      - 47
     file: reverse/src/lib.rs
     lines:
       - 16
-      - 16
-    note: parse_generated_path signature
-  - promptLines:
-      - 56
-      - 56
-    file: reverse/src/lib.rs
-    lines:
-      - 17
-      - 17
-    note: normalize backslashes to forward slashes
-  - promptLines:
-      - 56
-      - 58
-    file: reverse/src/lib.rs
-    lines:
       - 18
-      - 18
-    note: strip GENERATED_PREFIX, None if absent
+    note: normalize backslashes and strip prefix
   - promptLines:
-      - 56
-      - 58
+      - 48
+      - 48
     file: reverse/src/lib.rs
     lines:
       - 19
-      - 19
-    note: find first slash, None if none
-  - promptLines:
-      - 57
-      - 57
-    file: reverse/src/lib.rs
-    lines:
-      - 20
       - 21
-    note: target before slash, rest is target_rel_path
+    note: split at first slash into target and rel path
   - promptLines:
-      - 58
-      - 59
+      - 49
+      - 50
     file: reverse/src/lib.rs
     lines:
       - 22
       - 24
-    note: None if target or rel path empty
+    note: return None if target or rel path empty
   - promptLines:
-      - 55
-      - 59
+      - 46
+      - 50
     file: reverse/src/lib.rs
     lines:
       - 25
       - 28
     note: build GeneratedPathInfo result
   - promptLines:
-      - 66
-      - 69
+      - 57
+      - 60
     file: reverse/src/lib.rs
     lines:
       - 31
       - 37
     note: AttributionSource struct
   - promptLines:
-      - 70
-      - 73
+      - 61
+      - 64
     file: reverse/src/lib.rs
     lines:
       - 39
       - 47
     note: ReverseMatch struct
   - promptLines:
-      - 75
-      - 75
+      - 66
+      - 66
     file: reverse/src/lib.rs
     lines:
       - 49
       - 54
     note: reverse_matches signature
   - promptLines:
-      - 76
-      - 76
+      - 67
+      - 67
     file: reverse/src/lib.rs
     lines:
       - 56
       - 59
-    note: filter sources by target
+    note: filter sources by matching target
   - promptLines:
-      - 76
-      - 76
+      - 67
+      - 68
     file: reverse/src/lib.rs
     lines:
       - 60
       - 63
-    note: filter entries by file
+    note: filter entries by matching file
   - promptLines:
-      - 77
-      - 81
+      - 68
+      - 68
     file: reverse/src/lib.rs
     lines:
       - 64
       - 68
-    note: code_line containment filter, None skips filter
+    note: filter by code_line containment when Some
   - promptLines:
-      - 78
-      - 80
+      - 69
+      - 71
     file: reverse/src/lib.rs
     lines:
       - 69
       - 78
     note: emit one match per prompt file
   - promptLines:
-      - 81
-      - 82
+      - 72
+      - 73
     file: reverse/src/lib.rs
     lines:
       - 81
       - 81
-    note: return matches in order
+    note: return accumulated matches in order
   - promptLines:
-      - 86
-      - 88
+      - 77
+      - 79
     file: reverse/src/lib.rs
     lines:
       - 84
       - 89
-    note: prompt_absolute_lines conversion
+    note: prompt_absolute_lines body-relative to absolute conversion
   - promptLines:
-      - 90
-      - 91
+      - 81
+      - 82
     file: reverse/src/lib.rs
     lines:
       - 91
       - 93
-    note: match_prompt_lines uses body_start_line
+    note: match_prompt_lines uses body.body_start_line
   - promptLines:
-      - 95
-      - 97
+      - 86
+      - 88
     file: reverse/src/lib.rs
     lines:
       - 95
       - 100
     note: is_file_drifted hash comparison
   - promptLines:
-      - 98
-      - 101
+      - 89
+      - 90
     file: reverse/src/lib.rs
     lines:
       - 102
-      - 108
-    note: code_lens_title with/without note
-  - promptLines:
-      - 102
       - 104
+    note: code_lens_title without note
+  - promptLines:
+      - 91
+      - 92
+    file: reverse/src/lib.rs
+    lines:
+      - 105
+      - 107
+    note: code_lens_title with note and em-dash separator
+  - promptLines:
+      - 93
+      - 95
     file: reverse/src/lib.rs
     lines:
       - 110

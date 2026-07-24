@@ -2,234 +2,218 @@ module: schemas_journal
 target: rust
 entries:
   - promptLines:
-      - 7
-      - 7
+      - 22
+      - 24
     file: schemas_journal/src/lib.rs
     lines:
-      - 9
-      - 9
-    note: brings in serde Serialize/Deserialize
+      - 49
+      - 51
+    note: file_patch delegates to text_diff::unified_diff
   - promptLines:
-      - 30
+      - 25
+      - 28
+    file: schemas_journal/src/lib.rs
+    lines:
+      - 8
+      - 8
+    note: imports BlameSourceEntry from blame crate
+  - promptLines:
+      - 32
       - 33
     file: schemas_journal/src/lib.rs
     lines:
-      - 8
-      - 8
-    note: imports BlameSourceEntry from blame sibling crate
+      - 12
+      - 12
+    note: derive traits on JournalFile
+  - promptLines:
+      - 35
+      - 36
+    file: schemas_journal/src/lib.rs
+    lines:
+      - 13
+      - 14
+    note: JournalFile struct with path field
   - promptLines:
       - 37
-      - 38
-    file: schemas_journal/src/lib.rs
-    lines:
-      - 12
-      - 12
-    note: derives Debug/Clone/PartialEq/Eq/Serialize/Deserialize on JournalFile
-  - promptLines:
-      - 40
-      - 40
-    file: schemas_journal/src/lib.rs
-    lines:
-      - 13
-      - 13
-    note: JournalFile struct
-  - promptLines:
-      - 41
-      - 41
-    file: schemas_journal/src/lib.rs
-    lines:
-      - 14
-      - 14
-    note: path field
-  - promptLines:
-      - 42
-      - 42
+      - 37
     file: schemas_journal/src/lib.rs
     lines:
       - 15
       - 15
     note: patch field
   - promptLines:
-      - 43
-      - 43
+      - 38
+      - 38
     file: schemas_journal/src/lib.rs
     lines:
       - 16
       - 17
-    note: hash_before with serde rename hashBefore
+    note: hash_before renamed hashBefore
   - promptLines:
-      - 44
-      - 44
+      - 39
+      - 39
     file: schemas_journal/src/lib.rs
     lines:
       - 18
       - 19
-    note: hash_after with serde rename hashAfter
+    note: hash_after renamed hashAfter
   - promptLines:
-      - 45
-      - 47
+      - 32
+      - 33
     file: schemas_journal/src/lib.rs
     lines:
       - 23
-      - 30
-    note: JournalMode Copy enum, lowercase rename, four variants
+      - 23
+    note: derive traits + Copy on JournalMode
   - promptLines:
-      - 51
-      - 51
+      - 40
+      - 42
+    file: schemas_journal/src/lib.rs
+    lines:
+      - 24
+      - 30
+    note: JournalMode enum lowercase variants
+  - promptLines:
+      - 32
+      - 33
     file: schemas_journal/src/lib.rs
     lines:
       - 33
+      - 33
+    note: derive traits on JournalEntry
+  - promptLines:
+      - 46
+      - 47
+    file: schemas_journal/src/lib.rs
+    lines:
       - 34
-    note: JournalEntry struct with derives
-  - promptLines:
-      - 52
-      - 52
-    file: schemas_journal/src/lib.rs
-    lines:
       - 35
-      - 35
-    note: gen field
+    note: JournalEntry struct with gen field
   - promptLines:
-      - 53
-      - 53
+      - 48
+      - 50
     file: schemas_journal/src/lib.rs
     lines:
       - 36
-      - 36
-    note: timestamp field
-  - promptLines:
-      - 54
-      - 54
-    file: schemas_journal/src/lib.rs
-    lines:
-      - 37
-      - 37
-    note: module field
-  - promptLines:
-      - 55
-      - 55
-    file: schemas_journal/src/lib.rs
-    lines:
       - 38
-      - 38
-    note: target field
+    note: timestamp, module, target fields
   - promptLines:
-      - 56
-      - 56
+      - 51
+      - 51
     file: schemas_journal/src/lib.rs
     lines:
       - 39
       - 40
-    note: prompt_hash rename promptHash
+    note: prompt_hash renamed promptHash
   - promptLines:
-      - 57
-      - 57
+      - 52
+      - 52
     file: schemas_journal/src/lib.rs
     lines:
       - 41
       - 42
-    note: prompt_diff rename promptDiff
+    note: prompt_diff renamed promptDiff
   - promptLines:
-      - 58
-      - 58
+      - 53
+      - 53
     file: schemas_journal/src/lib.rs
     lines:
       - 43
       - 43
     note: mode field
   - promptLines:
-      - 59
-      - 59
+      - 54
+      - 54
     file: schemas_journal/src/lib.rs
     lines:
       - 44
       - 45
-    note: files defaults to empty via serde default
+    note: files defaults to empty
   - promptLines:
-      - 63
-      - 65
+      - 58
+      - 60
     file: schemas_journal/src/lib.rs
     lines:
       - 49
       - 51
-    note: file_patch delegates to unified_diff, None as empty
+    note: file_patch treats None as empty string
   - promptLines:
-      - 101
-      - 102
+      - 96
+      - 97
     file: schemas_journal/src/lib.rs
     lines:
       - 53
       - 58
-    note: "entry validation: gen>=1, module/target non-empty, file paths non-empty"
+    note: entry_is_valid validation rules
   - promptLines:
-      - 69
-      - 70
+      - 64
+      - 67
     file: schemas_journal/src/lib.rs
     lines:
       - 62
-      - 64
-    note: read_journal_str returns entries and warnings
-  - promptLines:
-      - 71
-      - 72
-    file: schemas_journal/src/lib.rs
-    lines:
-      - 66
       - 68
-    note: split on newline, 1-based number, strip trailing CR
+    note: split lines, strip trailing CR, 1-based number
   - promptLines:
-      - 74
-      - 74
+      - 69
+      - 69
     file: schemas_journal/src/lib.rs
     lines:
       - 70
       - 72
-    note: skip blank line silently
+    note: skip empty line silently
   - promptLines:
-      - 75
-      - 84
+      - 70
+      - 79
     file: schemas_journal/src/lib.rs
     lines:
       - 74
       - 79
-    note: parse as generic JSON; invalid JSON warning byte-exact
+    note: invalid JSON warning branch
   - promptLines:
-      - 85
-      - 94
+      - 80
+      - 89
     file: schemas_journal/src/lib.rs
     lines:
       - 81
       - 89
-    note: deserialize as JournalEntry, validate, push entry or reason warning
+    note: deserialize/validate, reason warning, push entry
   - promptLines:
-      - 101
-      - 104
+      - 89
+      - 89
+    file: schemas_journal/src/lib.rs
+    lines:
+      - 82
+      - 82
+    note: push valid entry
+  - promptLines:
+      - 96
+      - 99
     file: schemas_journal/src/lib.rs
     lines:
       - 83
       - 85
-    note: validation-failure warning branch
+    note: failed validation warning
   - promptLines:
-      - 92
-      - 93
+      - 64
+      - 65
     file: schemas_journal/src/lib.rs
     lines:
-      - 86
-      - 88
-    note: deserialize error reason warning
+      - 92
+      - 92
+    note: returns entries and warnings
   - promptLines:
-      - 108
-      - 109
+      - 103
+      - 104
     file: schemas_journal/src/lib.rs
     lines:
       - 96
       - 98
     note: next_gen_number one past max or 1
   - promptLines:
+      - 106
       - 111
-      - 116
     file: schemas_journal/src/lib.rs
     lines:
       - 101
       - 118
-    note: file_history collects matching file entries in order
+    note: file_history collects matching BlameSourceEntry in order

@@ -77,13 +77,7 @@ It exposes:
 - `unified_diff(before: &str, after: &str) -> String`: the unified diff between
   two texts (use this in your test helpers to build patches from file contents).
 
-Add a path dependency on that sibling member crate in your `Cargo.toml` (depend
-on the `text_diff` crate by path — it lives at `../text_diff`) and use its hunk
-parsing, line splitting, and diffing. Do **not** reimplement diff parsing or line
-splitting here, and do not depend on any hand-written crate — depend only on the
-generated sibling `text_diff` member crate. This sibling path dependency is part
-of the same workspace, not an external crates.io dependency, so add it even
-though the general guidance is to avoid outside dependencies.
+Use that generated sibling crate for all hunk parsing, line splitting, and diffing — do not reimplement any of it here, and do not depend on any hand-written crate.
 
 ## The types
 

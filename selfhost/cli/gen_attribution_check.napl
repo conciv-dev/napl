@@ -37,17 +37,10 @@ before finishing.
 
 ## Builds on the `schemas_attribution` module of this workspace
 
-This module composes on a **generated sibling member crate** in the same
-workspace — not a crates.io dependency and not a hand-written crate. Add a path
-dependency on it in your `Cargo.toml`:
-
 - `schemas_attribution` lives at `../schemas_attribution`. Use its public
   `Attribution` struct (which has a public `entries: Vec<AttributionEntry>` field)
   and its public `AttributionEntry` struct (which has a public `file: String`
   field, among others). Do not reimplement them.
-
-Depending on a sibling by path only reads it; leave the `schemas_attribution`
-crate untouched.
 
 ## `assert_attribution_sane(attribution: &Attribution, allowed: &[String]) -> Result<(), String>`
 

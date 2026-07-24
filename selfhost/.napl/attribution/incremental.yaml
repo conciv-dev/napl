@@ -2,154 +2,210 @@ module: incremental
 target: rust
 entries:
   - promptLines:
+      - 21
+      - 23
+    file: incremental/src/lib.rs
+    lines:
+      - 222
+      - 222
+    note: uses LineRange from schemas_line_range crate
+  - promptLines:
       - 24
-      - 26
-    file: incremental/src/lib.rs
-    lines:
-      - 222
-      - 222
-    note: uses LineRange from schemas_line_range
-  - promptLines:
-      - 27
-      - 31
+      - 28
     file: incremental/src/lib.rs
     lines:
       - 3
       - 3
-    note: imports AttributionEntry
+    note: imports AttributionEntry from sibling crate
   - promptLines:
-      - 35
-      - 37
+      - 32
+      - 34
     file: incremental/src/lib.rs
     lines:
       - 15
       - 20
-    note: BodyLineDiff struct with three public fields
+    note: BodyLineDiff struct with unified and changed line vecs
+  - promptLines:
+      - 36
+      - 37
+    file: incremental/src/lib.rs
+    lines:
+      - 155
+      - 155
+    note: diff_body_lines signature
   - promptLines:
       - 39
       - 40
     file: incremental/src/lib.rs
     lines:
-      - 155
-      - 158
-    note: diff_body_lines entry point
-  - promptLines:
-      - 42
-      - 43
-    file: incremental/src/lib.rs
-    lines:
       - 22
       - 26
-    note: split on \n and strip trailing \r
+    note: split on \n, strip trailing \r
   - promptLines:
-      - 44
-      - 48
+      - 39
+      - 40
+    file: incremental/src/lib.rs
+    lines:
+      - 156
+      - 158
+    note: split both bodies and build ops
+  - promptLines:
+      - 41
+      - 42
     file: incremental/src/lib.rs
     lines:
       - 28
       - 42
-    note: LCS table computation
+    note: LCS table via bottom-up DP
   - promptLines:
-      - 44
-      - 48
+      - 41
+      - 47
     file: incremental/src/lib.rs
     lines:
       - 44
       - 88
-    note: backtrack into equal/delete/insert ops
+    note: backtrack LCS into equal/delete/insert ops
   - promptLines:
-      - 8
-      - 13
+      - 42
+      - 45
     file: incremental/src/lib.rs
     lines:
       - 9
       - 13
-    note: "DiffOp enum: equal, delete, insert"
+    note: "DiffOp enum: equal/delete/insert with line numbers"
   - promptLines:
-      - 49
-      - 50
+      - 45
+      - 47
     file: incremental/src/lib.rs
     lines:
       - 59
       - 64
-    note: tie prefers deletion (>=)
+    note: tie prefers deletion (>= chooses delete)
   - promptLines:
-      - 51
-      - 51
+      - 48
+      - 48
     file: incremental/src/lib.rs
     lines:
       - 160
       - 166
     note: changed_old_lines from deletions
   - promptLines:
-      - 52
-      - 52
+      - 49
+      - 49
     file: incremental/src/lib.rs
     lines:
       - 167
       - 173
     note: changed_new_lines from insertions
   - promptLines:
-      - 53
-      - 55
+      - 50
+      - 52
     file: incremental/src/lib.rs
     lines:
       - 6
       - 6
-    note: context width constant 3
+    note: 3 lines of context constant
   - promptLines:
-      - 53
-      - 55
+      - 50
+      - 52
     file: incremental/src/lib.rs
     lines:
       - 90
       - 110
-    note: group ops into hunks within context
+    note: group ops into hunks within context, merge adjacent
   - promptLines:
+      - 51
+      - 52
+    file: incremental/src/lib.rs
+    lines:
+      - 100
+      - 107
+    note: context window and merge on overlap
+  - promptLines:
+      - 53
       - 56
+    file: incremental/src/lib.rs
+    lines:
+      - 149
+      - 149
+    note: hunk header with old/new start,count
+  - promptLines:
+      - 53
+      - 56
+    file: incremental/src/lib.rs
+    lines:
+      - 112
+      - 147
+    note: compute starts/counts over hunk ops
+  - promptLines:
+      - 57
+      - 57
+    file: incremental/src/lib.rs
+    lines:
+      - 130
+      - 130
+    note: equal line leading space
+  - promptLines:
+      - 58
+      - 58
+    file: incremental/src/lib.rs
+    lines:
+      - 137
+      - 137
+    note: deletion leading -
+  - promptLines:
+      - 58
       - 59
     file: incremental/src/lib.rs
     lines:
-      - 113
-      - 149
-    note: compute hunk start/count and header
+      - 144
+      - 144
+    note: insertion leading +
   - promptLines:
-      - 60
-      - 62
+      - 59
+      - 59
     file: incremental/src/lib.rs
     lines:
-      - 119
+      - 150
       - 152
-    note: prefix lines per op and join
+    note: join hunk lines with newline
   - promptLines:
-      - 62
-      - 66
+      - 50
+      - 59
     file: incremental/src/lib.rs
     lines:
       - 175
-      - 187
-    note: join hunks, no trailing newline
+      - 180
+    note: render hunks and join into unified
   - promptLines:
+      - 67
       - 70
-      - 73
     file: incremental/src/lib.rs
     lines:
       - 189
       - 203
-    note: select entries whose prompt range intersects changed lines
+    note: select entries whose prompt range hits changed lines, keep order
   - promptLines:
-      - 77
-      - 79
+      - 68
+      - 70
+    file: incremental/src/lib.rs
+    lines:
+      - 196
+      - 201
+    note: range intersects changed_old_lines, cloned
+  - promptLines:
+      - 74
+      - 76
     file: incremental/src/lib.rs
     lines:
       - 205
       - 213
-    note: seed owned files, add target-joined entry files
+    note: start from owned files, add target-prefixed entry files
   - promptLines:
-      - 80
-      - 81
+      - 77
+      - 78
     file: incremental/src/lib.rs
     lines:
       - 214
       - 216
-    note: sort and dedup
+    note: sort, dedup, return

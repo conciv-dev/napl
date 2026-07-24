@@ -2,8 +2,9 @@ module: prompts
 target: rust
 entries:
   - promptLines:
-      - 1
-      - 8
+      - 20
+      - 20
     kind: no-op
-    message: No edits made — existing prompts/src/lib.rs already satisfies the full spec.
-    reasoning: The change summary is "NO CHANGES". The agent reported the prompt diff was empty (no behavior change) and that the existing prompts crate already implements every builder, constant, and the last_chars helper exactly as specified, with 18 passing tests. Because this is a pure-restatement compile of an already-implemented module, there was nothing to add or edit. No source drift was reported, so the no-op is the correct outcome rather than a missed requirement.
+    message: Prompt-only clarification of sibling-crate usage; no source change needed.
+    reasoning: "Changes were NO CHANGES. Per the agent, the prompt diff only removed a sentence instructing 'Add a path dependency on each in your Cargo.toml'. The remaining requirements on this line — use each generated sibling crate's public API, don't reimplement its types/logic, don't depend on any hand-written crate — are already satisfied by existing code: prompts/Cargo.toml already has path deps to exactly the four generated siblings and no hand-written/crates.io deps, and lib.rs already uses their public types without reimplementation. Path dependencies remain the only mechanism to consume a workspace sibling's API, so dropping the explicit wording has no behavioral consequence. cargo test -p prompts reported 18 passed, 0 failed."
+    suggestion: Use each generated sibling crate's public API via a path dependency in prompts/Cargo.toml — do not reimplement its types or logic here, and do not depend on any hand-written crate.

@@ -46,10 +46,7 @@ from the workspace root before finishing.
 
 ## Builds on four modules of this workspace
 
-Each is a sibling member crate generated into this same workspace. Add a path
-dependency on each in your `Cargo.toml` (workspace siblings, not external
-crates.io dependencies), read their public fields to drive serialization, and do
-**not** reimplement them or depend on any hand-written crate.
+Read each generated sibling crate's public types and fields to drive serialization — do not reimplement any of them here, and do not depend on any hand-written crate.
 
 - **`schemas_line_range`** (`../schemas_line_range`): `LineRange`, an inclusive
   1-based range with public `start`/`end` fields (`u32`).

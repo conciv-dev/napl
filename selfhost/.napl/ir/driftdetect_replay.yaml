@@ -6,26 +6,20 @@ types: []
 functions:
   - name: reconstruct_file_content
     signature: "reconstruct_file_content(entries: &[schemas_journal::JournalEntry], file_path: &str) -> Option<String>"
-    behavior: "Pure function (no filesystem access) that reconstructs the baseline content the toolchain last wrote for `file_path` by replaying its recorded journal patches in ascending `gen` order. Precondition: `entries` may arrive unsorted and must not be mutated (order a borrowed view, not the caller's slice). Postcondition: entries are processed oldest `gen` first; for each entry, the file whose `path` equals `file_path` (if any) has its `patch` parsed into hunks and applied to the content accumulated so far (the empty string when nothing has been accumulated yet), and the result becomes the new current content. Returns the accumulated content after walking every entry, or `None` if no entry ever contained a file matching `file_path`. Files in an entry whose path differs from `file_path` are ignored.\n"
+    behavior: Pure baseline reconstruction of a single file from journal patches. Considers every journal entry in ascending gen order (input is not assumed sorted and the caller's slice is not mutated; only a borrowed view is sorted). Starts with no accumulated content. For each entry in gen order, finds the file whose path equals file_path; if present, parses that file's patch into hunks and applies them to the current accumulated content (empty string when nothing accumulated yet), and the result becomes the new accumulated content. Returns the final accumulated content, or None if no entry ever contained file_path.
 tests:
   - name: replays_two_patches_in_gen_order
-    given: 'Two entries for path "a.rs" — gen 1 inserting "line one" into empty content, gen 2 appending "line two".
-'
-    expect: Some("line one\nline two").
+    given: Two entries for "a.rs" — gen 1 inserting "line one", gen 2 appending "line two" — already in ascending gen order.
+    expect: Reconstruction returns Some("line one\nline two").
   - name: sorts_out_of_order_entries_without_mutating_input
-    given: 'The same two "a.rs" entries supplied in reverse gen order (gen 2 before gen 1), with the input slice cloned beforehand.
-'
-    expect: 'Returns Some("line one\nline two") (replayed in ascending gen order) and the input slice is unchanged from its original clone.
-'
+    given: Two entries for "a.rs" supplied out of gen order (gen 2 before gen 1).
+    expect: Reconstruction returns Some("line one\nline two"), applying patches in ascending gen order, and the caller's input slice is left unchanged.
   - name: returns_none_for_untouched_path
-    given: A single entry touching "a.rs", queried for path "b.rs".
-    expect: None (no entry touched the queried path).
+    given: A single entry touching only "a.rs", queried for path "b.rs".
+    expect: Reconstruction returns None.
   - name: ignores_files_from_other_entries_with_different_paths
-    given: 'One entry (gen 1) containing two files — "a.rs" reconstructing to "content a" and "b.rs" reconstructing to "content b".
-'
-    expect: 'Querying "a.rs" returns Some("content a") and querying "b.rs" returns Some("content b"); each path uses only its own matching file.
-'
+    given: One entry containing two files, "a.rs" ("content a") and "b.rs" ("content b").
+    expect: Querying "a.rs" returns Some("content a") and querying "b.rs" returns Some("content b"); each path is reconstructed only from its matching file.
   - name: three_entries_apply_in_ascending_gen_order
-    given: 'Three "a.rs" entries provided out of order (gen 3, gen 1, gen 2), each appending one line building v1 → v1\nv2 → v1\nv2\nv3.
-'
-    expect: Some("v1\nv2\nv3"), confirming ascending gen ordering.
+    given: Three entries for "a.rs" supplied out of order (gens 3, 1, 2), each appending one line.
+    expect: Reconstruction returns Some("v1\nv2\nv3").

@@ -28,10 +28,7 @@ finishing.
 
 ## Builds on two modules of this workspace
 
-Both are sibling member crates generated into this same workspace. Add a path
-dependency on each in your `Cargo.toml` (workspace siblings, not external
-crates.io dependencies), use their public API, and do **not** reimplement their
-logic or depend on any hand-written crate.
+Use each generated sibling crate's public API — do not reimplement its types or logic here, and do not depend on any hand-written crate.
 
 - **`schemas_line_range`** (`../schemas_line_range`): exposes `LineRange`, an
   inclusive 1-based range with public `start` and `end` fields (`u32`) and a

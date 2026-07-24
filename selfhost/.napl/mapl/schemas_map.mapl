@@ -2,21 +2,14 @@ module: schemas_map
 target: rust
 entries:
   - promptLines:
-      - 1
-      - 142
+      - 30
+      - 30
     kind: no-op
-    message: Module already matched the prompt; agent made no changes.
-    reasoning: The changes were "NO CHANGES". Agent reports the schemas_map crate already exists and conforms to the current prompt — all 15 tests pass and `cargo test -p schemas_map` is green. The prompt describes an existing module state rather than requesting a delta, so nothing needed editing. This is expected when the prompt is re-compiled against source that already satisfies it.
+    message: New sentence restates an already-satisfied ordered-map constraint; no source change needed.
+    reasoning: Line 30 tightens the prose ("Use that generated sibling crate's OrderedMap<V> for every ordered-map field below — do not reimplement an ordered map here, and do not depend on any hand-written crate") but describes exactly what the existing code already does. lib.rs imports schemas_ordered_map::OrderedMap and uses it for all three ordered-map fields (PromptRecord.targets, NaplMap.prompts, NaplMap.files); no local OrderedMap type exists; Cargo.toml depends only on serde, serde_json, and the generated sibling crate. A minimal correct realization is zero edits. Agent verified cargo test -p schemas_map green (15 passed).
   - promptLines:
-      - 80
-      - 82
-    kind: ambiguity
-    message: parse_map return error type left as `_`; concrete error type unspecified.
-    reasoning: Signature is `Result<NaplMap, _>`. Prompt distinguishes two failure modes ("unsupported map version" validation error vs. corrupt-JSON deserialization error) but never names the error type unifying them. Existing code already picked one (no change needed here), but the prompt itself does not pin the type — a re-implementer would have to guess (e.g. a custom enum, Box<dyn Error>, serde_json::Error, String).
-    suggestion: Specify the error type explicitly, e.g. "returns Result<NaplMap, ParseMapError> where ParseMapError has variants for unsupported-version and JSON-decode failures."
-  - promptLines:
-      - 98
-      - 102
+      - 23
+      - 24
     kind: note
-    message: is_prompt_gen_stale takes Option<&PromptRecord> rather than (map, rel).
-    reasoning: Unlike the other query helpers which take `map` and a key, this helper takes a pre-resolved `Option<&PromptRecord>`. Not contradictory, but the asymmetry with siblings is worth surfacing; caller must do the lookup. Existing code matches this signature, so no change was required.
+    message: Correctness of the no-op depends on the sibling schemas_ordered_map crate existing as described.
+    reasoning: The prompt assumes ../schemas_ordered_map is already generated and exposes the OrderedMap<V> API. The agent relied on this existing sibling crate rather than verifying its generation in this compile. If that sibling is absent or its API drifts, the unchanged schemas_map would fail to build despite the reported green tests.

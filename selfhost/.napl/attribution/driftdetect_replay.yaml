@@ -2,90 +2,74 @@ module: driftdetect_replay
 target: rust
 entries:
   - promptLines:
-      - 38
-      - 38
+      - 21
+      - 25
+    file: driftdetect_replay/src/lib.rs
+    lines:
+      - 9
+      - 9
+    note: import JournalEntry from schemas_journal crate
+  - promptLines:
+      - 30
+      - 33
     file: driftdetect_replay/src/lib.rs
     lines:
       - 14
       - 14
-    note: "reconstruct_file_content signature: entries slice + file_path, returns Option<String>"
+    note: reconstruct_file_content signature returning Option<String>
   - promptLines:
-      - 41
-      - 42
+      - 35
+      - 36
     file: driftdetect_replay/src/lib.rs
     lines:
       - 15
-      - 15
-    note: borrow view of entries without mutating caller's slice
-  - promptLines:
-      - 41
-      - 42
-    file: driftdetect_replay/src/lib.rs
-    lines:
       - 16
-      - 16
-    note: sort borrowed view by ascending gen
+    note: collect borrowed view and sort by ascending gen
   - promptLines:
-      - 43
-      - 43
+      - 37
+      - 37
     file: driftdetect_replay/src/lib.rs
     lines:
       - 18
       - 18
     note: start with no content (None)
   - promptLines:
-      - 44
-      - 44
+      - 38
+      - 39
     file: driftdetect_replay/src/lib.rs
     lines:
       - 19
       - 20
-    note: walk entries in gen order, find file whose path equals file_path
+    note: iterate entries, find file whose path equals file_path
   - promptLines:
-      - 46
-      - 46
+      - 39
+      - 41
     file: driftdetect_replay/src/lib.rs
     lines:
       - 21
       - 21
-    note: take current content or empty string when none yet
+    note: take current content or empty string as base
   - promptLines:
-      - 46
-      - 47
+      - 40
+      - 41
     file: driftdetect_replay/src/lib.rs
     lines:
       - 22
-      - 22
-    note: parse patch into hunks
-  - promptLines:
-      - 47
-      - 47
-    file: driftdetect_replay/src/lib.rs
-    lines:
       - 23
-      - 23
-    note: apply hunks, result becomes new current content
+    note: parse patch into hunks, apply to base, become new content
   - promptLines:
-      - 48
-      - 49
-    file: driftdetect_replay/src/lib.rs
-    lines:
       - 26
-      - 26
-    note: return accumulated content, or None if path never touched
-  - promptLines:
-      - 27
-      - 31
-    file: driftdetect_replay/src/lib.rs
-    lines:
-      - 9
-      - 9
-    note: depend on schemas_journal JournalEntry type
-  - promptLines:
-      - 32
-      - 34
+      - 28
     file: driftdetect_replay/src/lib.rs
     lines:
       - 22
       - 23
     note: use text_diff parse_hunks and apply_hunks
+  - promptLines:
+      - 42
+      - 43
+    file: driftdetect_replay/src/lib.rs
+    lines:
+      - 26
+      - 26
+    note: return accumulated content or None if untouched

@@ -2,14 +2,15 @@ module: incremental
 target: rust
 entries:
   - promptLines:
-      - 1
-      - 82
+      - 19
+      - 19
     kind: no-op
-    message: No changes — prompt unchanged since prior compile, existing code already satisfies it.
-    reasoning: Agent reported "Empty prompt diff, code already matches prompt. All 11 tests pass." This is an incremental regeneration where the prompt body did not differ from the previously compiled version, so the existing `incremental/` crate (BodyLineDiff, diff_body_lines, select_intersecting_entries, incremental_unlock_list) already implements every requirement and its test suite passes. No edits were warranted.
+    message: Line 19 reword (public-API usage / no-reimplement / no-hand-written-dep) was already satisfied by existing Cargo.toml + lib.rs; no code change needed.
+    reasoning: "The only prompt change was a rewording of line 19: the old text spelled out the mechanism (\"Add a path dependency on each in your Cargo.toml ... use their public API, and do not reimplement their logic or depend on any hand-written crate\") while the new text states the same three requirements more tightly (\"Use each generated sibling crate's public API — do not reimplement its types or logic here, and do not depend on any hand-written crate\"). No named symbol, field, signature, struct, or behavior changed. The existing source already satisfies the new wording: incremental/Cargo.toml carries path deps on schemas_line_range and schemas_attribution (which, in a Cargo workspace, is how a sibling crate's public API is consumed), lib.rs uses their public types rather than reimplementing them, and no hand-written crate is depended upon. Tests pass 11/11. Editing source would be no-op churn against the \"touch nothing outside incremental/\" and minimal-edit constraints."
   - promptLines:
-      - 53
-      - 62
+      - 19
+      - 19
     kind: note
-    message: Unified-diff hunk-grouping rules were not exercised by new work but carry latent ambiguity.
-    reasoning: The spec for grouping operations into hunks ("a hunk covers every operation within 3 of a change; a purely-equal run wider than the context splits hunks") is prose that admits more than one boundary interpretation at hunk edges and around adjacent changes. Since no changes were made, the existing implementation's interpretation stands unverified against any new intent — worth confirming against the passing tests if hunk boundaries matter.
+    message: Reworded line 19 now only implies the path-dependency mechanism rather than stating it; correct here but leaves the how-to-depend step to inference.
+    reasoning: The reworded line 19 dropped the explicit "Add a path dependency on each in your Cargo.toml" instruction that the prior version stated. The mechanism is now only implied ("Use each ... crate's public API"). This is fine for a Cargo workspace where a path dep is the standard way to consume a sibling, but the dependency mechanism is no longer stated outright, so a from-scratch compile relies on inferring that "use the public API" means "declare a path dependency."
+    suggestion: Use each generated sibling crate's public API via a path dependency in incremental/Cargo.toml — do not reimplement its types or logic here, and do not depend on any hand-written crate.

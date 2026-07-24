@@ -46,10 +46,6 @@ before finishing.
 
 ## Builds on the `blame` and `schemas_journal` modules of this workspace
 
-This module composes on two **generated sibling member crates** in the same
-workspace — not on crates.io dependencies and not on any hand-written crate. Add
-path dependencies on them in your `Cargo.toml`:
-
 - `blame` lives at `../blame`. Use its public `BlameLine` struct (fields `line:
   usize`, `gen: i64`, `timestamp: String`, `module: String`, `text: String`) and
   its public `first_prompt_diff_line(prompt_diff: &str) -> String` function. Do
@@ -60,9 +56,6 @@ path dependencies on them in your `Cargo.toml`:
   Vec<JournalFile>` where each `JournalFile` has a `path: String` field) and its
   public `JournalMode` enum (variants `Full`, `Incremental`, `Reconcile`,
   `Move`). Do not reimplement them.
-
-Depending on a sibling by path only reads it; leave both sibling crates
-untouched.
 
 ## `mode_str(mode: JournalMode) -> &'static str`
 

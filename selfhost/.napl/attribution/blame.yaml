@@ -2,218 +2,170 @@ module: blame
 target: rust
 entries:
   - promptLines:
-      - 24
-      - 33
-    file: blame/src/lib.rs
-    lines:
-      - 8
-      - 8
-    note: import to_lines, parse_hunks, HunkKind from text_diff
-  - promptLines:
-      - 45
-      - 45
+      - 41
+      - 44
     file: blame/src/lib.rs
     lines:
       - 11
-      - 11
-    note: derive Clone, PartialEq, Eq for comparable/cloneable
-  - promptLines:
-      - 47
-      - 50
-    file: blame/src/lib.rs
-    lines:
-      - 12
       - 18
-    note: BlameSourceEntry struct with public fields gen/timestamp/module/patch/prompt_diff
+    note: BlameSourceEntry public fields gen/timestamp/module/patch/prompt_diff
+  - promptLines:
+      - 39
+      - 39
+    file: blame/src/lib.rs
+    lines:
+      - 11
+      - 11
+    note: derive Clone/PartialEq/Eq for comparable+cloneable
+  - promptLines:
+      - 45
+      - 47
+    file: blame/src/lib.rs
+    lines:
+      - 21
+      - 28
+    note: BlameLine public fields line/gen/timestamp/module/text
   - promptLines:
       - 51
-      - 53
-    file: blame/src/lib.rs
-    lines:
-      - 22
-      - 28
-    note: BlameLine struct with line/gen/timestamp/module/text
-  - promptLines:
-      - 57
-      - 60
+      - 54
     file: blame/src/lib.rs
     lines:
       - 31
       - 31
     note: apply_patch_to_blame signature
   - promptLines:
-      - 62
-      - 63
+      - 56
+      - 57
     file: blame/src/lib.rs
     lines:
       - 32
       - 35
     note: parse hunks; empty returns input unchanged
   - promptLines:
-      - 64
-      - 64
+      - 58
+      - 58
     file: blame/src/lib.rs
     lines:
       - 37
+      - 38
+    note: init result vec and old_idx cursor at 0
+  - promptLines:
+      - 59
+      - 61
+    file: blame/src/lib.rs
+    lines:
       - 40
-    note: init result and old_idx cursor, loop hunks
-  - promptLines:
-      - 65
-      - 67
-    file: blame/src/lib.rs
-    lines:
-      - 41
       - 45
-    note: copy untouched entries up to hunk start (saturating)
+    note: copy untouched entries up to hunk start (saturating), in bounds
   - promptLines:
-      - 67
-      - 67
-    file: blame/src/lib.rs
-    lines:
-      - 47
-      - 48
-    note: iterate hunk lines by kind
-  - promptLines:
-      - 68
-      - 69
+      - 62
+      - 63
     file: blame/src/lib.rs
     lines:
       - 49
       - 56
-    note: "context: push blame[old_idx] or gen past end, advance"
+    note: context line pushes blame or gen past end, advances
   - promptLines:
-      - 70
-      - 70
+      - 64
+      - 64
     file: blame/src/lib.rs
     lines:
       - 57
       - 59
-    note: "deletion: advance without pushing"
+    note: deletion advances without pushing
   - promptLines:
-      - 71
-      - 71
+      - 65
+      - 65
     file: blame/src/lib.rs
     lines:
       - 60
       - 62
-    note: "insertion: push gen, no advance"
+    note: insertion pushes gen, no advance
   - promptLines:
-      - 72
-      - 72
+      - 66
+      - 66
     file: blame/src/lib.rs
     lines:
       - 67
-      - 71
-    note: push remaining entries, return result
+      - 69
+    note: push remaining trailing entries
   - promptLines:
-      - 76
-      - 76
+      - 70
+      - 70
     file: blame/src/lib.rs
     lines:
       - 75
       - 75
     note: blame_file signature
   - promptLines:
-      - 78
-      - 78
+      - 72
+      - 72
     file: blame/src/lib.rs
     lines:
       - 76
       - 77
     note: sort copy of history ascending by gen
   - promptLines:
+      - 73
+      - 74
+    file: blame/src/lib.rs
+    lines:
+      - 79
+      - 82
+    note: fold patches from empty blame vector
+  - promptLines:
+      - 75
+      - 76
+    file: blame/src/lib.rs
+    lines:
+      - 84
+      - 84
+    note: "fallback gen: last entry gen or 0"
+  - promptLines:
+      - 77
+      - 78
+    file: blame/src/lib.rs
+    lines:
+      - 86
+      - 92
+    note: per-line gen from blame or fallback, lookup entry
+  - promptLines:
       - 79
       - 80
     file: blame/src/lib.rs
     lines:
-      - 79
-      - 82
-    note: fold patches into blame vector
-  - promptLines:
-      - 81
-      - 82
-    file: blame/src/lib.rs
-    lines:
-      - 84
-      - 84
-    note: "fallback gen: last entry's gen or 0"
-  - promptLines:
-      - 83
-      - 83
-    file: blame/src/lib.rs
-    lines:
-      - 86
-      - 90
-    note: to_lines and enumerate 0-based index
-  - promptLines:
-      - 84
-      - 84
-    file: blame/src/lib.rs
-    lines:
-      - 91
-      - 92
-    note: gen = blame[index] else fallback; lookup entry
-  - promptLines:
-      - 85
-      - 86
-    file: blame/src/lib.rs
-    lines:
       - 93
       - 100
-    note: build BlameLine, line=index+1, empty strings if none
+    note: build BlameLine with line index+1, timestamp/module empty if none
   - promptLines:
-      - 88
-      - 89
+      - 82
+      - 83
     file: blame/src/lib.rs
     lines:
       - 105
       - 113
-    note: blame_line_at finds line by 1-based number or None
+    note: blame_line_at finds BlameLine by 1-based line or None
   - promptLines:
-      - 93
-      - 93
+      - 87
+      - 89
     file: blame/src/lib.rs
     lines:
       - 116
-      - 116
-    note: first_prompt_diff_line signature
-  - promptLines:
-      - 94
-      - 94
-    file: blame/src/lib.rs
-    lines:
-      - 121
-      - 122
-    note: iterate lines, strip trailing CR
-  - promptLines:
-      - 95
-      - 95
-    file: blame/src/lib.rs
-    lines:
-      - 124
       - 133
-    note: ignore until first @@ header; skip header lines
+    note: scan lines strip trailing CR, ignore until first @@ hunk, skip headers
   - promptLines:
-      - 96
-      - 97
+      - 90
+      - 91
     file: blame/src/lib.rs
     lines:
-      - 139
+      - 135
       - 143
     note: text after marker char, trimmed; skip empty
   - promptLines:
-      - 98
-      - 99
+      - 92
+      - 93
     file: blame/src/lib.rs
     lines:
       - 145
-      - 149
-    note: capture first added/removed
-  - promptLines:
-      - 98
-      - 99
-    file: blame/src/lib.rs
-    lines:
-      - 151
       - 156
-    note: prefer added, else removed, else empty
+    note: prefer first added, else first removed, else empty

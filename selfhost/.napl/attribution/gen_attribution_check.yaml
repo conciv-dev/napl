@@ -2,64 +2,64 @@ module: gen_attribution_check
 target: rust
 entries:
   - promptLines:
-      - 34
-      - 34
-    file: gen_attribution_check/src/lib.rs
-    lines:
-      - 3
-      - 3
-    note: function signature assert_attribution_sane
-  - promptLines:
-      - 26
-      - 29
+      - 22
+      - 22
     file: gen_attribution_check/src/lib.rs
     lines:
       - 1
       - 1
-    note: imports Attribution from sibling crate
+    note: imports Attribution from schemas_attribution
   - promptLines:
-      - 39
-      - 39
+      - 27
+      - 27
+    file: gen_attribution_check/src/lib.rs
+    lines:
+      - 3
+      - 3
+    note: assert_attribution_sane signature
+  - promptLines:
+      - 32
+      - 34
+    file: gen_attribution_check/src/lib.rs
+    lines:
+      - 4
+      - 6
+    note: non-empty allowed + empty entries returns first error
+  - promptLines:
+      - 43
+      - 43
     file: gen_attribution_check/src/lib.rs
     lines:
       - 4
       - 4
-    note: checks allowed non-empty and entries empty
+    note: empty allowed + empty entries skips error
   - promptLines:
-      - 40
-      - 41
-    file: gen_attribution_check/src/lib.rs
-    lines:
-      - 5
-      - 5
-    note: returns exact no-entries error message
-  - promptLines:
-      - 42
-      - 42
+      - 35
+      - 36
     file: gen_attribution_check/src/lib.rs
     lines:
       - 8
       - 9
-    note: iterates entries, checks file not in allowed
+    note: iterate entries, check file not in allowed
   - promptLines:
-      - 43
-      - 47
+      - 37
+      - 40
     file: gen_attribution_check/src/lib.rs
     lines:
       - 10
       - 13
-    note: returns outside-set error with file substituted
+    note: format outside-set error with quoted file
   - promptLines:
-      - 52
-      - 53
+      - 46
+      - 46
     file: gen_attribution_check/src/lib.rs
     lines:
       - 8
       - 14
-    note: checks entries in order, returns first violation
+    note: checks entries in order, returns on first violation
   - promptLines:
-      - 48
-      - 48
+      - 41
+      - 41
     file: gen_attribution_check/src/lib.rs
     lines:
       - 17

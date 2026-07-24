@@ -8,202 +8,210 @@ entries:
     lines:
       - 1
       - 5
-    note: "module doc: pure rendering core, no I/O"
+    note: "module doc: pure blame render core"
   - promptLines:
-      - 24
-      - 27
+      - 20
+      - 20
     file: blame_render/src/lib.rs
     lines:
       - 7
       - 7
     note: import BlameLine from blame crate
   - promptLines:
-      - 28
-      - 33
+      - 24
+      - 29
     file: blame_render/src/lib.rs
     lines:
       - 8
       - 8
-    note: import JournalEntry, JournalMode from schemas_journal
+    note: import JournalEntry and JournalMode
   - promptLines:
-      - 38
-      - 44
+      - 31
+      - 31
     file: blame_render/src/lib.rs
     lines:
       - 11
-      - 18
-    note: mode_str maps each JournalMode variant to lowercase label
+      - 11
+    note: mode_str signature returns &'static str
   - promptLines:
-      - 40
-      - 40
+      - 33
+      - 33
     file: blame_render/src/lib.rs
     lines:
       - 13
-      - 14
-    note: Full->full, Incremental->incremental
+      - 13
+    note: Full maps to "full"
   - promptLines:
-      - 41
-      - 41
+      - 33
+      - 34
     file: blame_render/src/lib.rs
     lines:
+      - 14
       - 15
-      - 16
-    note: Reconcile->reconcile, Move->move
+    note: Incremental/Reconcile labels
   - promptLines:
-      - 46
-      - 53
+      - 34
+      - 37
+    file: blame_render/src/lib.rs
+    lines:
+      - 16
+      - 16
+    note: Move maps to "move", exhaustive match
+  - promptLines:
+      - 39
+      - 39
     file: blame_render/src/lib.rs
     lines:
       - 21
-      - 26
-    note: "format_blame_row: two-space separated gen/timestamp/module/text"
+      - 21
+    note: format_blame_row signature
   - promptLines:
-      - 55
-      - 61
+      - 41
+      - 46
+    file: blame_render/src/lib.rs
+    lines:
+      - 22
+      - 25
+    note: format row with two-space separators
+  - promptLines:
+      - 48
+      - 48
     file: blame_render/src/lib.rs
     lines:
       - 29
-      - 36
-    note: "why_line: first_prompt_diff_line, empty -> initial generation"
+      - 29
+    note: why_line signature
   - promptLines:
-      - 57
-      - 57
+      - 50
+      - 50
     file: blame_render/src/lib.rs
     lines:
       - 30
       - 30
-    note: call blame::first_prompt_diff_line
+    note: call first_prompt_diff_line
   - promptLines:
-      - 58
-      - 58
+      - 51
+      - 52
     file: blame_render/src/lib.rs
     lines:
       - 31
-      - 32
-    note: empty result returns initial generation
+      - 35
+    note: empty result -> initial generation else unchanged
   - promptLines:
-      - 58
-      - 59
-    file: blame_render/src/lib.rs
-    lines:
-      - 33
-      - 34
-    note: otherwise return result unchanged
-  - promptLines:
-      - 63
-      - 67
+      - 56
+      - 56
     file: blame_render/src/lib.rs
     lines:
       - 46
       - 46
     note: render_blame_gen signature
   - promptLines:
-      - 65
-      - 66
+      - 58
+      - 59
     file: blame_render/src/lib.rs
     lines:
       - 40
       - 43
-    note: BlameGenRender struct with text and exit_code fields
+    note: BlameGenRender struct with text and exit_code
   - promptLines:
-      - 69
-      - 69
+      - 62
+      - 62
     file: blame_render/src/lib.rs
     lines:
       - 47
       - 47
     note: find first entry matching gen
   - promptLines:
-      - 71
-      - 73
+      - 64
+      - 66
     file: blame_render/src/lib.rs
     lines:
       - 48
       - 52
-    note: "no match: error text, exit_code 1"
+    note: no match -> error text, exit_code 1
   - promptLines:
-      - 75
-      - 77
+      - 68
+      - 69
     file: blame_render/src/lib.rs
     lines:
       - 54
       - 54
-    note: build lines vector
+    note: accumulate lines to join with newlines
   - promptLines:
-      - 79
-      - 81
+      - 72
+      - 74
     file: blame_render/src/lib.rs
     lines:
       - 56
       - 63
     note: "header line: gen/timestamp/module (target) mode"
   - promptLines:
-      - 82
-      - 82
+      - 75
+      - 75
     file: blame_render/src/lib.rs
     lines:
       - 64
       - 64
     note: empty line
   - promptLines:
-      - 83
-      - 83
+      - 76
+      - 76
     file: blame_render/src/lib.rs
     lines:
       - 65
       - 65
-    note: "prompt edit: label"
+    note: '"prompt edit:" line'
   - promptLines:
-      - 84
-      - 85
+      - 77
+      - 78
     file: blame_render/src/lib.rs
     lines:
       - 67
       - 68
-    note: trimmed-empty diff -> initial generation line
+    note: trimmed empty diff -> initial generation
   - promptLines:
-      - 86
-      - 88
+      - 79
+      - 81
     file: blame_render/src/lib.rs
     lines:
       - 69
       - 73
-    note: split diff on newline, prefix each piece two spaces
+    note: split diff on newline, prefix each with two spaces
   - promptLines:
-      - 89
-      - 89
+      - 82
+      - 82
     file: blame_render/src/lib.rs
     lines:
       - 75
       - 75
     note: empty line
   - promptLines:
-      - 90
-      - 90
+      - 83
+      - 83
     file: blame_render/src/lib.rs
     lines:
       - 76
       - 76
-    note: "files touched: label"
+    note: '"files touched:" line'
   - promptLines:
-      - 91
-      - 91
+      - 84
+      - 84
     file: blame_render/src/lib.rs
     lines:
       - 78
       - 79
-    note: empty files -> (none) line
+    note: empty files -> (none)
   - promptLines:
-      - 92
-      - 93
+      - 85
+      - 86
     file: blame_render/src/lib.rs
     lines:
       - 80
-      - 83
+      - 84
     note: one line per file path, two-space prefix
   - promptLines:
-      - 75
-      - 76
+      - 68
+      - 69
     file: blame_render/src/lib.rs
     lines:
       - 86

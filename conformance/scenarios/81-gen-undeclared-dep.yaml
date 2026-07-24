@@ -1,0 +1,79 @@
+name: gen-undeclared-dep
+description: >
+  Deps-enforcement gate: the fake coding agent writes a Cargo.toml that declares a
+  path dependency on a sibling crate (../helper) that the prompt's `deps:`
+  frontmatter does not list. `cargo test` passes, but the deps gate fails the
+  attempt with a pinned error naming the module, the undeclared sibling, and the
+  fix. Across all three attempts the undeclared dependency persists, so gen exits
+  non-zero, leaves the generated files unlocked (0644), and writes no attribution,
+  map, journal, or prompts-at-gen state. Non-sibling crates.io deps and the
+  declared-but-unused case are not policed by this gate.
+setup:
+  .napl/lock.json: |
+    {
+      "model": "claude-sonnet-5",
+      "backend": "claude-cli",
+      "agent": {
+        "preset": "claude"
+      }
+    }
+  math.napl: |
+    ---
+    module: adder
+    deps: []
+    targets: [rust]
+    tests: []
+    ---
+    Add two integers and return their sum.
+script:
+  agent:
+    - files:
+        adder/Cargo.toml: |
+          [package]
+          name = "adder"
+          version = "0.1.0"
+          edition = "2021"
+
+          [dependencies]
+          helper = { path = "../helper" }
+        adder/src/lib.rs: |
+          pub fn add(a: i64, b: i64) -> i64 {
+              a + b
+          }
+
+          #[cfg(test)]
+          mod tests {
+              use super::*;
+
+              #[test]
+              fn adds_two_integers() {
+                  assert_eq!(add(2, 3), 5);
+              }
+          }
+      output: "implemented the adder member crate in Rust"
+run: [gen, rust]
+expect:
+  exitCode: 1
+  stdoutContains:
+    - "gen     adder (rust)"
+    - "  attempt 1/3: running coding agent"
+    - "  attempt 1/3: undeclared sibling dependency in Cargo.toml"
+    - "  attempt 2/3: undeclared sibling dependency in Cargo.toml"
+    - "  attempt 3/3: undeclared sibling dependency in Cargo.toml"
+  stderrContains:
+    - "napl: gen failed for module 'adder' (rust): the generated Cargo.toml declares a path dependency on the sibling crate 'helper', which is not declared in the prompt's `deps:` frontmatter — declare it in `deps:` or remove the dependency."
+  files:
+    .napl/src/rust/adder/src/lib.rs:
+      mode: "0644"
+    .napl/src/rust/adder/Cargo.toml:
+      mode: "0644"
+    .napl/gen.lock:
+      absent: true
+    .napl/attribution/adder.yaml:
+      absent: true
+    .napl/prompts-at-gen/adder.md:
+      absent: true
+    .napl/map.json:
+      absent: true
+    .napl/journal.jsonl:
+      absent: true

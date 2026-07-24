@@ -48,10 +48,6 @@ before finishing.
 
 ## Builds on the `drift`, `prompts`, and `text_diff` modules of this workspace
 
-This module composes on three **generated sibling member crates** in the same
-workspace — not on crates.io dependencies and not on any hand-written crate. Add
-path dependencies on them in your `Cargo.toml`:
-
 - `drift` lives at `../drift`. Use its public `DriftedFile` struct and its public
   `DriftReason` enum. `DriftReason` has variants `Edited` (a file changed by hand)
   and `Missing` (a locked file deleted). `DriftedFile` has fields including `file:
@@ -62,9 +58,6 @@ path dependencies on them in your `Cargo.toml`:
   has public fields `file: String` and `diff: String`. Do not reimplement it.
 - `text_diff` lives at `../text_diff`. Use its public `unified_diff(before: &str,
   after: &str) -> String` function to build a diff. Do not reimplement it.
-
-Depending on a sibling by path only reads it; leave all three sibling crates
-untouched.
 
 ## `editable_drifted(files: &[DriftedFile]) -> Vec<&DriftedFile>`
 

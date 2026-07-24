@@ -2,31 +2,16 @@ module: schemas_attribution
 target: rust
 entries:
   - promptLines:
-      - 1
-      - 86
+      - 30
+      - 30
     kind: no-op
-    message: No changes produced — existing generated code already satisfies the full spec.
-    reasoning: 'The changes were "NO CHANGES". The coding agent reports the prompt diff was empty and the existing schemas_attribution crate already realizes every requirement (types, validators, lookup, lenient line-range normalization), with all 13 tests passing. So nothing needed to be regenerated. No-op is because the requirement was already met by existing code, not because the instruction was unintelligible.
-'
+    message: Added constraint (use sibling LineRange, no reimplementation, no hand-written dep) already satisfied by existing code — no edit realizes it.
+    reasoning: "The only prompt change was line 30, reinforcing that the generated `schemas_line_range` sibling crate's `LineRange` must back every line-range field, with no in-module reimplementation and no hand-written crate dependency. Existing source already met this exactly: `lib.rs` does `use schemas_line_range::LineRange;` for both `prompt_lines` and `lines`, reimplements no parsing, and `Cargo.toml`'s sole line-range dep is `schemas_line_range = { path = \"../schemas_line_range\" }` (plus `serde`, `serde_json`). Reinforcing constraint, no behavior change, so nothing to edit. Agent reports tests pass (13 passed, 0 failed).\n"
   - promptLines:
-      - 57
-      - 57
+      - 30
+      - 30
     kind: ambiguity
-    message: Error type of validate_attribution is left as `_` — concrete error type unspecified.
-    reasoning: 'The signature is written `Result<Attribution, _>` with a placeholder error type. The prompt never says what the error type should be (a custom enum, serde_json::Error, String, a boxed error, etc.), only that malformed input is a deserialization error and validation failures are "an error, not a panic". Whatever concrete type the existing code uses was an unconstrained choice.
+    message: '"do not depend on any hand-written crate" is vague on what counts as hand-written vs generated.'
+    reasoning: 'The clause forbids depending on "any hand-written crate" but the module inherently depends on `serde`/`serde_json` (external, hand-written crates). Intent is clearly "no hand-written line-range crate — use the generated sibling instead," but the literal wording could be read to bar all hand-written deps. Agent interpreted it narrowly (line-range dep only), which is correct, but the phrasing invites misreading.
 '
-    suggestion: 'Specify the error type explicitly, e.g. "returns Result<Attribution, E>" and define E (for example a String message, or a named error enum with Deserialize vs Validation variants).
-'
-  - promptLines:
-      - 64
-      - 68
-    kind: ambiguity
-    message: parse_attribution_entries error type also unspecified (`_` placeholder).
-    reasoning: "Same open question as validate_attribution: the `Result<Vec<AttributionEntry>, _>` error type is a placeholder. It is unclear whether it must match validate_attribution's error type or may differ. The existing code's choice was unconstrained by the prompt.\n"
-    suggestion: State the error type and whether both validators share one error type.
-  - promptLines:
-      - 61
-      - 62
-    kind: note
-    message: Deserialization-vs-validation error boundary is described by example only.
-    reasoning: The prompt distinguishes "structurally malformed" (deserialize error, e.g. 1.5) from rejected values (empty/missing file). Both are reported as errors and the observable Result contract is the same, so callers cannot tell them apart unless the error type carries that distinction — which the prompt does not require. Worth confirming whether the two error categories must be separately identifiable.
+    suggestion: '"...do not reimplement line-range parsing here, and do not add a separate hand-written line-range crate — depend only on the generated `schemas_line_range` sibling for line ranges (serde/serde_json aside)."'

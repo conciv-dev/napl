@@ -57,15 +57,6 @@ crate in a subdirectory named `reverse/`: `reverse/Cargo.toml` (package name
 
 ## Builds on three modules of this workspace
 
-This module builds on three sibling member crates of this same workspace,
-generated in directories named after each module. Add a path dependency on each
-in your `Cargo.toml` (depend on each crate by path — each lives one directory up
-and over from this crate) and use their public items directly. Do **not**
-reimplement any of them, and do not depend on any hand-written crate — depend
-only on these generated sibling member crates. These sibling path dependencies
-are part of the same workspace, not external crates.io dependencies, so add them
-even though the general guidance is to avoid outside dependencies.
-
 - **`schemas_line_range`** (`../schemas_line_range`): exposes `LineRange`, an
   inclusive 1-based range with public `start`/`end` fields (`u32`) and a
   `new(start, end)` constructor, comparable and copyable. Use it for every line

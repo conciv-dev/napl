@@ -1,77 +1,79 @@
 module: schemas_ml
 deps:
   - schemas_line_range
+  - serde
+  - serde_json
 types:
   - name: MlKind
-    description: 'Enumeration of four annotation kinds, comparable and copyable, deserialized from kebab-case JSON strings: "ambiguity" (Ambiguity), "assumption" (Assumption), "note" (Note), and "no-op" (NoOp). An unknown string is a deserialization error.'
+    description: 'Enumeration of four machine-layer annotation kinds. Copyable and comparable for equality. Deserialized from kebab-case JSON strings: "ambiguity" -> Ambiguity, "assumption" -> Assumption, "note" -> Note, "no-op" -> NoOp. Any other string is a deserialization error.'
   - name: MlEntry
-    description: 'One model-authored annotation, comparable and cloneable. Fields: prompt_lines (a LineRange, JSON key "promptLines"); kind (an MlKind); message (string); reasoning (string, defaults to empty string when absent); suggestion (optional string, defaults to none when absent).'
+    description: 'One model-authored annotation keyed to a prompt line range. Comparable and cloneable. Fields: prompt_lines (a LineRange from schemas_line_range, JSON key "promptLines"), kind (MlKind), message (string), reasoning (string, defaults to empty when absent), suggestion (optional string, defaults to none when absent).'
   - name: Ml
-    description: "A whole machine-layer document, comparable and cloneable. Fields: module (string), target (string), and entries (list of MlEntry, defaults to empty when absent)."
+    description: "A whole machine-layer document. Comparable and cloneable. Fields: module (string), target (string), entries (list of MlEntry, defaults to empty when absent)."
   - name: MlError
-    description: "Error kind returned by validation. Variants: Parse (holds a message, for structural/deserialization failures), EmptyModule, EmptyTarget, and EmptyMessage. Carries a human-readable display for each variant."
+    description: "Error kind returned by validators. Variants: Parse (deserialization failed, carries a message), EmptyModule, EmptyTarget, EmptyMessage. Comparable for equality; renders a human-readable message."
 functions:
   - name: validate_ml
-    signature: "validate_ml(value: JsonValue) -> Result<Ml, MlError>"
-    behavior: "Deserializes the JSON value into an Ml, then validates. Precondition: the value must be structurally valid (known kinds, a promptLines that normalizes per LineRange rules — a scalar such as 18 becomes 18..=18, an absent suggestion becomes none); otherwise returns a Parse error. Postcondition: on success module is non-empty, target is non-empty, and every entry's message is non-empty; violations return EmptyModule, EmptyTarget, or EmptyMessage respectively. Rejection is an error, never a panic."
+    signature: "validate_ml(value: Json) -> Result<Ml, MlError>"
+    behavior: 'Deserialize the JSON value into an Ml, then validate. Precondition: value must structurally deserialize (unknown kind such as "bogus", or a promptLines that is a string, yields a Parse error). Postconditions: on success returns the Ml with a scalar promptLines normalized (e.g. 18 -> 18..=18), absent suggestion as none, absent entries as empty. Rejects with EmptyModule if module is empty, EmptyTarget if target is empty, EmptyMessage if any entry message is empty. Never panics; rejection is a returned error.'
   - name: parse_ml_entries
-    signature: "parse_ml_entries(value: JsonValue) -> Result<Vec<MlEntry>, MlError>"
-    behavior: If the value is not a JSON array, returns an empty list with no error. Otherwise deserializes it as a list of MlEntry (a malformed element is a Parse error) and validates each entry's message is non-empty, returning EmptyMessage otherwise. On success returns the parsed entries.
+    signature: "parse_ml_entries(value: Json) -> Result<Vec<MlEntry>, MlError>"
+    behavior: "If value is not a JSON array, return an empty list with no error. Otherwise deserialize it as a list of MlEntry (a malformed element, e.g. unknown kind, yields a Parse error) and validate each entry: any empty message yields EmptyMessage. On success returns the parsed entries in order."
   - name: ml_entries_at_body_line
     signature: "ml_entries_at_body_line(ml: &Ml, body_line: u32) -> Vec<&MlEntry>"
-    behavior: Returns references to every entry whose promptLines range inclusively covers body_line (start <= body_line <= end), preserving document order. Returns an empty list when no entry covers the line.
+    behavior: Return references to every entry whose promptLines range inclusively covers body_line (start <= body_line <= end), preserving document order. Returns empty when no entry covers the line.
 tests:
   - name: kind_kebab_case_spellings
-    given: The JSON strings "ambiguity", "assumption", "note", and "no-op".
-    expect: Deserialize to Ambiguity, Assumption, Note, and NoOp respectively.
+    given: JSON strings "ambiguity", "assumption", "note", "no-op"
+    expect: Deserialize to MlKind Ambiguity, Assumption, Note, NoOp respectively.
   - name: unknown_kind_is_error
-    given: The JSON string "bogus" deserialized as an MlKind.
-    expect: A deserialization error.
+    given: JSON string "bogus" deserialized as MlKind
+    expect: Deserialization error.
   - name: entry_defaults_reasoning_and_suggestion
-    given: An entry object with promptLines 18, kind "note", message "hello", and no reasoning or suggestion.
-    expect: prompt_lines is 18..=18, kind is Note, message is "hello", reasoning is the empty string, and suggestion is none.
+    given: Entry JSON with promptLines 18, kind "note", message "hello", no reasoning or suggestion
+    expect: prompt_lines normalizes to 18..=18, kind Note, message "hello", reasoning empty string, suggestion none.
   - name: entry_with_reasoning_and_suggestion
-    given: An entry object with promptLines [3, 5], kind "assumption", message "m", reasoning "r", and suggestion "s".
-    expect: prompt_lines is 3..=5, reasoning is "r", and suggestion is "s".
+    given: Entry JSON with promptLines [3,5], kind "assumption", message "m", reasoning "r", suggestion "s"
+    expect: prompt_lines is 3..=5, reasoning "r", suggestion some "s".
   - name: prompt_lines_string_is_deserialize_error
-    given: An entry object whose promptLines is the string "1-2".
-    expect: A deserialization error.
+    given: Entry JSON with promptLines "1-2"
+    expect: Deserialization error.
   - name: validate_ml_accepts_valid_document
-    given: A document with module "m", target "t", and one entry (promptLines [1, 2], kind "ambiguity", message "a").
-    expect: Success with module "m", target "t", and one entry.
+    given: Document with module "m", target "t", one entry {promptLines [1,2], kind "ambiguity", message "a"}
+    expect: Ok with module "m", target "t", and one entry.
   - name: validate_ml_defaults_missing_entries_to_empty
-    given: A document with module "m", target "t", and no entries field.
-    expect: Success with an empty entries list.
+    given: Document with module "m", target "t", no entries key
+    expect: Ok with empty entries list.
   - name: validate_ml_rejects_empty_module
-    given: A document with an empty module and target "t".
-    expect: An EmptyModule error.
+    given: Document with module "", target "t"
+    expect: Error EmptyModule.
   - name: validate_ml_rejects_empty_target
-    given: A document with module "m" and an empty target.
-    expect: An EmptyTarget error.
+    given: Document with module "m", target ""
+    expect: Error EmptyTarget.
   - name: validate_ml_rejects_empty_entry_message
-    given: A document with module "m", target "t", and an entry whose message is empty.
-    expect: An EmptyMessage error.
+    given: Document with one entry whose message is ""
+    expect: Error EmptyMessage.
   - name: validate_ml_rejects_unknown_kind
-    given: A document containing an entry with kind "bogus".
-    expect: A Parse error.
+    given: Document with one entry whose kind is "bogus"
+    expect: Error Parse.
   - name: validate_ml_rejects_string_prompt_lines
-    given: A document containing an entry whose promptLines is the string "1-2".
-    expect: A Parse error.
+    given: Document with one entry whose promptLines is "1-2"
+    expect: Error Parse.
   - name: parse_ml_entries_returns_empty_for_non_array
-    given: Non-array JSON values (an object, a string, a number).
-    expect: An empty list with no error for each.
+    given: A JSON object, a JSON string, and a JSON number
+    expect: Ok with empty list for each (no error).
   - name: parse_ml_entries_parses_valid_array
-    given: 'An array of two entries: (promptLines [1, 2], kind "note", message "a") and (promptLines 5, kind "no-op", message "b").'
-    expect: Two entries; first message is "a", second kind is NoOp.
+    given: Array of two entries {promptLines [1,2], kind "note", message "a"} and {promptLines 5, kind "no-op", message "b"}
+    expect: Ok with two entries; first message "a", second kind NoOp.
   - name: parse_ml_entries_rejects_empty_message
-    given: An array with a single entry whose message is empty.
-    expect: An EmptyMessage error.
+    given: Array with one entry whose message is ""
+    expect: Error EmptyMessage.
   - name: parse_ml_entries_rejects_malformed_list
-    given: An array with a single entry whose kind is "bogus".
-    expect: A Parse error.
+    given: Array with one entry whose kind is "bogus"
+    expect: Error Parse.
   - name: lookup_finds_covering_entries_in_order
-    given: A document with entries (promptLines [1, 2], message "a") and (promptLines [5, 7], message "b"), queried at body lines 1 and 6.
-    expect: Line 1 yields only the entry with message "a"; line 6 yields only the entry with message "b".
+    given: Document with entries covering [1,2] ("a") and [5,7] ("b"); query body lines 1 and 6
+    expect: Line 1 yields only "a"; line 6 yields only "b".
   - name: lookup_returns_empty_for_uncovered_line
-    given: The same document queried at body line 4.
-    expect: An empty result.
+    given: Same document; query body line 4
+    expect: Empty result.
