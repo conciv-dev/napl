@@ -1,0 +1,68 @@
+name: heal-moved-drifted
+description: >
+  Generated-file healing (moved + drifted): the map's tracked greet.ts is missing
+  and no untracked file hash-matches it, but one untracked file is line-similar
+  (>= 50%) to the journal-reconstructed baseline. Status heals the path (journals
+  a `move` entry) and then reports normal DRIFT on the changed content at the new
+  path — instead of a false "deleted + unattributed".
+setup:
+  .napl/lock.json: |
+    {
+      "model": "claude-sonnet-5",
+      "backend": "claude-cli"
+    }
+  examples/greeting.napl: |
+    ---
+    module: greeting
+    deps: []
+    targets: [typescript]
+    tests: []
+    ---
+    Greet a person by name.
+  .napl/src/typescript/moved/greet.ts: |
+    alpha
+    beta
+    gamma
+    DELTA-EDITED
+  .napl/journal.jsonl: |
+    {"gen":1,"timestamp":"t1","module":"greeting","target":"typescript","promptHash":"a89eecb1f31e12e98001c16dfa96c74cc9edfc11e24a4abcd54cfb2258c5d3e3","promptDiff":"","mode":"full","files":[{"path":".napl/src/typescript/greet.ts","patch":"@@ -0,0 +1,4 @@\n+alpha\n+beta\n+gamma\n+delta\n","hashBefore":null,"hashAfter":"1111111111111111111111111111111111111111111111111111111111111111"}]}
+  .napl/map.json: |
+    {
+      "version": 2,
+      "prompts": {
+        "greeting": {
+          "module": "greeting",
+          "promptHash": "a89eecb1f31e12e98001c16dfa96c74cc9edfc11e24a4abcd54cfb2258c5d3e3",
+          "declaredTargets": [
+            "typescript"
+          ],
+          "targets": {
+            "typescript": {
+              "promptHashAtGen": "a89eecb1f31e12e98001c16dfa96c74cc9edfc11e24a4abcd54cfb2258c5d3e3",
+              "files": [
+                ".napl/src/typescript/greet.ts"
+              ]
+            }
+          }
+        }
+      },
+      "files": {
+        ".napl/src/typescript/greet.ts": {
+          "target": "typescript",
+          "hash": "1111111111111111111111111111111111111111111111111111111111111111",
+          "prompts": [
+            "greeting"
+          ]
+        }
+      }
+    }
+run: [status]
+expect:
+  exitCode: 1
+  stdout:
+    - "DRIFT        examples/greeting.napl (typescript: .napl/src/typescript/moved/greet.ts was edited)"
+  files:
+    .napl/journal.jsonl:
+      contains:
+        - "\"mode\":\"move\""
+        - ".napl/src/typescript/moved/greet.ts"

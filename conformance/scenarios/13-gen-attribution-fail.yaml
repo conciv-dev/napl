@@ -58,7 +58,7 @@ expect:
         {
           "version": 2,
           "prompts": {
-            "examples/greeting.napl": {
+            "greeting": {
               "module": "greeting",
               "promptHash": "a89eecb1f31e12e98001c16dfa96c74cc9edfc11e24a4abcd54cfb2258c5d3e3",
               "declaredTargets": [

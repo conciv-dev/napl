@@ -27,7 +27,7 @@ setup:
     {
       "version": 2,
       "prompts": {
-        "examples/greeting.napl": {
+        "greeting": {
           "module": "greeting",
           "promptHash": "a89eecb1f31e12e98001c16dfa96c74cc9edfc11e24a4abcd54cfb2258c5d3e3",
           "declaredTargets": [
@@ -48,7 +48,7 @@ setup:
           "target": "typescript",
           "hash": "ba0fff9dc431972a2488987562dbf68bc99b9c991a3cdc7506f64eff6a703545",
           "prompts": [
-            "examples/greeting.napl"
+            "greeting"
           ]
         }
       }
@@ -105,7 +105,7 @@ expect:
         {
           "version": 2,
           "prompts": {
-            "examples/greeting.napl": {
+            "greeting": {
               "module": "greeting",
               "promptHash": "a89eecb1f31e12e98001c16dfa96c74cc9edfc11e24a4abcd54cfb2258c5d3e3",
               "declaredTargets": [
@@ -126,7 +126,7 @@ expect:
               "target": "typescript",
               "hash": "29c4769fcac1ab3d75f0065ad08944203a9bd3686180a6c32cf1002aaf933a13",
               "prompts": [
-                "examples/greeting.napl"
+                "greeting"
               ]
             }
           }

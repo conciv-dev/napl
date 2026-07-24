@@ -1,0 +1,36 @@
+name: duplicate-module
+description: >
+  cp-semantics: identity is the frontmatter module name, so two prompt files that
+  declare the same module are a hard error naming both paths — a copied prompt
+  must be given a new module name in the copy. Status refuses to run rather than
+  silently picking one.
+setup:
+  .napl/lock.json: |
+    {
+      "model": "claude-sonnet-5",
+      "backend": "claude-cli"
+    }
+  examples/greeting.napl: |
+    ---
+    module: greeting
+    deps: []
+    targets: [typescript]
+    tests: []
+    ---
+    Greet a person by name.
+  examples/greeting-copy.napl: |
+    ---
+    module: greeting
+    deps: []
+    targets: [typescript]
+    tests: []
+    ---
+    Greet a person by name (a copy someone forgot to rename).
+run: [status]
+expect:
+  exitCode: 1
+  stderrContains:
+    - "duplicate module 'greeting' is declared by two prompts"
+    - "examples/greeting-copy.napl"
+    - "examples/greeting.napl"
+    - "Rename the module in the copy"

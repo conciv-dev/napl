@@ -25,9 +25,9 @@ use crate::clock::now;
 use crate::driftdetect::detect_gen_drift;
 use crate::error::{CliError, CliResult};
 use crate::fsutil::{self, READONLY_MODE};
-use crate::paths::{rel_to, resolve_paths, NaplPaths};
+use crate::paths::{find_prompt_files, rel_to, resolve_paths, NaplPaths};
 use crate::process::{acquire_gen_lock, require_engine, resolve_engine, run_coding_agent};
-use crate::state::{append_journal_entry, read_journal, read_lock, read_map, write_map};
+use crate::state::{append_journal_entry, load_prompt_aliases, read_journal, read_lock, read_map, write_map};
 
 /// Arguments for the reconcile command.
 pub struct ReconcileArgs<'a> {
@@ -60,7 +60,18 @@ pub fn run(root: &Path, args: &ReconcileArgs) -> CliResult<i32> {
     for warning in &journal_warnings {
         println!("{warning}");
     }
-    let drifts = detect_gen_drift(root, args.target, &map, &journal, args.module)?;
+    let aliases = load_prompt_aliases(&paths.lock_path);
+    let prompt_files = find_prompt_files(root, &aliases)?;
+    crate::discovery::check_duplicate_modules(root, &prompt_files)?;
+    let prompt_paths = crate::discovery::module_paths(root, &prompt_files);
+    let drifts = detect_gen_drift(
+        root,
+        args.target,
+        &map,
+        &journal,
+        args.module,
+        &prompt_paths,
+    )?;
     if drifts.is_empty() {
         println!(
             "nothing to reconcile — no drifted files for target '{}'.",

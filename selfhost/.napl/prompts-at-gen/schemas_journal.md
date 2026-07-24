@@ -43,7 +43,11 @@ both `Serialize` and `Deserialize`):
   - `hash_before: Option<String>` — serde field name `hashBefore`.
   - `hash_after: String` — serde field name `hashAfter`.
 - `JournalMode`: an enum (`Copy` as well) with variants `Full`, `Incremental`,
-  `Reconcile`, serialized in lowercase (`full`, `incremental`, `reconcile`).
+  `Reconcile`, `Move`, serialized in lowercase (`full`, `incremental`,
+  `reconcile`, `move`). The `Move` mode records a location-heal: a generated file
+  the toolchain relocated to a new path when its content was found unchanged (or
+  drifted) under a different filename, with the file entry's patch describing the
+  move.
 - `JournalEntry`: one generation. Public fields:
   - `gen: i64`
   - `timestamp: String`

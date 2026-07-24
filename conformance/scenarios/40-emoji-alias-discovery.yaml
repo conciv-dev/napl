@@ -2,7 +2,8 @@ name: emoji-alias-discovery
 description: >
   A prompt spelled with the person-emoji alias (greeting.🧑) is discovered and
   generated; per the mirror rule the machine file is written as greeting.🤖 (not
-  .mapl), and map.json records the actual emoji filename.
+  .mapl). Identity is the frontmatter module, so map.json keys the prompt by its
+  module name, not its emoji filename.
 setup:
   .napl/lock.json: |
     {
@@ -58,5 +59,5 @@ expect:
       absent: true
     .napl/map.json:
       contains:
-        - "\"examples/greeting.🧑\""
+        - "\"greeting\""
         - "\".napl/src/typescript/greet.ts\""

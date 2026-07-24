@@ -1,7 +1,7 @@
 {
   "version": 2,
   "prompts": {
-    "extensions.napl": {
+    "extensions": {
       "module": "extensions",
       "promptHash": "53b3004a36ec7d3e18f21eccb7133d6620a90346ccabac373e809fc5de8cb56b",
       "declaredTargets": [
@@ -17,7 +17,7 @@
         }
       }
     },
-    "hash.napl": {
+    "hash": {
       "module": "hash",
       "promptHash": "8e6d0d3bf608d29abc67791f92bc0e9c97daaedd4915a15a8d11f13a9a9b95b8",
       "declaredTargets": [
@@ -33,7 +33,7 @@
         }
       }
     },
-    "parse_output.napl": {
+    "parse_output": {
       "module": "parse_output",
       "promptHash": "5f61ddd58df5a9c4e3e795e4f32b4465f89afb5aed39439934fa70bd36f25242",
       "declaredTargets": [
@@ -49,7 +49,7 @@
         }
       }
     },
-    "text_diff.napl": {
+    "text_diff": {
       "module": "text_diff",
       "promptHash": "c12f6b2d040adc808d408f71fc27f225312be710a4088acef49a678e58ed21e2",
       "declaredTargets": [
@@ -65,7 +65,7 @@
         }
       }
     },
-    "body_lines.napl": {
+    "body_lines": {
       "module": "body_lines",
       "promptHash": "f5bfbff4e852f6a907e7e28ebfba093137b0e7624f33e7a605d3caae5eeb65c4",
       "declaredTargets": [
@@ -81,7 +81,7 @@
         }
       }
     },
-    "schemas_ordered_map.napl": {
+    "schemas_ordered_map": {
       "module": "schemas_ordered_map",
       "promptHash": "4973abaa008fa2130ccfd3cd7a25f1d4cc0aa9f8e4035b90b1c48b6a7ba3e707",
       "declaredTargets": [
@@ -97,7 +97,7 @@
         }
       }
     },
-    "schemas_line_range.napl": {
+    "schemas_line_range": {
       "module": "schemas_line_range",
       "promptHash": "b64ad0a0e88a52c81bf16816622897c86e0e7f491113ae444b0dfe2cce55312f",
       "declaredTargets": [
@@ -113,7 +113,7 @@
         }
       }
     },
-    "schemas_ir.napl": {
+    "schemas_ir": {
       "module": "schemas_ir",
       "promptHash": "9774858515e616c6840e4f9e49eaa8a4ee19d5868be410cf6701a71df61feeeb",
       "declaredTargets": [
@@ -129,7 +129,7 @@
         }
       }
     },
-    "schemas_frontmatter.napl": {
+    "schemas_frontmatter": {
       "module": "schemas_frontmatter",
       "promptHash": "174a5adc2d3f1decc3c9e9cd830357181a4913004d843f82533cbec7dd5bfea9",
       "declaredTargets": [
@@ -145,7 +145,7 @@
         }
       }
     },
-    "drift.napl": {
+    "drift": {
       "module": "drift",
       "promptHash": "291ef28967c7e57871c6cdbd15cfcf8d9fbf08993defcfd78d86cab0415f84f5",
       "declaredTargets": [
@@ -161,7 +161,7 @@
         }
       }
     },
-    "guard.napl": {
+    "guard": {
       "module": "guard",
       "promptHash": "f90cbfb6b9bd0ebef3d6ce5c300d17ed9c8225cfee6e67e17a07222e1e5c071d",
       "declaredTargets": [
@@ -177,7 +177,7 @@
         }
       }
     },
-    "targets.napl": {
+    "targets": {
       "module": "targets",
       "promptHash": "ee1c036d337878f247a878e50bac1f1e2b03efe38054bb967363aee21cbb194e",
       "declaredTargets": [
@@ -193,7 +193,7 @@
         }
       }
     },
-    "scanner.napl": {
+    "scanner": {
       "module": "scanner",
       "promptHash": "2cc1cdc421bebc56913433d93fbd3892c3c7a60802b3045f7a01961e03b4b180",
       "declaredTargets": [
@@ -209,7 +209,7 @@
         }
       }
     },
-    "schemas_lock.napl": {
+    "schemas_lock": {
       "module": "schemas_lock",
       "promptHash": "f36751c42e649c8872eaebc138cd4291c0172cc696f7b55b41d44e634424305e",
       "declaredTargets": [
@@ -225,7 +225,7 @@
         }
       }
     },
-    "schemas_attribution.napl": {
+    "schemas_attribution": {
       "module": "schemas_attribution",
       "promptHash": "ac240b384587d7549b089bad8cfe0d2128bf41076ed141de95edd689dbd98bfe",
       "declaredTargets": [
@@ -241,7 +241,7 @@
         }
       }
     },
-    "schemas_ml.napl": {
+    "schemas_ml": {
       "module": "schemas_ml",
       "promptHash": "7e21ddf6dac1e77e2090f64da1d16de2c1972d221b10d7d7ef2fe2f61c7d832f",
       "declaredTargets": [
@@ -257,7 +257,7 @@
         }
       }
     },
-    "schemas_map.napl": {
+    "schemas_map": {
       "module": "schemas_map",
       "promptHash": "fa144f25203c81777b06913519ce5d3e026a33dd2e48c5ab68dc6f178c0b978f",
       "declaredTargets": [
@@ -273,7 +273,7 @@
         }
       }
     },
-    "blame.napl": {
+    "blame": {
       "module": "blame",
       "promptHash": "84231fdf78a7aec9af8607958100baacdeaeb82fb08c87cf68fc75e66483de5f",
       "declaredTargets": [
@@ -289,7 +289,7 @@
         }
       }
     },
-    "reverse.napl": {
+    "reverse": {
       "module": "reverse",
       "promptHash": "8d0dcc75b9f8226646b762eadafe5b39bc69eecb8577487b957bfde287d315ac",
       "declaredTargets": [
@@ -305,15 +305,15 @@
         }
       }
     },
-    "schemas_journal.napl": {
+    "schemas_journal": {
       "module": "schemas_journal",
-      "promptHash": "533df5639e43ebe5bf601f3215f7a28a16ad0a221c50f2fc9d60b7e369f51274",
+      "promptHash": "5b7a3ad888dd30a0c713c567c8bdd3e40591674987c8de067575c8f3f8ae3468",
       "declaredTargets": [
         "rust"
       ],
       "targets": {
         "rust": {
-          "promptHashAtGen": "533df5639e43ebe5bf601f3215f7a28a16ad0a221c50f2fc9d60b7e369f51274",
+          "promptHashAtGen": "5b7a3ad888dd30a0c713c567c8bdd3e40591674987c8de067575c8f3f8ae3468",
           "files": [
             ".napl/src/rust/schemas_journal/Cargo.toml",
             ".napl/src/rust/schemas_journal/src/lib.rs"
@@ -321,7 +321,7 @@
         }
       }
     },
-    "incremental.napl": {
+    "incremental": {
       "module": "incremental",
       "promptHash": "daea8da01dc83d87a8a5435727784058ba5f2b6e9501a2532d74acd072d6ed7d",
       "declaredTargets": [
@@ -337,7 +337,7 @@
         }
       }
     },
-    "yaml.napl": {
+    "yaml": {
       "module": "yaml",
       "promptHash": "fa89048b5a8f28ac704bfe83b7e4b466425569da27067fbf7f4d2d2339ca577c",
       "declaredTargets": [
@@ -353,7 +353,7 @@
         }
       }
     },
-    "prompts.napl": {
+    "prompts": {
       "module": "prompts",
       "promptHash": "eb7c42f8d6065ae063df6decc85899642a07675bd9d0ae1b1a184834cbc312df",
       "declaredTargets": [
@@ -369,7 +369,7 @@
         }
       }
     },
-    "clock_fmt.napl": {
+    "clock_fmt": {
       "module": "clock_fmt",
       "promptHash": "d6f4e055037dbb2b27ccdeeb9b3c46fd627c51cf49ed19b3d307409c24c7d27d",
       "declaredTargets": [
@@ -385,7 +385,7 @@
         }
       }
     },
-    "paths_core.napl": {
+    "paths_core": {
       "module": "paths_core",
       "promptHash": "a017d3f9f5a60901f4dd44a63278f805c3e42dc95cfd69d6b80888948e753d4b",
       "declaredTargets": [
@@ -401,7 +401,7 @@
         }
       }
     },
-    "statusclass_render.napl": {
+    "statusclass_render": {
       "module": "statusclass_render",
       "promptHash": "24cdb5c1328634b0489441dce5fdf5660ca766d6d9237bf9952163d442f61e2a",
       "declaredTargets": [
@@ -417,7 +417,7 @@
         }
       }
     },
-    "driftdetect_replay.napl": {
+    "driftdetect_replay": {
       "module": "driftdetect_replay",
       "promptHash": "2dc207581462ff8cc3269a946b1dcb811f7f20af2b496429e810bacc40d60e25",
       "declaredTargets": [
@@ -433,7 +433,7 @@
         }
       }
     },
-    "snapshot_diff.napl": {
+    "snapshot_diff": {
       "module": "snapshot_diff",
       "promptHash": "c7d341e8a8e32d38ea733e31a3db55d0ee3e656042e7e66a3dd43e91ebb61d28",
       "declaredTargets": [
@@ -449,7 +449,7 @@
         }
       }
     },
-    "snapshot_filter.napl": {
+    "snapshot_filter": {
       "module": "snapshot_filter",
       "promptHash": "7f505aa884a76cab7a726d8fff73fa09a2d8d7c9a21a7461dd627191827c8db8",
       "declaredTargets": [
@@ -465,7 +465,7 @@
         }
       }
     },
-    "blame_render.napl": {
+    "blame_render": {
       "module": "blame_render",
       "promptHash": "24f5a9fb57c836884c5c5b671bc1f45dd69e5a592d15b00de12dfb1e0dbb3615",
       "declaredTargets": [
@@ -481,7 +481,7 @@
         }
       }
     },
-    "watch_filter.napl": {
+    "watch_filter": {
       "module": "watch_filter",
       "promptHash": "0fd7a885b0a99d6c35bd18152b4ba93746068afc1528c8509a3b545908e230ba",
       "declaredTargets": [
@@ -497,7 +497,7 @@
         }
       }
     },
-    "reconcile_derive.napl": {
+    "reconcile_derive": {
       "module": "reconcile_derive",
       "promptHash": "704b6537cd1d5c203cd89337f18a28682ece8b7bc8d21c3a70afb4bf04415d43",
       "declaredTargets": [
@@ -513,7 +513,7 @@
         }
       }
     },
-    "gen_classify.napl": {
+    "gen_classify": {
       "module": "gen_classify",
       "promptHash": "3627515696a514875f675bff4c4b5d80502695bc2ee3cd1c112a1863e40dc2d1",
       "declaredTargets": [
@@ -529,7 +529,7 @@
         }
       }
     },
-    "gen_prompt_diff.napl": {
+    "gen_prompt_diff": {
       "module": "gen_prompt_diff",
       "promptHash": "f1eadaec8f24352623f38a565a0b746f2ffad044b2f2ce04c37d9308c6d87811",
       "declaredTargets": [
@@ -545,7 +545,7 @@
         }
       }
     },
-    "gen_attribution_check.napl": {
+    "gen_attribution_check": {
       "module": "gen_attribution_check",
       "promptHash": "b4c17dd61957714a9953a0a631236ceae382b2b389450f2b7eea1416a53cd897",
       "declaredTargets": [
@@ -561,7 +561,7 @@
         }
       }
     },
-    "gen_mode.napl": {
+    "gen_mode": {
       "module": "gen_mode",
       "promptHash": "fde5685a475e2a0776d6a95b88eaaa5a07ccc6dd78a0670ae39c2ee2f90adced",
       "declaredTargets": [
@@ -583,504 +583,504 @@
       "target": "rust",
       "hash": "1e5450cfc6f881b6b27bb47aaf68f388c4666df1bae946cf664d60599e874c8a",
       "prompts": [
-        "extensions.napl"
+        "extensions"
       ]
     },
     ".napl/src/rust/extensions/src/lib.rs": {
       "target": "rust",
       "hash": "5a4c066920d1d42d04c18d34821bbb4b1b8834e7433d94300d0352b3976d1ce8",
       "prompts": [
-        "extensions.napl"
+        "extensions"
       ]
     },
     ".napl/src/rust/hash/Cargo.toml": {
       "target": "rust",
       "hash": "8762f6782dfe056ccb8f5331ff49186fd058be913020eb6231f62bae474e4f36",
       "prompts": [
-        "hash.napl"
+        "hash"
       ]
     },
     ".napl/src/rust/hash/src/lib.rs": {
       "target": "rust",
       "hash": "c43ed4485041d8909086749b3899377fb41bd6fa712e7ee6b1e19a96243c9821",
       "prompts": [
-        "hash.napl"
+        "hash"
       ]
     },
     ".napl/src/rust/parse_output/Cargo.toml": {
       "target": "rust",
       "hash": "fd33dfc100eef137d231a3a69d6ba3ca47fa79c58a30536442f673813d5e1413",
       "prompts": [
-        "parse_output.napl"
+        "parse_output"
       ]
     },
     ".napl/src/rust/parse_output/src/lib.rs": {
       "target": "rust",
       "hash": "45604f1ccc9a35ebfb276d693fe0452fb7c54ec6e34c4c40e8c23f6a547f275f",
       "prompts": [
-        "parse_output.napl"
+        "parse_output"
       ]
     },
     ".napl/src/rust/text_diff/Cargo.toml": {
       "target": "rust",
       "hash": "c15fd6accdee0af844f9fcb0155309887f50ec5bc07f2312171a8f689e38554d",
       "prompts": [
-        "text_diff.napl"
+        "text_diff"
       ]
     },
     ".napl/src/rust/text_diff/src/lib.rs": {
       "target": "rust",
       "hash": "707c356b93434f1a3ccfb24c84e736d45f9d62b7e65c6bc89ad361999dbfdee3",
       "prompts": [
-        "text_diff.napl"
+        "text_diff"
       ]
     },
     ".napl/src/rust/body_lines/Cargo.toml": {
       "target": "rust",
       "hash": "87760cbe55d962b4b0b139e09e641322f83515f10d3afcf62374f9da3716cb4a",
       "prompts": [
-        "body_lines.napl"
+        "body_lines"
       ]
     },
     ".napl/src/rust/body_lines/src/lib.rs": {
       "target": "rust",
       "hash": "c86e862fb84101f03bdf766d93af963e0c8660c1aceae7019cff861c2db427b2",
       "prompts": [
-        "body_lines.napl"
+        "body_lines"
       ]
     },
     ".napl/src/rust/schemas_ordered_map/Cargo.toml": {
       "target": "rust",
       "hash": "98fadd96d5624c447be9890873322b43a2fb3032ef80fba7730439fe879a3688",
       "prompts": [
-        "schemas_ordered_map.napl"
+        "schemas_ordered_map"
       ]
     },
     ".napl/src/rust/schemas_ordered_map/src/lib.rs": {
       "target": "rust",
       "hash": "e8d1e86ccd222b4164de126c3d77699f4fba253480fda19f7ff6a3e1a8b0061f",
       "prompts": [
-        "schemas_ordered_map.napl"
+        "schemas_ordered_map"
       ]
     },
     ".napl/src/rust/schemas_line_range/Cargo.toml": {
       "target": "rust",
       "hash": "2c1699e86b59fffb19909bf31723ff1ccbacffce0da84e1e1542c1a6d6b193c5",
       "prompts": [
-        "schemas_line_range.napl"
+        "schemas_line_range"
       ]
     },
     ".napl/src/rust/schemas_line_range/src/lib.rs": {
       "target": "rust",
       "hash": "fac45be6f26f4a7933383140262a3bade91ee3f126ecc2fdb0afed00b8b869bf",
       "prompts": [
-        "schemas_line_range.napl"
+        "schemas_line_range"
       ]
     },
     ".napl/src/rust/schemas_ir/Cargo.toml": {
       "target": "rust",
       "hash": "ae47654b9b96fdef57c354d75c56bcb0d7c5e39739e21640458c46eddb4fc1c4",
       "prompts": [
-        "schemas_ir.napl"
+        "schemas_ir"
       ]
     },
     ".napl/src/rust/schemas_ir/src/lib.rs": {
       "target": "rust",
       "hash": "186aa20fc64e075209ee598403a224b62daeab0ebaedf54db1d5499efd5d1bec",
       "prompts": [
-        "schemas_ir.napl"
+        "schemas_ir"
       ]
     },
     ".napl/src/rust/schemas_frontmatter/Cargo.toml": {
       "target": "rust",
       "hash": "305fdbf4d8c246f91e73e2a228c690cfbcdee2e9e2cf21649456c3fb6ef4ce68",
       "prompts": [
-        "schemas_frontmatter.napl"
+        "schemas_frontmatter"
       ]
     },
     ".napl/src/rust/schemas_frontmatter/src/lib.rs": {
       "target": "rust",
       "hash": "af76ef7b620450b6b3b1586f06bb80ee977b819d7e351f849031a11cac90e090",
       "prompts": [
-        "schemas_frontmatter.napl"
+        "schemas_frontmatter"
       ]
     },
     ".napl/src/rust/drift/Cargo.toml": {
       "target": "rust",
       "hash": "e0bf5ae5e5a46a2dcc15a0c5c5bd5d4f313d5c16a0f11f4d907b4ffca017507b",
       "prompts": [
-        "drift.napl"
+        "drift"
       ]
     },
     ".napl/src/rust/drift/src/lib.rs": {
       "target": "rust",
       "hash": "ca76b4db3f732a0bb89d62cb839836dc811e65b64f1ff1c3f2e9597c13e9de13",
       "prompts": [
-        "drift.napl"
+        "drift"
       ]
     },
     ".napl/src/rust/guard/Cargo.toml": {
       "target": "rust",
       "hash": "c048f679ef562f17572917bd5924c554da6b6fd57c480ebb51af43ab7db339de",
       "prompts": [
-        "guard.napl"
+        "guard"
       ]
     },
     ".napl/src/rust/guard/src/lib.rs": {
       "target": "rust",
       "hash": "f5ad3f996759a3531dac5213fd5395eefa6af9b0ec3a84cc4676abf4ef24c013",
       "prompts": [
-        "guard.napl"
+        "guard"
       ]
     },
     ".napl/src/rust/targets/Cargo.toml": {
       "target": "rust",
       "hash": "344936b81784a55fc49b63b54cc2f7546bc1e8e84f3c91bb95b42a987ad3e02d",
       "prompts": [
-        "targets.napl"
+        "targets"
       ]
     },
     ".napl/src/rust/targets/src/lib.rs": {
       "target": "rust",
       "hash": "21ff9ce3f478019e09e028e0c72c306a4e119d22d99bebe6ceb7caec63ca7594",
       "prompts": [
-        "targets.napl"
+        "targets"
       ]
     },
     ".napl/src/rust/scanner/Cargo.toml": {
       "target": "rust",
       "hash": "636d525277d854d86478de5cdc08c30b4336b89c296f0ca7a342ca3546225608",
       "prompts": [
-        "scanner.napl"
+        "scanner"
       ]
     },
     ".napl/src/rust/scanner/src/lib.rs": {
       "target": "rust",
       "hash": "da8a04a9fdea2c5fef9b2e0b29c6ce815b6072faac88ad942dcb90c623813226",
       "prompts": [
-        "scanner.napl"
+        "scanner"
       ]
     },
     ".napl/src/rust/schemas_lock/Cargo.toml": {
       "target": "rust",
       "hash": "fc0807f7b89a276c36375260b1f93a11451213ca1b265eb75938a56c6ccaee45",
       "prompts": [
-        "schemas_lock.napl"
+        "schemas_lock"
       ]
     },
     ".napl/src/rust/schemas_lock/src/lib.rs": {
       "target": "rust",
       "hash": "781b675c4700cd05ad1728b8784c72b5444e622a882739b71ccca45e003c0808",
       "prompts": [
-        "schemas_lock.napl"
+        "schemas_lock"
       ]
     },
     ".napl/src/rust/schemas_attribution/Cargo.toml": {
       "target": "rust",
       "hash": "e5808ea935540a22afda52de4a2f8de967d69ad88e366b57220aa3368012057f",
       "prompts": [
-        "schemas_attribution.napl"
+        "schemas_attribution"
       ]
     },
     ".napl/src/rust/schemas_attribution/src/lib.rs": {
       "target": "rust",
       "hash": "00869fe4f11589e2e93e4bc423b1760c546811be7803a4e9b389e4a69eb81de0",
       "prompts": [
-        "schemas_attribution.napl"
+        "schemas_attribution"
       ]
     },
     ".napl/src/rust/schemas_ml/Cargo.toml": {
       "target": "rust",
       "hash": "8a1c56b5209e988c75c6fb5f2e7d68983d9e86dda9a48520478bbce270450cc4",
       "prompts": [
-        "schemas_ml.napl"
+        "schemas_ml"
       ]
     },
     ".napl/src/rust/schemas_ml/src/lib.rs": {
       "target": "rust",
       "hash": "3c71293936ba91d83c94305ba6cb6d6e832e0ad851039836916373b5dd88f180",
       "prompts": [
-        "schemas_ml.napl"
+        "schemas_ml"
       ]
     },
     ".napl/src/rust/schemas_map/Cargo.toml": {
       "target": "rust",
       "hash": "0fda37b2feb99164dfabd008ae876946ab7c7578dc62762d38f18d028a35a487",
       "prompts": [
-        "schemas_map.napl"
+        "schemas_map"
       ]
     },
     ".napl/src/rust/schemas_map/src/lib.rs": {
       "target": "rust",
       "hash": "fdfd1a199609827854596ac690aa57d958182596da8550cc18a4bda74f84914e",
       "prompts": [
-        "schemas_map.napl"
+        "schemas_map"
       ]
     },
     ".napl/src/rust/blame/Cargo.toml": {
       "target": "rust",
       "hash": "8d7674fb3a726b88982ff649d4e80dc9374d08414cf73d5dce64259b1a384964",
       "prompts": [
-        "blame.napl"
+        "blame"
       ]
     },
     ".napl/src/rust/blame/src/lib.rs": {
       "target": "rust",
       "hash": "e5db4a64fd3d893c579e3c8f6da8d46fb5d2a99e07d60a648c415840e035d157",
       "prompts": [
-        "blame.napl"
+        "blame"
       ]
     },
     ".napl/src/rust/reverse/Cargo.toml": {
       "target": "rust",
       "hash": "677ac0aec10f99acce5778f16277536a863498d854336942006976c583f8d99c",
       "prompts": [
-        "reverse.napl"
+        "reverse"
       ]
     },
     ".napl/src/rust/reverse/src/lib.rs": {
       "target": "rust",
       "hash": "5544c0f6a971d400f00779eecfab2a843edd677ad1fd506218afdea17bd18bd9",
       "prompts": [
-        "reverse.napl"
+        "reverse"
       ]
     },
     ".napl/src/rust/schemas_journal/Cargo.toml": {
       "target": "rust",
       "hash": "6e2eb88b5496ef4b8f02a4b2e6002433df3760fc6a128a4a87ab609580711ac6",
       "prompts": [
-        "schemas_journal.napl"
+        "schemas_journal"
       ]
     },
     ".napl/src/rust/schemas_journal/src/lib.rs": {
       "target": "rust",
-      "hash": "a80c27e369375bfebc62483dd83701413f835c4746f43c5419e3b922c527b2a3",
+      "hash": "5dfcfb3e3e091e7df9da8e064ae4ca357515d8415a1fc38bbdd61291153a8456",
       "prompts": [
-        "schemas_journal.napl"
+        "schemas_journal"
       ]
     },
     ".napl/src/rust/incremental/Cargo.toml": {
       "target": "rust",
       "hash": "8f24ff787d504aabdada635b0bba347563b5371185f22f0e17b501b3f48eacde",
       "prompts": [
-        "incremental.napl"
+        "incremental"
       ]
     },
     ".napl/src/rust/incremental/src/lib.rs": {
       "target": "rust",
       "hash": "dc6da73cf6085e364a8c83f82f88b5080bee055d48524ee251b120036d780666",
       "prompts": [
-        "incremental.napl"
+        "incremental"
       ]
     },
     ".napl/src/rust/yaml/Cargo.toml": {
       "target": "rust",
       "hash": "cd00f12e24e0d2bb97c580e9e88dfe568d18bd2bdbffc20db568d7d73e638cb0",
       "prompts": [
-        "yaml.napl"
+        "yaml"
       ]
     },
     ".napl/src/rust/yaml/src/lib.rs": {
       "target": "rust",
       "hash": "7fd8d24dfccf033d3000496f79921a549012a8494e30f57ba110892f0b874778",
       "prompts": [
-        "yaml.napl"
+        "yaml"
       ]
     },
     ".napl/src/rust/prompts/Cargo.toml": {
       "target": "rust",
       "hash": "592c5d496dd9a30663d22060e490fbe185b61740110b3cb75fd1c6bc27791782",
       "prompts": [
-        "prompts.napl"
+        "prompts"
       ]
     },
     ".napl/src/rust/prompts/src/lib.rs": {
       "target": "rust",
       "hash": "2b8b4a2c52bcfe5212920d7b07347e556e3d1701dd51c675a832b9d475230260",
       "prompts": [
-        "prompts.napl"
+        "prompts"
       ]
     },
     ".napl/src/rust/clock_fmt/Cargo.toml": {
       "target": "rust",
       "hash": "13ce1a608498dbf01fbc2a2653d1255e56c28d7342a869ac80158d62d7039601",
       "prompts": [
-        "clock_fmt.napl"
+        "clock_fmt"
       ]
     },
     ".napl/src/rust/clock_fmt/src/lib.rs": {
       "target": "rust",
       "hash": "d80c9c140f84deecc6afa034a520ca86932a46ea8e41f1005f58b0f392b58a41",
       "prompts": [
-        "clock_fmt.napl"
+        "clock_fmt"
       ]
     },
     ".napl/src/rust/paths_core/Cargo.toml": {
       "target": "rust",
       "hash": "261e4e0ea691194e88b9d933b193ca76f81c396f19d361dee2e67487d2e65596",
       "prompts": [
-        "paths_core.napl"
+        "paths_core"
       ]
     },
     ".napl/src/rust/paths_core/src/lib.rs": {
       "target": "rust",
       "hash": "9c10bae4dbefd7f8e7505dc64ec06a6711f1bedf6a129c79205ebd16326abcb0",
       "prompts": [
-        "paths_core.napl"
+        "paths_core"
       ]
     },
     ".napl/src/rust/statusclass_render/Cargo.toml": {
       "target": "rust",
       "hash": "77933484f70605c4364ee04cac6bdc2c47c7b81d878c50d45eeb1daf7c522540",
       "prompts": [
-        "statusclass_render.napl"
+        "statusclass_render"
       ]
     },
     ".napl/src/rust/statusclass_render/src/lib.rs": {
       "target": "rust",
       "hash": "ad33ac52ed8dd654476f9d822c95f983cd8003bf2e1472f526840405ec1884c6",
       "prompts": [
-        "statusclass_render.napl"
+        "statusclass_render"
       ]
     },
     ".napl/src/rust/driftdetect_replay/Cargo.toml": {
       "target": "rust",
       "hash": "dd3df7524f45928c0d6e755caacb1df43bf204ed1f5afd7a00003de0d184f16e",
       "prompts": [
-        "driftdetect_replay.napl"
+        "driftdetect_replay"
       ]
     },
     ".napl/src/rust/driftdetect_replay/src/lib.rs": {
       "target": "rust",
       "hash": "990cbd8bc95cc4ac82674d2be0b9675578c4050ce0969cd5b963d3d69e5d8d81",
       "prompts": [
-        "driftdetect_replay.napl"
+        "driftdetect_replay"
       ]
     },
     ".napl/src/rust/snapshot_diff/Cargo.toml": {
       "target": "rust",
       "hash": "3b9ffd03377d34af4d46add4362680afe93a72fe2f53796975f39f40cac18fad",
       "prompts": [
-        "snapshot_diff.napl"
+        "snapshot_diff"
       ]
     },
     ".napl/src/rust/snapshot_diff/src/lib.rs": {
       "target": "rust",
       "hash": "28144ba2053d71ab1cf583ba92657b500ac8b1e6e6dbd59def533218cdef2ebf",
       "prompts": [
-        "snapshot_diff.napl"
+        "snapshot_diff"
       ]
     },
     ".napl/src/rust/snapshot_filter/Cargo.toml": {
       "target": "rust",
       "hash": "b6b7f0b62af61a4c34647059ec2ac76acb77219c3868bfd3f51ca6f328aff07b",
       "prompts": [
-        "snapshot_filter.napl"
+        "snapshot_filter"
       ]
     },
     ".napl/src/rust/snapshot_filter/src/lib.rs": {
       "target": "rust",
       "hash": "bfcbaaed1aad17d3d96ad1b956919e47748f1bf9cc0b88ae1518cecafb231fb1",
       "prompts": [
-        "snapshot_filter.napl"
+        "snapshot_filter"
       ]
     },
     ".napl/src/rust/blame_render/Cargo.toml": {
       "target": "rust",
       "hash": "1ac95e40ce5147457a86fb4fd747056eae6b3d6eb619c5bbf6ffb63e6583ae7d",
       "prompts": [
-        "blame_render.napl"
+        "blame_render"
       ]
     },
     ".napl/src/rust/blame_render/src/lib.rs": {
       "target": "rust",
-      "hash": "e3cefa0f1d7efa8ef4b09681e39d5150be0ff7ce4cc5be6d4441443ecd6c24f7",
+      "hash": "c4a846260609258998e7cd2b5d6f01a6dbb8e1913c3910793dd08befc62a0045",
       "prompts": [
-        "blame_render.napl"
+        "blame_render"
       ]
     },
     ".napl/src/rust/watch_filter/Cargo.toml": {
       "target": "rust",
       "hash": "af97bfde25feec193531cfea9619cc31e3a78e208a1caadbe0a3d4c8e572a6d9",
       "prompts": [
-        "watch_filter.napl"
+        "watch_filter"
       ]
     },
     ".napl/src/rust/watch_filter/src/lib.rs": {
       "target": "rust",
       "hash": "42bbabb26a13a889ac7714d55db601adc22c540942274be9cda2ca222891a160",
       "prompts": [
-        "watch_filter.napl"
+        "watch_filter"
       ]
     },
     ".napl/src/rust/reconcile_derive/Cargo.toml": {
       "target": "rust",
       "hash": "081bec9e3d4e4f1736c82c24c4b3e3121305d7338ae45184aaaba8570a518fae",
       "prompts": [
-        "reconcile_derive.napl"
+        "reconcile_derive"
       ]
     },
     ".napl/src/rust/reconcile_derive/src/lib.rs": {
       "target": "rust",
       "hash": "063e1e437203c23abc27a0d71daf69f43fb509caeb06d13d0d217edee0ebd265",
       "prompts": [
-        "reconcile_derive.napl"
+        "reconcile_derive"
       ]
     },
     ".napl/src/rust/gen_classify/Cargo.toml": {
       "target": "rust",
       "hash": "196eeb541367f2fd7fa40afd882193f21bc9443ec75fa5406f4798edc5e4cc95",
       "prompts": [
-        "gen_classify.napl"
+        "gen_classify"
       ]
     },
     ".napl/src/rust/gen_classify/src/lib.rs": {
       "target": "rust",
       "hash": "f079dea119b5264c99f0fbefdfc3b7b22ca4e9335941a8176d784091f2c9ff99",
       "prompts": [
-        "gen_classify.napl"
+        "gen_classify"
       ]
     },
     ".napl/src/rust/gen_prompt_diff/Cargo.toml": {
       "target": "rust",
       "hash": "ab77d30fac121fbcd6ab2f209808dd41b524990927bfbe1238710998523d231e",
       "prompts": [
-        "gen_prompt_diff.napl"
+        "gen_prompt_diff"
       ]
     },
     ".napl/src/rust/gen_prompt_diff/src/lib.rs": {
       "target": "rust",
       "hash": "bad7da76b74023c37839a2234b2ed3deb13652e6d831fc428eefe5511b4bb3f7",
       "prompts": [
-        "gen_prompt_diff.napl"
+        "gen_prompt_diff"
       ]
     },
     ".napl/src/rust/gen_attribution_check/Cargo.toml": {
       "target": "rust",
       "hash": "90c859a34e81d6b6190a4921137aa116e45c00af54d930490d462062716049ab",
       "prompts": [
-        "gen_attribution_check.napl"
+        "gen_attribution_check"
       ]
     },
     ".napl/src/rust/gen_attribution_check/src/lib.rs": {
       "target": "rust",
       "hash": "c0a05084787f44636425ec7ce4d0b8026e39e6df8e29a593213d8aba7716d58e",
       "prompts": [
-        "gen_attribution_check.napl"
+        "gen_attribution_check"
       ]
     },
     ".napl/src/rust/gen_mode/Cargo.toml": {
       "target": "rust",
       "hash": "8cb9695efb6b25a4c6310798d4deb624fdc53c825c24297ae69fa8282120410a",
       "prompts": [
-        "gen_mode.napl"
+        "gen_mode"
       ]
     },
     ".napl/src/rust/gen_mode/src/lib.rs": {
       "target": "rust",
       "hash": "68b79fe4c18777e42a9b37c524d27640b97c9ff546ee01d6f4108a967dd731d5",
       "prompts": [
-        "gen_mode.napl"
+        "gen_mode"
       ]
     }
   }

@@ -222,7 +222,6 @@ fn build_task_builder(
     root: &Path,
     paths: &NaplPaths,
     args: &GenArgs,
-    rel: &str,
     frontmatter: &Frontmatter,
     body: &str,
     deps: Vec<DepSummary>,
@@ -230,7 +229,7 @@ fn build_task_builder(
 ) -> TaskBuilder {
     let module = &frontmatter.module;
     let target = args.target;
-    let target_record = map.prompts.get(rel).and_then(|r| r.targets.get(target));
+    let target_record = map.prompts.get(module).and_then(|r| r.targets.get(target));
     let owned_files: Vec<String> = target_record.map(|r| r.files.clone()).unwrap_or_default();
     let use_incremental = can_incremental(
         args.full,
@@ -312,6 +311,7 @@ struct AttemptResult {
     output: String,
 }
 
+#[allow(clippy::too_many_arguments)]
 fn run_attempts(
     adapter: &TargetAdapter,
     target_dir: &Path,
@@ -320,12 +320,16 @@ fn run_attempts(
     body: &str,
     plan: &TaskPlan,
     engine: &AgentEngine,
+    crate_note: Option<&str>,
 ) -> CliResult<AttemptResult> {
     let mut failure: Option<String> = None;
     let mut output = String::new();
     for attempt in 1..=MAX_ATTEMPTS {
         println!("  attempt {attempt}/{MAX_ATTEMPTS}: running coding agent");
-        let task = build_task(adapter, frontmatter, body, plan, failure.as_deref());
+        let mut task = build_task(adapter, frontmatter, body, plan, failure.as_deref());
+        if let Some(note) = crate_note {
+            task.push_str(note);
+        }
         let run = run_coding_agent(engine, &task, target_dir, model, &adapter.agent_tools)?;
         output = run.output;
         let cmd = adapter.test_command(&target_dir.to_string_lossy());
@@ -624,10 +628,17 @@ fn run_gen_locked(
     let mut map = read_map(&paths.map_path)?;
     let aliases = load_prompt_aliases(&paths.lock_path);
     let prompt_files = find_prompt_files(root, &aliases)?;
+    crate::discovery::check_duplicate_modules(root, &prompt_files)?;
     let summaries = collect_summaries(root, &prompt_files);
-    let (existing_journal, journal_warnings) = read_journal(&paths.journal_path)?;
+    let (_module_crate, crate_deps) = crate_assignment(root, &prompt_files, target);
+    let (mut existing_journal, journal_warnings) = read_journal(&paths.journal_path)?;
     for warning in &journal_warnings {
         println!("{warning}");
+    }
+    let heals = crate::healing::heal_moved_files(root, paths, &mut map, &existing_journal)?;
+    if !heals.is_empty() {
+        write_map(&paths.map_path, &map)?;
+        existing_journal = read_journal(&paths.journal_path)?.0;
     }
     let mut next_gen = next_gen_number(&existing_journal);
     let mut journaled_paths: std::collections::HashSet<String> = std::collections::HashSet::new();
@@ -638,7 +649,9 @@ fn run_gen_locked(
     }
 
     if !args.force {
-        let drifts = detect_gen_drift(root, target, &map, &existing_journal, args.module)?;
+        let prompt_paths = crate::discovery::module_paths(root, &prompt_files);
+        let drifts =
+            detect_gen_drift(root, target, &map, &existing_journal, args.module, &prompt_paths)?;
         if !drifts.is_empty() {
             println!("{}", format_gen_drift_report(&drifts, target));
             let count: usize = drifts.iter().map(|d| d.files.len()).sum();
@@ -672,7 +685,7 @@ fn run_gen_locked(
             napl_core::extensions::machine_extension_for_prompt(&file.to_string_lossy());
         let prompt_hash = content_hash(&raw);
         if !napl_core::schemas::is_prompt_gen_stale(
-            map.prompts.get(&rel),
+            map.prompts.get(&module),
             target,
             &prompt_hash,
             args.force,
@@ -689,19 +702,40 @@ fn run_gen_locked(
             .collect();
 
         println!("gen     {module} ({target})");
-        refresh_workspace_manifest(&target_dir, &adapter, Some(&module))?;
-        let builder = build_task_builder(root, paths, args, &rel, &frontmatter, &body, deps, &map);
+        let declared_crate = crate::discovery::declared_crate(&raw);
+        let member_dir = declared_crate.clone().unwrap_or_else(|| module.clone());
+        if let Some(crate_name) = &declared_crate {
+            let empty = std::collections::BTreeSet::new();
+            let path_deps: Vec<String> = crate_deps
+                .get(crate_name)
+                .unwrap_or(&empty)
+                .iter()
+                .cloned()
+                .collect();
+            refresh_declared_crate(&target_dir, crate_name, &module, &path_deps)?;
+            println!(
+                "  crate: {module} grouped into member crate '{crate_name}' as src/{module}.rs (Cargo.toml + lib.rs toolchain-owned)"
+            );
+        }
+        refresh_workspace_manifest(&target_dir, &adapter, Some(&member_dir))?;
+        let builder = build_task_builder(root, paths, args, &frontmatter, &body, deps, &map);
 
         unlock_files(root, &builder.unlock);
 
         let prior_hash_at_gen = map
             .prompts
-            .get(&rel)
+            .get(&module)
             .and_then(|r| r.targets.get(target))
             .and_then(|t| t.prompt_hash_at_gen.clone());
         let prompt_changed = prior_hash_at_gen
             .as_ref()
             .is_some_and(|h| h != &prompt_hash);
+
+        let crate_note = declared_crate.as_ref().map(|crate_name| {
+            format!(
+                "\n\nCRATE GROUPING: this module groups into the shared member crate `{crate_name}`. Write your implementation ONLY to `{crate_name}/src/{module}.rs`. The crate's `{crate_name}/Cargo.toml` and `{crate_name}/src/lib.rs` are written and owned by the toolchain — do not create, edit, or delete them."
+            )
+        });
 
         let before = snapshot_hashes(&target_dir, &filter)?;
         let prior_contents = snapshot_contents(&target_dir, &filter)?;
@@ -713,6 +747,7 @@ fn run_gen_locked(
             &body,
             &builder.plan,
             engine,
+            crate_note.as_deref(),
         )?;
         if !attempt.ok {
             return Err(CliError::new(format!(
@@ -725,7 +760,10 @@ fn run_gen_locked(
         let mut changed = diff_snapshots(&before, &after);
 
         if prompt_changed && changed.is_empty() {
-            let base_task = build_task(&adapter, &frontmatter, &body, &builder.plan, None);
+            let mut base_task = build_task(&adapter, &frontmatter, &body, &builder.plan, None);
+            if let Some(note) = &crate_note {
+                base_task.push_str(note);
+            }
             let (output, tests_passed) =
                 retry_for_change(&adapter, &target_dir, model, &base_task, engine)?;
             agent_output = output;
@@ -758,7 +796,7 @@ fn run_gen_locked(
             .iter()
             .map(|abs| rel_to(root, Path::new(abs)))
             .collect();
-        if let Some(prior_files) = map.prompts.get(&rel).and_then(|r| r.targets.get(target)) {
+        if let Some(prior_files) = map.prompts.get(&module).and_then(|r| r.targets.get(target)) {
             for prior in &prior_files.files {
                 if root.join(prior).exists() && !attributed_rel.contains(prior) {
                     attributed_rel.push(prior.clone());
@@ -826,7 +864,7 @@ fn run_gen_locked(
             record_attribution(
                 &mut map,
                 &AttributionInput {
-                    rel: rel.clone(),
+                    rel: module.clone(),
                     module: module.clone(),
                     prompt_hash: prompt_hash.clone(),
                     target: target.to_string(),
@@ -871,7 +909,7 @@ fn run_gen_locked(
                 record_unattributed(
                     &mut map,
                     &UnattributedInput {
-                        rel: rel.clone(),
+                        rel: module.clone(),
                         module: module.clone(),
                         prompt_hash: prompt_hash.clone(),
                         target: target.to_string(),
@@ -914,7 +952,7 @@ fn run_gen_locked(
         record_attribution(
             &mut map,
             &AttributionInput {
-                rel: rel.clone(),
+                rel: module.clone(),
                 module: module.clone(),
                 prompt_hash: prompt_hash.clone(),
                 target: target.to_string(),
@@ -1083,6 +1121,107 @@ fn refresh_workspace_manifest(
         &napl_core::targets::workspace_manifest_toml(&members),
     )?;
     Ok(())
+}
+
+/// Write the toolchain-owned files of a declared member crate (named by a
+/// module's frontmatter `crate:` key). Like the workspace root manifest, the
+/// crate's `Cargo.toml` and `src/lib.rs` are written and owned by the toolchain,
+/// refreshed each gen, excluded from attribution, and never locked — module
+/// ownership stays at the file level (`src/<module>.rs`). `lib.rs` exposes every
+/// module source file present plus the current module (so the in-gen `cargo test`
+/// compiles it); `Cargo.toml` carries the crate's merged sibling path-deps.
+fn refresh_declared_crate(
+    target_dir: &Path,
+    crate_name: &str,
+    current_module: &str,
+    path_deps: &[String],
+) -> CliResult<()> {
+    use std::fmt::Write as _;
+    let crate_dir = target_dir.join(crate_name);
+    let src_dir = crate_dir.join("src");
+    std::fs::create_dir_all(&src_dir)?;
+
+    let mut modules: Vec<String> = Vec::new();
+    if let Ok(entries) = std::fs::read_dir(&src_dir) {
+        for entry in entries.flatten() {
+            let name = entry.file_name().to_string_lossy().into_owned();
+            if let Some(stem) = name.strip_suffix(".rs") {
+                if stem != "lib" {
+                    modules.push(stem.to_string());
+                }
+            }
+        }
+    }
+    if !modules.iter().any(|m| m == current_module) {
+        modules.push(current_module.to_string());
+    }
+    modules.sort();
+    modules.dedup();
+
+    let mut lib = String::new();
+    for module in &modules {
+        let _ = writeln!(lib, "pub mod {module};");
+    }
+    fsutil::write(&src_dir.join("lib.rs"), &lib)?;
+
+    let mut manifest = String::new();
+    manifest.push_str("[package]\n");
+    let _ = writeln!(manifest, "name = \"{crate_name}\"");
+    manifest.push_str("version = \"0.1.0\"\n");
+    manifest.push_str("edition = \"2021\"\n");
+    manifest.push_str("\n[dependencies]\n");
+    let mut deps = path_deps.to_vec();
+    deps.sort();
+    deps.dedup();
+    for dep in &deps {
+        let _ = writeln!(manifest, "{dep} = {{ path = \"../{dep}\" }}");
+    }
+    fsutil::write(&crate_dir.join("Cargo.toml"), &manifest)?;
+    Ok(())
+}
+
+/// The `module -> declared crate` assignment and each declared crate's merged
+/// sibling path-deps, read from every prompt frontmatter targeting `target`. A
+/// module with no `crate:` key maps to a crate named after itself (the default
+/// per-module layout).
+fn crate_assignment(
+    root: &Path,
+    prompt_files: &[std::path::PathBuf],
+    target: &str,
+) -> (
+    BTreeMap<String, String>,
+    BTreeMap<String, std::collections::BTreeSet<String>>,
+) {
+    let mut module_crate: BTreeMap<String, String> = BTreeMap::new();
+    let mut deps_by_module: BTreeMap<String, Vec<String>> = BTreeMap::new();
+    for file in prompt_files {
+        let Ok(raw) = std::fs::read_to_string(file) else {
+            continue;
+        };
+        let Ok(parsed) = parse_frontmatter(&raw) else {
+            continue;
+        };
+        if !parsed.frontmatter.targets.iter().any(|t| t == target) {
+            continue;
+        }
+        let module = parsed.frontmatter.module.clone();
+        let crate_name =
+            crate::discovery::declared_crate(&raw).unwrap_or_else(|| module.clone());
+        module_crate.insert(module.clone(), crate_name);
+        deps_by_module.insert(module, parsed.frontmatter.deps.clone());
+    }
+    let _ = root;
+    let mut crate_deps: BTreeMap<String, std::collections::BTreeSet<String>> = BTreeMap::new();
+    for (module, crate_name) in &module_crate {
+        let entry = crate_deps.entry(crate_name.clone()).or_default();
+        for dep in deps_by_module.get(module).into_iter().flatten() {
+            let dep_crate = module_crate.get(dep).cloned().unwrap_or_else(|| dep.clone());
+            if &dep_crate != crate_name {
+                entry.insert(dep_crate);
+            }
+        }
+    }
+    (module_crate, crate_deps)
 }
 
 #[cfg(test)]

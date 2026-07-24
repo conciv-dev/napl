@@ -1,0 +1,119 @@
+name: status-crate-grouping-clean
+description: >
+  After a declared-crate grouping gen, status classifies both grouped modules as
+  clean: each owns its own source file inside the shared member crate, and the
+  toolchain-owned Cargo.toml and lib.rs are excluded from the map so they are
+  never drift-checked. This is the post-gen steady state of gen-crate-grouping.
+setup:
+  .napl/lock.json: |
+    {
+      "model": "claude-sonnet-5",
+      "backend": "claude-cli"
+    }
+  alpha.napl: |
+    ---
+    module: alpha
+    deps: []
+    targets: [rust]
+    crate: shared
+    tests: []
+    ---
+    Add one to an integer.
+  beta.napl: |
+    ---
+    module: beta
+    deps: []
+    targets: [rust]
+    crate: shared
+    tests: []
+    ---
+    Subtract one from an integer.
+  .napl/src/rust/shared/src/lib.rs: |
+    pub mod alpha;
+    pub mod beta;
+  .napl/src/rust/shared/src/alpha.rs: |
+    pub fn inc(n: i64) -> i64 {
+        n + 1
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn increments() {
+            assert_eq!(inc(2), 3);
+        }
+    }
+  .napl/src/rust/shared/src/beta.rs: |
+    pub fn dec(n: i64) -> i64 {
+        n - 1
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn decrements() {
+            assert_eq!(dec(2), 1);
+        }
+    }
+  .napl/map.json: |
+    {
+      "version": 2,
+      "prompts": {
+        "alpha": {
+          "module": "alpha",
+          "promptHash": "7cafbbc9b23d38195beddfa42ec5d7cda207760154e534c8b83d1b52928bf20a",
+          "declaredTargets": [
+            "rust"
+          ],
+          "targets": {
+            "rust": {
+              "promptHashAtGen": "7cafbbc9b23d38195beddfa42ec5d7cda207760154e534c8b83d1b52928bf20a",
+              "files": [
+                ".napl/src/rust/shared/src/alpha.rs"
+              ]
+            }
+          }
+        },
+        "beta": {
+          "module": "beta",
+          "promptHash": "88e75c810d5f08ba446abe06df07797183ea243a0f6122a0e2099c2392a0f940",
+          "declaredTargets": [
+            "rust"
+          ],
+          "targets": {
+            "rust": {
+              "promptHashAtGen": "88e75c810d5f08ba446abe06df07797183ea243a0f6122a0e2099c2392a0f940",
+              "files": [
+                ".napl/src/rust/shared/src/beta.rs"
+              ]
+            }
+          }
+        }
+      },
+      "files": {
+        ".napl/src/rust/shared/src/alpha.rs": {
+          "target": "rust",
+          "hash": "9d3fe725c0899fd0835263fd3a19f40bfca5ecfc221767cc9ea79f4a0e8212ba",
+          "prompts": [
+            "alpha"
+          ]
+        },
+        ".napl/src/rust/shared/src/beta.rs": {
+          "target": "rust",
+          "hash": "cdd3dd7e30a9d3223af464b8073d412fe1f044500f31d760173d3b9f391658c4",
+          "prompts": [
+            "beta"
+          ]
+        }
+      }
+    }
+run: [status]
+expect:
+  exitCode: 0
+  stdout:
+    - "clean        alpha.napl"
+    - "clean        beta.napl"

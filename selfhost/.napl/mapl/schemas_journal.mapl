@@ -2,15 +2,17 @@ module: schemas_journal
 target: rust
 entries:
   - promptLines:
-      - 45
-      - 46
+      - 14
+      - 16
     kind: ambiguity
-    message: "'(Copy as well)' reads like a stray aside dropped mid-sentence."
-    reasoning: "The parenthetical \"(Copy as well)\" interrupts the type description awkwardly — it's unclear whether it means \"also derive Copy\" or is a leftover fragment from editing. The agent interpreted it as an instruction to add Copy to the derive list (in addition to Debug, Clone, PartialEq, Eq, Serialize, Deserialize), which is a reasonable reading but the phrasing itself is a strange insertion a careful author should tighten.\n"
-    suggestion: "`JournalMode`: an enum, also `Copy`, with variants `Full`, `Incremental`, `Reconcile`, serialized in lowercase."
+    message: '"Touch nothing outside schemas_journal/" conflicts with "ensure cargo test passes from workspace root"'
+    reasoning: "Adding the `Move` variant to `JournalMode` breaks any downstream crate that exhaustively matches on it. `blame_render` had such a match (`mode_str`) that didn't cover `Move`, so making workspace `cargo test` pass required editing a file outside `schemas_journal/`. The agent edited `blame_render/src/lib.rs` to add the missing match arm and tests, directly violating the \"touch nothing outside schemas_journal/\" constraint in order to satisfy the \"cargo test passes from workspace root\" constraint. Prompt doesn't say which instruction wins when they collide.\n"
+    suggestion: '"Touch nothing outside schemas_journal/, except: if adding a JournalMode variant breaks an exhaustive match in a sibling crate, update that match arm minimally so cargo test passes from the workspace root."
+'
   - promptLines:
-      - 82
-      - 89
+      - 85
+      - 93
     kind: assumption
-    message: Exact reason text for failed-validation warnings left unspecified; agent used literal "failed validation".
-    reasoning: The prompt pins the byte-exact text only for the invalid-JSON branch, and says the deserialize/validation branch's `{reason}` is just "the deserialize/validation message" without saying what a *validation* failure's message should literally read (deserialize errors naturally produce serde's error string, but validation failures have no such natural message). The agent assumed the literal string "failed validation" for this case, which the tests then pin down. This is a defensible filler but was not dictated by the prompt.
+    message: Exact {reason} text for a validation (not deserialize) failure left unspecified
+    reasoning: "Prompt says the `({reason})` portion for a JSON-valid-but-invalid-entry line is \"the deserialize/validation message\" but never states what string a validation failure (as opposed to a serde deserialize error) should produce, since validation isn't a serde operation with its own message. The agent assumed the literal string \"failed validation\" for all validation rejections (gen<1, empty module/target/path), rather than a more specific per-field reason.\n"
+    suggestion: "\"...the {reason} inside is either serde's deserialize error message, or, for entries that parse but fail validation, the literal string 'failed validation'.\""

@@ -26,6 +26,7 @@ pub enum JournalMode {
     Full,
     Incremental,
     Reconcile,
+    Move,
 }
 
 /// One generation of a module against a target.
@@ -166,6 +167,10 @@ mod tests {
         assert_eq!(
             serde_json::to_string(&JournalMode::Reconcile).unwrap(),
             "\"reconcile\""
+        );
+        assert_eq!(
+            serde_json::to_string(&JournalMode::Move).unwrap(),
+            "\"move\""
         );
     }
 

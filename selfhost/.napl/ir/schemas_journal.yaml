@@ -4,78 +4,66 @@ deps:
   - blame
 types:
   - name: JournalFile
-    description: 'One file touched by a generation. Fields: path (string), patch (string, unified diff text), hash_before (optional string, serialized as "hashBefore", absent/null for newly created files), hash_after (string, serialized as "hashAfter"). Structural equality, cloneable, serializable to/from JSON with the given field renames.
+    description: 'One file touched by a generation. Fields: path (string), patch (string, unified diff text), hash_before (optional string, serialized as "hashBefore"), hash_after (string, serialized as "hashAfter"). Equality and Debug/Clone derivable; serializable/deserializable.
 '
   - name: JournalMode
-    description: 'Enum of the mode a generation ran in: Full, Incremental, Reconcile. Serializes to/from lowercase strings "full", "incremental", "reconcile". Copyable, structural equality.
-'
+    description: "Enum of generation modes: Full, Incremental, Reconcile, Move. Serialized as lowercase strings \"full\", \"incremental\", \"reconcile\", \"move\". Move records a location-heal: a generated file relocated to a new path when its content was unchanged/drifted under a different filename; the file entry's patch describes the move. Copyable, equatable.\n"
   - name: JournalEntry
-    description: "One generation record. Fields: gen (integer, 1-based generation number), timestamp (string), module (string, non-empty when valid), target (string, non-empty when valid), prompt_hash (string, serialized as \"promptHash\"), prompt_diff (string, serialized as \"promptDiff\"), mode (JournalMode), files (list of JournalFile, defaults to empty list when absent from JSON, each file's path non-empty when valid). Structural equality, cloneable, serializable to/from JSON.\n"
+    description: 'One generation record. Fields: gen (integer), timestamp (string), module (string), target (string), prompt_hash (string, serialized as "promptHash"), prompt_diff (string, serialized as "promptDiff"), mode (JournalMode), files (list of JournalFile, defaults to empty list when omitted from JSON). Equatable, cloneable, serializable/deserializable.
+'
 functions:
   - name: file_patch
-    signature: "file_patch(before: Option<String>, after: String) -> String"
-    behavior: "Returns the unified diff between `before` and `after`. When `before` is absent (None/null), treats the \"before\" text as the empty string (i.e. represents a newly created file). Delegates the actual diff computation to the text_diff module's unified_diff function; does not reimplement diffing.\n"
+    signature: "file_patch(before: Optional<string>, after: string) -> string"
+    behavior: "Returns the unified diff between `before` (or empty string when `before` is absent, representing a newly created file) and `after`. Delegates entirely to the text_diff module's unified-diff computation; performs no independent diffing logic.\n"
   - name: read_journal_str
-    signature: "read_journal_str(raw: String) -> (entries: List<JournalEntry>, warnings: List<String>)"
-    behavior: "Parses raw JSONL journal text (no I/O — text is already in memory) and returns the list of valid entries plus a list of warning strings, one per skipped line, in encounter order.\nSplits input on '\\n' into lines, tracking a 1-based line number for each; strips a trailing '\\r' from each line before processing.\nFor each line: - If the line is empty/whitespace-only, it is skipped silently (no\n  entry, no warning).\n- Otherwise the line is first checked for syntactic JSON validity. If\n  it is not valid JSON at all, a warning of the exact form\n  \"journal: skipping corrupt line {n} (invalid JSON)\" is emitted\n  (byte-exact, no entry produced) and processing moves to the next\n  line.\n- If the line is syntactically valid JSON, it is deserialized as a\n  JournalEntry and validated (see validation rule below). If\n  deserialization fails or validation fails, a warning of the form\n  \"journal: skipping corrupt line {n} ({reason})\" is emitted, where\n  {reason} is the deserialize error message or a validation-failure\n  reason; no entry is produced for that line.\n- Otherwise (valid JSON, deserializes cleanly, passes validation),\n  the resulting JournalEntry is appended to the returned entries\n  list.\n\nValidation rule (applied to a successfully-deserialized entry): an entry is invalid (and thus rejected with a warning, never appearing in the returned entries) if any of: gen < 1; module is empty; target is empty; or any file in files has an empty path.\nPrecondition: none — any string input, including malformed or binary garbage, is handled without panicking. Postcondition: entries contains only valid JournalEntry values in original line order; warnings.length equals the number of skipped non-blank lines, in original line order; the function performs no I/O.\n"
+    signature: "read_journal_str(raw: string) -> (entries: List<JournalEntry>, warnings: List<string>)"
+    behavior: "Parses raw JSONL journal text line by line (split on '\\n', trailing '\\r' stripped, 1-based line numbering). Blank lines (empty after trim) are skipped silently — no entry, no warning. For each non-blank line: first checks whether the line is syntactically valid JSON (any JSON value). If not, emits warning exactly `journal: skipping corrupt line {n} (invalid JSON)` and skips the line — no entry produced, and no deserialization error message is surfaced in this case. If it is valid JSON, attempts to deserialize it as a JournalEntry and validate it. Validation fails when gen < 1, module is empty, target is empty, or any file's path is empty. If deserialization or validation fails, emits warning `journal: skipping corrupt line {n} ({reason})` where reason is the deserialize error message or a validation-failure reason, and no entry is produced. On success the entry is appended to the returned entries list, in line order. Returns the full list of accepted entries plus one warning per skipped/corrupt line, in encounter order.\n"
   - name: next_gen_number
-    signature: "next_gen_number(entries: List<JournalEntry>) -> Integer"
-    behavior: "Returns one greater than the maximum `gen` value found among `entries`. Returns 1 when `entries` is empty. Does not mutate input.\n"
+    signature: "next_gen_number(entries: List<JournalEntry>) -> integer"
+    behavior: "Returns one more than the maximum `gen` value found among `entries`. Returns 1 when `entries` is empty.\n"
   - name: file_history
-    signature: "file_history(entries: List<JournalEntry>, file_path: String) -> List<BlameSourceEntry>"
-    behavior: "Scans `entries` in order; for each entry that contains a file whose `path` equals `file_path`, produces one BlameSourceEntry carrying that entry's gen, timestamp, and module, together with the matching file's patch and the entry's prompt_diff. Entries with no matching file contribute nothing. Result preserves the relative order of the source entries and is empty when no entry touches `file_path`. When an entry contains more than one file with a matching path, only one BlameSourceEntry is produced per entry (the first match).\n"
+    signature: "file_history(entries: List<JournalEntry>, file_path: string) -> List<BlameSourceEntry>"
+    behavior: "Walks `entries` in order; for each entry containing a file whose `path` equals `file_path`, produces a BlameSourceEntry with that entry's gen, timestamp, module, the matching file's patch, and the entry's prompt_diff. Entries with no matching file are omitted. Returns an empty list when no entry touches `file_path`. When an entry has multiple files matching, uses the first match.\n"
 tests:
-  - name: journal_file_serde_field_names
-    given: 'A JournalFile with hash_before = Some("h1"), hash_after = "h2", serialized to JSON.
-'
-    expect: 'The JSON object has keys "hashBefore" = "h1" and "hashAfter" = "h2"; deserializing that JSON back produces an equal JournalFile.
-'
-  - name: journal_mode_serializes_lowercase
-    given: JournalMode::Full, ::Incremental, ::Reconcile serialized to JSON.
-    expect: 'Produces the JSON strings "full", "incremental", "reconcile" respectively.
-'
-  - name: journal_entry_field_names_and_default_files
-    given: 'A JSON object with gen, timestamp, module, target, "promptHash", "promptDiff", "mode" set but no "files" key.
-'
-    expect: "Deserializes successfully; prompt_hash/prompt_diff/mode map from the renamed JSON fields correctly, and files defaults to an empty list.\n"
   - name: file_patch_treats_none_as_empty_before
-    given: file_patch(None, "line one\n") and file_patch(Some("old\n"), "new\n")
-    expect: 'Both equal calling text_diff::unified_diff directly with "" (for the None case) or "old\n" (for the Some case) as before, and the given after text.
-'
+    given: before=None, after='line one\n'; and before=Some('old\n'), after='new\n'
+    expect: result equals text_diff::unified_diff called with '' (or 'old\n') and the given after text
   - name: read_journal_str_skips_blank_lines_silently
-    given: raw text "\n\n   \n" (all-blank lines)
-    expect: Empty entries list and empty warnings list.
+    given: raw = '\n\n   \n'
+    expect: entries empty, warnings empty
   - name: read_journal_str_warns_on_invalid_json
-    given: raw text "not json at all"
-    expect: 'Empty entries; exactly one warning equal to "journal: skipping corrupt line 1 (invalid JSON)".
-'
+    given: raw = 'not json at all'
+    expect: "entries empty; warnings = ['journal: skipping corrupt line 1 (invalid JSON)']"
   - name: read_journal_str_warns_on_failed_validation
-    given: "A single JSON line that is syntactically valid JSON and matches the JournalEntry shape but has gen = 0 (invalid per validation rule).\n"
-    expect: 'Empty entries; exactly one warning starting with "journal: skipping corrupt line 1 (".
-'
+    given: a syntactically valid JSON line with gen=0 (otherwise well-formed entry)
+    expect: "entries empty; one warning starting with 'journal: skipping corrupt line 1 ('"
   - name: read_journal_str_rejects_empty_module_target_or_file_path
-    given: "Three otherwise-valid entry JSON lines, each with exactly one of module, target, or the sole file's path set to empty string.\n"
-    expect: "For each case, entries is empty and warnings has exactly one entry.\n"
+    given: three JSON lines, each with exactly one of module/target/file path empty
+    expect: each yields entries empty and exactly one warning
   - name: read_journal_str_accepts_valid_entries_and_strips_cr
-    given: 'A valid serialized JournalEntry (gen=1) followed by "\r\n\r\n" (trailing CR and blank lines).
-'
-    expect: "One entry returned with gen == 1; no warnings.\n"
+    given: a valid serialized entry line followed by '\r\n\r\n'
+    expect: entries has 1 item with gen 1; warnings empty
   - name: read_journal_str_line_numbers_are_one_based_and_mixed
-    given: 'Raw text: valid entry line, then "not json", then the same valid entry line again (3 lines total).
-'
-    expect: 'Two entries returned; exactly one warning, equal to "journal: skipping corrupt line 2 (invalid JSON)".
-'
+    given: valid entry line, then 'not json', then valid entry line again
+    expect: "entries has 2 items; warnings = ['journal: skipping corrupt line 2 (invalid JSON)']"
   - name: next_gen_number_empty_is_one
-    given: An empty entries list.
-    expect: Returns 1.
+    given: empty entries list
+    expect: returns 1
   - name: next_gen_number_is_one_past_max
-    given: Entries with gen values [1, 3, 2].
-    expect: Returns 4.
+    given: entries with gen values 1, 3, 2
+    expect: returns 4
   - name: file_history_collects_matching_files_in_order
-    given: 'Three entries (gen 1, 2, 3): entry 1 and entry 3 each have a file with path "hash/src/lib.rs" (distinct patch text "patch-one" and "patch-three"); entry 2 has a file with a different path.
-'
-    expect: 'file_history for "hash/src/lib.rs" returns exactly 2 BlameSourceEntry values, in order: first with gen 1 and patch "patch-one", second with gen 3 and patch "patch-three".
-'
+    given: three entries (gen 1,2,3); entries 1 and 3 touch 'hash/src/lib.rs' with distinct patches, entry 2 touches a different path
+    expect: "history has 2 items, in order: gen 1 with its patch, then gen 3 with its patch"
   - name: file_history_empty_when_no_entry_touches_file
-    given: A single entry whose file path does not match "nonexistent.rs".
-    expect: file_history returns an empty list.
+    given: one entry that does not reference the queried file path
+    expect: returns empty list
+  - name: journal_file_serde_field_names
+    given: a JournalFile with hash_before=Some('h1'), hash_after='h2'
+    expect: serialized JSON has keys hashBefore='h1', hashAfter='h2'; round-trip deserialization equals original
+  - name: journal_mode_serializes_lowercase
+    given: each JournalMode variant
+    expect: serializes to '"full"', '"incremental"', '"reconcile"', '"move"' respectively
+  - name: journal_entry_field_names_and_default_files
+    given: JSON object with promptHash, promptDiff, mode='incremental', and no 'files' key
+    expect: deserializes with prompt_hash/prompt_diff mapped correctly, mode=Incremental, files defaults to empty list

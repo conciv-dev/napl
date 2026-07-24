@@ -1,14 +1,18 @@
-name: status-clean
+name: move-prompt-noop
 description: >
-  With a locked file whose hash matches the map and a prompt whose hash matches
-  promptHashAtGen, status reports the prompt as clean and exits 0.
+  Location-free identity: a prompt is identified by its frontmatter module, not
+  its path. The map stores no prompt path at all. Moving the prompt file into a
+  deep subdirectory is therefore a no-op — the same generated file and the same
+  module-keyed map still classify the module as clean at its new location, with
+  no drift and no "never generated". The map here is byte-identical to the one
+  status-clean uses; only the prompt's path on disk differs.
 setup:
   .napl/lock.json: |
     {
       "model": "claude-sonnet-5",
       "backend": "claude-cli"
     }
-  examples/greeting.napl: |
+  core/modules/nested/greeting.napl: |
     ---
     module: greeting
     deps: []
@@ -51,4 +55,4 @@ run: [status]
 expect:
   exitCode: 0
   stdout:
-    - "clean        examples/greeting.napl"
+    - "clean        core/modules/nested/greeting.napl"

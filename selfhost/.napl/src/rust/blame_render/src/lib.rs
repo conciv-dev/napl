@@ -13,6 +13,7 @@ pub fn mode_str(mode: JournalMode) -> &'static str {
         JournalMode::Full => "full",
         JournalMode::Incremental => "incremental",
         JournalMode::Reconcile => "reconcile",
+        JournalMode::Move => "move",
     }
 }
 
@@ -125,6 +126,7 @@ mod tests {
         assert_eq!(mode_str(JournalMode::Full), "full");
         assert_eq!(mode_str(JournalMode::Incremental), "incremental");
         assert_eq!(mode_str(JournalMode::Reconcile), "reconcile");
+        assert_eq!(mode_str(JournalMode::Move), "move");
     }
 
     #[test]

@@ -1,7 +1,9 @@
-name: status-clean
+name: heal-ambiguous
 description: >
-  With a locked file whose hash matches the map and a prompt whose hash matches
-  promptHashAtGen, status reports the prompt as clean and exits 0.
+  Generated-file healing refuses to guess: the map's tracked greet.ts is missing,
+  and two untracked files carry byte-identical content (both hash-match the lost
+  file). The move is ambiguous, so status hard-errors naming the candidates
+  rather than silently healing to one of them.
 setup:
   .napl/lock.json: |
     {
@@ -16,7 +18,8 @@ setup:
     tests: []
     ---
     Greet a person by name.
-  .napl/src/typescript/greet.ts: "export const greet = (name: string): string => `Hello, ${name}!`;\n"
+  .napl/src/typescript/one/greet.ts: "export const greet = (name: string): string => `Hello, ${name}!`;\n"
+  .napl/src/typescript/two/greet.ts: "export const greet = (name: string): string => `Hello, ${name}!`;\n"
   .napl/map.json: |
     {
       "version": 2,
@@ -49,6 +52,9 @@ setup:
     }
 run: [status]
 expect:
-  exitCode: 0
-  stdout:
-    - "clean        examples/greeting.napl"
+  exitCode: 1
+  stderrContains:
+    - "cannot heal moved file '.napl/src/typescript/greet.ts'"
+    - "identical content"
+    - ".napl/src/typescript/one/greet.ts"
+    - ".napl/src/typescript/two/greet.ts"

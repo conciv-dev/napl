@@ -2,114 +2,122 @@ module: schemas_journal
 target: rust
 entries:
   - promptLines:
-      - 40
-      - 44
+      - 3
+      - 8
     file: schemas_journal/src/lib.rs
     lines:
-      - 11
+      - 1
+      - 9
+    note: module doc, serde/serde_json imports
+  - promptLines:
       - 20
-    note: JournalFile struct with serde renames for hashBefore/hashAfter
-  - promptLines:
-      - 45
-      - 46
+      - 25
     file: schemas_journal/src/lib.rs
     lines:
-      - 22
-      - 29
-    note: JournalMode enum, lowercase serde rename_all
-  - promptLines:
-      - 47
-      - 55
-    file: schemas_journal/src/lib.rs
-    lines:
-      - 31
-      - 45
-    note: JournalEntry struct with field renames and default files
+      - 8
+      - 8
+    note: import blame sibling crate
   - promptLines:
       - 27
       - 29
     file: schemas_journal/src/lib.rs
     lines:
-      - 8
-      - 8
-    note: import of text_diff crate (used via path in file_patch)
+      - 49
+      - 51
+    note: file_patch delegates to text_diff::unified_diff
   - promptLines:
       - 30
       - 33
     file: schemas_journal/src/lib.rs
     lines:
-      - 8
-      - 8
-    note: import BlameSourceEntry from blame crate
+      - 101
+      - 118
+    note: file_history returns Vec<BlameSourceEntry>
   - promptLines:
+      - 37
+      - 44
+    file: schemas_journal/src/lib.rs
+    lines:
+      - 11
+      - 20
+    note: JournalFile struct with derives and serde renames
+  - promptLines:
+      - 45
+      - 50
+    file: schemas_journal/src/lib.rs
+    lines:
+      - 22
+      - 30
+    note: JournalMode enum lowercase-serialized
+  - promptLines:
+      - 51
       - 59
-      - 61
+    file: schemas_journal/src/lib.rs
+    lines:
+      - 32
+      - 46
+    note: JournalEntry struct fields and defaults
+  - promptLines:
+      - 63
+      - 65
     file: schemas_journal/src/lib.rs
     lines:
       - 48
-      - 50
-    note: file_patch delegates to text_diff::unified_diff, None -> empty string
+      - 51
+    note: file_patch signature and None-as-empty handling
   - promptLines:
-      - 65
-      - 70
+      - 69
+      - 74
     file: schemas_journal/src/lib.rs
     lines:
-      - 61
-      - 71
-    note: read_journal_str line splitting, CR stripping, 1-based numbering, blank skip
+      - 62
+      - 72
+    note: read_journal_str loop, line split/CR strip, blank skip
   - promptLines:
-      - 71
-      - 80
-    file: schemas_journal/src/lib.rs
-    lines:
-      - 73
-      - 78
-    note: syntactic JSON validity check, byte-exact invalid JSON warning
-  - promptLines:
-      - 81
-      - 90
-    file: schemas_journal/src/lib.rs
-    lines:
-      - 80
-      - 88
-    note: deserialize as JournalEntry, validate, push entry or warning with reason
-  - promptLines:
-      - 92
-      - 95
-    file: schemas_journal/src/lib.rs
-    lines:
-      - 73
-      - 88
-    note: "two-phase parse: invalid JSON branch vs validation/deserialize branch kept separate"
-  - promptLines:
-      - 97
-      - 100
-    file: schemas_journal/src/lib.rs
-    lines:
-      - 52
-      - 57
-    note: "entry_is_valid validation rules: gen>=1, non-empty module/target/file paths"
-  - promptLines:
-      - 97
-      - 100
-    file: schemas_journal/src/lib.rs
-    lines:
-      - 81
+      - 75
       - 84
-    note: validation failure produces skip warning, entry never returned
-  - promptLines:
-      - 104
-      - 105
     file: schemas_journal/src/lib.rs
     lines:
+      - 74
+      - 79
+    note: invalid JSON check and byte-exact warning
+  - promptLines:
+      - 85
       - 94
-      - 97
-    note: "next_gen_number: max gen + 1, or 1 for empty"
-  - promptLines:
-      - 107
-      - 112
     file: schemas_journal/src/lib.rs
     lines:
+      - 81
+      - 89
+    note: deserialize + validate, warning with reason, push entry
+  - promptLines:
+      - 96
       - 99
-      - 117
-    note: file_history builds BlameSourceEntry list for matching file path, entry order
+    file: schemas_journal/src/lib.rs
+    lines:
+      - 74
+      - 89
+    note: two-phase parse ensures raw non-JSON never surfaces serde message
+  - promptLines:
+      - 101
+      - 104
+    file: schemas_journal/src/lib.rs
+    lines:
+      - 53
+      - 58
+    note: entry_is_valid validation rules
+  - promptLines:
+      - 108
+      - 109
+    file: schemas_journal/src/lib.rs
+    lines:
+      - 95
+      - 98
+    note: next_gen_number implementation
+  - promptLines:
+      - 111
+      - 116
+    file: schemas_journal/src/lib.rs
+    lines:
+      - 100
+      - 118
+    note: file_history filter/map over entries in order

@@ -7,6 +7,7 @@
 //! the current file off disk and diffs it against the reconstructed baseline.
 //! The unit corpus below rides along as the regression net.
 
+use std::collections::BTreeMap;
 use std::path::Path;
 
 use napl_core::drift::{DriftReason, DriftedFile, ModuleDrift};
@@ -65,9 +66,10 @@ pub fn detect_gen_drift(
     map: &NaplMap,
     journal: &[JournalEntry],
     module_scope: Option<&str>,
+    prompt_paths: &BTreeMap<String, String>,
 ) -> CliResult<Vec<ModuleDrift>> {
     let mut drifts = Vec::new();
-    for (prompt_file, record) in map.prompts.iter() {
+    for (_, record) in map.prompts.iter() {
         if let Some(scope) = module_scope {
             if record.module != scope {
                 continue;
@@ -88,7 +90,10 @@ pub fn detect_gen_drift(
         if !files.is_empty() {
             drifts.push(ModuleDrift {
                 module: record.module.clone(),
-                prompt_file: prompt_file.clone(),
+                prompt_file: prompt_paths
+                    .get(&record.module)
+                    .cloned()
+                    .unwrap_or_else(|| record.module.clone()),
                 target: target.to_string(),
                 files,
             });

@@ -83,7 +83,7 @@ pub fn classify_prompt(
     let parsed = parse_frontmatter(raw)?;
     let frontmatter = parsed.frontmatter;
     let prompt_hash = content_hash(raw);
-    let record = map.prompts.get(rel_path);
+    let record = map.prompts.get(&frontmatter.module);
 
     if let Some(record) = record {
         let drift = detect_drift(root, record, map)?;

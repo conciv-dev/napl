@@ -1,7 +1,10 @@
-name: status-clean
+name: heal-clean-move
 description: >
-  With a locked file whose hash matches the map and a prompt whose hash matches
-  promptHashAtGen, status reports the prompt as clean and exits 0.
+  Generated-file healing (clean move): the map tracks greet.ts at one path, but a
+  hand mv relocated it into a subdirectory with byte-identical content. Status
+  finds the map's path missing, matches the untracked file by exact content hash,
+  heals the path in the map, journals a `move` entry, and relocks the file 0444 —
+  status stays clean, exit 0. No false "deleted + unattributed".
 setup:
   .napl/lock.json: |
     {
@@ -16,7 +19,7 @@ setup:
     tests: []
     ---
     Greet a person by name.
-  .napl/src/typescript/greet.ts: "export const greet = (name: string): string => `Hello, ${name}!`;\n"
+  .napl/src/typescript/greetings/greet.ts: "export const greet = (name: string): string => `Hello, ${name}!`;\n"
   .napl/map.json: |
     {
       "version": 2,
@@ -52,3 +55,13 @@ expect:
   exitCode: 0
   stdout:
     - "clean        examples/greeting.napl"
+  files:
+    .napl/journal.jsonl:
+      contains:
+        - "\"mode\":\"move\""
+        - ".napl/src/typescript/greetings/greet.ts"
+    .napl/map.json:
+      contains:
+        - ".napl/src/typescript/greetings/greet.ts"
+    .napl/src/typescript/greetings/greet.ts:
+      mode: "0444"
