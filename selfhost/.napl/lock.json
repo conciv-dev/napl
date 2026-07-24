@@ -1,0 +1,7 @@
+{
+  "model": "sonnet",
+  "backend": "claude-cli",
+  "agent": {
+    "preset": "claude"
+  }
+}

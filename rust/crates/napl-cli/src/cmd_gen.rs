@@ -43,7 +43,7 @@ use crate::state::{load_prompt_aliases, read_journal, read_lock, read_map, write
 const MAX_ATTEMPTS: usize = 3;
 const MAX_ATTRIBUTION_FILES: usize = 24;
 const MAX_FILE_LINES: usize = 500;
-const SOURCE_EXTENSIONS: [&str; 6] = [".ts", ".tsx", ".js", ".jsx", ".css", ".html"];
+const SOURCE_EXTENSIONS: [&str; 7] = [".ts", ".tsx", ".js", ".jsx", ".css", ".html", ".rs"];
 
 /// Arguments for the gen command.
 pub struct GenArgs<'a> {

@@ -1,0 +1,75 @@
+module: body_lines
+target: rust
+entries:
+  - promptLines:
+      - 9
+      - 14
+    file: src/lib.rs
+    lines:
+      - 14
+      - 23
+    note: split lines on newline, strip trailing CR, never drop last line
+  - promptLines:
+      - 18
+      - 23
+    file: src/lib.rs
+    lines:
+      - 6
+      - 12
+    note: PromptBody struct with body_start_line and lines fields
+  - promptLines:
+      - 25
+      - 29
+    file: src/lib.rs
+    lines:
+      - 25
+      - 29
+    note: delimiter check ignoring trailing whitespace
+  - promptLines:
+      - 25
+      - 33
+    file: src/lib.rs
+    lines:
+      - 38
+      - 44
+    note: detect frontmatter opening delimiter and locate closing delimiter
+  - promptLines:
+      - 28
+      - 29
+    file: src/lib.rs
+    lines:
+      - 43
+      - 48
+    note: body starts after closing delimiter, slice remaining lines
+  - promptLines:
+      - 30
+      - 32
+    file: src/lib.rs
+    lines:
+      - 52
+      - 55
+    note: no frontmatter case, body_start_line 0, whole doc is body
+  - promptLines:
+      - 34
+      - 35
+    file: src/lib.rs
+    lines:
+      - 44
+      - 48
+    note: frontmatter followed by nothing yields one empty body line
+  - promptLines:
+      - 39
+      - 44
+    file: src/lib.rs
+    lines:
+      - 66
+      - 76
+    note: checked arithmetic converting doc line to body line, range validated
+  - promptLines:
+      - 46
+      - 51
+    file: src/lib.rs
+    lines:
+      - 81
+      - 88
+    note: number lines with 1-based prefix joined by newline

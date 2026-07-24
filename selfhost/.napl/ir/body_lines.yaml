@@ -1,0 +1,61 @@
+module: body_lines
+deps: []
+types:
+  - name: PromptBody
+    description: "Value describing a prompt document's prose body: `body_start_line`, the absolute 0-based document line index at which the body begins, and `lines`, the body's lines in order as owned strings."
+functions:
+  - name: prompt_body_lines
+    signature: "prompt_body_lines(raw: String) -> PromptBody"
+    behavior: 'Splits raw document text into lines on the newline character, stripping a single trailing carriage return from each line so "\r\n" and "\n" endings produce identical lines; splitting never drops a line (a document with no trailing newline still yields its last line, and a document ending in a newline yields a final trailing empty line). Frontmatter is recognized when the first line, compared after stripping trailing whitespace, equals "---" exactly, and some later line, compared the same way, also equals "---" exactly. When both delimiters are found, returns body_start_line as the absolute 0-based index of the first line after the closing delimiter, and lines as everything from that index to the end of the document (a document whose frontmatter is followed by nothing still yields exactly one body line, the empty string). When the first line is not the delimiter, or no closing delimiter is found after the first line, there is no frontmatter: body_start_line is 0 and lines is the entire split document.'
+  - name: body_line_for_doc_line
+    signature: "body_line_for_doc_line(body: PromptBody, doc_line: Int64) -> Option<UInt64>"
+    behavior: Converts an absolute 0-based document line number into a 1-based line number within the body, computed as doc_line - body_start_line + 1. doc_line may be any signed 64-bit value, including negative or extreme values (e.g. Int64 min/max); arithmetic never overflows or panics. Returns the computed 1-based body line only when it is at least 1 and no greater than the number of lines in the body; returns nothing (none/null) if the document line falls before the body starts, past the body's final line, or if the offset arithmetic is out of representable range.
+  - name: number_lines
+    signature: "number_lines(lines: List<String>) -> String"
+    behavior: 'Renders the given slice of lines as a single display string. Each line is prefixed with its 1-based position within the slice followed by ": ", and the resulting per-line strings are joined with newline characters. An empty input slice renders as the empty string.'
+tests:
+  - name: crlf_and_lf_produce_identical_lines
+    given: prompt_body_lines called on "first\nsecond\nthird" and on "first\r\nsecond\r\nthird"
+    expect: Both yield lines ["first", "second", "third"]; the two results' lines are identical
+  - name: no_trailing_newline_keeps_last_line
+    given: Document text "a\nb" with no trailing newline
+    expect: prompt_body_lines yields lines ["a", "b"]
+  - name: trailing_newline_yields_final_empty_line
+    given: Document text "a\nb\n"
+    expect: prompt_body_lines yields lines ["a", "b", ""]
+  - name: empty_document_is_one_empty_line
+    given: Empty document text ""
+    expect: prompt_body_lines yields body_start_line 0 and lines [""]
+  - name: frontmatter_body_starts_after_closing_delimiter
+    given: 'Document "---\ntitle: x\ntags: y\n---\nhello\nworld"'
+    expect: prompt_body_lines yields body_start_line 4 and lines ["hello", "world"]
+  - name: delimiters_ignore_trailing_whitespace
+    given: 'Document "---  \ntitle: x\n---\t\nprose" where delimiter lines have trailing whitespace'
+    expect: prompt_body_lines yields body_start_line 3 and lines ["prose"]
+  - name: no_frontmatter_when_first_line_is_not_delimiter
+    given: Document "not front\n---\nmore" where the first line is not "---"
+    expect: prompt_body_lines yields body_start_line 0 and lines ["not front", "---", "more"]
+  - name: no_frontmatter_when_closing_delimiter_missing
+    given: 'Document "---\ntitle: x\nno close here" with an opening delimiter but no closing delimiter'
+    expect: 'prompt_body_lines yields body_start_line 0 and lines ["---", "title: x", "no close here"]'
+  - name: frontmatter_followed_by_nothing_has_one_empty_body_line
+    given: 'Document "---\ntitle: x\n---\n" whose frontmatter is immediately followed by nothing'
+    expect: prompt_body_lines yields body_start_line 3 and lines [""]
+  - name: body_line_within_range_is_one_based
+    given: 'PromptBody from "---\ntitle: x\ntags: y\n---\nhello\nworld" (body_start_line 4, lines ["hello","world"]); doc_line 4 and doc_line 5'
+    expect: body_line_for_doc_line returns Some(1) for doc_line 4 and Some(2) for doc_line 5
+  - name: body_line_above_body_is_none
+    given: Same PromptBody as above; doc_line 3 and doc_line 0
+    expect: body_line_for_doc_line returns none for both
+  - name: body_line_past_body_is_none
+    given: Same PromptBody as above; doc_line 6
+    expect: body_line_for_doc_line returns none
+  - name: body_line_negative_or_extreme_does_not_panic
+    given: PromptBody from "hello\nworld" (no frontmatter, body_start_line 0); doc_line -1, Int64 minimum, and Int64 maximum
+    expect: body_line_for_doc_line returns none for all three without panicking or overflowing
+  - name: number_lines_matches_spec_example
+    given: Lines ["a", "b"]
+    expect: 'number_lines returns "1: a\n2: b"'
+  - name: number_lines_of_empty_slice_is_empty_string
+    given: An empty list of lines
+    expect: number_lines returns the empty string ""

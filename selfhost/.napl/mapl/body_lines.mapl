@@ -1,0 +1,24 @@
+module: body_lines
+target: rust
+entries:
+  - promptLines:
+      - 1
+      - 52
+    kind: assumption
+    message: Prompt doesn't specify implementation language or crate structure.
+    reasoning: The prompt describes behavior only (pure module, no I/O/dependencies) without naming a language. The agent inferred Rust and scaffolded a standalone crate (Cargo.toml + src/lib.rs) with a public PromptBody struct and two pub fns, matching an existing napl-generated-code convention. This is a reasonable choice given the header comment style but is not explicitly stated in the prompt body.
+    suggestion: State the target language and whether this is a standalone crate/module or part of a larger package.
+  - promptLines:
+      - 21
+      - 23
+    kind: assumption
+    message: Field types (usize vs i64/u64) for body_start_line and lines chosen by agent.
+    reasoning: Prompt says body_start_line is a 0-based document line index but doesn't specify its integer type; agent used usize. Reasonable since it's always non-negative, but the prompt leaves numeric typing entirely to the implementer.
+    suggestion: Optionally note expected types/ranges for body_start_line if precision matters downstream.
+  - promptLines:
+      - 39
+      - 44
+    kind: note
+    message: body_line_for_doc_line return type (Option<u64>) and overflow-safety handled via checked arithmetic.
+    reasoning: Prompt requires doc_line be a signed 64-bit integer that may be negative or out of range, and implies the function must not panic on extreme values, but never explicitly says 'must not panic' or specifies the return type for the body line number. The agent used checked_sub/checked_add and returned Option<u64>, and added tests for i64::MIN/MAX, correctly inferring the safety requirement from context.
+    suggestion: Explicitly state 'must not panic on any input, including i64::MIN/MAX' and specify the return type (e.g. Option<u64>) if that precision matters.

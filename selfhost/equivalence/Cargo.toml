@@ -1,0 +1,7 @@
+[package]
+name = "equivalence"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+body_lines = { path = "../.napl/src/rust" }

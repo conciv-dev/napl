@@ -1,0 +1,6 @@
+# Cargo build output inside the generated rust target tree
+.napl/src/rust/target/
+# The equivalence harness is a throwaway cargo project
+equivalence/target/
+# Transient gen lock
+.napl/gen.lock

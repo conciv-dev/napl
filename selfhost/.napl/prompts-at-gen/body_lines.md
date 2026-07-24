@@ -1,0 +1,51 @@
+# Body lines
+
+This module maps between the absolute line numbers of a `.napl` prompt document
+and the 1-based line numbers of its prose **body** — the text that follows the
+YAML frontmatter. It is pure: no I/O, no dependencies.
+
+## Splitting a document into lines
+
+Everywhere in this module a document is split into lines on the newline
+character. A trailing carriage return on a line is stripped, so a file written
+with Windows (`\r\n`) line endings produces exactly the same lines as one
+written with Unix (`\n`) endings. Splitting never drops a line: a document with
+no trailing newline still yields its last line, and a document that ends in a
+newline yields a final empty line.
+
+## `prompt_body_lines(raw)`
+
+Given the raw text of a prompt file, return a `PromptBody` value with two public
+fields:
+
+- `body_start_line`: the absolute, 0-based document line index at which the body
+  begins.
+- `lines`: the body's lines, in order, as owned strings.
+
+Frontmatter is recognised when the very first line of the document — compared
+after ignoring trailing whitespace — is exactly `---`, and some later line, also
+compared ignoring trailing whitespace, is exactly `---`. When both delimiters
+are present, the body is everything after the closing `---`: `body_start_line`
+is the index of the first line following that closing delimiter, and `lines`
+holds the remaining lines. When the first line is not `---`, or no closing `---`
+is found, the document has no frontmatter: `body_start_line` is 0 and `lines` is
+the entire document.
+
+A document whose frontmatter is immediately followed by nothing still has a body
+of exactly one line: the empty string.
+
+## `body_line_for_doc_line(body, doc_line)`
+
+Convert an absolute, 0-based document line number into a 1-based line number
+within the body. The parameter `doc_line` is a signed 64-bit integer and may be
+negative or out of range. The body line is `doc_line - body_start_line + 1`.
+Return that number only when it is a valid body position — at least 1 and no
+greater than the number of body lines. When the document line sits above the
+body (before it starts) or past its final line, return nothing.
+
+## `number_lines(lines)`
+
+Render a slice of lines as a single string for display. Each line is prefixed by
+its 1-based position followed by `": "`, and the results are joined by newlines.
+For example, the two lines `a` and `b` render as `1: a` then a newline then
+`2: b`.

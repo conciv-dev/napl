@@ -1,0 +1,37 @@
+{
+  "version": 2,
+  "prompts": {
+    "body_lines.napl": {
+      "module": "body_lines",
+      "promptHash": "eb0d5bdd945034c80de4f1c19cb798c2de8153010d64a8e5ef33036a99059934",
+      "declaredTargets": [
+        "rust"
+      ],
+      "targets": {
+        "rust": {
+          "promptHashAtGen": "eb0d5bdd945034c80de4f1c19cb798c2de8153010d64a8e5ef33036a99059934",
+          "files": [
+            ".napl/src/rust/Cargo.toml",
+            ".napl/src/rust/src/lib.rs"
+          ]
+        }
+      }
+    }
+  },
+  "files": {
+    ".napl/src/rust/Cargo.toml": {
+      "target": "rust",
+      "hash": "7302381f7961450e37ab09dd41049cd1e08d66c84cd84c3b571eb3f72db41d58",
+      "prompts": [
+        "body_lines.napl"
+      ]
+    },
+    ".napl/src/rust/src/lib.rs": {
+      "target": "rust",
+      "hash": "6953db4bae90a68d73f5722f7ca47b3b3606771cd74b768afa96c0531a0590fb",
+      "prompts": [
+        "body_lines.napl"
+      ]
+    }
+  }
+}

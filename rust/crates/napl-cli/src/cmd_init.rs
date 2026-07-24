@@ -8,7 +8,7 @@ use napl_core::guard::{
     GUARD_FILE_NAMES, PRE_COMMIT_HOOK, PRE_COMMIT_HOOK_LINE,
 };
 use napl_core::schemas::empty_map;
-use napl_core::targets::list_targets;
+use napl_core::targets::starter_targets;
 
 use crate::error::CliResult;
 use crate::fsutil::{self, EXEC_MODE};
@@ -32,7 +32,7 @@ fn write_if_absent(path: &Path, contents: &str) -> CliResult<()> {
 }
 
 fn write_guard_docs(src_dir: &Path) -> CliResult<()> {
-    for target in list_targets() {
+    for target in starter_targets() {
         let target_dir = src_dir.join(target);
         std::fs::create_dir_all(&target_dir)?;
         for name in GUARD_FILE_NAMES {
