@@ -2,53 +2,77 @@ module: blame
 target: rust
 entries:
   - promptLines:
-      - 1
-      - 8
+      - 24
+      - 33
     file: blame/src/lib.rs
     lines:
-      - 1
-      - 6
-    note: module doc summary
+      - 8
+      - 8
+    note: import to_lines, parse_hunks, HunkKind from text_diff
   - promptLines:
-      - 17
-      - 41
+      - 45
+      - 45
     file: blame/src/lib.rs
     lines:
-      - 8
-      - 8
-    note: import from sibling text_diff crate
+      - 11
+      - 11
+    note: derive Clone, PartialEq, Eq for comparable/cloneable
   - promptLines:
       - 47
       - 50
     file: blame/src/lib.rs
     lines:
-      - 10
+      - 12
       - 18
-    note: BlameSourceEntry struct fields
+    note: BlameSourceEntry struct with public fields gen/timestamp/module/patch/prompt_diff
   - promptLines:
       - 51
       - 53
     file: blame/src/lib.rs
     lines:
-      - 20
+      - 22
       - 28
-    note: BlameLine struct fields
+    note: BlameLine struct with line/gen/timestamp/module/text
   - promptLines:
       - 57
-      - 63
+      - 60
     file: blame/src/lib.rs
     lines:
       - 31
-      - 36
-    note: parse hunks, empty returns unchanged
+      - 31
+    note: apply_patch_to_blame signature
+  - promptLines:
+      - 62
+      - 63
+    file: blame/src/lib.rs
+    lines:
+      - 32
+      - 35
+    note: parse hunks; empty returns input unchanged
   - promptLines:
       - 64
-      - 67
+      - 64
     file: blame/src/lib.rs
     lines:
       - 37
+      - 40
+    note: init result and old_idx cursor, loop hunks
+  - promptLines:
+      - 65
+      - 67
+    file: blame/src/lib.rs
+    lines:
+      - 41
       - 45
-    note: copy untouched old entries before hunk start
+    note: copy untouched entries up to hunk start (saturating)
+  - promptLines:
+      - 67
+      - 67
+    file: blame/src/lib.rs
+    lines:
+      - 47
+      - 48
+    note: iterate hunk lines by kind
   - promptLines:
       - 68
       - 69
@@ -56,7 +80,7 @@ entries:
     lines:
       - 49
       - 56
-    note: context line pushes blame or gen, advances cursor
+    note: "context: push blame[old_idx] or gen past end, advance"
   - promptLines:
       - 70
       - 70
@@ -64,7 +88,7 @@ entries:
     lines:
       - 57
       - 59
-    note: deletion line advances cursor without pushing
+    note: "deletion: advance without pushing"
   - promptLines:
       - 71
       - 71
@@ -72,15 +96,23 @@ entries:
     lines:
       - 60
       - 62
-    note: insertion pushes gen, no advance
+    note: "insertion: push gen, no advance"
   - promptLines:
       - 72
       - 72
     file: blame/src/lib.rs
     lines:
       - 67
-      - 69
-    note: push remaining old entries after last hunk
+      - 71
+    note: push remaining entries, return result
+  - promptLines:
+      - 76
+      - 76
+    file: blame/src/lib.rs
+    lines:
+      - 75
+      - 75
+    note: blame_file signature
   - promptLines:
       - 78
       - 78
@@ -104,68 +136,84 @@ entries:
     lines:
       - 84
       - 84
-    note: fallback gen from last entry or 0
+    note: "fallback gen: last entry's gen or 0"
   - promptLines:
       - 83
-      - 86
+      - 83
     file: blame/src/lib.rs
     lines:
       - 86
-      - 102
-    note: build BlameLine per current line with lookup
+      - 90
+    note: to_lines and enumerate 0-based index
+  - promptLines:
+      - 84
+      - 84
+    file: blame/src/lib.rs
+    lines:
+      - 91
+      - 92
+    note: gen = blame[index] else fallback; lookup entry
+  - promptLines:
+      - 85
+      - 86
+    file: blame/src/lib.rs
+    lines:
+      - 93
+      - 100
+    note: build BlameLine, line=index+1, empty strings if none
   - promptLines:
       - 88
       - 89
     file: blame/src/lib.rs
     lines:
-      - 104
+      - 105
       - 113
-    note: blame_line_at finds line by number or None
+    note: blame_line_at finds line by 1-based number or None
   - promptLines:
       - 93
-      - 94
+      - 93
     file: blame/src/lib.rs
     lines:
       - 116
-      - 129
-    note: scan lines, skip until first hunk header
+      - 116
+    note: first_prompt_diff_line signature
+  - promptLines:
+      - 94
+      - 94
+    file: blame/src/lib.rs
+    lines:
+      - 121
+      - 122
+    note: iterate lines, strip trailing CR
   - promptLines:
       - 95
       - 95
     file: blame/src/lib.rs
     lines:
-      - 131
+      - 124
       - 133
-    note: skip header lines themselves
+    note: ignore until first @@ header; skip header lines
   - promptLines:
       - 96
       - 97
     file: blame/src/lib.rs
     lines:
-      - 135
+      - 139
       - 143
-    note: strip marker char, trim, skip empty
+    note: text after marker char, trimmed; skip empty
   - promptLines:
       - 98
       - 99
     file: blame/src/lib.rs
     lines:
       - 145
+      - 149
+    note: capture first added/removed
+  - promptLines:
+      - 98
+      - 99
+    file: blame/src/lib.rs
+    lines:
+      - 151
       - 156
-    note: return first added else first removed else empty
-  - promptLines:
-      - 94
-      - 94
-    file: blame/src/lib.rs
-    lines:
-      - 122
-      - 122
-    note: strip trailing carriage return from each line
-  - promptLines:
-      - 12
-      - 15
-    file: blame/src/lib.rs
-    lines:
-      - 1
-      - 1
-    note: generated crate marker comment referencing module location convention
+    note: prefer added, else removed, else empty

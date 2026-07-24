@@ -3,20 +3,44 @@ target: rust
 entries:
   - promptLines:
       - 19
+      - 20
+    file: schemas_line_range/src/lib.rs
+    lines:
+      - 8
+      - 11
+    note: public LineRange struct with u32 start/end fields
+  - promptLines:
+      - 21
       - 22
     file: schemas_line_range/src/lib.rs
     lines:
-      - 6
+      - 7
+      - 7
+    note: derives Clone, Copy, PartialEq, Eq for equality/copying
+  - promptLines:
+      - 21
+      - 21
+    file: schemas_line_range/src/lib.rs
+    lines:
+      - 13
       - 17
-    note: LineRange struct with start/end fields, new(), derive equality/copy
+    note: new(start, end) constructor
   - promptLines:
       - 26
-      - 28
+      - 27
     file: schemas_line_range/src/lib.rs
     lines:
       - 111
       - 118
-    note: Deserialize impl entry point
+    note: Deserialize impl delegating to deserialize_any
+  - promptLines:
+      - 26
+      - 27
+    file: schemas_line_range/src/lib.rs
+    lines:
+      - 43
+      - 45
+    note: visitor expecting message describing accepted shapes
   - promptLines:
       - 29
       - 29
@@ -24,7 +48,7 @@ entries:
     lines:
       - 47
       - 53
-    note: bare u64 number becomes n..=n
+    note: bare unsigned number becomes n..=n
   - promptLines:
       - 29
       - 29
@@ -34,11 +58,19 @@ entries:
       - 75
     note: bare float number becomes n..=n
   - promptLines:
+      - 29
+      - 29
+    file: schemas_line_range/src/lib.rs
+    lines:
+      - 55
+      - 65
+    note: signed number path, rejects negatives
+  - promptLines:
       - 30
       - 30
     file: schemas_line_range/src/lib.rs
     lines:
-      - 93
+      - 92
       - 97
     note: one-element array becomes n..=n
   - promptLines:
@@ -51,20 +83,20 @@ entries:
     note: two-element array becomes start..=end
   - promptLines:
       - 33
-      - 40
+      - 34
     file: schemas_line_range/src/lib.rs
     lines:
       - 19
       - 36
-    note: number_to_line validates integer and >=1, accepts whole floats
+    note: number_to_line enforces integer >= 1
   - promptLines:
       - 36
       - 37
     file: schemas_line_range/src/lib.rs
     lines:
-      - 21
+      - 20
       - 23
-    note: reject zero (u64 branch)
+    note: rejects 0 via as_u64 lower bound
   - promptLines:
       - 36
       - 37
@@ -72,60 +104,36 @@ entries:
     lines:
       - 29
       - 31
-    note: reject zero (float branch)
-  - promptLines:
-      - 36
-      - 37
-    file: schemas_line_range/src/lib.rs
-    lines:
-      - 59
-      - 65
-    note: reject negative i64 (covers 0 boundary via visit_u64)
+    note: rejects sub-1 float values
   - promptLines:
       - 38
-      - 40
+      - 39
     file: schemas_line_range/src/lib.rs
     lines:
       - 25
+      - 28
+    note: rejects nonzero fractional part
+  - promptLines:
+      - 39
+      - 40
+    file: schemas_line_range/src/lib.rs
+    lines:
       - 32
-    note: reject nonzero fractional part, accept whole-valued float
+      - 32
+    note: zero-fraction float accepted as integer
   - promptLines:
       - 41
       - 42
     file: schemas_line_range/src/lib.rs
     lines:
-      - 92
+      - 104
       - 107
-    note: reject arrays with !=1,2 elements
+    note: rejects arrays with not exactly 1 or 2 elements
   - promptLines:
       - 43
       - 44
     file: schemas_line_range/src/lib.rs
     lines:
-      - 83
+      - 82
       - 90
-    note: reject non-number elements in array
-  - promptLines:
-      - 43
-      - 44
-    file: schemas_line_range/src/lib.rs
-    lines:
-      - 116
-      - 116
-    note: deserialize_any lets visitor reject strings/bools/objects via missing visit_* overrides
-  - promptLines:
-      - 46
-      - 48
-    file: schemas_line_range/src/lib.rs
-    lines:
-      - 19
-      - 36
-    note: errors returned via Result, not panics
-  - promptLines:
-      - 26
-      - 48
-    file: schemas_line_range/src/lib.rs
-    lines:
-      - 128
-      - 208
-    note: unit tests covering accepted/rejected input shapes
+    note: rejects non-number array elements

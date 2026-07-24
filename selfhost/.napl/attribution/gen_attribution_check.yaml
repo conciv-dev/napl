@@ -2,13 +2,13 @@ module: gen_attribution_check
 target: rust
 entries:
   - promptLines:
-      - 3
-      - 8
+      - 34
+      - 34
     file: gen_attribution_check/src/lib.rs
     lines:
-      - 1
-      - 18
-    note: module summary implemented as pure sanity-check function
+      - 3
+      - 3
+    note: function signature assert_attribution_sane
   - promptLines:
       - 26
       - 29
@@ -16,92 +16,52 @@ entries:
     lines:
       - 1
       - 1
-    note: import Attribution from sibling schemas_attribution crate
-  - promptLines:
-      - 34
-      - 34
-    file: gen_attribution_check/src/lib.rs
-    lines:
-      - 3
-      - 3
-    note: function signature matches spec
+    note: imports Attribution from sibling crate
   - promptLines:
       - 39
-      - 41
+      - 39
     file: gen_attribution_check/src/lib.rs
     lines:
       - 4
-      - 6
-    note: rule 1 - non-empty allowed with empty entries errors
+      - 4
+    note: checks allowed non-empty and entries empty
+  - promptLines:
+      - 40
+      - 41
+    file: gen_attribution_check/src/lib.rs
+    lines:
+      - 5
+      - 5
+    note: returns exact no-entries error message
   - promptLines:
       - 42
-      - 47
+      - 42
     file: gen_attribution_check/src/lib.rs
     lines:
       - 8
-      - 15
-    note: rule 2 - entry file not in allowed errors with exact message
+      - 9
+    note: iterates entries, checks file not in allowed
   - promptLines:
-      - 48
-      - 48
-    file: gen_attribution_check/src/lib.rs
-    lines:
-      - 17
-      - 17
-    note: rule 3 - fallback Ok
-  - promptLines:
-      - 50
-      - 53
-    file: gen_attribution_check/src/lib.rs
-    lines:
-      - 44
-      - 91
-    note: tests covering all described scenarios in order
-  - promptLines:
-      - 50
-      - 50
-    file: gen_attribution_check/src/lib.rs
-    lines:
-      - 44
+      - 43
       - 47
-    note: empty allowed + empty entries -> Ok test
-  - promptLines:
-      - 50
-      - 51
     file: gen_attribution_check/src/lib.rs
     lines:
-      - 49
-      - 57
-    note: non-empty allowed + empty entries -> error test
-  - promptLines:
-      - 51
-      - 51
-    file: gen_attribution_check/src/lib.rs
-    lines:
-      - 59
-      - 64
-    note: entry within allowed -> Ok test
-  - promptLines:
-      - 52
-      - 52
-    file: gen_attribution_check/src/lib.rs
-    lines:
-      - 66
-      - 74
-    note: entry outside allowed -> error naming file test
+      - 10
+      - 13
+    note: returns outside-set error with file substituted
   - promptLines:
       - 52
       - 53
     file: gen_attribution_check/src/lib.rs
     lines:
-      - 76
-      - 84
-    note: check entries in order, return first violation test
+      - 8
+      - 14
+    note: checks entries in order, returns first violation
   - promptLines:
-      - 51
-      - 51
+      - 48
+      - 48
     file: gen_attribution_check/src/lib.rs
     lines:
-      - 86
-      - 91
-    note: all entries within allowed multiple -> Ok test
+      - 17
+      - 17
+    note: returns Ok when no rule fires

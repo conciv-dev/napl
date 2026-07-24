@@ -5,23 +5,23 @@ types: []
 functions:
   - name: assert_attribution_sane
     signature: "assert_attribution_sane(attribution: &Attribution, allowed: &[String]) -> Result<(), String>"
-    behavior: "Pure validation, no I/O. Given a derived Attribution and the list of file paths allowed to be attributed: if allowed is non-empty and attribution.entries is empty, returns Err(\"attribution has no entries but the module has attributed source files\"). Otherwise iterates attribution.entries in order; for the first entry whose file is not present in allowed, returns Err(`attribution entry references file \"<file>\" which is outside the attributed file set`) with the entry's file substituted. If no rule fires (including the case where allowed and entries are both empty), returns Ok(()).\n"
+    behavior: "Pure validation of a derived attribution against the set of file paths allowed to be attributed; performs no I/O. Preconditions: attribution exposes an ordered list of entries, each carrying a file path string; allowed is the set of permitted file paths. Postconditions, checked in order with return on first violation: (1) if allowed is non-empty and the entries list is empty, returns Err with exactly \"attribution has no entries but the module has attributed source files\"; (2) otherwise, iterating entries in order, the first entry whose file is not present in allowed yields Err with exactly 'attribution entry references file \"<file>\" which is outside the attributed file set', the offending file path substituted inside straight double quotes; (3) if no rule fires, returns Ok. An empty allowed with empty entries returns Ok.\n"
 tests:
   - name: empty_allowed_and_empty_entries_is_ok
-    given: attribution with no entries, allowed = []
-    expect: Ok(())
+    given: attribution with no entries and an empty allowed set
+    expect: Ok
   - name: nonempty_allowed_and_empty_entries_errors
-    given: attribution with no entries, allowed = ["a.ts"]
-    expect: Err("attribution has no entries but the module has attributed source files")
+    given: attribution with no entries and allowed set ["a.ts"]
+    expect: Err "attribution has no entries but the module has attributed source files"
   - name: entry_within_allowed_is_ok
-    given: attribution with entry "a.ts", allowed = ["a.ts"]
-    expect: Ok(())
+    given: attribution with one entry file "a.ts" and allowed set ["a.ts"]
+    expect: Ok
   - name: entry_outside_allowed_errors_with_exact_message
-    given: attribution with entry "b.ts", allowed = ["a.ts"]
-    expect: Err("attribution entry references file \"b.ts\" which is outside the attributed file set")
+    given: attribution with one entry file "b.ts" and allowed set ["a.ts"]
+    expect: Err 'attribution entry references file "b.ts" which is outside the attributed file set'
   - name: returns_first_violation_in_order
-    given: attribution with entries ["a.ts","b.ts","c.ts"], allowed = ["a.ts","c.ts"]
-    expect: Err("attribution entry references file \"b.ts\" which is outside the attributed file set")
+    given: attribution with entries ["a.ts", "b.ts", "c.ts"] and allowed set ["a.ts", "c.ts"]
+    expect: Err naming "b.ts" (the first entry outside the allowed set)
   - name: all_entries_within_allowed_multiple_is_ok
-    given: attribution with entries ["a.ts","c.ts"], allowed = ["a.ts","b.ts","c.ts"]
-    expect: Ok(())
+    given: attribution with entries ["a.ts", "c.ts"] and allowed set ["a.ts", "b.ts", "c.ts"]
+    expect: Ok

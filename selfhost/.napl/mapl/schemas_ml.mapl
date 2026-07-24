@@ -2,16 +2,28 @@ module: schemas_ml
 target: rust
 entries:
   - promptLines:
-      - 59
-      - 71
-    kind: note
-    message: Rejection paths match spec exactly — bad kind or promptLines-as-string errors, not panics.
-    reasoning: validate_ml and parse_ml_entries both use serde_json::from_value and map errors to MlError::Parse, satisfying "rejection is error not panic" and structural-invalid cases. Tests confirm behavior. No gaps found.
-    suggestion: ""
+      - 10
+      - 15
+    kind: no-op
+    message: No changes — module already exists and realizes target behavior.
+    reasoning: Changes were "NO CHANGES". Coding agent reports schemas_ml crate already present with all 18 tests green and prompt diff empty, so existing source already satisfies every requirement (types, validators, lookup, sibling path dependency). Nothing to author. This no-op is required because the compile produced no source edits.
   - promptLines:
-      - 17
-      - 36
+      - 61
+      - 61
     kind: assumption
-    message: Assumed schemas_line_range sibling crate already exists with matching API.
-    reasoning: Code depends on schemas_line_range::LineRange via path dep, per spec. Couldn't verify sibling crate's actual contents in this review, just that lib.rs uses it correctly per described API (new, start, end, Deserialize). Assumed prior generation of that module was correct/consistent.
-    suggestion: ""
+    message: Error type for validate_ml left as `_`; concrete Err type unspecified.
+    reasoning: Signature written `Result<Ml, _>` — the error type is a placeholder. Prompt says rejection is "an error, not a panic" but never names the type (custom enum vs serde_json::Error vs String). Existing code picks some concrete type; that choice was not dictated by the prompt.
+    suggestion: State the intended error type, e.g. "returns Result<Ml, MlError>" or "Result<Ml, serde_json::Error>", so validation and deserialization failures share a defined type.
+  - promptLines:
+      - 68
+      - 68
+    kind: assumption
+    message: Error type for parse_ml_entries also `_`; unspecified.
+    reasoning: Same placeholder `Result<Vec<MlEntry>, _>`. Whether this shares validate_ml's error type or uses its own is not stated; existing code resolved it.
+    suggestion: Name the error type and whether it is shared with validate_ml.
+  - promptLines:
+      - 42
+      - 42
+    kind: note
+    message: MlKind must be copy but MlEntry only cloneable — intentional asymmetry.
+    reasoning: Prompt asks MlKind to be copy (line 42) while MlEntry is only "cloneable" (line 46) since it holds String/Option<String>. Consistent and correct; noted for the author's awareness that the derive sets differ by design.

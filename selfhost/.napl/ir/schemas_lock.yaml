@@ -3,92 +3,101 @@ deps:
   - extensions
 types:
   - name: Backend
-    description: 'Enum selecting code-generation backend. Variants: claude-cli, anthropic-api. Serialized/deserialized as kebab-case strings ("claude-cli", "anthropic-api"). Comparable and copyable.'
+    description: 'Enum of code-generation backends with two variants: ClaudeCli and AnthropicApi. Serialized in kebab-case as "claude-cli" and "anthropic-api". Comparable and copyable.'
   - name: AgentPreset
-    description: 'Enum selecting coding-agent engine. Variants: claude, codex, custom. Serialized/deserialized as lowercase strings ("claude", "codex", "custom").'
+    description: 'Enum of coding-agent engine presets with three variants: Claude, Codex, Custom. Serialized in lowercase as "claude", "codex", "custom".'
   - name: AgentConfig
-    description: "Agent configuration: preset (AgentPreset) and optional command (list of strings, a command template). command is omitted from serialized output and defaults to absent/None when not provided on input. Rejects any JSON field other than preset and command as a deserialization error."
+    description: Struct pairing a required preset (AgentPreset) with an optional command template (list of strings). command is omitted from serialized output and defaults to absent. Unknown JSON keys other than "preset" and "command" are rejected on deserialization.
   - name: HlLock
-    description: 'The lock document. Fields: model (string, required); backend (Backend, defaults to claude-cli when absent); prompt_aliases (optional list of strings, JSON key "promptAliases", omitted when absent); agent (optional AgentConfig, omitted when absent).'
+    description: 'The lock document. Fields: model (string, required); backend (Backend, defaults to claude-cli when the key is absent); prompt_aliases (optional list of strings, JSON key "promptAliases", omitted when absent); agent (optional AgentConfig, omitted when absent).'
   - name: LockError
-    description: "Error type describing why parsing/validation of a lock document failed: malformed/corrupt input (with message), empty model, invalid prompt alias (with the offending alias), custom preset missing command, or non-custom preset carrying a command. Displays a human-readable message; exact wording is not contractually significant."
+    description: "Error type distinguishing failure modes: parse failure, empty model, invalid prompt alias, custom preset missing command, and non-custom preset carrying a command."
 functions:
+  - name: DEFAULT_MODEL
+    signature: "constant: string"
+    behavior: The default model string, equal to "claude-sonnet-5".
+  - name: DEFAULT_BACKEND
+    signature: "constant: Backend"
+    behavior: The default backend, equal to the claude-cli variant.
+  - name: DEFAULT_AGENT_PRESET
+    signature: "constant: AgentPreset"
+    behavior: The default agent preset, equal to the claude variant.
   - name: default_agent_config
     signature: () -> AgentConfig
-    behavior: "Returns the default agent configuration: preset = claude, command = absent."
+    behavior: Returns an AgentConfig with the claude preset and no command.
   - name: is_valid_prompt_alias
     signature: "(alias: string) -> bool"
-    behavior: Returns true only if alias starts with a leading '.' character, has exactly 1 or 2 Unicode code points after that leading dot, and contains no zero-width joiner (U+200D) character anywhere after the dot. Returns false otherwise (missing leading dot, 0 or 3+ code points after the dot, or presence of a ZWJ).
+    behavior: True iff the alias starts with a dot ("."), has exactly 1 or 2 Unicode code points after the dot, and contains no ZWJ (U+200D) anywhere. Otherwise false.
   - name: validate_agent_config
-    signature: "(agent: AgentConfig) -> Result<void, LockError>"
-    behavior: "Validates an agent configuration against its preset. If preset is custom: succeeds only when command is present and non-empty; otherwise fails with a 'custom agent missing command' error. If preset is claude or codex: succeeds only when command is absent; otherwise fails with a 'non-custom agent has command' error."
+    signature: "(agent: AgentConfig) -> Result<unit, LockError>"
+    behavior: "Ok when: custom preset has a non-empty command; or claude/codex preset has no command. Error when: custom preset has no command or an empty command; or claude/codex preset carries a command."
   - name: parse_lock
     signature: "(raw: string) -> Result<HlLock, LockError>"
-    behavior: "Deserializes raw as JSON into an HlLock. Fails (without panicking) on malformed JSON, unknown backend spelling, unknown agent preset spelling, unknown fields in agent config, or wrong field types, returning a parse error. On successful structural parse, validates: model must be non-empty (else empty-model error); if prompt_aliases present, every alias must satisfy is_valid_prompt_alias (else invalid-alias error naming the first failing alias); if agent present, it must satisfy validate_agent_config (else the corresponding agent error). Returns the parsed HlLock only if all checks pass."
+    behavior: "Pure, no I/O. Deserializes the JSON string into an HlLock, returning an error (never a panic) on corrupt JSON, unknown backend spelling, unknown preset, unknown agent field, or wrong types. After a structural parse, validates: model must be non-empty; if promptAliases present, every alias must satisfy is_valid_prompt_alias; if agent present, it must pass validate_agent_config. Returns the parsed lock verbatim on success."
   - name: resolve_prompt_aliases
     signature: "(lock: HlLock) -> list<string>"
-    behavior: Returns lock.prompt_aliases if present (cloned/verbatim); otherwise returns the curated default alias list obtained from the extensions module's default_prompt_aliases().
+    behavior: Returns the lock's promptAliases override if present, otherwise the curated default from the extensions module's default_prompt_aliases().
   - name: resolve_agent_config
     signature: "(lock: HlLock) -> AgentConfig"
-    behavior: Returns lock.agent if present (cloned/verbatim); otherwise returns default_agent_config() (claude preset, no command).
+    behavior: Returns the lock's agent override if present, otherwise default_agent_config() (the claude preset).
 tests:
   - name: backend_kebab_case_round_trip
-    given: Backend::ClaudeCli and Backend::AnthropicApi serialized to JSON, and the strings "claude-cli"/"anthropic-api" deserialized
-    expect: Serialize to "claude-cli" and "anthropic-api" respectively; deserializing those strings back yields the matching variants
+    given: Backend variants and their kebab-case JSON strings.
+    expect: ClaudeCli serializes to "claude-cli" and AnthropicApi to "anthropic-api"; both strings deserialize back to the matching variants.
   - name: agent_preset_lowercase_round_trip
-    given: AgentPreset::Claude, Codex, Custom serialized to JSON
-    expect: Produce "claude", "codex", "custom" respectively
+    given: AgentPreset variants Claude, Codex, Custom.
+    expect: Serialize to lowercase "claude", "codex", "custom" respectively.
   - name: agent_config_denies_unknown_fields
-    given: 'JSON {"preset": "claude", "bogus": 1}'
-    expect: Deserialization into AgentConfig fails
+    given: JSON {"preset":"claude","bogus":1} deserialized as AgentConfig.
+    expect: Deserialization fails.
   - name: agent_config_command_omitted_when_absent
-    given: "AgentConfig{preset: claude, command: None} serialized to JSON"
-    expect: Output JSON is {"preset":"claude"} with no command key
+    given: An AgentConfig with claude preset and no command.
+    expect: Serializes to {"preset":"claude"} with no command key.
   - name: hl_lock_defaults_backend_when_absent
-    given: 'JSON {"model": "m"}'
-    expect: Parses with backend = ClaudeCli, prompt_aliases = None, agent = None
+    given: JSON {"model":"m"} deserialized as HlLock.
+    expect: backend defaults to claude-cli; prompt_aliases and agent are absent.
   - name: hl_lock_prompt_aliases_use_camel_case_key
-    given: 'JSON {"model": "m", "promptAliases": [".a"]}'
-    expect: prompt_aliases = [".a"]; re-serializing includes "promptAliases":[".a"]
+    given: JSON {"model":"m","promptAliases":[".a"]}.
+    expect: prompt_aliases parses to [".a"] and re-serializing emits the "promptAliases" camelCase key.
   - name: parse_lock_rejects_corrupt_json
-    given: Raw string "not json"
-    expect: parse_lock returns an error
+    given: The input "not json".
+    expect: parse_lock returns an error.
   - name: parse_lock_rejects_unknown_backend_spelling
-    given: 'JSON {"model": "m", "backend": "bogus"}'
-    expect: parse_lock returns an error
+    given: JSON {"model":"m","backend":"bogus"}.
+    expect: parse_lock returns an error.
   - name: parse_lock_rejects_unknown_preset
-    given: 'JSON {"model": "m", "agent": {"preset": "bogus"}}'
-    expect: parse_lock returns an error
+    given: JSON {"model":"m","agent":{"preset":"bogus"}}.
+    expect: parse_lock returns an error.
   - name: parse_lock_rejects_empty_model
-    given: 'JSON {"model": ""}'
-    expect: parse_lock returns EmptyModel error
+    given: JSON {"model":""}.
+    expect: parse_lock returns the empty-model validation error.
   - name: parse_lock_accepts_valid_document
-    given: JSON with model="claude-sonnet-5", backend="anthropic-api", promptAliases=[".a",".ab"], agent={preset:"custom", command:["run","me"]}
-    expect: Parses successfully with all fields matching the input verbatim
+    given: A document with model "claude-sonnet-5", backend "anthropic-api", promptAliases [".a",".ab"], and agent {preset custom, command ["run","me"]}.
+    expect: parse_lock succeeds and the lock's fields equal the supplied model, backend, aliases, and agent config.
   - name: prompt_alias_must_start_with_dot
-    given: Alias string "abc" (no leading dot)
-    expect: is_valid_prompt_alias returns false
+    given: The alias "abc" without a leading dot.
+    expect: is_valid_prompt_alias is false.
   - name: prompt_alias_allows_one_or_two_code_points_after_dot
-    given: Aliases ".a", ".ab", and ".<single emoji code point>"
-    expect: is_valid_prompt_alias returns true for all
+    given: Aliases ".a", ".ab", and "." followed by a single emoji code point.
+    expect: is_valid_prompt_alias is true for each.
   - name: prompt_alias_rejects_too_many_code_points
-    given: Alias ".abc" (three code points after dot)
-    expect: is_valid_prompt_alias returns false
+    given: The alias ".abc" (three code points after the dot).
+    expect: is_valid_prompt_alias is false.
   - name: prompt_alias_rejects_zwj_sequences
-    given: Alias ".<man emoji><ZWJ><laptop emoji>" (visually one glyph, ZWJ-joined)
-    expect: is_valid_prompt_alias returns false
+    given: The alias "." + man + ZWJ (U+200D) + laptop.
+    expect: is_valid_prompt_alias is false.
   - name: parse_lock_rejects_invalid_prompt_alias
-    given: 'JSON {"model": "m", "promptAliases": ["abc"]}'
-    expect: parse_lock returns an InvalidPromptAlias error
+    given: JSON {"model":"m","promptAliases":["abc"]}.
+    expect: parse_lock returns the invalid-prompt-alias error.
   - name: custom_preset_requires_non_empty_command
-    given: 'AgentConfig{preset: custom, command: None}; AgentConfig{preset: custom, command: Some(empty list)}; AgentConfig{preset: custom, command: Some(["run"])}'
-    expect: First two fail validation with a custom-agent-missing-command error; the third validates successfully
+    given: Custom preset with no command; with an empty command; and with a one-element command.
+    expect: The first two fail with the custom-missing-command error; the last validates Ok.
   - name: claude_and_codex_presets_reject_command
-    given: 'AgentConfig{preset: claude, command: Some(["run"])}; AgentConfig{preset: codex, command: Some(["run"])}; AgentConfig{preset: claude, command: None}'
-    expect: First two fail validation with a non-custom-agent-has-command error; the third validates successfully
+    given: Claude preset with a command; codex preset with a command; and claude preset with no command.
+    expect: The first two fail with the non-custom-has-command error; the last validates Ok.
   - name: resolve_prompt_aliases_uses_override_or_curated_default
-    given: HlLock with prompt_aliases=Some([".x"]); and HlLock with prompt_aliases=None
-    expect: First resolves to [".x"]; second resolves to extensions::default_prompt_aliases()
+    given: A lock with a promptAliases override, and one without.
+    expect: With override returns the override list; without override returns the extensions module's default_prompt_aliases().
   - name: resolve_agent_config_uses_override_or_default
-    given: "HlLock with agent=Some(AgentConfig{preset: codex, command: None}); and HlLock with agent=None"
-    expect: First resolves to the codex AgentConfig; second resolves to default_agent_config() (claude preset, no command)
+    given: A lock with an agent override (codex, no command), and one without.
+    expect: With override returns that agent config; without override returns default_agent_config().

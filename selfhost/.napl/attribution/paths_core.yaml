@@ -3,12 +3,92 @@ target: rust
 entries:
   - promptLines:
       - 19
-      - 31
+      - 20
     file: paths_core/src/lib.rs
     lines:
       - 3
-      - 14
-    note: NaplPaths struct with public PathBuf fields
+      - 3
+    note: public NaplPaths struct declaration
+  - promptLines:
+      - 22
+      - 22
+    file: paths_core/src/lib.rs
+    lines:
+      - 4
+      - 4
+    note: ir_dir field
+  - promptLines:
+      - 23
+      - 23
+    file: paths_core/src/lib.rs
+    lines:
+      - 5
+      - 5
+    note: src_dir field
+  - promptLines:
+      - 24
+      - 24
+    file: paths_core/src/lib.rs
+    lines:
+      - 6
+      - 6
+    note: map_path field
+  - promptLines:
+      - 25
+      - 25
+    file: paths_core/src/lib.rs
+    lines:
+      - 7
+      - 7
+    note: lock_path field
+  - promptLines:
+      - 26
+      - 26
+    file: paths_core/src/lib.rs
+    lines:
+      - 8
+      - 8
+    note: gen_lock_path field
+  - promptLines:
+      - 27
+      - 27
+    file: paths_core/src/lib.rs
+    lines:
+      - 9
+      - 9
+    note: journal_path field
+  - promptLines:
+      - 28
+      - 28
+    file: paths_core/src/lib.rs
+    lines:
+      - 10
+      - 10
+    note: prompts_at_gen_dir field
+  - promptLines:
+      - 29
+      - 29
+    file: paths_core/src/lib.rs
+    lines:
+      - 11
+      - 11
+    note: examples_dir field
+  - promptLines:
+      - 30
+      - 30
+    file: paths_core/src/lib.rs
+    lines:
+      - 12
+      - 12
+    note: attribution_dir field
+  - promptLines:
+      - 31
+      - 31
+    file: paths_core/src/lib.rs
+    lines:
+      - 13
+      - 13
+    note: ml_dir field
   - promptLines:
       - 35
       - 36
@@ -16,7 +96,7 @@ entries:
     lines:
       - 16
       - 17
-    note: resolve_paths signature and napl_dir computation
+    note: resolve_paths signature and napl_dir = root/.napl
   - promptLines:
       - 38
       - 38
@@ -80,7 +160,7 @@ entries:
     lines:
       - 26
       - 26
-    note: examples_dir = root/examples, beside .napl
+    note: examples_dir = root/examples beside .napl
   - promptLines:
       - 46
       - 46
@@ -98,50 +178,26 @@ entries:
       - 28
     note: ml_dir = napl_dir/mapl
   - promptLines:
-      - 49
-      - 50
-    file: paths_core/src/lib.rs
-    lines:
-      - 51
-      - 76
-    note: example resolve_paths assertions covering map_path/examples_dir/ml_dir
-  - promptLines:
       - 54
-      - 57
+      - 55
     file: paths_core/src/lib.rs
     lines:
       - 32
-      - 33
-    note: rel_to signature, strip_prefix with fallback to unchanged path
+      - 32
+    note: rel_to signature returning String
   - promptLines:
       - 55
+      - 56
+    file: paths_core/src/lib.rs
+    lines:
+      - 33
+      - 33
+    note: strip root prefix, fall back to path if not under root
+  - promptLines:
+      - 56
       - 57
     file: paths_core/src/lib.rs
     lines:
       - 34
       - 43
-    note: render components with POSIX forward-slash separator
-  - promptLines:
-      - 58
-      - 59
-    file: paths_core/src/lib.rs
-    lines:
-      - 79
-      - 82
-    note: "test: rel_to strips root prefix example"
-  - promptLines:
-      - 56
-      - 56
-    file: paths_core/src/lib.rs
-    lines:
-      - 85
-      - 88
-    note: "test: path unchanged when not under root"
-  - promptLines:
-      - 57
-      - 57
-    file: paths_core/src/lib.rs
-    lines:
-      - 91
-      - 95
-    note: "test: forward slashes rendered, no backslashes"
+    note: render components joined with forward slashes

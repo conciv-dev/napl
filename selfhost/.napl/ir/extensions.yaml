@@ -1,68 +1,70 @@
 module: extensions
 deps: []
-types: []
+types:
+  - name: PromptExtension
+    description: Canonical prompt (human-authored source) file extension, the string slice ".napl".
+  - name: MachineExtension
+    description: Canonical machine (compiled) file extension, the string slice ".mapl".
+  - name: MachineAlias
+    description: "Emoji spelling of a compiled file: a dot followed by the robot-face emoji (U+1F916)."
+  - name: CuratedPromptAliases
+    description: 'Fixed set of six curated "single person" emoji prompt aliases, each a dot followed by exactly one codepoint, in canonical codepoint order: person (U+1F9D1), older person (U+1F9D3), bust in silhouette (U+1F464), man (U+1F468), woman (U+1F469), child (U+1F9D2).'
 functions:
   - name: default_prompt_aliases
-    signature: () -> List<String>
-    behavior: "Returns the six curated single-person emoji prompt aliases as owned strings, in fixed canonical codepoint order: person (U+1F9D1), older person (U+1F9D3), bust in silhouette (U+1F464), man (U+1F468), woman (U+1F469), child (U+1F9D2). No inputs, no failure modes.\n"
+    signature: () -> list<string>
+    behavior: Returns the six curated prompt aliases as owned strings in canonical codepoint order. Pure; always the same result.
   - name: prompt_extensions
-    signature: "(aliases: Option<List<String>>) -> List<String>"
-    behavior: 'Returns the canonical prompt extension ".napl" first. If aliases is Some(list), appends exactly those alias strings, in given order, after the canonical extension (curated aliases do not apply in this case). If aliases is None, appends the six curated aliases in canonical order instead.
-'
+    signature: "(aliases: optional<list<string>>) -> list<string>"
+    behavior: Returns the recognized prompt extensions with canonical ".napl" first. When an alias list is supplied, the entries follow ".napl" in the given order and the curated aliases do not apply. When none is supplied, the six curated aliases follow in canonical order.
   - name: machine_extensions
-    signature: () -> List<String>
-    behavior: 'Returns the canonical machine extension ".mapl" followed by the emoji machine alias "." + robot-face emoji (U+1F916), in that order. No inputs.
-'
+    signature: () -> list<string>
+    behavior: 'Returns the recognized machine extensions: canonical ".mapl" first, then the emoji machine alias (dot + U+1F916).'
   - name: is_prompt_file
-    signature: "(path: String, aliases: Option<List<String>>) -> Bool"
-    behavior: "True iff path ends with (exact codepoint suffix match) any extension returned by prompt_extensions(aliases) for the same aliases argument. A composite emoji grapheme sequence (e.g. base emoji + ZWJ + another emoji) does not match a single-codepoint-sequence alias unless the path literally ends with that exact alias substring. When aliases is explicitly supplied, curated aliases are not considered.\n"
+    signature: "(path: string, aliases: optional<list<string>>) -> bool"
+    behavior: True when path ends (exact suffix test over whole codepoints) with any recognized prompt extension, using the same optional-alias rule as prompt_extensions. A composite emoji sequence never matches a single-codepoint alias. Pure.
   - name: is_machine_file
-    signature: "(path: String) -> Bool"
-    behavior: 'True iff path ends with (exact suffix match) either the canonical machine extension ".mapl" or the emoji machine alias. Robot-emoji spelled paths are machine files, never prompt files.
-'
+    signature: "(path: string) -> bool"
+    behavior: True when path ends (exact suffix test) with any recognized machine extension (".mapl" or the emoji machine alias). Pure.
   - name: machine_extension_for_prompt
-    signature: "(prompt_path: String) -> String (static lifetime)"
-    behavior: 'If prompt_path ends with the canonical prompt extension ".napl", returns the canonical machine extension ".mapl". Otherwise (any emoji-spelled prompt extension), returns the emoji machine alias. Does not validate that prompt_path actually has a recognized prompt extension; any non-".napl"-ending input yields the emoji alias.
-'
+    signature: "(prompt_path: string) -> string"
+    behavior: Chooses the machine extension mirroring the prompt spelling. Returns canonical ".mapl" when prompt_path ends with canonical ".napl"; otherwise returns the emoji machine alias. Result is a static string.
 tests:
   - name: canonical_constants
-    given: the exposed constants PROMPT_EXTENSION, MACHINE_EXTENSION, MACHINE_ALIAS
-    expect: 'equal ".napl", ".mapl", and "." + robot-face emoji (U+1F916) respectively
-'
+    given: The exported canonical constants.
+    expect: Prompt extension equals ".napl", machine extension equals ".mapl", and machine alias equals "." + U+1F916.
   - name: curated_aliases_in_order
-    given: the curated prompt alias set and default_prompt_aliases()
-    expect: "both equal, in order, person/older-person/bust-in-silhouette/man/ woman/child emoji dot-prefixed strings\n"
+    given: The curated alias set and default_prompt_aliases().
+    expect: Both equal the six single-person emoji aliases (U+1F9D1, U+1F9D3, U+1F464, U+1F468, U+1F469, U+1F9D2) in canonical order.
   - name: prompt_extensions_defaults_to_curated
-    given: prompt_extensions(None)
-    expect: 'first element is ".napl", total length 7, remaining 6 equal default_prompt_aliases()
-'
+    given: prompt_extensions with no alias list.
+    expect: 'Seven entries: ".napl" first, followed by the six curated aliases in order.'
   - name: prompt_extensions_with_override
-    given: prompt_extensions(Some([".foo", ".bar"]))
-    expect: exactly [".napl", ".foo", ".bar"]
+    given: prompt_extensions with override list [".foo", ".bar"].
+    expect: Result is exactly [".napl", ".foo", ".bar"].
   - name: machine_extensions_lists_both
-    given: machine_extensions()
-    expect: equals [".mapl", "." + robot emoji]
+    given: machine_extensions().
+    expect: Result is [".mapl", "." + U+1F916].
   - name: is_prompt_file_matches_canonical
-    given: '"foo.napl" and "foo.mapl", aliases=None'
-    expect: first is a prompt file, second is not
+    given: Paths "foo.napl" and "foo.mapl" with no alias list.
+    expect: True for "foo.napl", false for "foo.mapl".
   - name: is_prompt_file_matches_curated_aliases
-    given: '"foo" + each of the six curated emoji aliases, aliases=None'
-    expect: all six are recognized as prompt files
+    given: Paths ending in each of the six curated emoji, no alias list.
+    expect: True for every curated-alias path.
   - name: is_prompt_file_override_excludes_curated
-    given: aliases=Some([".xyz"]); paths "foo.napl", "foo.xyz", "foo.<person emoji>"
-    expect: "first two are prompt files, third (curated emoji, not in override) is not\n"
+    given: Alias override [".xyz"] with paths "foo.napl", "foo.xyz", and a curated-alias path.
+    expect: True for ".napl" and ".xyz" paths; false for the curated-alias path since the override replaces the curated set.
   - name: composite_emoji_sequence_is_not_a_prompt_file
-    given: "path ending in man emoji (U+1F468) + ZWJ (U+200D) + laptop emoji (U+1F4BB), aliases=None\n"
-    expect: not recognized as a prompt file
+    given: Path ending in man (U+1F468) + ZWJ (U+200D) + laptop (U+1F4BB), no alias list.
+    expect: False, because the four-scalar composite is not one of the single-codepoint aliases.
   - name: robot_emoji_is_machine_not_prompt
-    given: path ending in "." + robot emoji
-    expect: not a prompt file, but is a machine file
+    given: A path ending in the robot emoji (U+1F916).
+    expect: Not a prompt file, but is a machine file.
   - name: is_machine_file_matches_canonical_and_alias
-    given: '"foo.mapl", "foo.<robot emoji>", "foo.napl"'
-    expect: first two are machine files, third is not
+    given: Paths "foo.mapl", the robot-emoji path, and "foo.napl".
+    expect: True for ".mapl" and the emoji alias; false for "foo.napl".
   - name: machine_extension_for_prompt_mirrors_canonical
-    given: '"foo.napl"'
-    expect: returns ".mapl"
+    given: machine_extension_for_prompt("foo.napl").
+    expect: Returns ".mapl".
   - name: machine_extension_for_prompt_mirrors_emoji
-    given: '"foo.<person emoji>" and "foo.<bust-in-silhouette emoji>"'
-    expect: both return "." + robot emoji
+    given: machine_extension_for_prompt on emoji-spelled prompt paths (U+1F9D1, U+1F464).
+    expect: Returns the emoji machine alias ("." + U+1F916).

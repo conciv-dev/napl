@@ -2,53 +2,61 @@ module: body_lines
 target: rust
 entries:
   - promptLines:
-      - 9
-      - 12
+      - 16
+      - 17
     file: body_lines/src/lib.rs
     lines:
-      - 1
-      - 1
-    note: generated file marker, crate location note
+      - 11
+      - 12
+    note: split on newline, strip trailing carriage return
   - promptLines:
-      - 16
+      - 19
       - 21
     file: body_lines/src/lib.rs
     lines:
       - 10
-      - 14
-    note: split_lines strips trailing CR, preserves empty trailing line
+      - 13
+    note: split never drops lines, yields trailing empty line
   - promptLines:
       - 25
-      - 30
+      - 27
     file: body_lines/src/lib.rs
     lines:
-      - 3
+      - 5
       - 8
-    note: PromptBody struct with body_start_line and lines fields
+    note: PromptBody struct with two public fields
   - promptLines:
-      - 25
+      - 28
+      - 29
+    file: body_lines/src/lib.rs
+    lines:
+      - 6
+      - 6
+    note: body_start_line field
+  - promptLines:
+      - 30
       - 30
     file: body_lines/src/lib.rs
     lines:
-      - 17
-      - 18
-    note: prompt_body_lines entry, splits raw into lines
+      - 7
+      - 7
+    note: lines field as owned strings
   - promptLines:
       - 32
-      - 34
+      - 33
     file: body_lines/src/lib.rs
     lines:
       - 20
       - 22
-    note: detect opening --- ignoring trailing whitespace
+    note: first line == --- ignoring trailing whitespace
   - promptLines:
-      - 32
+      - 33
       - 34
     file: body_lines/src/lib.rs
     lines:
       - 25
       - 31
-    note: find closing --- delimiter ignoring trailing whitespace
+    note: find later closing --- ignoring trailing whitespace
   - promptLines:
       - 35
       - 36
@@ -56,15 +64,15 @@ entries:
     lines:
       - 32
       - 32
-    note: body_start_line is line after closing delimiter
+    note: body_start_line is index after closing delimiter
   - promptLines:
       - 36
-      - 36
-    file: body_lines/src/lib.rs
-    lines:
-      - 35
       - 37
-    note: lines holds remaining lines after closing delimiter
+    file: body_lines/src/lib.rs
+    lines:
+      - 36
+      - 41
+    note: lines holds remaining lines after closing
   - promptLines:
       - 37
       - 39
@@ -72,7 +80,7 @@ entries:
     lines:
       - 45
       - 48
-    note: no frontmatter fallback, body_start_line 0 whole doc
+    note: "no frontmatter: start 0, whole document"
   - promptLines:
       - 41
       - 42
@@ -80,7 +88,7 @@ entries:
     lines:
       - 33
       - 34
-    note: frontmatter immediately followed by nothing yields one empty line
+    note: frontmatter followed by nothing yields one empty line
   - promptLines:
       - 46
       - 48
@@ -88,20 +96,28 @@ entries:
     lines:
       - 53
       - 56
-    note: compute body line as doc_line - body_start_line + 1 with checked arithmetic
+    note: compute doc_line - body_start_line + 1, signed i64
   - promptLines:
       - 49
-      - 51
+      - 50
     file: body_lines/src/lib.rs
     lines:
       - 57
-      - 61
-    note: validate body line within range, else None
+      - 58
+    note: valid when >= 1 and <= body line count
+  - promptLines:
+      - 50
+      - 51
+    file: body_lines/src/lib.rs
+    lines:
+      - 59
+      - 60
+    note: return None when out of range
   - promptLines:
       - 55
-      - 58
+      - 56
     file: body_lines/src/lib.rs
     lines:
       - 65
-      - 72
-    note: number_lines prefixes each line with 1-based position joined by newline
+      - 71
+    note: "prefix 1-based position + ': ', join by newlines"

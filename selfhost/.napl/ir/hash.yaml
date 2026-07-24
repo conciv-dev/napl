@@ -4,20 +4,21 @@ types: []
 functions:
   - name: content_hash
     signature: "content_hash(content: string) -> string"
-    behavior: "Computes SHA-256 digest of UTF-8 bytes of content, returns lowercase hex-encoded string, always 64 characters (0-9, a-f only). Deterministic: identical input always produces identical output. Different inputs produce different outputs (collision-free in practice). Pure function, no I/O, no side effects, matches standard SHA-256 implementations.\n"
+    behavior: "Pure function, no I/O and no dependencies on other project modules. Returns the SHA-256 digest of the UTF-8 bytes of `content`, encoded as a lowercase hexadecimal string. Deterministic: identical input always yields the identical digest. Distinguishing: different inputs yield different digests. Shape: result is always exactly 64 characters, each a lowercase hex digit (`0`-`9`, `a`-`f`), never uppercase. Must match a standard SHA-256 implementation (e.g. `hello` -> `2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824`).\n"
 tests:
   - name: matches_known_sha256_vector
-    given: content = "hello"
-    expect: result equals "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+    given: content is the string "hello"
+    expect: 'returns "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+'
   - name: deterministic_for_same_input
-    given: content_hash("some content") called twice
-    expect: both results equal
+    given: content_hash called twice with the same string "some content"
+    expect: both calls return the identical digest
   - name: distinguishes_different_inputs
-    given: content_hash("some content") and content_hash("other content")
-    expect: results not equal
+    given: content_hash called with "some content" and with "other content"
+    expect: the two digests are not equal
   - name: empty_string_hashes_to_64_char_digest
-    given: content = ""
-    expect: digest length is 64, and repeated calls with "" produce same digest
+    given: content is the empty string ""
+    expect: digest is 64 characters long and is stable across repeated calls
   - name: result_is_64_lowercase_hex_characters
-    given: content = "Hello, World! 🦀" (non-ASCII UTF-8 input)
-    expect: digest length is 64 and every character is a lowercase hex digit (0-9, a-f)
+    given: content is a non-ASCII string "Hello, World! 🦀"
+    expect: digest is 64 characters long and every character is a lowercase hex digit (`0`-`9` or `a`-`f`)

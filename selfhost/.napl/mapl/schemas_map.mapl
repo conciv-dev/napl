@@ -2,21 +2,21 @@ module: schemas_map
 target: rust
 entries:
   - promptLines:
-      - 11
-      - 16
-    kind: note
-    message: Agent scoped work correctly to schemas_map/, root Cargo.toml untouched.
-    reasoning: Prompt required leaving workspace root manifest alone and touching nothing outside schemas_map/. Verified only schemas_map/Cargo.toml and schemas_map/src/lib.rs were created; root manifest was not modified. No ambiguity, just confirming correct scope discipline.
+      - 1
+      - 142
+    kind: no-op
+    message: Module already matched the prompt; agent made no changes.
+    reasoning: The changes were "NO CHANGES". Agent reports the schemas_map crate already exists and conforms to the current prompt — all 15 tests pass and `cargo test -p schemas_map` is green. The prompt describes an existing module state rather than requesting a delta, so nothing needed editing. This is expected when the prompt is re-compiled against source that already satisfies it.
   - promptLines:
-      - 118
-      - 121
-    kind: assumption
-    message: FileRecord fields overwritten unconditionally on every attribution, even for pre-existing files.
-    reasoning: Spec says "ensure a FileRecord under its path with target=input.target, hash=that file's hash, and a prompts list that includes input.rel." It doesn't explicitly say whether target/hash on an already-existing FileRecord (e.g. shared across prompts under a different target) should be overwritten or left alone if it already matches a different owner. Agent chose to always overwrite target and hash on the existing record while only appending to prompts if absent, which is a reasonable reading of "ensure" but not the only one (an alternate reading only fills in missing records and never touches existing target/hash of a shared file record). Not tested by the shipped test suite for a cross-target conflict case.
-    suggestion: Clarify whether target/hash should be overwritten when a FileRecord for the given path already exists under a different attribution.
+      - 80
+      - 82
+    kind: ambiguity
+    message: parse_map return error type left as `_`; concrete error type unspecified.
+    reasoning: Signature is `Result<NaplMap, _>`. Prompt distinguishes two failure modes ("unsupported map version" validation error vs. corrupt-JSON deserialization error) but never names the error type unifying them. Existing code already picked one (no change needed here), but the prompt itself does not pin the type — a re-implementer would have to guess (e.g. a custom enum, Box<dyn Error>, serde_json::Error, String).
+    suggestion: Specify the error type explicitly, e.g. "returns Result<NaplMap, ParseMapError> where ParseMapError has variants for unsupported-version and JSON-decode failures."
   - promptLines:
-      - 94
-      - 97
+      - 98
+      - 102
     kind: note
-    message: files_for_module dedup logic matches spec exactly (dedup by target+path, first-seen order), verified by test.
-    reasoning: No ambiguity found; implementation and accompanying test (files_for_module_dedupes_by_target_and_path) directly mirror the prompt's requirement.
+    message: is_prompt_gen_stale takes Option<&PromptRecord> rather than (map, rel).
+    reasoning: Unlike the other query helpers which take `map` and a key, this helper takes a pre-resolved `Option<&PromptRecord>`. Not contradictory, but the asymmetry with siblings is worth surfacing; caller must do the lookup. Existing code matches this signature, so no change was required.

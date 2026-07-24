@@ -19,6 +19,7 @@ mod tests {
             deps: Vec::new(),
             targets: vec!["typescript".to_string()],
             tests: Vec::new(),
+            crate_name: None,
         }
     }
 

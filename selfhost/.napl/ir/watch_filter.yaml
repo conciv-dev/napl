@@ -1,36 +1,36 @@
 module: watch_filter
 deps: []
-types: []
+types:
+  - name: IGNORED_DIRS
+    description: 'A public constant ordered array of directory names that are always ignored: exactly ["node_modules", ".napl", ".git"], in that order. Used as the set of names against which path components are matched.
+'
 functions:
   - name: is_ignored
     signature: "is_ignored(path: Path, root: Path) -> bool"
-    behavior: 'Computes path relative to root by stripping the root prefix; if path does not start with root, uses path unchanged. Returns true if any component of the resulting path exactly equals one of the entries in IGNORED_DIRS (node_modules, .napl, .git), compared as exact strings, regardless of depth. Returns false otherwise. Pure function: no filesystem access, no side effects, no dependency on other modules. File extensions (e.g. a file literally named "foo.napl") are not treated as directory components and do not trigger a match.
+    behavior: 'Pure predicate with no filesystem access. Computes path relative to root by stripping the root prefix; if path does not start with root, path is used unchanged. Returns true when any component of that (possibly relative) path, compared as a string, exactly equals one of IGNORED_DIRS at any depth; returns false otherwise. A matching name anywhere along the path causes the whole path to be ignored. A file whose extension resembles an ignored name (e.g. a ".napl" file) does not match — only whole path components count.
 '
 tests:
   - name: node_modules_component_ignored
     given: root=/proj, path=/proj/node_modules/dep.js
-    expect: "true"
+    expect: true — node_modules component matches
   - name: dot_napl_component_ignored
     given: root=/proj, path=/proj/.napl/src/rust/x.rs
-    expect: "true"
+    expect: true — .napl component matches
   - name: dot_git_component_ignored
     given: root=/proj, path=/proj/.git/HEAD
-    expect: "true"
+    expect: true — .git component matches
   - name: nested_ignored_dir_at_any_depth
     given: root=/proj, path=/proj/src/a/.napl/b
-    expect: "true"
+    expect: true — nested .napl matches regardless of depth
   - name: napl_file_extension_is_not_a_directory_match
     given: root=/proj, path=/proj/examples/greeting.napl
-    expect: "false"
+    expect: false — .napl file extension is not a .napl directory component
   - name: plain_source_file_not_ignored
     given: root=/proj, path=/proj/src/lib.rs
-    expect: "false"
+    expect: false — no component is an ignored directory
   - name: path_not_under_root_used_unchanged
-    given: root=/proj, path=/other/node_modules/x (not prefixed by root)
-    expect: "true"
-  - name: path_not_under_root_used_unchanged_false_case
-    given: root=/proj, path=/other/src/x (not prefixed by root)
-    expect: "false"
+    given: root=/proj, paths=/other/node_modules/x and /other/src/x
+    expect: true for the first (node_modules matches on unchanged path); false for the second
   - name: ignored_dirs_constant_order
-    given: the exported IGNORED_DIRS constant
-    expect: equals [node_modules, .napl, .git] in that exact order
+    given: the IGNORED_DIRS constant
+    expect: equals ["node_modules", ".napl", ".git"] in that exact order

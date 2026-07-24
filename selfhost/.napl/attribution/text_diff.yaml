@@ -2,72 +2,144 @@ module: text_diff
 target: rust
 entries:
   - promptLines:
-      - 9
-      - 14
-    file: text_diff/src/lib.rs
-    lines:
-      - 1
-      - 6
-    note: crate location/header comment marker
-  - promptLines:
       - 18
-      - 23
+      - 18
     file: text_diff/src/lib.rs
     lines:
-      - 38
-      - 55
-    note: to_lines implementation with CRLF handling
+      - 39
+      - 41
+    note: empty text returns empty vector
+  - promptLines:
+      - 19
+      - 20
+    file: text_diff/src/lib.rs
+    lines:
+      - 43
+      - 50
+    note: strip single trailing \n or \r\n terminator
+  - promptLines:
+      - 20
+      - 21
+    file: text_diff/src/lib.rs
+    lines:
+      - 52
+      - 54
+    note: split on \n, consume \r before split \n
   - promptLines:
       - 27
-      - 29
+      - 27
     file: text_diff/src/lib.rs
     lines:
       - 125
+      - 127
+    note: unified_diff delegates with context 3
+  - promptLines:
+      - 28
+      - 29
+    file: text_diff/src/lib.rs
+    lines:
       - 130
-    note: unified_diff and unified_diff_with_context entrypoints
+      - 130
+    note: unified_diff_with_context signature
   - promptLines:
       - 31
+      - 31
+    file: text_diff/src/lib.rs
+    lines:
+      - 131
+      - 133
+    note: split both inputs then align
+  - promptLines:
+      - 31
+      - 33
+    file: text_diff/src/lib.rs
+    lines:
+      - 65
+      - 122
+    note: LCS alignment producing entries
+  - promptLines:
+      - 32
+      - 32
+    file: text_diff/src/lib.rs
+    lines:
+      - 85
+      - 92
+    note: matching lines become context
+  - promptLines:
+      - 32
+      - 33
+    file: text_diff/src/lib.rs
+    lines:
+      - 93
+      - 105
+    note: choose deletion vs insertion via LCS table
+  - promptLines:
+      - 34
       - 35
     file: text_diff/src/lib.rs
     lines:
-      - 64
-      - 122
-    note: LCS alignment producing context/del/ins entries with line numbers
+      - 58
+      - 62
+    note: entry carries 1-based old/new line numbers
   - promptLines:
       - 37
-      - 39
+      - 38
     file: text_diff/src/lib.rs
     lines:
-      - 135
+      - 138
+      - 147
+    note: mark entries within context of a change
+  - promptLines:
+      - 38
+      - 38
+    file: text_diff/src/lib.rs
+    lines:
+      - 152
       - 161
-    note: mark entries within context of a change, group into hunks
+    note: group consecutive included entries into hunk
   - promptLines:
-      - 39
-      - 46
+      - 41
+      - 41
     file: text_diff/src/lib.rs
     lines:
-      - 163
-      - 205
-    note: compute hunk header counts/starts and emit prefixed lines
+      - 194
+      - 197
+    note: emit hunk header line
   - promptLines:
-      - 47
-      - 49
+      - 43
+      - 45
+    file: text_diff/src/lib.rs
+    lines:
+      - 167
+      - 192
+    note: compute old/new start and counts
+  - promptLines:
+      - 43
+      - 44
+    file: text_diff/src/lib.rs
+    lines:
+      - 170
+      - 175
+    note: first non-insertion sets start, 0 if none
+  - promptLines:
+      - 46
+      - 48
     file: text_diff/src/lib.rs
     lines:
       - 198
-      - 207
-    note: marker prefixes and newline-joined output, empty diff case
+      - 204
+    note: prefix each entry with marker char
   - promptLines:
-      - 51
-      - 53
+      - 48
+      - 49
     file: text_diff/src/lib.rs
     lines:
-      - 345
-      - 358
-    note: tests preserving empty/full insertion/deletion/identical behavior
+      - 207
+      - 207
+    note: join lines with \n, empty when no change
   - promptLines:
       - 57
-      - 61
+      - 58
     file: text_diff/src/lib.rs
     lines:
       - 227
@@ -75,57 +147,129 @@ entries:
     note: empty/whitespace diff yields no hunks
   - promptLines:
       - 58
+      - 58
+    file: text_diff/src/lib.rs
+    lines:
+      - 232
+      - 232
+    note: split diff via CRLF-aware to_lines
+  - promptLines:
+      - 59
       - 60
     file: text_diff/src/lib.rs
     lines:
       - 211
       - 223
-    note: header regex-shape parsing into four numbers
+    note: parse header shape into four numbers
   - promptLines:
       - 59
-      - 61
+      - 60
     file: text_diff/src/lib.rs
     lines:
-      - 232
+      - 233
       - 242
-    note: split diff into lines, start new hunk on header match
+    note: header line starts new hunk
   - promptLines:
       - 61
-      - 64
+      - 61
     file: text_diff/src/lib.rs
     lines:
       - 244
-      - 256
-    note: classify first char as context/del/ins/ignored, push hunk line
+      - 246
+    note: other lines belong to open hunk
   - promptLines:
-      - 66
-      - 72
+      - 62
+      - 64
     file: text_diff/src/lib.rs
     lines:
-      - 8
-      - 31
-    note: Hunk, HunkLine, HunkKind data model
+      - 247
+      - 255
+    note: first char selects kind, rest is text, unknown ignored
   - promptLines:
-      - 76
+      - 64
+      - 64
+    file: text_diff/src/lib.rs
+    lines:
+      - 256
+      - 256
+    note: push parsed hunk line
+  - promptLines:
+      - 66
+      - 68
+    file: text_diff/src/lib.rs
+    lines:
+      - 24
+      - 31
+    note: Hunk struct public fields
+  - promptLines:
+      - 67
+      - 68
+    file: text_diff/src/lib.rs
+    lines:
+      - 17
+      - 21
+    note: HunkLine kind and text fields
+  - promptLines:
+      - 68
+      - 69
+    file: text_diff/src/lib.rs
+    lines:
+      - 9
+      - 14
+    note: HunkKind Context/Del/Ins variants
+  - promptLines:
+      - 77
+      - 77
+    file: text_diff/src/lib.rs
+    lines:
+      - 263
+      - 263
+    note: take before lines via to_lines
+  - promptLines:
+      - 78
+      - 78
+    file: text_diff/src/lib.rs
+    lines:
+      - 270
+      - 278
+    note: copy original lines before hunk start
+  - promptLines:
+      - 79
+      - 80
+    file: text_diff/src/lib.rs
+    lines:
+      - 282
+      - 289
+    note: context copies original, fallback to text, advances
+  - promptLines:
+      - 81
+      - 81
+    file: text_diff/src/lib.rs
+    lines:
+      - 290
+      - 292
+    note: deletion advances without emitting
+  - promptLines:
+      - 81
+      - 82
+    file: text_diff/src/lib.rs
+    lines:
+      - 293
+      - 295
+    note: insertion emits text without advancing
+  - promptLines:
+      - 82
+      - 82
+    file: text_diff/src/lib.rs
+    lines:
+      - 300
+      - 303
+    note: copy remaining original lines
+  - promptLines:
+      - 83
       - 83
     file: text_diff/src/lib.rs
     lines:
-      - 262
-      - 306
-    note: apply_hunks reconstruction walking original lines and hunk lines
-  - promptLines:
-      - 85
-      - 87
-    file: text_diff/src/lib.rs
-    lines:
-      - 443
-      - 467
-    note: roundtrip property tests
-  - promptLines:
-      - 11
-      - 13
-    file: text_diff/src/lib.rs
-    lines:
-      - 1
-      - 1
-    note: generated-from marker referencing separate crate manifest requirement
+      - 305
+      - 305
+    note: join result with \n

@@ -2,23 +2,27 @@ module: targets
 target: rust
 entries:
   - promptLines:
-      - 57
-      - 63
-    kind: assumption
-    message: Exact agent_tools list for typescript left to implementer's judgment.
-    reasoning: "Prompt says \"agent tools include `Read` (and the usual npm/npx/node/file tools)\" without enumerating them. Agent assumed Write, Edit, Bash(npm:*), Bash(npx:*), Bash(node:*) as the concrete set. Tests only assert `Read` is present, so this exact list isn't verified against the prompt's intent.\n"
-    suggestion: "agent tools: Read, Write, Edit, Bash(npm:*), Bash(npx:*), Bash(node:*)."
+      - 1
+      - 88
+    kind: no-op
+    message: No changes made — agent reports existing source already matches the prompt exactly.
+    reasoning: The prompt diff was empty and the coding agent found the targets crate already implements every requirement (data types, registry, three adapters, workspace manifest renderer); it reports all 11 tests pass. Nothing to edit. This is unverified by the machine layer — the claim rests entirely on the agent's assertion that current code satisfies the spec.
   - promptLines:
-      - 67
-      - 75
-    kind: assumption
-    message: Exact agent_tools list for rust, and universal exclude files, left implicit.
-    reasoning: "Prompt says agent tools \"include `Read` and `Bash(cargo:*)` (and rustc/rustfmt/file tools)\" and must not include `Bash(npx:*)` — agent chose Write, Edit, Bash(cargo:*), Bash(rustc:*), Bash(rustfmt:*). Also, attribution_exclude_files for rust ends up with AGENTS.md/CLAUDE.md added alongside Cargo.lock, mirroring typescript's universal excludes, but the prompt's rust bullet only explicitly calls out `Cargo.lock`. Not asserted by tests either way, so it's a silent extrapolation from the typescript spec.\n"
-    suggestion: List rust's exact agent_tools and attribution_exclude_files explicitly, as done for typescript.
+      - 58
+      - 61
+    kind: ambiguity
+    message: '"the usual npm/npx/node/file tools" and "the usual JS dirs" are underspecified.'
+    reasoning: Phrases like "the usual npm/npx/node/file tools" (agent_tools) and "the usual JS dirs" leave the exact tool and directory lists to the implementer. Line 60 gives a concrete dir list in parens, but the tool list beyond `Read` is left to convention. Since no changes were made, whatever the existing code lists was accepted as-is and not validated against intent.
+    suggestion: Enumerate the exact agent_tools and excluded dirs explicitly rather than "the usual …", or reference a named canonical list.
   - promptLines:
-      - 70
-      - 70
-    kind: assumption
-    message: rust attribution_exclude_dirs beyond 'target' assumed to include '.git'.
-    reasoning: "Prompt says \"attribution excludes dirs including `target`\" — open-ended wording (\"including\") let the agent add `.git` too, matching typescript's dir excludes. Not verified by any test, so it's a guess at intended scope.\n"
-    suggestion: State the full attribution_exclude_dirs list for rust, e.g. ['target', '.git'].
+      - 38
+      - 40
+    kind: note
+    message: test_command takes target_dir but is documented as ignoring it.
+    reasoning: The method signature accepts `target_dir` yet the prompt states the directory argument is accepted but not consulted (command is fixed per target). This is intentional per the spec but is an unusual API shape worth confirming — an accepted-but-unused parameter invites future confusion about whether it should influence the result.
+  - promptLines:
+      - 68
+      - 69
+    kind: note
+    message: rust agent_tools use scoped Bash forms (Bash(cargo:*)) while other tool names are bare.
+    reasoning: The rust adapter lists `Bash(cargo:*)` and excludes `Bash(npx:*)`, mixing scoped Bash permission syntax with bare tool names like `Read` used elsewhere. No change was made, so the existing representation was accepted; worth confirming the two notations are handled consistently in the registry data.

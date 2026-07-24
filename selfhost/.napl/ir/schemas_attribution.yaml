@@ -3,58 +3,58 @@ deps:
   - schemas_line_range
 types:
   - name: AttributionEntry
-    description: "One mapping entry from a prompt-line range to a file's line range. Fields: prompt_lines (LineRange, JSON key \"promptLines\") - the inclusive 1-based prompt body line range; file (String) - target file path, must be non-empty for validity; lines (LineRange) - the inclusive 1-based generated file line range; note (String) - free-form description, defaults to empty string when the JSON key is absent. Supports deserialization, equality comparison, and cloning."
+    description: 'One mapping entry from a range of prompt body lines to a range of generated file lines. Deserializable, comparable, and cloneable. Fields: prompt_lines (a LineRange, JSON key "promptLines" in camelCase), file (string), lines (a LineRange), and note (string that defaults to the empty string when the JSON key is absent). Line-range fields accept the lenient LineRange JSON spellings (bare number, one-element array, or two-element array), so single-line values normalize to n..=n.'
   - name: Attribution
-    description: "A whole attribution document. Fields: module (String) - module name, must be non-empty for validity; target (String) - target language/output, must be non-empty for validity; entries (Vec<AttributionEntry>) - the list of mapping entries, defaults to empty list when the JSON key is absent. Supports deserialization, equality comparison, and cloning."
+    description: "A whole attribution document. Deserializable, comparable, and cloneable. Fields: module (string), target (string), and entries (list of AttributionEntry that defaults to empty when the JSON key is absent)."
   - name: AttributionError
-    description: "Error type returned by validation and parsing functions. Variants: Parse(String) - the value failed to deserialize into the expected structure (message describes the failure); EmptyModule - the document's module field was empty; EmptyTarget - the document's target field was empty; EmptyFile - an entry's file field was empty or missing/malformed such that it counted as invalid. Implements display formatting and the standard error interface; supports equality comparison and cloning."
+    description: "Error outcome for validation and parsing. Distinct cases: a parse/ deserialization failure carrying a message, an empty-module rejection, an empty-target rejection, and an empty-file rejection. Comparable and renders a human-readable message; not a panic."
 functions:
   - name: validate_attribution
-    signature: "validate_attribution(value: JsonValue) -> Result<Attribution, AttributionError>"
-    behavior: Deserializes the given JSON value into an Attribution document, using lenient LineRange parsing for every line-range field (accepts a bare integer n, a one-element array [n], or a two-element array [a,b], each endpoint an integer >= 1; non-integer or otherwise malformed line ranges cause a Parse error). A missing note on any entry defaults to the empty string; a missing entries list on the document defaults to empty. After successful deserialization, validates that module is non-empty (else EmptyModule), target is non-empty (else EmptyTarget), and every entry's file is non-empty (else EmptyFile, checked in entry order). Returns the validated Attribution on success. Never panics; all failures are returned as errors.
+    signature: "validate_attribution(value: Json) -> Result<Attribution, AttributionError>"
+    behavior: "Deserializes the JSON value into an Attribution, then validates it. Precondition: value must be structurally well-formed (e.g. a non-integer line range such as 1.5, or an entry missing its file, is a deserialization/parse error). Postcondition on success: module is non-empty, target is non-empty, and every entry's file is non-empty; returns the parsed Attribution with line ranges normalized. Returns a rejection error (empty module, empty target, or empty file) rather than panicking when a non-empty invariant is violated."
   - name: parse_attribution_entries
-    signature: "parse_attribution_entries(value: JsonValue) -> Result<Vec<AttributionEntry>, AttributionError>"
-    behavior: If the input JSON value is not an array, returns an empty list successfully (no error). If it is an array, deserializes it as a list of AttributionEntry using the same lenient LineRange parsing rules as validate_attribution (malformed entries, e.g. a promptLines that is a string, yield a Parse error). After successful deserialization, validates that every entry's file is non-empty, returning EmptyFile on the first violation in list order. Returns the parsed entries on success. Never panics.
+    signature: "parse_attribution_entries(value: Json) -> Result<Vec<AttributionEntry>, AttributionError>"
+    behavior: If value is not a JSON array, returns an empty list with no error. Otherwise deserializes value as a list of AttributionEntry (a malformed entry, e.g. promptLines given as a string, is a parse error) and validates that each entry's file is non-empty, returning an empty-file rejection error otherwise. On success returns the parsed entries with line ranges normalized.
   - name: entries_at_body_line
-    signature: "entries_at_body_line(attribution: Attribution, body_line: u32) -> Vec<AttributionEntry reference>"
-    behavior: Returns references to every entry in attribution.entries whose prompt_lines range contains body_line, inclusive on both the start and end endpoints. Preserves document order among matching entries. Returns an empty list if no entries match. Does not mutate the input.
+    signature: "entries_at_body_line(attribution: &Attribution, body_line: u32) -> Vec<&AttributionEntry>"
+    behavior: Returns references to every entry whose promptLines range contains body_line, inclusive on both endpoints, preserving document order. Returns an empty list when no entry's range contains body_line.
 tests:
   - name: validates_a_well_formed_document
-    given: A JSON document with module "m", target "rust", and 3 well-formed entries.
-    expect: validate_attribution succeeds; returned module is "m", target is "rust", and entries length is 3.
+    given: A document with module "m", target "rust", and three entries passed to validate_attribution.
+    expect: Ok; module is "m", target is "rust", and there are 3 entries.
   - name: entry_field_normalization
-    given: A document with one entry whose promptLines is [8] (single-element array), lines is 3 (bare number), and note omitted.
-    expect: validate_attribution succeeds; entry.prompt_lines equals LineRange 8..=8, entry.lines equals LineRange 3..=3, entry.note equals empty string.
+    given: A document with one entry whose promptLines is [8], lines is 3, and note is absent, passed to validate_attribution.
+    expect: Ok; the entry's prompt_lines is 8..=8, lines is 3..=3, and note is the empty string.
   - name: entries_default_to_empty_when_absent
-    given: A document JSON with only module and target keys, entries omitted.
-    expect: validate_attribution succeeds and attribution.entries is empty.
+    given: A document {module:"m", target:"rust"} with no entries key.
+    expect: Ok; entries is empty.
   - name: rejects_empty_module
-    given: A document with module set to empty string, target "rust", entries empty.
-    expect: validate_attribution returns Err(AttributionError::EmptyModule).
+    given: A document with module "", target "rust", and empty entries.
+    expect: Error indicating the module must not be empty.
   - name: rejects_empty_target
-    given: A document with module "m", target set to empty string, entries empty.
-    expect: validate_attribution returns Err(AttributionError::EmptyTarget).
+    given: A document with module "m", target "", and empty entries.
+    expect: Error indicating the target must not be empty.
   - name: rejects_entry_with_empty_file
-    given: A document with one entry whose file is an empty string.
-    expect: validate_attribution returns Err(AttributionError::EmptyFile).
+    given: A document with one entry whose file is "".
+    expect: Error indicating the entry file must not be empty.
   - name: rejects_entry_missing_file
-    given: A document with one entry that has no file key at all.
-    expect: validate_attribution returns an Err of the Parse variant (deserialization error, since file is required).
+    given: A document with one entry that omits the file key.
+    expect: A parse/deserialization error.
   - name: rejects_malformed_line_range
-    given: A document with one entry whose promptLines value is 1.5 (a non-integer number).
-    expect: validate_attribution returns an Err of the Parse variant.
+    given: A document with one entry whose promptLines is 1.5 (not an integer).
+    expect: A parse/deserialization error.
   - name: parse_entries_returns_empty_for_non_array
-    given: 'A JSON value that is an object, not an array (e.g. {"not": "an array"}).'
-    expect: parse_attribution_entries succeeds and returns an empty list.
+    given: A non-array JSON value passed to parse_attribution_entries.
+    expect: Ok with an empty list; no error.
   - name: parse_entries_parses_a_valid_list
-    given: A JSON array containing one well-formed entry with file "a.rs".
-    expect: parse_attribution_entries succeeds, returns a list of length 1 whose entry's file is "a.rs".
+    given: A JSON array with one valid entry (file "a.rs") passed to parse_attribution_entries.
+    expect: Ok; one entry whose file is "a.rs".
   - name: parse_entries_rejects_entry_with_empty_file
-    given: A JSON array containing one entry whose file is an empty string.
-    expect: parse_attribution_entries returns Err(AttributionError::EmptyFile).
+    given: A JSON array with one entry whose file is "".
+    expect: Error indicating the entry file must not be empty.
   - name: parse_entries_errors_on_malformed_list
-    given: A JSON array containing one entry whose promptLines is the string "nope".
-    expect: parse_attribution_entries returns an Err of the Parse variant.
+    given: A JSON array with one entry whose promptLines is "nope" (a string).
+    expect: A parse/deserialization error.
   - name: entries_at_body_line_finds_all_containing_entries
-    given: A validated document with entries covering promptLines [2,2], [3,4], and [3,3], with notes "builds the greeting", "trims whitespace", "covers trimming" respectively.
-    expect: entries_at_body_line at line 3 returns 2 entries in order ["trims whitespace", "covers trimming"]; at line 2 returns 1 entry ["builds the greeting"]; at line 9 returns an empty list.
+    given: The sample document with entries promptLines [2,2], [3,4], and [3,3], queried at body lines 3, 2, and 9.
+    expect: Body line 3 yields the two entries whose ranges contain 3 ("trims whitespace" then "covers trimming") in document order; body line 2 yields only "builds the greeting"; body line 9 yields none.

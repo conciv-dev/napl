@@ -2,13 +2,13 @@ module: schemas_ml
 target: rust
 entries:
   - promptLines:
-      - 1
-      - 6
+      - 3
+      - 4
     file: schemas_ml/src/lib.rs
     lines:
-      - 1
       - 4
-    note: module doc, imports serde
+      - 4
+    note: brings in serde Deserialize
   - promptLines:
       - 19
       - 27
@@ -16,7 +16,7 @@ entries:
     lines:
       - 3
       - 3
-    note: use shared LineRange type
+    note: imports LineRange from sibling crate
   - promptLines:
       - 42
       - 45
@@ -24,15 +24,31 @@ entries:
     lines:
       - 6
       - 13
-    note: MlKind enum kebab-case variants
+    note: MlKind enum, copy/eq, kebab-case
+  - promptLines:
+      - 44
+      - 45
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 7
+      - 7
+    note: kebab-case rename gives no-op spelling
+  - promptLines:
+      - 44
+      - 45
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 12
+      - 12
+    note: NoOp variant
   - promptLines:
       - 46
       - 52
     file: schemas_ml/src/lib.rs
     lines:
-      - 15
+      - 19
       - 29
-    note: MlEntry fields, defaults for reasoning/suggestion
+    note: MlEntry struct, clone/eq deserialize
   - promptLines:
       - 48
       - 48
@@ -40,7 +56,23 @@ entries:
     lines:
       - 21
       - 22
-    note: promptLines rename camelCase key
+    note: prompt_lines renamed promptLines, LineRange type
+  - promptLines:
+      - 49
+      - 49
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 23
+      - 23
+    note: kind field
+  - promptLines:
+      - 50
+      - 50
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 24
+      - 24
+    note: message field
   - promptLines:
       - 51
       - 51
@@ -48,7 +80,7 @@ entries:
     lines:
       - 15
       - 17
-    note: default_reasoning fn
+    note: default_reasoning returns empty string
   - promptLines:
       - 51
       - 51
@@ -56,7 +88,7 @@ entries:
     lines:
       - 25
       - 26
-    note: reasoning default attr
+    note: reasoning defaults to empty
   - promptLines:
       - 52
       - 52
@@ -64,7 +96,7 @@ entries:
     lines:
       - 27
       - 28
-    note: suggestion default None
+    note: suggestion Option defaults None
   - promptLines:
       - 53
       - 57
@@ -72,15 +104,39 @@ entries:
     lines:
       - 31
       - 37
-    note: Ml document struct, entries default empty
+    note: Ml document struct
+  - promptLines:
+      - 55
+      - 55
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 33
+      - 33
+    note: module field
+  - promptLines:
+      - 56
+      - 56
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 34
+      - 34
+    note: target field
+  - promptLines:
+      - 57
+      - 57
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 35
+      - 36
+    note: entries default empty vec
   - promptLines:
       - 61
-      - 67
+      - 62
     file: schemas_ml/src/lib.rs
     lines:
       - 60
-      - 76
-    note: validate_ml deserialize then validate module/target/message
+      - 61
+    note: validate_ml deserializes into Ml
   - promptLines:
       - 62
       - 63
@@ -88,7 +144,7 @@ entries:
     lines:
       - 63
       - 65
-    note: reject empty module
+    note: module must not be empty
   - promptLines:
       - 62
       - 63
@@ -96,7 +152,7 @@ entries:
     lines:
       - 66
       - 68
-    note: reject empty target
+    note: target must not be empty
   - promptLines:
       - 63
       - 63
@@ -104,23 +160,55 @@ entries:
     lines:
       - 69
       - 73
-    note: reject empty entry message
+    note: every entry message not empty
   - promptLines:
       - 64
       - 65
     file: schemas_ml/src/lib.rs
     lines:
+      - 61
+      - 61
+    note: structural invalid maps to parse error
+  - promptLines:
+      - 65
+      - 65
+    file: schemas_ml/src/lib.rs
+    lines:
       - 39
       - 58
-    note: MlError enum and error type, deserialization errors surfaced
+    note: MlError type, rejection not panic
   - promptLines:
       - 68
-      - 71
+      - 68
     file: schemas_ml/src/lib.rs
     lines:
       - 78
-      - 93
-    note: parse_ml_entries non-array empty list else deserialize and validate
+      - 78
+    note: parse_ml_entries signature
+  - promptLines:
+      - 69
+      - 69
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 79
+      - 81
+    note: non-array returns empty list
+  - promptLines:
+      - 70
+      - 70
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 83
+      - 84
+    note: deserialize array of entries
+  - promptLines:
+      - 70
+      - 71
+    file: schemas_ml/src/lib.rs
+    lines:
+      - 86
+      - 90
+    note: validate each entry message non-empty
   - promptLines:
       - 75
       - 77
@@ -128,60 +216,12 @@ entries:
     lines:
       - 95
       - 100
-    note: ml_entries_at_body_line lookup filter
+    note: return entries covering body_line in order
   - promptLines:
-      - 79
-      - 81
+      - 76
+      - 77
     file: schemas_ml/src/lib.rs
     lines:
-      - 266
-      - 288
-    note: example lookup test matching prompt example
-  - promptLines:
-      - 42
-      - 45
-    file: schemas_ml/src/lib.rs
-    lines:
-      - 108
-      - 130
-    note: tests for kind kebab-case spellings and unknown kind error
-  - promptLines:
-      - 51
-      - 52
-    file: schemas_ml/src/lib.rs
-    lines:
-      - 133
-      - 160
-    note: tests for entry defaults and explicit reasoning/suggestion
-  - promptLines:
-      - 64
-      - 66
-    file: schemas_ml/src/lib.rs
-    lines:
-      - 162
-      - 170
-    note: test promptLines string is deserialize error
-  - promptLines:
-      - 61
-      - 67
-    file: schemas_ml/src/lib.rs
-    lines:
-      - 172
-      - 233
-    note: validate_ml tests for valid doc, defaults, empty fields, unknown kind, string promptLines
-  - promptLines:
-      - 68
-      - 71
-    file: schemas_ml/src/lib.rs
-    lines:
-      - 236
-      - 264
-    note: parse_ml_entries tests non-array, valid array, empty message, malformed list
-  - promptLines:
-      - 75
-      - 81
-    file: schemas_ml/src/lib.rs
-    lines:
-      - 278
-      - 295
-    note: lookup tests covering/uncovered lines
+      - 98
+      - 98
+    note: inclusive range coverage filter

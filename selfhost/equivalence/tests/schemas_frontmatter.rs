@@ -35,7 +35,15 @@ fn applies_defaults_for_optional_fields() {
     assert!(parsed.frontmatter.deps.is_empty());
     assert!(parsed.frontmatter.targets.is_empty());
     assert!(parsed.frontmatter.tests.is_empty());
+    assert_eq!(parsed.frontmatter.crate_name, None);
     assert_eq!(parsed.body, "Body here.\n");
+}
+
+#[test]
+fn captures_optional_crate_key_into_crate_name() {
+    let parsed = parse_frontmatter("---\nmodule: alpha\ncrate: shared\n---\nBody.\n").unwrap();
+    assert_eq!(parsed.frontmatter.module, "alpha");
+    assert_eq!(parsed.frontmatter.crate_name, Some("shared".to_string()));
 }
 
 #[test]

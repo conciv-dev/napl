@@ -2,21 +2,21 @@ module: gen_prompt_diff
 target: rust
 entries:
   - promptLines:
-      - 23
-      - 26
+      - 31
+      - 31
     file: gen_prompt_diff/src/lib.rs
     lines:
-      - 1
-      - 1
-    note: import diff_body_lines from incremental sibling crate
+      - 3
+      - 3
+    note: "compute_prompt_diff signature: Option<&str> prior, &str body → String"
   - promptLines:
-      - 31
-      - 31
+      - 23
+      - 24
     file: gen_prompt_diff/src/lib.rs
     lines:
-      - 3
-      - 3
-    note: function signature for compute_prompt_diff
+      - 1
+      - 1
+    note: imports diff_body_lines from incremental sibling crate
   - promptLines:
       - 36
       - 38
@@ -24,7 +24,7 @@ entries:
     lines:
       - 5
       - 5
-    note: prior differs from body -> return unified diff
+    note: Some(prior) and prior != body → return diff_body_lines(prior, body).unified
   - promptLines:
       - 39
       - 40
@@ -32,7 +32,7 @@ entries:
     lines:
       - 6
       - 6
-    note: no prior or unchanged body -> empty string
+    note: None or unchanged body → empty string
   - promptLines:
       - 42
       - 42
@@ -40,20 +40,20 @@ entries:
     lines:
       - 15
       - 17
-    note: "test: (None, body) -> empty"
+    note: "test: (None, body) → empty"
   - promptLines:
       - 42
       - 42
     file: gen_prompt_diff/src/lib.rs
     lines:
-      - 19
+      - 20
       - 22
-    note: "test: (Some(body), body) -> empty (unchanged)"
+    note: "test: (Some(body), body) unchanged → empty"
   - promptLines:
       - 43
       - 43
     file: gen_prompt_diff/src/lib.rs
     lines:
-      - 24
+      - 25
       - 30
-    note: "test: changed body returns diff_body_lines unified diff"
+    note: "test: changed body → unified diff"

@@ -2,21 +2,29 @@ module: snapshot_diff
 target: rust
 entries:
   - promptLines:
-      - 3
-      - 7
+      - 18
+      - 20
     file: snapshot_diff/src/lib.rs
     lines:
-      - 1
-      - 5
-    note: module doc, pure comparison core description
+      - 14
+      - 17
+    note: "diff_snapshots signature: two BTreeMap refs -> Vec<String>"
   - promptLines:
-      - 18
+      - 20
+      - 20
+    file: snapshot_diff/src/lib.rs
+    lines:
+      - 7
+      - 7
+    note: import BTreeMap type
+  - promptLines:
+      - 21
       - 21
     file: snapshot_diff/src/lib.rs
     lines:
-      - 9
-      - 17
-    note: fn signature and doc for diff_snapshots
+      - 18
+      - 22
+    note: collect kept paths from after
   - promptLines:
       - 23
       - 24
@@ -24,28 +32,36 @@ entries:
     lines:
       - 18
       - 20
-    note: keep path if before missing or hash differs
+    note: walk after, keep path when before missing or hash differs
+  - promptLines:
+      - 23
+      - 24
+    file: snapshot_diff/src/lib.rs
+    lines:
+      - 21
+      - 22
+    note: clone kept path into result
   - promptLines:
       - 25
       - 27
     file: snapshot_diff/src/lib.rs
     lines:
-      - 11
-      - 22
-    note: after-relative, no removed reporting, return kept sorted
+      - 18
+      - 20
+    note: iterate only after, so removed paths not reported
   - promptLines:
       - 27
       - 27
     file: snapshot_diff/src/lib.rs
     lines:
-      - 21
-      - 22
-    note: sorted output via BTreeMap iteration order
+      - 18
+      - 23
+    note: BTreeMap iteration yields ascending-sorted result
   - promptLines:
       - 29
       - 31
     file: snapshot_diff/src/lib.rs
     lines:
-      - 37
+      - 36
       - 41
-    note: spec example test case
+    note: spec example test

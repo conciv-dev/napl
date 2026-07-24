@@ -2,20 +2,15 @@ module: gen_mode
 target: rust
 entries:
   - promptLines:
-      - 12
-      - 16
-    kind: note
-    message: Crate created at gen_mode/ per spec, cargo test passes, no files outside touched.
-    reasoning: Prompt clearly scopes work to gen_mode/ subdirectory with own Cargo.toml and lib.rs, leaving workspace root manifest alone. Agent followed this exactly, only creating gen_mode/Cargo.toml and gen_mode/src/lib.rs. Verified via final message claiming 11 tests pass.
+      - 1
+      - 55
+    kind: no-op
+    message: No changes — agent says gen_mode crate already exists and matches prompt exactly, 11 tests pass.
+    reasoning: "Changes were \"NO CHANGES\". Agent reports the gen_mode member crate (Cargo.toml + src/lib.rs), the can_incremental predicate, the three-variant full-mode enum, and both message renderers already exist and match the prompt byte-for-byte, with 11 tests green and an empty prompt diff. So the compile is idempotent — spec already satisfied by existing source, nothing to emit. No way to independently confirm the crate really exists from this input; taking the agent's report at face value.\n"
   - promptLines:
-      - 30
+      - 28
       - 34
-    kind: assumption
-    message: Enum doc comments phrase reasons verbatim from prompt wording.
-    reasoning: Prompt gives suggested variant names ("for example") but not exact doc text. Agent wrote doc comments mirroring the prompt's own phrasing for each variant ("There was no prior prompt body...", etc.) — reasonable choice given no exact wording was mandated, but a different phrasing would've been equally valid.
-  - promptLines:
-      - 18
-      - 26
     kind: note
-    message: can_incremental implemented as exact boolean expression given in prompt.
-    reasoning: Prompt gave the literal boolean formula to return; agent copied it verbatim (line 24), so no ambiguity here.
+    message: Four can_incremental failure conditions but only three full-mode reasons — unattributed case has no dedicated variant.
+    reasoning: "can_incremental fails on any of four conditions (full, !has_target_record, unattributed_is_true, !has_prompt_hash_at_gen), but the enum names only three reasons. Mapping is plausible — ForcedFull←full, NoPriorGen←!has_target_record, NoPriorOnDisk←!has_prompt_hash_at_gen — leaving unattributed_is_true with no dedicated reason. This module is pure and does not wire facts to reasons, so no defect here, but the I/O shell must pick a reason when unattributed is the cause. Author should confirm unattributed folds into NoPriorOnDisk (no prior attribution to diff against) rather than needing a fourth variant.\n"
+    suggestion: State explicitly which full-mode reason the shell reports when the target is flagged unattributed (e.g. "unattributed maps to NoPriorOnDisk").

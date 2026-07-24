@@ -2,23 +2,15 @@ module: scanner
 target: rust
 entries:
   - promptLines:
-      - 59
-      - 101
-    kind: assumption
-    message: Non-key, non-list-item lines inside an open block list don't reset it
-    reasoning: "The prompt says a key line clears block-list state and a matching `- item` line is consumed, but never says what happens to the block-list state when a frontmatter line is neither (e.g. a blank line, or a malformed dash with no following space). The agent's scan_frontmatter only clears block_state on a key-line match; any other non-matching line silently leaves the previously opened block-list state active, so a later valid `- item` line further down would still be attributed to that same deps/extends source. This was not verified against a worked example in the prompt.\n"
-    suggestion: "State explicitly whether a non-key, non-list-item line (blank or malformed) inside an open block list closes the list or is simply skipped/ignored.\n"
+      - 1
+      - 15
+    kind: no-op
+    message: No changes — scanner crate already matches the prompt; cargo test green.
+    reasoning: Prompt diff was empty (NO CHANGES). Agent reports the existing scanner/src/lib.rs and scanner/Cargo.toml already implement the described behavior, and `cargo test -p scanner` passes 15/15. No requirement was unmet, so no edits were produced.
   - promptLines:
-      - 83
-      - 85
-    kind: assumption
-    message: Inline list `]` search assumes the closing bracket follows the opening one
-    reasoning: "The prompt only specifies the \"no closing `]`\" fallback (use the string's end), but doesn't address the case where a `]` character exists before the first `[` (e.g. stray bracket in earlier text on the same line). The agent's parse_inline_list uses rfind(']') but only accepts it as the close if its byte index is greater than the open bracket's, otherwise falling back to the end of the string — an assumption not stated in the prompt.\n"
-    suggestion: 'Clarify: "the last `]` after the first `[`" (rather than just "the last `]`") to remove doubt about a `]` occurring earlier in the line.
-'
-  - promptLines:
-      - 62
-      - 67
-    kind: note
-    message: Key regex is ASCII-only; matched against byte indexing safely since key chars are single-byte
-    reasoning: The key-matching implementation walks the line byte-by-byte and slices `line[key.len()+1..]` for the remainder after the colon. This is safe only because the key charset (A–Z, a–z, 0–9, `_`, `-`) and the colon are all single-byte ASCII, so byte length equals UTF-16/char length for that prefix — consistent with the prompt's charset restriction, just noting the implementation detail relies on it holding.
+      - 33
+      - 34
+    kind: ambiguity
+    message: "'inclusive-in-spirit span' is vague and conflicts with the exclusive end columns used everywhere else."
+    reasoning: Line 34 calls Span 'inclusive-in-spirit', but every worked span computes the end column as start + UTF-16 length (e.g. module value auth/session (1,8)-(1,20), a 12-unit value), which is an exclusive/past-the-end column. The 'inclusive' wording contradicts the actual half-open convention and would confuse anyone implementing containment tests. find_target_at_position (line 128) then treats both ends as inclusive, making the semantics inconsistent across the doc.
+    suggestion: "State the exact convention: end.character is the column just past the last UTF-16 unit of the token (half-open on character), and clarify that containment in find_target_at_position treats that end as inclusive."

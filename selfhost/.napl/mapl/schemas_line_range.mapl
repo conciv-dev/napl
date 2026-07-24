@@ -2,22 +2,14 @@ module: schemas_line_range
 target: rust
 entries:
   - promptLines:
-      - 10
+      - 8
+      - 15
+    kind: no-op
+    message: No files created — agent reports the crate already exists and fully satisfies the prompt.
+    reasoning: The prompt directs creating a new member crate (schemas_line_range/Cargo.toml and src/lib.rs) with the LineRange type and lenient deserializer. The agent made NO CHANGES, stating the existing source already realizes the target and that 15/15 tests pass. So every requirement — the type, constructor, equality/copy, and the three-shape deserializer with strict integer≥1 validation — was already present. Nothing was produced because there was nothing to change; assuming the agent's claim of a passing `cargo test` is accurate, the module was already complete.
+  - promptLines:
+      - 15
       - 15
     kind: note
-    message: Root Cargo.toml left untouched, relying on it already globbing workspace members.
-    reasoning: "Prompt says root manifest is \"owned by the toolchain — leave it alone\" while also requiring a new member crate under schemas_line_range/. If the root manifest's `[workspace] members` list is explicit rather than a glob, adding this crate without touching the root would prevent `cargo test` from the workspace root from finding it. Agent proceeded without modifying the root and reported all tests green, so presumably the root already used a glob pattern (e.g. `members = [\"*\"]`) — but this wasn't verified against the prompt text itself, it's an assumption about the pre-existing workspace layout.\n"
-    suggestion: Note explicitly whether the root manifest already globs workspace members, so the agent doesn't need to infer it.
-  - promptLines:
-      - 33
-      - 44
-    kind: assumption
-    message: Values above u32::MAX and non-finite floats (NaN/Infinity) rejected, though prompt doesn't mention them.
-    reasoning: 'Prompt only specifies rejection rules for zero, negative, fractional, wrong-arity-array, and wrong-type inputs. It says nothing about integers too large to fit in u32 or about NaN/ Infinity floats. Agent chose to reject both (out-of-range error for overflow, "invalid number" error for non-finite floats) as a natural extension of "integer that is at least 1," but this is an unstated assumption with no corresponding test.
-'
-  - promptLines:
-      - 26
-      - 44
-    kind: note
-    message: No ambiguity found in core deserialization spec — all listed shapes/rejections implemented and tested 1:1.
-    reasoning: Bare number, one-element array, two-element array, zero rejection (bare and in array), fractional rejection (bare and in array), whole-valued float acceptance, 3+/0-element array rejection, and wrong-type rejection (string/bool/object) are each implemented and covered by a dedicated test matching the prompt's examples exactly.
+    message: Completion hinges on unverified claim that `cargo test` passes at workspace root.
+    reasoning: The prompt requires `cargo test` to pass from the workspace root before finishing. The agent asserts 15/15 tests pass but this compile record cannot independently confirm the test run happened against the required root. If the pre-existing code was assumed correct without an actual test invocation, the finish condition may be unmet. Worth surfacing since the entire "no changes needed" conclusion rests on this.

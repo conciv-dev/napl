@@ -40,30 +40,13 @@ pub fn check_duplicate_modules(root: &Path, prompt_files: &[PathBuf]) -> CliResu
 
 /// The optional `crate:` frontmatter key: the declared member crate a module's
 /// generated code groups into. Absent means the module owns a crate named after
-/// itself (the default layout). Parsed at the shell so the pure frontmatter
-/// schema stays untouched; the value must be a string.
+/// itself (the default layout). `crate` is now a strict, known field of the
+/// generated `Frontmatter` schema (deserialized into `crate_name`), so this reads
+/// it straight off the strict parse instead of re-scanning the raw YAML. A prompt
+/// whose frontmatter fails to parse yields `None` (its parse error is surfaced by
+/// the caller's per-file classification).
 pub fn declared_crate(raw: &str) -> Option<String> {
-    let after = raw
-        .strip_prefix("---\r\n")
-        .or_else(|| raw.strip_prefix("---\n"))?;
-    let mut pos = 0usize;
-    let yaml = loop {
-        let newline = after[pos..].find('\n').map(|i| pos + i);
-        let end = newline.unwrap_or(after.len());
-        let line = after[pos..end].strip_suffix('\r').unwrap_or(&after[pos..end]);
-        if line == "---" {
-            break &after[..pos];
-        }
-        match newline {
-            Some(nl) => pos = nl + 1,
-            None => return None,
-        }
-    };
-    let value: serde_yaml::Value = serde_yaml::from_str(yaml).ok()?;
-    value
-        .get("crate")
-        .and_then(|v| v.as_str())
-        .map(str::to_string)
+    parse_frontmatter(raw).ok()?.frontmatter.crate_name
 }
 
 /// Build the derived `module -> current on-disk relative path` index from the

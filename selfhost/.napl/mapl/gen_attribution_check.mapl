@@ -2,8 +2,14 @@ module: gen_attribution_check
 target: rust
 entries:
   - promptLines:
-      - 39
+      - 1
+      - 54
+    kind: no-op
+    message: No changes made — existing crate already matches the prompt exactly.
+    reasoning: "Agent reported the prompt diff was empty: gen_attribution_check crate, Cargo.toml, lib.rs, the assert_attribution_sane signature, both exact error messages, and ordering all already present. All 6 tests pass, so no edits were needed. Cannot independently confirm test run from this layer, but the agent claims the target state was already satisfied."
+  - promptLines:
+      - 34
       - 47
     kind: note
-    message: Rules 1 and 2 implemented exactly as spec'd, error strings match verbatim.
-    reasoning: Agent's code matches message text char-for-char including quoting style, order of checks, and iteration-stops-at-first-violation behavior. No ambiguity here, just confirming correct compile.
+    message: Exact error-message strings and file-substitution format are pinned; verify existing code matches byte-for-byte.
+    reasoning: Prompt demands two verbatim error messages, one with the offending file path wrapped in straight double quotes. Since no changes were made, correctness rests entirely on the pre-existing code already producing these exact strings. Worth a human byte-level check that the empty-diff claim holds against lines 41 and 45-47.

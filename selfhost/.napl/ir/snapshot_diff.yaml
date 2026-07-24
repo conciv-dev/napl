@@ -4,26 +4,26 @@ types: []
 functions:
   - name: diff_snapshots
     signature: "diff_snapshots(before: Map<String, String>, after: Map<String, String>) -> List<String>"
-    behavior: "Pure comparison, no I/O. Given a before snapshot and an after snapshot, each mapping path to content hash, returns the sorted list of paths whose value in after differs from before. A path is included when it is absent from before (newly added) or present in before with a different hash (changed). A path present in before but absent from after is not included — the result is after-relative and does not report removals. Unchanged paths (same hash in both) are excluded. Result is deterministically sorted in ascending order. Does not mutate either input map.\n"
+    behavior: "Pure function; no filesystem or external state access. Returns the ascending-sorted list of paths from `after` whose value differs from `before`. A path is included when `before` has no entry for it (newly added) or maps it to a different hash (changed). A path present in `before` but absent from `after` is not reported — the diff is after-relative. Identical maps yield an empty list. Since inputs are ordered maps keyed by path, the result is naturally in ascending order.\n"
 tests:
   - name: spec_example
     given: "before = {/a: h1, /b: h2}, after = {/a: h1, /b: h2x, /c: h3}"
-    expect: "[/b, /c]"
+    expect: returns [/b, /c] — /a unchanged and dropped, /b changed, /c new
   - name: empty_before_and_after
     given: before = {}, after = {}
-    expect: "[]"
+    expect: returns an empty list
   - name: all_new_paths
     given: "before = {}, after = {/a: h1, /b: h2}"
-    expect: "[/a, /b]"
+    expect: returns [/a, /b] — every after path is new
   - name: identical_snapshots_yield_nothing
-    given: "before = {/a: h1, /b: h2}, after = identical copy of before"
-    expect: "[]"
+    given: "before = {/a: h1, /b: h2}, after equal to before"
+    expect: returns an empty list
   - name: removed_path_not_reported
     given: "before = {/a: h1, /b: h2}, after = {/a: h1}"
-    expect: "[]"
+    expect: returns an empty list — removed /b is not reported
   - name: result_is_sorted
     given: "before = {}, after = {/z: h1, /a: h2, /m: h3}"
-    expect: "[/a, /m, /z]"
+    expect: returns [/a, /m, /z] in ascending order
   - name: mixed_add_change_unchanged_remove
     given: "before = {/a: h1, /b: h2, /d: h4}, after = {/a: h1, /b: h2changed, /c: h3}"
-    expect: "[/b, /c]"
+    expect: returns [/b, /c] — /b changed, /c added, /a unchanged, /d removed

@@ -2,149 +2,29 @@ module: schemas_ordered_map
 target: rust
 entries:
   - promptLines:
-      - 22
-      - 26
-    file: schemas_ordered_map/src/lib.rs
-    lines:
+      - 8
       - 9
+    file: schemas_ordered_map/src/lib.rs
+    lines:
+      - 6
+      - 7
+    note: imports serde Serialize/Deserialize traits
+  - promptLines:
+      - 22
       - 24
-    note: struct def, Default, new()
-  - promptLines:
-      - 30
-      - 31
     file: schemas_ordered_map/src/lib.rs
     lines:
-      - 26
-      - 32
-    note: len/is_empty
+      - 11
+      - 13
+    note: generic OrderedMap<V> backed by Vec of (String, V)
   - promptLines:
-      - 32
-      - 32
+      - 23
+      - 24
     file: schemas_ordered_map/src/lib.rs
     lines:
-      - 34
-      - 36
-    note: contains_key
-  - promptLines:
-      - 33
-      - 33
-    file: schemas_ordered_map/src/lib.rs
-    lines:
-      - 38
-      - 40
-    note: get
-  - promptLines:
-      - 34
-      - 34
-    file: schemas_ordered_map/src/lib.rs
-    lines:
-      - 42
-      - 44
-    note: get_mut
-  - promptLines:
-      - 35
-      - 37
-    file: schemas_ordered_map/src/lib.rs
-    lines:
-      - 46
-      - 52
-    note: insert replace-in-place or append
-  - promptLines:
-      - 38
-      - 40
-    file: schemas_ordered_map/src/lib.rs
-    lines:
-      - 54
-      - 57
-    note: remove closing gap
-  - promptLines:
-      - 41
-      - 41
-    file: schemas_ordered_map/src/lib.rs
-    lines:
-      - 59
-      - 61
-    note: iter pairs
-  - promptLines:
-      - 42
-      - 42
-    file: schemas_ordered_map/src/lib.rs
-    lines:
-      - 63
-      - 65
-    note: keys
-  - promptLines:
-      - 43
-      - 43
-    file: schemas_ordered_map/src/lib.rs
-    lines:
-      - 67
-      - 69
-    note: values
-  - promptLines:
-      - 47
-      - 48
-    file: schemas_ordered_map/src/lib.rs
-    lines:
-      - 132
-      - 140
-    note: test insertion order z a m
-  - promptLines:
-      - 49
-      - 50
-    file: schemas_ordered_map/src/lib.rs
-    lines:
-      - 143
-      - 152
-    note: test reinsert replaces in place
-  - promptLines:
-      - 51
-      - 52
-    file: schemas_ordered_map/src/lib.rs
-    lines:
-      - 155
-      - 165
-    note: test remove closes gap
-  - promptLines:
-      - 56
-      - 58
-    file: schemas_ordered_map/src/lib.rs
-    lines:
-      - 72
-      - 83
-    note: Serialize impl as map in insertion order
-  - promptLines:
-      - 56
-      - 58
-    file: schemas_ordered_map/src/lib.rs
-    lines:
-      - 85
-      - 115
-    note: Deserialize impl reading entries in order
-  - promptLines:
-      - 59
-      - 61
-    file: schemas_ordered_map/src/lib.rs
-    lines:
-      - 198
-      - 205
-    note: test exact json serialization z before a
-  - promptLines:
-      - 61
-      - 61
-    file: schemas_ordered_map/src/lib.rs
-    lines:
-      - 208
-      - 218
-    note: test round trip deserialize preserves order
-  - promptLines:
-      - 62
-      - 63
-    file: schemas_ordered_map/src/lib.rs
-    lines:
-      - 10
-      - 10
-    note: derive PartialEq for equality comparison
+      - 12
+      - 12
+    note: Vec preserves first-insertion order
   - promptLines:
       - 25
       - 25
@@ -152,12 +32,180 @@ entries:
     lines:
       - 15
       - 19
-    note: Default impl empty map
+    note: Default impl returns empty map
   - promptLines:
-      - 22
-      - 22
+      - 25
+      - 26
     file: schemas_ordered_map/src/lib.rs
     lines:
-      - 11
-      - 13
-    note: OrderedMap struct definition with Vec of pairs
+      - 22
+      - 24
+    note: new() delegates to default
+  - promptLines:
+      - 30
+      - 30
+    file: schemas_ordered_map/src/lib.rs
+    lines:
+      - 26
+      - 28
+    note: len() returns entry count
+  - promptLines:
+      - 31
+      - 31
+    file: schemas_ordered_map/src/lib.rs
+    lines:
+      - 30
+      - 32
+    note: is_empty()
+  - promptLines:
+      - 32
+      - 32
+    file: schemas_ordered_map/src/lib.rs
+    lines:
+      - 34
+      - 36
+    note: contains_key scans entries
+  - promptLines:
+      - 33
+      - 33
+    file: schemas_ordered_map/src/lib.rs
+    lines:
+      - 38
+      - 40
+    note: get returns shared reference or None
+  - promptLines:
+      - 34
+      - 34
+    file: schemas_ordered_map/src/lib.rs
+    lines:
+      - 42
+      - 44
+    note: get_mut returns mutable reference or None
+  - promptLines:
+      - 35
+      - 37
+    file: schemas_ordered_map/src/lib.rs
+    lines:
+      - 46
+      - 52
+    note: insert replaces in place or appends
+  - promptLines:
+      - 36
+      - 37
+    file: schemas_ordered_map/src/lib.rs
+    lines:
+      - 47
+      - 48
+    note: replace value in place keeping position
+  - promptLines:
+      - 37
+      - 37
+    file: schemas_ordered_map/src/lib.rs
+    lines:
+      - 50
+      - 50
+    note: append new key at end
+  - promptLines:
+      - 38
+      - 40
+    file: schemas_ordered_map/src/lib.rs
+    lines:
+      - 54
+      - 57
+    note: remove finds position, removes, closes gap
+  - promptLines:
+      - 41
+      - 41
+    file: schemas_ordered_map/src/lib.rs
+    lines:
+      - 59
+      - 61
+    note: iter yields (&String,&V) in order
+  - promptLines:
+      - 42
+      - 42
+    file: schemas_ordered_map/src/lib.rs
+    lines:
+      - 63
+      - 65
+    note: keys iterator
+  - promptLines:
+      - 43
+      - 43
+    file: schemas_ordered_map/src/lib.rs
+    lines:
+      - 67
+      - 69
+    note: values iterator
+  - promptLines:
+      - 56
+      - 57
+    file: schemas_ordered_map/src/lib.rs
+    lines:
+      - 72
+      - 83
+    note: Serialize as map in insertion order
+  - promptLines:
+      - 56
+      - 58
+    file: schemas_ordered_map/src/lib.rs
+    lines:
+      - 85
+      - 115
+    note: Deserialize from map preserving order
+  - promptLines:
+      - 58
+      - 59
+    file: schemas_ordered_map/src/lib.rs
+    lines:
+      - 101
+      - 110
+    note: visit_map reads entries in order via insert
+  - promptLines:
+      - 62
+      - 63
+    file: schemas_ordered_map/src/lib.rs
+    lines:
+      - 10
+      - 10
+    note: derive PartialEq for equality
+  - promptLines:
+      - 47
+      - 48
+    file: schemas_ordered_map/src/lib.rs
+    lines:
+      - 131
+      - 140
+    note: test insertion order z,a,m
+  - promptLines:
+      - 49
+      - 50
+    file: schemas_ordered_map/src/lib.rs
+    lines:
+      - 142
+      - 152
+    note: test reinsert replaces in place
+  - promptLines:
+      - 51
+      - 52
+    file: schemas_ordered_map/src/lib.rs
+    lines:
+      - 154
+      - 165
+    note: test remove returns value, closes gap
+  - promptLines:
+      - 59
+      - 61
+    file: schemas_ordered_map/src/lib.rs
+    lines:
+      - 197
+      - 205
+    note: test serializes to {"z":1,"a":2}
+  - promptLines:
+      - 59
+      - 61
+    file: schemas_ordered_map/src/lib.rs
+    lines:
+      - 207
+      - 218
+    note: test JSON round-trip preserving order

@@ -8,7 +8,31 @@ entries:
     lines:
       - 6
       - 11
-    note: extract_yaml public entry, dispatches to fence finder or trims whole text
+    note: extract_yaml returns YAML content from text
+  - promptLines:
+      - 28
+      - 30
+    file: parse_output/src/lib.rs
+    lines:
+      - 7
+      - 10
+    note: falls back to whole text trimmed when no fenced block
+  - promptLines:
+      - 26
+      - 26
+    file: parse_output/src/lib.rs
+    lines:
+      - 8
+      - 8
+    note: trims surrounding whitespace of fence content
+  - promptLines:
+      - 29
+      - 30
+    file: parse_output/src/lib.rs
+    lines:
+      - 9
+      - 9
+    note: returns whole text trimmed on no fence
   - promptLines:
       - 21
       - 25
@@ -16,76 +40,60 @@ entries:
     lines:
       - 13
       - 21
-    note: "finds fenced block: opening fence, discards opening line, extracts content up to closing backticks"
-  - promptLines:
-      - 21
-      - 23
-    file: parse_output/src/lib.rs
-    lines:
-      - 23
-      - 28
-    note: locates first fence line start (at text start or after a newline)
+    note: locates fenced block content between fences
   - promptLines:
       - 23
-      - 25
+      - 24
     file: parse_output/src/lib.rs
     lines:
       - 15
-      - 18
-    note: skips opening fence line including its terminating newline to find content start
+      - 17
+    note: discards opening fence line up to its newline
   - promptLines:
+      - 24
       - 25
-      - 25
+    file: parse_output/src/lib.rs
+    lines:
+      - 18
+      - 20
+    note: content up to next triple backticks
+  - promptLines:
+      - 28
+      - 29
+    file: parse_output/src/lib.rs
+    lines:
+      - 16
+      - 16
+    note: no newline after fence returns None
+  - promptLines:
+      - 28
+      - 29
     file: parse_output/src/lib.rs
     lines:
       - 19
-      - 20
-    note: content runs up to next occurrence of three backticks
+      - 19
+    note: no closing backticks returns None
   - promptLines:
-      - 26
-      - 26
+      - 21
+      - 21
     file: parse_output/src/lib.rs
     lines:
-      - 8
-      - 8
-    note: trims surrounding whitespace of extracted fence content
-  - promptLines:
+      - 23
       - 28
-      - 30
-    file: parse_output/src/lib.rs
-    lines:
-      - 9
-      - 9
-    note: falls back to trimming whole text when no complete fenced block found
+    note: finds first line beginning with three backticks
   - promptLines:
-      - 28
-      - 30
+      - 21
+      - 21
     file: parse_output/src/lib.rs
     lines:
-      - 14
-      - 20
-    note: returns None (no fence) when opening fence or closing fence missing
+      - 24
+      - 26
+    note: handles fence at start of text
   - promptLines:
-      - 34
-      - 36
+      - 21
+      - 21
     file: parse_output/src/lib.rs
     lines:
-      - 35
-      - 38
-    note: "test: fenced block with yaml info string"
-  - promptLines:
-      - 37
-      - 38
-    file: parse_output/src/lib.rs
-    lines:
-      - 41
-      - 44
-    note: "test: bare fence with no info string"
-  - promptLines:
-      - 39
-      - 40
-    file: parse_output/src/lib.rs
-    lines:
-      - 47
-      - 50
-    note: "test: plain text with no fence trimmed"
+      - 27
+      - 27
+    note: handles fence after a newline mid-text

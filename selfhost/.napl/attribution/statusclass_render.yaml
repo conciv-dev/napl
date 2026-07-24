@@ -2,37 +2,125 @@ module: statusclass_render
 target: rust
 entries:
   - promptLines:
+      - 1
+      - 7
+    file: statusclass_render/src/lib.rs
+    lines:
+      - 1
+      - 4
+    note: "module doc: pure rendering core, no I/O"
+  - promptLines:
       - 20
       - 21
     file: statusclass_render/src/lib.rs
     lines:
       - 7
       - 8
-    note: enum decl with required derives
+    note: public FileStatus enum with required derives
   - promptLines:
-      - 22
-      - 27
+      - 23
+      - 23
     file: statusclass_render/src/lib.rs
     lines:
       - 9
-      - 17
-    note: four variants with doc comments
+      - 10
+    note: Clean variant
+  - promptLines:
+      - 24
+      - 24
+    file: statusclass_render/src/lib.rs
+    lines:
+      - 11
+      - 12
+    note: PromptStale variant
+  - promptLines:
+      - 25
+      - 25
+    file: statusclass_render/src/lib.rs
+    lines:
+      - 13
+      - 14
+    note: Drift variant
+  - promptLines:
+      - 26
+      - 26
+    file: statusclass_render/src/lib.rs
+    lines:
+      - 15
+      - 16
+    note: Unattributed variant
   - promptLines:
       - 28
       - 33
     file: statusclass_render/src/lib.rs
     lines:
-      - 20
+      - 21
       - 28
-    note: label() match per variant
+    note: label() maps each variant to its fixed string
+  - promptLines:
+      - 30
+      - 30
+    file: statusclass_render/src/lib.rs
+    lines:
+      - 23
+      - 23
+    note: Clean -> clean
+  - promptLines:
+      - 31
+      - 31
+    file: statusclass_render/src/lib.rs
+    lines:
+      - 24
+      - 24
+    note: PromptStale -> prompt-stale
+  - promptLines:
+      - 32
+      - 32
+    file: statusclass_render/src/lib.rs
+    lines:
+      - 25
+      - 25
+    note: Drift -> DRIFT uppercase
+  - promptLines:
+      - 33
+      - 33
+    file: statusclass_render/src/lib.rs
+    lines:
+      - 26
+      - 26
+    note: Unattributed -> unattributed
   - promptLines:
       - 37
-      - 41
+      - 38
     file: statusclass_render/src/lib.rs
     lines:
       - 37
-      - 44
-    note: StatusEntry struct fields
+      - 38
+    note: public StatusEntry struct
+  - promptLines:
+      - 39
+      - 39
+    file: statusclass_render/src/lib.rs
+    lines:
+      - 39
+      - 40
+    note: file field, prompt path
+  - promptLines:
+      - 40
+      - 40
+    file: statusclass_render/src/lib.rs
+    lines:
+      - 41
+      - 41
+    note: status field
+  - promptLines:
+      - 41
+      - 41
+    file: statusclass_render/src/lib.rs
+    lines:
+      - 42
+      - 43
+    note: detail field, possibly empty
   - promptLines:
       - 43
       - 49
@@ -40,47 +128,23 @@ entries:
     lines:
       - 48
       - 55
-    note: line() renders padded label + file + optional detail
+    note: line() renders one status line
+  - promptLines:
+      - 46
+      - 49
+    file: statusclass_render/src/lib.rs
+    lines:
+      - 49
+      - 53
+    note: suffix empty when detail empty, else ' (detail)'
   - promptLines:
       - 51
       - 52
     file: statusclass_render/src/lib.rs
     lines:
-      - 49
       - 54
-    note: suffix format and format string
-  - promptLines:
       - 54
-      - 56
-    file: statusclass_render/src/lib.rs
-    lines:
-      - 84
-      - 89
-    note: byte-exact example test, clean empty detail
-  - promptLines:
-      - 57
-      - 59
-    file: statusclass_render/src/lib.rs
-    lines:
-      - 91
-      - 97
-    note: byte-exact example test, prompt-stale with detail
-  - promptLines:
-      - 60
-      - 61
-    file: statusclass_render/src/lib.rs
-    lines:
-      - 99
-      - 105
-    note: byte-exact example test, DRIFT with detail
-  - promptLines:
-      - 62
-      - 63
-    file: statusclass_render/src/lib.rs
-    lines:
-      - 107
-      - 113
-    note: byte-exact example test, unattributed with detail
+    note: "{label:<12} {file}{suffix} format, pad to 12"
   - promptLines:
       - 65
       - 68
@@ -97,11 +161,3 @@ entries:
       - 58
       - 60
     note: StatusEntry::is_error delegates to status
-  - promptLines:
-      - 65
-      - 68
-    file: statusclass_render/src/lib.rs
-    lines:
-      - 137
-      - 148
-    note: is_error test for all variants

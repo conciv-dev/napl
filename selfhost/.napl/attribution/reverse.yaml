@@ -24,23 +24,63 @@ entries:
     lines:
       - 10
       - 14
-    note: GeneratedPathInfo struct definition
+    note: GeneratedPathInfo struct with target and target_rel_path
+  - promptLines:
+      - 55
+      - 55
+    file: reverse/src/lib.rs
+    lines:
+      - 16
+      - 16
+    note: parse_generated_path signature
+  - promptLines:
+      - 56
+      - 56
+    file: reverse/src/lib.rs
+    lines:
+      - 17
+      - 17
+    note: normalize backslashes to forward slashes
+  - promptLines:
+      - 56
+      - 58
+    file: reverse/src/lib.rs
+    lines:
+      - 18
+      - 18
+    note: strip GENERATED_PREFIX, None if absent
+  - promptLines:
+      - 56
+      - 58
+    file: reverse/src/lib.rs
+    lines:
+      - 19
+      - 19
+    note: find first slash, None if none
+  - promptLines:
+      - 57
+      - 57
+    file: reverse/src/lib.rs
+    lines:
+      - 20
+      - 21
+    note: target before slash, rest is target_rel_path
+  - promptLines:
+      - 58
+      - 59
+    file: reverse/src/lib.rs
+    lines:
+      - 22
+      - 24
+    note: None if target or rel path empty
   - promptLines:
       - 55
       - 59
     file: reverse/src/lib.rs
     lines:
-      - 16
-      - 29
-    note: parse_generated_path normalizes, strips prefix, splits target/rel path
-  - promptLines:
-      - 60
-      - 62
-    file: reverse/src/lib.rs
-    lines:
-      - 137
-      - 159
-    note: examples of parse_generated_path behavior as tests
+      - 25
+      - 28
+    note: build GeneratedPathInfo result
   - promptLines:
       - 66
       - 69
@@ -48,7 +88,7 @@ entries:
     lines:
       - 31
       - 37
-    note: AttributionSource struct definition
+    note: AttributionSource struct
   - promptLines:
       - 70
       - 73
@@ -56,23 +96,63 @@ entries:
     lines:
       - 39
       - 47
-    note: ReverseMatch struct definition
+    note: ReverseMatch struct
   - promptLines:
       - 75
-      - 82
+      - 75
     file: reverse/src/lib.rs
     lines:
       - 49
+      - 54
+    note: reverse_matches signature
+  - promptLines:
+      - 76
+      - 76
+    file: reverse/src/lib.rs
+    lines:
+      - 56
+      - 59
+    note: filter sources by target
+  - promptLines:
+      - 76
+      - 76
+    file: reverse/src/lib.rs
+    lines:
+      - 60
+      - 63
+    note: filter entries by file
+  - promptLines:
+      - 77
+      - 81
+    file: reverse/src/lib.rs
+    lines:
+      - 64
+      - 68
+    note: code_line containment filter, None skips filter
+  - promptLines:
+      - 78
+      - 80
+    file: reverse/src/lib.rs
+    lines:
+      - 69
+      - 78
+    note: emit one match per prompt file
+  - promptLines:
+      - 81
       - 82
-    note: reverse_matches filters by target/file/line and emits one match per prompt file
+    file: reverse/src/lib.rs
+    lines:
+      - 81
+      - 81
+    note: return matches in order
   - promptLines:
       - 86
-      - 89
+      - 88
     file: reverse/src/lib.rs
     lines:
       - 84
       - 89
-    note: prompt_absolute_lines conversion formula
+    note: prompt_absolute_lines conversion
   - promptLines:
       - 90
       - 91
@@ -80,7 +160,7 @@ entries:
     lines:
       - 91
       - 93
-    note: match_prompt_lines delegates using body_start_line
+    note: match_prompt_lines uses body_start_line
   - promptLines:
       - 95
       - 97
@@ -88,7 +168,7 @@ entries:
     lines:
       - 95
       - 100
-    note: is_file_drifted hash comparison logic
+    note: is_file_drifted hash comparison
   - promptLines:
       - 98
       - 101
@@ -96,7 +176,7 @@ entries:
     lines:
       - 102
       - 108
-    note: code_lens_title formatting with/without note
+    note: code_lens_title with/without note
   - promptLines:
       - 102
       - 104
@@ -104,28 +184,4 @@ entries:
     lines:
       - 110
       - 120
-    note: dedupe_matches keeps first occurrence per prompt span
-  - promptLines:
-      - 27
-      - 30
-    file: reverse/src/lib.rs
-    lines:
-      - 5
-      - 5
-    note: use of LineRange from schemas_line_range
-  - promptLines:
-      - 31
-      - 36
-    file: reverse/src/lib.rs
-    lines:
-      - 4
-      - 4
-    note: use of AttributionEntry from schemas_attribution
-  - promptLines:
-      - 37
-      - 39
-    file: reverse/src/lib.rs
-    lines:
-      - 3
-      - 3
-    note: use of PromptBody from body_lines
+    note: dedupe_matches keeps first per span

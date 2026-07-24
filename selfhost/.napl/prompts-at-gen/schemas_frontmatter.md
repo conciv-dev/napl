@@ -21,9 +21,15 @@ All derive `serde::Deserialize` where noted and support equality comparison:
 - `PromptTest` with a public string field `name`, and two public fields `given`
   and `expect`, each a `serde_yaml::Value`. When `given` or `expect` is omitted it
   defaults to an **empty YAML mapping** (an empty object), not null.
-- `Frontmatter` with a public string field `module`, and three list fields that
-  each default to empty when omitted: `deps` (strings), `targets` (strings), and
-  `tests` (a list of `PromptTest`).
+- `Frontmatter` with a public string field `module`; three list fields that each
+  default to empty when omitted: `deps` (strings), `targets` (strings), and
+  `tests` (a list of `PromptTest`); and one **optional** field for the declared
+  member-crate grouping. That optional field is a public field named `crate_name`
+  of type `Option<String>`, deserialized from the YAML key **`crate`** (the Rust
+  identifier is `crate_name` because `crate` is a reserved word; the on-disk key
+  is `crate`). It defaults to `None` when the `crate` key is absent. `crate` is a
+  **known** optional key of the frontmatter block: when present its value is a
+  string captured into `crate_name`; when absent `crate_name` is `None`.
 - `ParsedPrompt` with two public fields: `frontmatter` (a `Frontmatter`) and
   `body` (a `String`).
 
@@ -85,3 +91,6 @@ success or an error on failure. It:
   rejected; `---\nmodule: ""\n---\nbody` (empty module) is rejected.
 - `---\nmodule: m\n---\n\nActual body.\n` parses to a body of exactly
   `Actual body.\n` (the one blank line after the closing delimiter is stripped).
+- `---\nmodule: alpha\ncrate: shared\n---\nBody.\n` parses to `module` = `alpha`
+  and `crate_name` = `Some("shared")`. `---\nmodule: solo\n---\nBody here.\n`
+  parses with `crate_name` = `None` (the `crate` key is absent).

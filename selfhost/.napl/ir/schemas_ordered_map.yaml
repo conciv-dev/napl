@@ -2,75 +2,76 @@ module: schemas_ordered_map
 deps: []
 types:
   - name: OrderedMap<V>
-    description: "Generic map from owned String keys to values of type V, preserving first-insertion order for all iteration (whole map, keys, values). Default is empty. Supports equality comparison (two maps equal iff same entries in same order). Serializes as a plain map/object with entries in insertion order; deserializes from a map, preserving the order entries appear in the input.\n"
+    description: "A generic map from owned String keys to values of type V that preserves first-insertion order: iteration over entries, keys, or values always visits entries in the order their keys were first inserted (not sorted, not hash order). Empty by default. Supports equality: two maps are equal when they hold the same entries in the same order. Serializes as an ordinary map/object.\n"
 functions:
-  - name: new
-    signature: OrderedMap::new() -> OrderedMap<V>
-    behavior: Returns an empty map, identical to Default::default().
   - name: default
-    signature: OrderedMap::default() -> OrderedMap<V>
-    behavior: Returns an empty map with no entries.
+    signature: () -> OrderedMap<V>
+    behavior: "Constructs an empty map with no entries. Postcondition: len() == 0 and is_empty() is true.\n"
+  - name: new
+    signature: () -> OrderedMap<V>
+    behavior: "Constructs an empty map, equivalent to default(). Postcondition: len() == 0 and is_empty() is true.\n"
   - name: len
-    signature: len(&self) -> usize
-    behavior: Returns number of entries currently in the map.
+    signature: (self) -> integer
+    behavior: Returns the number of entries currently in the map.
   - name: is_empty
-    signature: is_empty(&self) -> bool
-    behavior: Returns true iff len() == 0.
+    signature: (self) -> boolean
+    behavior: Returns true when the map has no entries, false otherwise.
   - name: contains_key
-    signature: "contains_key(&self, key: &str) -> bool"
-    behavior: Returns true iff a key equal to `key` is present.
+    signature: "(self, key: string) -> boolean"
+    behavior: Returns true when an entry with the given key exists, false otherwise.
   - name: get
-    signature: "get(&self, key: &str) -> Option<&V>"
-    behavior: Returns shared reference to value for key if present, else None.
+    signature: "(self, key: string) -> optional<shared-ref<V>>"
+    behavior: "Returns a shared reference to the value stored for the key, or nothing when the key is absent.\n"
   - name: get_mut
-    signature: "get_mut(&mut self, key: &str) -> Option<&mut V>"
-    behavior: Returns mutable reference to value for key if present, else None.
+    signature: "(self, key: string) -> optional<mutable-ref<V>>"
+    behavior: "Returns a mutable reference to the value stored for the key, allowing in-place update, or nothing when the key is absent.\n"
   - name: insert
-    signature: "insert(&mut self, key: String, value: V) -> ()"
-    behavior: "If key already present, replaces its value in place, leaving key's position in iteration order unchanged. Otherwise appends key as new last entry. No return value.\n"
+    signature: "(self, key: string, value: V) -> ()"
+    behavior: "Sets the value for a key. Precondition/postcondition on ordering: if the key already exists, its value is replaced in place and the key keeps its existing position; if the key is new, it is appended as the last entry. Insertion order of pre-existing keys is never changed by re-insertion.\n"
   - name: remove
-    signature: "remove(&mut self, key: &str) -> Option<V>"
-    behavior: "If key present, removes it and returns its value, shifting later entries to close the gap so remaining keys keep relative order. If key absent, returns None and map unchanged.\n"
+    signature: "(self, key: string) -> optional<V>"
+    behavior: "Removes the entry for the key and returns its value when present; returns nothing when the key is absent. Remaining entries close the gap and keep their relative insertion order.\n"
   - name: iter
-    signature: iter(&self) -> Iterator<Item = (&String, &V)>
-    behavior: Yields (key, value) pairs in first-insertion order.
+    signature: (self) -> iterator<(shared-ref<string>, shared-ref<V>)>
+    behavior: Yields each (key, value) pair in first-insertion order.
   - name: keys
-    signature: keys(&self) -> Iterator<Item = &String>
-    behavior: Yields keys in first-insertion order.
+    signature: (self) -> iterator<shared-ref<string>>
+    behavior: Yields each key in first-insertion order.
   - name: values
-    signature: values(&self) -> Iterator<Item = &V>
-    behavior: Yields values in first-insertion order.
+    signature: (self) -> iterator<shared-ref<V>>
+    behavior: Yields each value in first-insertion order.
   - name: serialize
-    signature: "Serialize for OrderedMap<V> where V: Serialize"
-    behavior: "Serializes as a map/object type, emitting entries in insertion order.\n"
+    signature: (self, serializer) -> Result<ok, error>
+    behavior: 'Serializes the map as an ordinary map/object, emitting entries in insertion order. With a JSON serializer, a map built by inserting z=1 then a=2 produces exactly the string {\"z\":1,\"a\":2}.
+'
   - name: deserialize
-    signature: "Deserialize for OrderedMap<V> where V: Deserialize"
-    behavior: "Deserializes from a map input, building an OrderedMap by inserting entries in the order they appear in the input, preserving that order.\n"
+    signature: (deserializer) -> Result<OrderedMap<V>, error>
+    behavior: "Deserializes from a map/object by reading entries in the order they appear and inserting them, preserving that order. Round-trips with serialize: decoding a serialized map yields a map equal to the original with the same key order.\n"
 tests:
   - name: default_and_new_are_empty
-    given: OrderedMap::default() and OrderedMap::new() with no insertions
-    expect: both empty (len 0, is_empty true) and equal to each other
+    given: An OrderedMap<i32> built via default() and another via new().
+    expect: Both are empty (is_empty true, len 0) and compare equal.
   - name: preserves_first_insertion_order
-    given: insert z, then a, then m
-    expect: keys() yields [z, a, m], not sorted order
+    given: Insert z, then a, then m.
+    expect: keys() yields z, a, m — insertion order, not sorted.
   - name: reinsert_replaces_in_place_without_moving
-    given: insert a=1, b=2, then a=9
-    expect: get("a") is 9, keys() still [a, b] (a not moved to end)
+    given: Insert a=1, b=2, then a=9.
+    expect: get("a") is 9 and keys() still yields a, b (a not moved to end).
   - name: remove_closes_gap_and_returns_value
-    given: insert a=1, b=2, then remove a
-    expect: remove returns Some(1), contains_key("a") false, keys() is [b]
+    given: Insert a=1, b=2, then remove a.
+    expect: remove returns 1, map no longer contains a, remaining key is b.
   - name: remove_missing_key_returns_none
-    given: map with only a=1, remove "nope"
-    expect: returns None
+    given: Insert a=1, then remove a key that is not present.
+    expect: remove returns nothing.
   - name: get_mut_updates_value
-    given: insert a=1, mutate via get_mut to 42
-    expect: get("a") is Some(42)
+    given: Insert a=1, then obtain a mutable reference to a and set it to 42.
+    expect: get("a") is 42.
   - name: iter_and_values_follow_insertion_order
-    given: insert z=1, a=2
-    expect: iter() yields [(z,1),(a,2)]; values() yields [1,2]
+    given: Insert z=1, then a=2.
+    expect: iter() yields (z,1) then (a,2); values() yields 1 then 2.
   - name: serializes_in_insertion_order
-    given: insert z=1, a=2, serialize to JSON
-    expect: JSON string is exactly {"z":1,"a":2}
+    given: Insert z=1, then a=2, and serialize to JSON.
+    expect: The JSON string equals {"z":1,"a":2}.
   - name: round_trips_through_json_preserving_order
-    given: map with z=1, a=2 serialized to JSON then deserialized
-    expect: decoded map equals original; keys() is [z, a]
+    given: Insert z=1, a=2, serialize to JSON, then deserialize back.
+    expect: Decoded map equals the original and its keys yield z, a.

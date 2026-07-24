@@ -2,13 +2,13 @@ module: schemas_map
 target: rust
 entries:
   - promptLines:
-      - 1
+      - 7
       - 7
     file: schemas_map/src/lib.rs
     lines:
-      - 1
+      - 3
       - 4
-    note: module header, imports serde/serde_json
+    note: imports serde and ordered map
   - promptLines:
       - 24
       - 28
@@ -16,9 +16,9 @@ entries:
     lines:
       - 3
       - 3
-    note: import OrderedMap from schemas_ordered_map sibling crate
+    note: uses OrderedMap from sibling crate
   - promptLines:
-      - 41
+      - 44
       - 50
     file: schemas_map/src/lib.rs
     lines:
@@ -32,7 +32,7 @@ entries:
     lines:
       - 12
       - 13
-    note: promptHashAtGen field, omit if None, default None
+    note: promptHashAtGen rename, default, skip when None
   - promptLines:
       - 48
       - 48
@@ -40,7 +40,7 @@ entries:
     lines:
       - 14
       - 15
-    note: files field defaulting to empty
+    note: files default empty
   - promptLines:
       - 49
       - 50
@@ -48,7 +48,7 @@ entries:
     lines:
       - 16
       - 17
-    note: unattributed field, omit if None
+    note: unattributed skip when None, default None
   - promptLines:
       - 51
       - 56
@@ -72,7 +72,7 @@ entries:
     lines:
       - 23
       - 24
-    note: prompt_hash field renamed promptHash
+    note: prompt_hash renamed promptHash
   - promptLines:
       - 54
       - 55
@@ -80,7 +80,7 @@ entries:
     lines:
       - 25
       - 26
-    note: declared_targets field renamed declaredTargets, default empty
+    note: declared_targets renamed, default empty
   - promptLines:
       - 56
       - 56
@@ -88,7 +88,7 @@ entries:
     lines:
       - 27
       - 28
-    note: targets OrderedMap field default empty
+    note: targets ordered map default empty
   - promptLines:
       - 57
       - 60
@@ -97,6 +97,14 @@ entries:
       - 31
       - 37
     note: FileRecord struct
+  - promptLines:
+      - 60
+      - 60
+    file: schemas_map/src/lib.rs
+    lines:
+      - 35
+      - 36
+    note: prompts default empty
   - promptLines:
       - 61
       - 64
@@ -112,7 +120,7 @@ entries:
     lines:
       - 6
       - 8
-    note: default_version helper returning 2
+    note: default_version returns 2
   - promptLines:
       - 62
       - 62
@@ -120,15 +128,23 @@ entries:
     lines:
       - 41
       - 42
-    note: version field defaults via default_version
+    note: version defaults to 2
   - promptLines:
       - 63
-      - 64
+      - 63
     file: schemas_map/src/lib.rs
     lines:
       - 43
+      - 44
+    note: prompts default empty
+  - promptLines:
+      - 64
+      - 64
+    file: schemas_map/src/lib.rs
+    lines:
+      - 45
       - 46
-    note: prompts and files OrderedMap fields default empty
+    note: files default empty
   - promptLines:
       - 68
       - 68
@@ -152,7 +168,7 @@ entries:
     lines:
       - 61
       - 69
-    note: AttributionInput plain struct
+    note: AttributionInput struct
   - promptLines:
       - 73
       - 75
@@ -160,7 +176,7 @@ entries:
     lines:
       - 71
       - 79
-    note: UnattributedInput plain struct
+    note: UnattributedInput struct
   - promptLines:
       - 79
       - 79
@@ -168,7 +184,7 @@ entries:
     lines:
       - 81
       - 87
-    note: empty_map constructor
+    note: empty_map builds version 2 empty
   - promptLines:
       - 80
       - 82
@@ -176,7 +192,15 @@ entries:
     lines:
       - 89
       - 95
-    note: parse_map deserializes JSON and validates version
+    note: parse_map deserialize and version check
+  - promptLines:
+      - 81
+      - 81
+    file: schemas_map/src/lib.rs
+    lines:
+      - 91
+      - 93
+    note: unsupported map version error
   - promptLines:
       - 83
       - 84
@@ -184,7 +208,7 @@ entries:
     lines:
       - 97
       - 101
-    note: map_to_json pretty-prints with trailing newline
+    note: map_to_json pretty print plus newline
   - promptLines:
       - 88
       - 89
@@ -192,7 +216,7 @@ entries:
     lines:
       - 103
       - 109
-    note: prompts_for_module filters by module, insertion order
+    note: prompts_for_module filters by module
   - promptLines:
       - 90
       - 90
@@ -200,7 +224,7 @@ entries:
     lines:
       - 111
       - 113
-    note: has_module checks any matching prompt
+    note: has_module any match
   - promptLines:
       - 91
       - 93
@@ -208,7 +232,7 @@ entries:
     lines:
       - 115
       - 128
-    note: declared_targets_for_module dedup union first-seen order
+    note: declared_targets_for_module dedup first-seen
   - promptLines:
       - 94
       - 97
@@ -216,7 +240,7 @@ entries:
     lines:
       - 130
       - 151
-    note: files_for_module dedup by (target, file_path)
+    note: files_for_module dedup by target+path
   - promptLines:
       - 98
       - 102
@@ -224,7 +248,39 @@ entries:
     lines:
       - 153
       - 175
-    note: is_prompt_gen_stale staleness logic
+    note: is_prompt_gen_stale all cases
+  - promptLines:
+      - 99
+      - 99
+    file: schemas_map/src/lib.rs
+    lines:
+      - 159
+      - 164
+    note: force or absent record stale
+  - promptLines:
+      - 100
+      - 100
+    file: schemas_map/src/lib.rs
+    lines:
+      - 165
+      - 167
+    note: missing target sub-record stale
+  - promptLines:
+      - 101
+      - 101
+    file: schemas_map/src/lib.rs
+    lines:
+      - 168
+      - 170
+    note: unattributed true stale
+  - promptLines:
+      - 101
+      - 102
+    file: schemas_map/src/lib.rs
+    lines:
+      - 171
+      - 174
+    note: hash absent or differs stale
   - promptLines:
       - 131
       - 135
@@ -232,7 +288,7 @@ entries:
     lines:
       - 177
       - 185
-    note: detach_file helper removes prompt from file record
+    note: detach_file removes rel, drops empty entry
   - promptLines:
       - 108
       - 121
@@ -240,15 +296,31 @@ entries:
     lines:
       - 187
       - 247
-    note: record_attribution mutation helper
+    note: record_attribution full body
   - promptLines:
       - 110
-      - 113
+      - 111
     file: schemas_map/src/lib.rs
     lines:
       - 188
+      - 192
+    note: existing targets clone
+  - promptLines:
+      - 111
+      - 112
+    file: schemas_map/src/lib.rs
+    lines:
+      - 194
+      - 197
+    note: prior_files of target
+  - promptLines:
+      - 112
+      - 113
+    file: schemas_map/src/lib.rs
+    lines:
+      - 199
       - 205
-    note: compute existing_targets, prior_files, detach stale files
+    note: detach prior files not in new set
   - promptLines:
       - 114
       - 116
@@ -256,7 +328,7 @@ entries:
     lines:
       - 207
       - 214
-    note: set target sub-record with prompt_hash_at_gen/files/unattributed None
+    note: set target sub-record
   - promptLines:
       - 116
       - 117
@@ -264,7 +336,7 @@ entries:
     lines:
       - 216
       - 224
-    note: store prompt record under rel
+    note: store prompt record
   - promptLines:
       - 118
       - 121
@@ -272,7 +344,7 @@ entries:
     lines:
       - 226
       - 246
-    note: ensure FileRecord per new file, append prompt if absent
+    note: ensure FileRecord per file, append rel once
   - promptLines:
       - 123
       - 129
@@ -280,7 +352,7 @@ entries:
     lines:
       - 249
       - 283
-    note: record_unattributed mutation helper
+    note: record_unattributed full body
   - promptLines:
       - 125
       - 126
@@ -288,7 +360,7 @@ entries:
     lines:
       - 256
       - 263
-    note: detach every prior file of target sub-record
+    note: detach every prior file
   - promptLines:
       - 127
       - 128
@@ -296,12 +368,12 @@ entries:
     lines:
       - 265
       - 272
-    note: set sub-record unattributed=Some(true), prompt_hash_at_gen=None
+    note: sub-record unattributed true
   - promptLines:
       - 128
-      - 129
+      - 128
     file: schemas_map/src/lib.rs
     lines:
       - 274
       - 282
-    note: store prompt record, no FileRecord created
+    note: store prompt record

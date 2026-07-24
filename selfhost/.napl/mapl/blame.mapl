@@ -2,15 +2,22 @@ module: blame
 target: rust
 entries:
   - promptLines:
-      - 64
-      - 66
-    kind: assumption
-    message: hunk_start computed as old_start-1 once, then compared to old_idx each loop iteration (not per prompt's literal 'while old_idx < hunk.old_start - 1' re-evaluated wording).
-    reasoning: "Prompt says \"while old_idx < hunk.old_start - 1 (saturating at 0)\". Code precomputes hunk_start = hunk.old_start.saturating_sub(1) once per hunk, then loops while old_idx < hunk_start && old_idx < blame.len(). This is mathematically equivalent to the described condition (hunk.old_start-1 is constant per hunk), just phrased as a precomputed bound instead of recomputing each iteration. No behavior difference, but worth flagging since the prompt's literal phrasing suggested per-iteration subtraction rather than a cached start index.\n"
-    suggestion: Precompute hunk_start = hunk.old_start.saturating_sub(1) and loop while old_idx < hunk_start && within bounds.
+      - 1
+      - 100
+    kind: no-op
+    message: No changes made — existing blame/ crate already matches the full prompt.
+    reasoning: 'The changes were "NO CHANGES". Per the coding agent, the prompt diff was empty (no behavior change requested) and the existing blame/ member crate already implements the module exactly as specified — the public types, apply_patch_to_blame, blame_file, blame_line_at, and first_prompt_diff_line — with all 16 tests passing. Nothing needed to be edited because the source already satisfied every requirement.
+'
   - promptLines:
-      - 93
+      - 64
+      - 67
+    kind: note
+    message: old_start - 1 with 'saturating at 0' guards a hunk header reporting old_start 0.
+    reasoning: 'The copy-up loop condition `old_idx < hunk.old_start - 1` is computed on usize; the parenthetical "saturating at 0" is what keeps a hunk with old_start == 0 from underflowing to usize::MAX. This is a subtle but load-bearing detail; worth confirming the implementation actually uses saturating_sub rather than plain subtraction.
+'
+  - promptLines:
+      - 96
       - 99
     kind: note
-    message: first_prompt_diff_line stops scanning as soon as an added line is found, rather than always scanning to completion.
-    reasoning: The prompt describes finding "the first added line" and "the first removed line" as if both could require a full scan, then choosing added-over-removed. The implementation breaks out of the loop once first_added is found (early exit), only tracking first_removed opportunistically while still scanning. This produces the same final result (added wins if any exists) since once an added line is found nothing can change the outcome, but it means first_removed could theoretically be found for lines encountered before the first added line only — functionally identical to spec but implemented as an optimization not explicitly spelled out.
+    message: Marker-stripping via "everything after the first character" assumes each body line has a 1-char marker.
+    reasoning: first_prompt_diff_line takes text as everything after the first character of each post-header line. An empty body line (length 0) has no first character to strip; the spec relies on trimmed-empty lines being skipped afterward, so behavior on a zero-length line depends on the implementation slicing safely rather than panicking. Flagging as a correctness edge to confirm, not a defect.

@@ -4,7 +4,20 @@ entries:
   - promptLines:
       - 11
       - 16
-    kind: note
-    message: Agent flagged that snapshot_diff isn't listed in workspace members, yet cargo test still picked it up.
-    reasoning: "Prompt says the root Cargo.toml is owned by the toolchain and must be left alone, and that `cargo test` must pass from the workspace root. The agent's final message admits the new crate isn't listed under `[workspace.members]` but claims it \"ran under it — no matter, works,\" without verifying why (likely a wildcard/glob member pattern already present in the root manifest, or default-members behavior). This is worth double-checking: if the root manifest doesn't already glob-include new directories, `cargo test` from the root may not actually be exercising this crate in CI, contradicting the \"ensure cargo test passes from the workspace root\" requirement.\n"
-    suggestion: Clarify whether the root workspace manifest already includes new member crates automatically (e.g. via a `snapshot_diff/*` or `*` glob in `[workspace.members]`), or whether the prompt should explicitly state that membership registration is out of scope / already handled.
+    kind: no-op
+    message: Create-module task produced NO CHANGES — crate reportedly already existed and matched the spec.
+    reasoning: 'The prompt is an imperative to CREATE a new member crate (snapshot_diff/Cargo.toml and snapshot_diff/src/lib.rs) with a specific diff_snapshots function. The agent made NO CHANGES, reporting that the code already matches the prompt and `cargo test` passes (7 passed). For a "create this module" instruction, an empty diff means the crate pre-existed and already satisfied every requirement (BTreeMap iteration yields sorted paths, added/changed kept, removed dropped). Nothing was authored because there was nothing left to author — but the author should confirm the pre-existing crate is genuinely the intended artifact and not a stale duplicate.
+'
+  - promptLines:
+      - 32
+      - 32
+    kind: ambiguity
+    message: Stray `</content>` line at end of prompt body looks like an accidental markup artifact.
+    reasoning: "Line 32 is a lone `</content>` closing tag with no matching open tag anywhere in the prompt. It reads as an accidental copy/paste or templating artifact rather than an intentional requirement. It has no bearing on the module spec and was correctly ignored, but its presence suggests the prompt body may have been assembled from a wrapped source and leaked a delimiter.\n"
+    suggestion: Remove the stray `</content>` line.
+  - promptLines:
+      - 15
+      - 16
+    kind: assumption
+    message: Verified via `cargo test` from workspace root; assumed pre-existing tests are the intended coverage.
+    reasoning: The prompt requires `cargo test` to pass from the workspace root before finishing but does not specify which tests must exist. The agent relied on the 7 already-present tests as sufficient evidence and added none. Assumed the existing suite adequately exercises the added/changed/ removed/sorted-order cases described in lines 23-31; no new test was written to confirm the worked example on lines 29-31.

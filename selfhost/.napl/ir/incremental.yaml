@@ -4,48 +4,48 @@ deps:
   - schemas_attribution
 types:
   - name: BodyLineDiff
-    description: 'Result of diffing two prompt bodies line-by-line. Fields: "unified" (unified diff text with 3 lines of context, hunks joined by newline, no trailing newline), "changed_old_lines" (1-based old-body line numbers of deleted/changed lines, in order), "changed_new_lines" (1-based new-body line numbers of inserted/changed lines, in order).'
+    description: 'Result of a line-level diff between two prompt bodies. Public, cloneable, and equality-comparable. Fields: unified (a unified-diff string with 3 lines of context, hunk headers of the form "@@ -oldStart,oldCount +newStart,newCount @@", body lines prefixed by a space for unchanged, "-" for deletions, "+" for insertions, hunks joined by newlines with no trailing newline), changed_old_lines (1-based old-body line numbers of deleted lines, in order), and changed_new_lines (1-based new-body line numbers of inserted lines, in order).'
 functions:
   - name: diff_body_lines
     signature: "diff_body_lines(old_body: string, new_body: string) -> BodyLineDiff"
-    behavior: 'Splits each body into lines on "\n", stripping a trailing "\r" from each line. Computes a longest-common-subsequence alignment producing an ordered sequence of equal/deletion/insertion operations; deletions carry a 1-based old-body line number, insertions a 1-based new-body line number, equals carry both. When a deletion and an insertion are equally valid next steps (neither extends the common subsequence further), the deletion is chosen first. Returns changed_old_lines as the ordered old-body line numbers of all deletions, changed_new_lines as the ordered new-body line numbers of all insertions. Builds a unified diff with 3 lines of context: operations within 3 positions of any change are grouped into a hunk; a purely-equal run wider than the context boundary splits hunks. Each hunk is rendered as a header "@@ -oldStart,oldCount +newStart,newCount @@" (oldStart/oldCount over equal+deletion lines, newStart/newCount over equal+insertion lines; start is 0 if the hunk has no such lines) followed by one line per operation (" text" for equal, "-text" for deletion, "+text" for insertion). All hunk lines are joined with "\n" with no trailing newline; identical bodies yield an empty unified string.'
+    behavior: "Splits each body into lines on newline, stripping a trailing carriage return from each line (so a trailing newline yields a final empty line). Computes an LCS alignment of the two line sequences into an ordered list of equal/deletion/insertion operations; when the choice between a deletion and an insertion is free, prefers the deletion. Postcondition: changed_old_lines lists the 1-based old-line numbers of deletions in order; changed_new_lines lists the 1-based new-line numbers of insertions in order; unified renders the operations grouped into hunks with 3 lines of context, where a purely-equal run wider than the context splits hunks and changes within 3 operations of each other merge into one hunk. Identical bodies produce empty change lists and an empty unified string."
   - name: select_intersecting_entries
-    signature: "select_intersecting_entries(entries: List<AttributionEntry>, changed_old_lines: List<usize>) -> List<AttributionEntry>"
-    behavior: Returns cloned entries, preserving input order, for which at least one line in the inclusive range [entry.prompt_lines.start, entry.prompt_lines.end] (as usize) is present in changed_old_lines. Entries with no overlap are excluded.
+    signature: "select_intersecting_entries(entries: AttributionEntry[], changed_old_lines: usize[]) -> AttributionEntry[]"
+    behavior: Returns a cloned copy of each entry whose inclusive prompt range (prompt_lines.start ..= prompt_lines.end, compared as integers) contains at least one line number present in changed_old_lines. Preserves the input order of entries. Entries with no overlapping line are excluded.
   - name: incremental_unlock_list
-    signature: "incremental_unlock_list(owned_files: List<string>, intersecting_entries: List<AttributionEntry>, target_rel_to_root: string) -> List<string>"
-    behavior: Builds a list starting from owned_files, then appends "{target_rel_to_root}/{entry.file}" for each intersecting entry in order. Sorts the combined list lexicographically and removes duplicate entries, returning the sorted, deduplicated result. Returns an empty list when both inputs are empty.
+    signature: "incremental_unlock_list(owned_files: string[], intersecting_entries: AttributionEntry[], target_rel_to_root: string) -> string[]"
+    behavior: 'Starts from the owned files, then appends for each intersecting entry the string "{target_rel_to_root}/{entry.file}". Postcondition: the returned vector is sorted ascending and deduplicated. Empty inputs yield an empty list.'
 tests:
   - name: splits_lines_and_strips_cr
-    given: old_body and new_body both equal to "a\r\nb\r\n" (CRLF line endings, trailing empty line)
-    expect: diff_body_lines returns changed_old_lines empty, changed_new_lines empty, and unified equal to empty string
+    given: diff_body_lines of "a\r\nb\r\n" against itself
+    expect: changed_old_lines empty, changed_new_lines empty, unified is ""
   - name: identical_bodies_produce_no_changes
-    given: old_body and new_body both equal to "Greet a person by name."
-    expect: changed_old_lines and changed_new_lines are empty, unified is empty string
+    given: diff_body_lines of "Greet a person by name." against itself
+    expect: empty changed_old_lines, empty changed_new_lines, unified is ""
   - name: single_line_change_reports_delete_and_insert
-    given: old_body "Greet a person by name.", new_body "Greet a person by name, loudly."
-    expect: changed_old_lines is [1], changed_new_lines is [1]; unified contains "-Greet a person by name." and "+Greet a person by name, loudly."; unified starts with "@@ -1,1 +1,1 @@"
+    given: diff_body_lines from "Greet a person by name." to "Greet a person by name, loudly."
+    expect: changed_old_lines == [1], changed_new_lines == [1], unified contains "-Greet a person by name." and "+Greet a person by name, loudly." and starts with "@@ -1,1 +1,1 @@"
   - name: context_lines_are_included_in_hunk
-    given: old_body "one\ntwo\nthree\nfour\nfive", new_body "one\ntwo\nCHANGED\nfour\nfive"
-    expect: changed_old_lines is [3], changed_new_lines is [3]; unified equals "@@ -1,5 +1,5 @@\n one\n two\n-three\n+CHANGED\n four\n five"
+    given: old "one/two/three/four/five" and new "one/two/CHANGED/four/five" (newline-separated)
+    expect: changed_old_lines == [3], changed_new_lines == [3], unified equals "@@ -1,5 +1,5 @@\n one\n two\n-three\n+CHANGED\n four\n five"
   - name: distant_changes_split_into_separate_hunks
-    given: old_body is 20 lines "line1".. "line20" joined by newline; new_body same but line 1 replaced with "CHANGED1" and line 20 replaced with "CHANGED20"
-    expect: unified contains exactly 2 hunk headers (2 occurrences of "@@" pairs)
+    given: 20 lines with line 1 and line 20 changed
+    expect: unified contains 2 hunks
   - name: adjacent_changes_merge_into_one_hunk
-    given: old_body is 8 lines "line1".."line8" joined by newline; new_body same but line 1 replaced with "CHANGED1" and line 8 replaced with "CHANGED8" (gap of 6 equal lines between changes)
-    expect: unified contains exactly 1 hunk header
+    given: 8 lines with line 1 and line 8 changed (gap of 6 equal lines)
+    expect: unified contains 1 hunk
   - name: prefers_deletion_on_free_choice
-    given: old_body "a\nx", new_body "a\ny" (tie between deletion and insertion at line 2)
-    expect: changed_old_lines is [2], changed_new_lines is [2] (deletion emitted before insertion on free choice)
+    given: diff_body_lines from "a\nx" to "a\ny" (a free delete/insert tie)
+    expect: changed_old_lines == [2], changed_new_lines == [2]
   - name: select_intersecting_entries_keeps_only_overlapping_ranges
-    given: entries with prompt_lines (1,2)->"a.rs", (3,3)->"b.rs", (5,6)->"c.rs"; changed_old_lines [3, 7]
-    expect: returns exactly one entry, with file "b.rs"
+    given: entries [(1..2,"a.rs"), (3..3,"b.rs"), (5..6,"c.rs")] with changed_old_lines [3, 7]
+    expect: one entry selected, its file is "b.rs"
   - name: select_intersecting_entries_preserves_order
-    given: entries [prompt_lines (5,5)->"z.rs", prompt_lines (1,1)->"a.rs"]; changed_old_lines [1, 5]
-    expect: 'returns two entries in original input order: ["z.rs", "a.rs"]'
+    given: entries [(5..5,"z.rs"), (1..1,"a.rs")] with changed_old_lines [1, 5]
+    expect: two entries selected in order "z.rs" then "a.rs"
   - name: unlock_list_merges_owned_and_intersecting_sorted_deduped
-    given: owned_files ["b.rs", "a.rs"]; intersecting_entries with file "a.rs" and file "c.rs"; target_rel_to_root "target/rust"
-    expect: returns ["a.rs", "b.rs", "target/rust/a.rs", "target/rust/c.rs"] (sorted, deduplicated)
+    given: owned ["b.rs", "a.rs"], entries [(1..1,"a.rs"), (2..2,"c.rs")], target_rel_to_root "target/rust"
+    expect: '["a.rs", "b.rs", "target/rust/a.rs", "target/rust/c.rs"]'
   - name: unlock_list_is_empty_when_no_input
-    given: empty owned_files, empty intersecting_entries, target_rel_to_root "target/rust"
-    expect: returns an empty list
+    given: incremental_unlock_list with empty owned files and empty entries, target "target/rust"
+    expect: empty list

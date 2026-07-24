@@ -2,61 +2,114 @@ module: schemas_frontmatter
 deps: []
 types:
   - name: PromptTest
-    description: "Single test case in frontmatter. Fields: name (string), given (YAML mapping, defaults empty mapping if omitted), expect (YAML mapping, defaults empty mapping if omitted). Deserializable, equality-comparable.\n"
+    description: "A single behavioral test case parsed from frontmatter. Supports equality comparison and deserialization. Fields: name (string); given (free-form YAML value, defaults to an empty mapping when omitted); expect (free-form YAML value, defaults to an empty mapping when omitted). After validation both given and expect are guaranteed to be YAML mappings.\n"
   - name: Frontmatter
-    description: "Validated frontmatter block. Fields: module (non-empty string, required), deps (list of strings, defaults empty), targets (list of strings, defaults empty), tests (list of PromptTest, defaults empty). Deserializable, equality-comparable.\n"
+    description: "The validated YAML frontmatter block. Supports equality comparison and deserialization. Fields: module (non-empty string, required); deps (list of strings, defaults to empty); targets (list of strings, defaults to empty); tests (list of PromptTest, defaults to empty); crate_name (optional string, defaults to none, deserialized from the on-disk YAML key `crate` since `crate` is a reserved identifier).\n"
   - name: ParsedPrompt
-    description: "Result of parsing a prompt file. Fields: frontmatter (Frontmatter), body (String, the prose after frontmatter with one leading blank line stripped). Equality-comparable.\n"
+    description: "The result of parsing a prompt file. Supports equality comparison. Fields: frontmatter (a Frontmatter); body (the cleaned prose body string that follows the closing delimiter).\n"
   - name: FrontmatterError
-    description: "Error returned on parse/validation failure. Variants: MissingFrontmatter (no valid opening/closing --- delimiters), InvalidYaml (YAML parse or deserialization failure, wraps underlying error), EmptyModule (module key missing or empty string), InvalidTestField (a test's given/expect is not a YAML mapping; carries test name and field name \"given\"/\"expect\"). Implements standard error/display traits with human-readable messages.\n"
+    description: "The error value returned when parsing fails. Distinguishes: a missing or unclosed frontmatter block; invalid YAML that fails to parse or deserialize (including a missing module key); an empty module value; and a test whose given or expect field is not a mapping (carrying the offending test name and field name). Rendered as a human-readable message; never raised as a panic.\n"
 functions:
   - name: parse_frontmatter
     signature: "parse_frontmatter(raw: string) -> Result<ParsedPrompt, FrontmatterError>"
-    behavior: 'Pure function, no I/O. Precondition: raw is the full text of a prompt file. Splits raw into a YAML frontmatter block and a body using delimiter rules: opening delimiter is literal "---" plus line ending at the very start of raw; closing delimiter is the next line that is exactly "---" (optional trailing line ending consumed). Supports both \n and \r\n line endings. If the opening delimiter is absent, or no closing "---" line is found, returns FrontmatterError::MissingFrontmatter. Parses the YAML between delimiters; an empty or null YAML block is treated as an empty mapping. YAML parse errors or deserialization failures return FrontmatterError::InvalidYaml. Deserializes into Frontmatter applying field defaults (deps/targets/tests default to empty list; given/expect on tests default to empty mapping). Requires module to be present and non-empty; otherwise returns FrontmatterError::EmptyModule. For every test case, requires given and expect to each be a YAML mapping; otherwise returns FrontmatterError::InvalidTestField naming the test and the offending field. Cleans the body: if it begins with a run of whitespace up to and including a newline (i.e., a single leading blank line), that prefix is removed; otherwise the body is left unchanged. On success returns ParsedPrompt with the validated Frontmatter and the cleaned body; never panics.
-'
+    behavior: "Precondition: raw is the full text of a prompt file. Splits the file into a YAML frontmatter block and a body. The opening delimiter is a literal `---` followed by a line ending (\\n or \\r\\n) at the very start of the file; the closing delimiter is the next line that is exactly `---`. Text between the delimiters is the YAML; text after the closing delimiter and its one consumed trailing line ending is the raw body. An absent opening delimiter or a missing closing `---` line returns an error. A completely empty or null YAML block is treated as an empty mapping. The mapping is deserialized into a Frontmatter applying all field defaults. Postconditions on success: module is a non-empty string (a missing module key or module set to \"\" is an error); every test's given and expect are YAML mappings (any other YAML type is an error); and the body has a single leading blank line removed — if the body begins with whitespace running up to and including a newline, everything up to and including that newline is dropped, otherwise the body is left unchanged. Returns a ParsedPrompt or a FrontmatterError; never panics.\n"
 tests:
-  - name: parses_full_frontmatter_with_test_case
-    given: 'Prompt document with module "auth/session", deps [auth/tokens], targets [typescript], one test "expired token rejected" with given {token: expired} and expect {error: SESSION_EXPIRED}, followed by a prose body.
-'
-    expect: 'Parses successfully; frontmatter fields match exactly as given; body starts with "Manage user sessions."
-'
-  - name: parses_minimal_frontmatter_with_defaults
-    given: "---\nmodule: solo\n---\nBody here.\n"
-    expect: 'module = "solo"; deps, targets, tests all empty; body equals "Body here.\n"
-'
-  - name: test_given_and_expect_default_to_empty_mapping
-    given: frontmatter with a test case that omits given and expect
-    expect: test.given and test.expect both equal an empty YAML mapping
-  - name: rejects_missing_frontmatter_entirely
-    given: '"no frontmatter here"'
-    expect: MissingFrontmatter error
-  - name: rejects_missing_module_key
-    given: "---\ndeps: []\n---\nbody"
-    expect: InvalidYaml error (module field required)
-  - name: rejects_empty_module_value
-    given: '---
+  - name: parses full frontmatter with test case
+    given:
+      raw: "---\nmodule: auth/session\ndeps: [auth/tokens]\ntargets: [typescript]\ntests:\n  - name: expired token rejected\n    given: { token: expired }\n    expect: { error: SESSION_EXPIRED }\n---\nManage user sessions. Sessions expire after 30 minutes.\n"
+    expect:
+      module: auth/session
+      deps:
+        - auth/tokens
+      targets:
+        - typescript
+      tests_len: 1
+      test_name: expired token rejected
+      test_given:
+        token: expired
+      test_expect:
+        error: SESSION_EXPIRED
+      body_starts_with: Manage user sessions.
+  - name: parses minimal frontmatter with defaults
+    given:
+      raw: "---\nmodule: solo\n---\nBody here.\n"
+    expect:
+      module: solo
+      deps: []
+      targets: []
+      tests: []
+      crate_name: null
+      body: "Body here.\n"
+  - name: parses crate key into crate_name
+    given:
+      raw: "---\nmodule: alpha\ncrate: shared\n---\nBody.\n"
+    expect:
+      module: alpha
+      crate_name: shared
+  - name: crate_name defaults to none when absent
+    given:
+      raw: "---\nmodule: solo\n---\nBody here.\n"
+    expect:
+      crate_name: null
+  - name: test given and expect default to empty mapping
+    given:
+      raw: "---\nmodule: m\ntests:\n  - name: bare test\n---\nBody\n"
+    expect:
+      test_given: {}
+      test_expect: {}
+  - name: rejects missing frontmatter entirely
+    given:
+      raw: no frontmatter here
+    expect:
+      error: MissingFrontmatter
+  - name: rejects missing module key
+    given:
+      raw: "---\ndeps: []\n---\nbody"
+    expect:
+      error: InvalidYaml
+  - name: rejects empty module value
+    given:
+      raw: '---
 module: ""
 ---
 body'
-    expect: EmptyModule error
-  - name: rejects_missing_closing_delimiter
-    given: "---\nmodule: m\nno closing delimiter here\n"
-    expect: MissingFrontmatter error
-  - name: rejects_non_mapping_given
-    given: "test with given: [1, 2] (a sequence, not a mapping)"
-    expect: InvalidTestField error with field "given"
-  - name: rejects_non_mapping_expect
-    given: "test with expect: 5 (a scalar, not a mapping)"
-    expect: InvalidTestField error with field "expect"
-  - name: strips_single_leading_blank_line_from_body
-    given: "---\nmodule: m\n---\n\nActual body.\n"
-    expect: body equals "Actual body.\n"
-  - name: does_not_strip_body_without_leading_blank_line
-    given: "---\nmodule: m\n---\nFirst line.\nSecond line.\n"
-    expect: body equals "First line.\nSecond line.\n" unchanged
-  - name: handles_crlf_line_endings
-    given: '"---\r\nmodule: m\r\n---\r\nBody.\r\n"'
-    expect: module = "m"; body equals "Body.\r\n"
-  - name: empty_yaml_block_treated_as_empty_mapping_still_requires_module
-    given: "---\n---\nbody (empty YAML block, no module)"
-    expect: InvalidYaml error (module still required even though empty block treated as empty mapping)
+    expect:
+      error: EmptyModule
+  - name: rejects missing closing delimiter
+    given:
+      raw: "---\nmodule: m\nno closing delimiter here\n"
+    expect:
+      error: MissingFrontmatter
+  - name: rejects non-mapping given
+    given:
+      raw: "---\nmodule: m\ntests:\n  - name: t\n    given: [1, 2]\n---\nbody"
+    expect:
+      error: InvalidTestField
+      field: given
+  - name: rejects non-mapping expect
+    given:
+      raw: "---\nmodule: m\ntests:\n  - name: t\n    expect: 5\n---\nbody"
+    expect:
+      error: InvalidTestField
+      field: expect
+  - name: strips single leading blank line from body
+    given:
+      raw: "---\nmodule: m\n---\n\nActual body.\n"
+    expect:
+      body: "Actual body.\n"
+  - name: does not strip body without leading blank line
+    given:
+      raw: "---\nmodule: m\n---\nFirst line.\nSecond line.\n"
+    expect:
+      body: "First line.\nSecond line.\n"
+  - name: handles crlf line endings
+    given:
+      raw: "---\r\nmodule: m\r\n---\r\nBody.\r\n"
+    expect:
+      module: m
+      body: "Body.\r\n"
+  - name: empty yaml block treated as empty mapping still requires module
+    given:
+      raw: "---\n---\nbody"
+    expect:
+      error: InvalidYaml

@@ -8,23 +8,39 @@ entries:
     lines:
       - 4
       - 5
-    note: recognized source-file extensions const array
+    note: public array of recognized source-file extensions in order
   - promptLines:
       - 24
-      - 28
+      - 24
     file: gen_classify/src/lib.rs
     lines:
       - 11
+      - 11
+    note: is_source_file signature
+  - promptLines:
+      - 29
+      - 30
+    file: gen_classify/src/lib.rs
+    lines:
+      - 12
       - 15
-    note: is_source_file signature, base name extraction
+    note: base name after last slash, else whole string
   - promptLines:
       - 31
       - 33
     file: gen_classify/src/lib.rs
     lines:
       - 7
+      - 7
+    note: config suffix constants
+  - promptLines:
+      - 31
+      - 33
+    file: gen_classify/src/lib.rs
+    lines:
+      - 17
       - 19
-    note: config suffix check returns false
+    note: return false if base ends with config suffix
   - promptLines:
       - 34
       - 35
@@ -32,7 +48,7 @@ entries:
     lines:
       - 21
       - 23
-    note: find last dot, no dot -> false
+    note: find last dot, false if none
   - promptLines:
       - 36
       - 38
@@ -40,44 +56,84 @@ entries:
     lines:
       - 25
       - 26
-    note: extension slice, membership check
-  - promptLines:
-      - 40
-      - 42
-    file: gen_classify/src/lib.rs
-    lines:
-      - 65
-      - 91
-    note: worked-decision tests for is_source_file
+    note: extension from last dot, check membership
   - promptLines:
       - 44
-      - 50
+      - 44
     file: gen_classify/src/lib.rs
     lines:
       - 30
-      - 41
-    note: first_meaningful_line impl - split, strip CR/#, trim, cap 120, default
+      - 30
+    note: first_meaningful_line signature
   - promptLines:
-      - 52
-      - 55
+      - 46
+      - 46
     file: gen_classify/src/lib.rs
     lines:
-      - 100
-      - 116
-    note: worked-decision tests for first_meaningful_line
+      - 31
+      - 31
+    note: split body on newline, iterate in order
+  - promptLines:
+      - 47
+      - 47
+    file: gen_classify/src/lib.rs
+    lines:
+      - 32
+      - 32
+    note: strip single trailing carriage return
+  - promptLines:
+      - 47
+      - 48
+    file: gen_classify/src/lib.rs
+    lines:
+      - 33
+      - 33
+    note: strip all leading hash characters
+  - promptLines:
+      - 48
+      - 48
+    file: gen_classify/src/lib.rs
+    lines:
+      - 34
+      - 34
+    note: trim leading/trailing whitespace
+  - promptLines:
+      - 48
+      - 49
+    file: gen_classify/src/lib.rs
+    lines:
+      - 35
+      - 35
+    note: return first non-empty result
+  - promptLines:
+      - 49
+      - 49
+    file: gen_classify/src/lib.rs
+    lines:
+      - 36
+      - 37
+    note: cap to first 120 Unicode chars and return
+  - promptLines:
+      - 50
+      - 50
+    file: gen_classify/src/lib.rs
+    lines:
+      - 40
+      - 40
+    note: fallback (no description) literal
   - promptLines:
       - 57
-      - 63
+      - 57
     file: gen_classify/src/lib.rs
     lines:
       - 44
-      - 49
-    note: split_body_lines CRLF-aware split impl
+      - 44
+    note: split_body_lines signature
   - promptLines:
-      - 61
-      - 63
+      - 59
+      - 60
     file: gen_classify/src/lib.rs
     lines:
-      - 129
-      - 147
-    note: worked-decision tests for split_body_lines
+      - 45
+      - 48
+    note: split on newline, strip trailing CR, collect owned strings

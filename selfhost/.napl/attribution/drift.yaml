@@ -6,33 +6,89 @@ entries:
       - 20
     file: drift/src/lib.rs
     lines:
-      - 4
+      - 3
       - 10
-    note: DriftReason enum with Edited/Missing, derives
+    note: DriftReason enum with Edited/Missing, equality+copy derives
   - promptLines:
       - 21
       - 28
     file: drift/src/lib.rs
     lines:
-      - 13
+      - 12
       - 28
-    note: DriftedFile struct fields and equality derive
+    note: DriftedFile struct with public fields and Eq
+  - promptLines:
+      - 22
+      - 22
+    file: drift/src/lib.rs
+    lines:
+      - 16
+      - 16
+    note: file field, path relative to project root
+  - promptLines:
+      - 22
+      - 22
+    file: drift/src/lib.rs
+    lines:
+      - 17
+      - 17
+    note: reason field
+  - promptLines:
+      - 23
+      - 23
+    file: drift/src/lib.rs
+    lines:
+      - 18
+      - 19
+    note: expected_hash Option<String>
+  - promptLines:
+      - 24
+      - 24
+    file: drift/src/lib.rs
+    lines:
+      - 20
+      - 21
+    note: actual_hash Option<String>
+  - promptLines:
+      - 25
+      - 26
+    file: drift/src/lib.rs
+    lines:
+      - 22
+      - 23
+    note: baseline Option<String>
+  - promptLines:
+      - 26
+      - 26
+    file: drift/src/lib.rs
+    lines:
+      - 24
+      - 25
+    note: current Option<String>
+  - promptLines:
+      - 27
+      - 28
+    file: drift/src/lib.rs
+    lines:
+      - 26
+      - 27
+    note: diff Option<String>
   - promptLines:
       - 29
       - 31
     file: drift/src/lib.rs
     lines:
-      - 31
+      - 30
       - 37
-    note: ModuleDrift struct fields and equality derive
+    note: ModuleDrift struct with module/prompt_file/target/files and Eq
   - promptLines:
-      - 35
+      - 33
       - 36
     file: drift/src/lib.rs
     lines:
-      - 84
+      - 83
       - 85
-    note: format_gen_drift_report signature, lines list
+    note: format_gen_drift_report signature, builds lines vec
   - promptLines:
       - 38
       - 42
@@ -40,15 +96,15 @@ entries:
     lines:
       - 87
       - 90
-    note: BLOCKED header line and trailing blank line
+    note: BLOCKED opening line then empty line
   - promptLines:
       - 44
       - 48
     file: drift/src/lib.rs
     lines:
-      - 93
+      - 92
       - 99
-    note: module header line with count and prompt_file
+    note: per-module header line with count and prompt_file
   - promptLines:
       - 49
       - 49
@@ -56,31 +112,79 @@ entries:
     lines:
       - 101
       - 103
-    note: emit per-file blocks
+    note: emit one block per drifted file
   - promptLines:
       - 50
-      - 51
+      - 50
     file: drift/src/lib.rs
     lines:
       - 105
-      - 106
-    note: empty line then Resolve header
+      - 105
+    note: empty line before resolutions block
   - promptLines:
       - 52
-      - 58
+      - 52
     file: drift/src/lib.rs
     lines:
       - 106
+      - 106
+    note: Resolve it one of three ways line
+  - promptLines:
+      - 53
+      - 53
+    file: drift/src/lib.rs
+    lines:
+      - 107
+      - 110
+    note: resolution 1) napl reconcile
+  - promptLines:
+      - 54
+      - 54
+    file: drift/src/lib.rs
+    lines:
+      - 111
+      - 114
+    note: resolution 2) napl gen --force
+  - promptLines:
+      - 55
+      - 55
+    file: drift/src/lib.rs
+    lines:
+      - 115
+      - 118
+    note: resolution 3) edit the prompt
+  - promptLines:
+      - 58
+      - 58
+    file: drift/src/lib.rs
+    lines:
       - 119
-    note: resolution numbered lines and trailing blank
+      - 119
+    note: trailing empty line after block
+  - promptLines:
+      - 35
+      - 36
+    file: drift/src/lib.rs
+    lines:
+      - 122
+      - 122
+    note: join lines with newline into String
+  - promptLines:
+      - 60
+      - 60
+    file: drift/src/lib.rs
+    lines:
+      - 47
+      - 48
+    note: format_drifted_file builds line vec
   - promptLines:
       - 62
-      - 64
+      - 65
     file: drift/src/lib.rs
     lines:
       - 50
       - 54
-    note: missing file line, four-space indent
+    note: "Missing reason: file (missing...) line indented four"
   - promptLines:
       - 66
       - 70
@@ -88,23 +192,39 @@ entries:
     lines:
       - 55
       - 57
-    note: recorded hash line when expected_hash present
+    note: recorded hash line only when expected_hash present
   - promptLines:
       - 72
       - 75
     file: drift/src/lib.rs
     lines:
       - 59
-      - 61
-    note: edited file header line
+      - 60
+    note: "Edited reason: file (edited by hand) line"
   - promptLines:
       - 76
-      - 81
+      - 77
     file: drift/src/lib.rs
     lines:
       - 61
+      - 65
+    note: check diff present and not blank
+  - promptLines:
+      - 79
+      - 80
+    file: drift/src/lib.rs
+    lines:
+      - 66
+      - 66
+    note: recorded baseline -> current header
+  - promptLines:
+      - 81
+      - 82
+    file: drift/src/lib.rs
+    lines:
       - 67
-    note: diff presence check and indented diff output
+      - 67
+    note: diff text with each line indented six spaces
   - promptLines:
       - 39
       - 45
@@ -112,52 +232,28 @@ entries:
     lines:
       - 39
       - 45
-    note: indent helper for diff lines
+    note: indent helper prefixes each line
   - promptLines:
       - 82
-      - 91
+      - 85
     file: drift/src/lib.rs
     lines:
       - 68
-      - 77
-    note: fallback hash-comparison lines with none defaults
+      - 72
+    note: "no-diff branch: comparing hashes only header"
   - promptLines:
-      - 95
-      - 100
+      - 86
+      - 89
     file: drift/src/lib.rs
     lines:
-      - 130
-      - 157
-    note: "worked example test: edited file with diff"
+      - 73
+      - 75
+    note: "recorded: expected_hash or (none)"
   - promptLines:
-      - 101
-      - 103
+      - 87
+      - 91
     file: drift/src/lib.rs
     lines:
-      - 160
-      - 205
-    note: "worked example tests: no diff / blank diff hash comparison"
-  - promptLines:
-      - 104
-      - 106
-    file: drift/src/lib.rs
-    lines:
-      - 208
-      - 228
-    note: "worked example test: missing file with hash"
-  - promptLines:
-      - 20
-      - 20
-    file: drift/src/lib.rs
-    lines:
-      - 302
-      - 306
-    note: test asserting DriftReason equality/copy
-  - promptLines:
-      - 28
-      - 28
-    file: drift/src/lib.rs
-    lines:
-      - 308
-      - 318
-    note: test asserting DriftedFile equality
+      - 74
+      - 76
+    note: "current: actual_hash or (none), two spaces"

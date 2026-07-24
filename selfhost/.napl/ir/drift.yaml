@@ -2,37 +2,49 @@ module: drift
 deps: []
 types:
   - name: DriftReason
-    description: Enum with variants Edited (file edited by hand) and Missing (locked file deleted). Supports equality and copy semantics.
+    description: "Enumeration of why a generated file is considered drifted. Two variants: Edited (file was changed by hand) and Missing (locked file was deleted). Supports value equality and copy semantics.\n"
   - name: DriftedFile
-    description: "Struct describing one drifted generated file: file (String, path relative to project root); reason (DriftReason); expected_hash (Option<String>, hash recorded in the map, if known); actual_hash (Option<String>, hash of current on-disk content, if present); baseline (Option<String>, journal-reconstructed baseline content, if recoverable); current (Option<String>, current on-disk content, if present); diff (Option<String>, baseline-to-current unified diff, if computable). Supports equality."
+    description: "A single generated file that has drifted from the prompt. Public fields: file (string, path relative to project root); reason (DriftReason); expected_hash (optional string, hash recorded in the map); actual_hash (optional string, hash of current on-disk content); baseline (optional string, journal-reconstructed baseline content); current (optional string, current on-disk content); diff (optional string, baseline-to-current unified diff). Supports value equality.\n"
   - name: ModuleDrift
-    description: "Struct describing drift found within a single module: module (String), prompt_file (String), target (String), files (list of DriftedFile). Supports equality."
+    description: "Drift found within a single module. Public fields: module (string), prompt_file (string), target (string), and files (list of DriftedFile). Supports value equality.\n"
 functions:
   - name: format_gen_drift_report
-    signature: "format_gen_drift_report(drifts: &[ModuleDrift], target: &str) -> String"
-    behavior: "Pure, no I/O. Given a list of ModuleDrift and a target name, returns a single String (lines joined by newline) forming the guided drift report the CLI prints before blocking 'napl gen <target>'. Report opens with a 'BLOCKED  drift detected — cannot run 'napl gen <target>' while generated files have hand edits that are not reflected in any prompt.' line, then a blank line. For each ModuleDrift, in input order, emits a header '  module <module> (<target>) — <count> file(s) drifted (from <prompt_file>):' where count is the number of files in that module's files list; then one block per drifted file (see per-file rules below); then a blank line; then a resolutions block: '  Resolve it one of three ways:', '    1) napl reconcile <module>  — fold this edit back into your prompt', '    2) napl gen <target> --module <module> --force  — discard the edit, the prompt wins' (using that ModuleDrift's own target, not necessarily the function's target argument), '    3) edit the prompt to describe the change, then napl gen <target>'; then a blank line. Per-file rules: for reason=Missing, emits '    <file> (missing — the locked file was deleted)', and if expected_hash is Some, an additional line '      recorded hash: <hash>' (omitted when expected_hash is None). For reason=Edited, emits '    <file> (edited by hand)'; if diff is Some and its trimmed content is non-empty, emits '      recorded baseline -> current:' followed by the diff text with every line indented six spaces; otherwise emits three lines indented six spaces: 'baseline content is not recoverable from the journal (pre-journal state); comparing hashes only:', 'recorded: <expected_hash or (none)>', 'current:  <actual_hash or (none)>' (two spaces after 'current:' so hash values align with 'recorded: '). Handles empty drifts list (no per-module blocks) and multiple modules (each gets its own full header/files/resolutions block) and multiple files per module (each formatted independently)."
+    signature: "(drifts: list<ModuleDrift>, target: string) -> string"
+    behavior: "Pure formatter with no I/O. Produces the pinned guided drift report as a single string of lines joined by newlines. Opens with \"BLOCKED  drift detected — cannot run 'napl gen <target>' while generated files have hand edits that are not reflected in any prompt.\" (target substituted), followed by an empty line. For each ModuleDrift in order, emits a header line beginning with two spaces: \"  module <module> (<target>) — <count> file(s) drifted (from <prompt_file>):\" where count is the number of drifted files. Then one block per drifted file, then an empty line, then a resolutions block: \"  Resolve it one of three ways:\" (two-space indent) and three numbered lines (four-space indent): \"1) napl reconcile <module>  — fold this edit back into your prompt\", \"2) napl gen <target> --module <module> --force — discard the edit, the prompt wins\", \"3) edit the prompt to describe the change, then napl gen <target>\" (note two spaces before each em dash), then an empty line. Per drifted file block: for reason Missing, emit \"    <file> (missing — the locked file was deleted)\" (four-space indent), and only when expected_hash is present a following line \"      recorded hash: <hash>\" (six-space indent). For reason Edited, emit \"    <file> (edited by hand)\" (four-space indent); then when diff is present and not blank (not empty or whitespace-only), emit \"      recorded baseline -> current:\" (six-space indent) followed by the diff with every line indented six spaces; otherwise emit three six-space-indented lines: \"baseline content is not recoverable from the journal (pre-journal state); comparing hashes only:\", \"recorded: <hash>\" (one space after colon), and \"current:  <hash>\" (two spaces after colon so values align), where a missing expected_hash/actual_hash renders as the literal \"(none)\".\n"
 tests:
   - name: edited_file_with_diff
-    given: One ModuleDrift (module="greeting", prompt_file="examples/greeting.napl", target="typescript") with one DriftedFile (file=".napl/src/typescript/greet.ts", reason=Edited, expected_hash=Some("aaa"), actual_hash=Some("bbb"), diff=Some("-hello\n+hello there")), formatted with target "typescript"
-    expect: Report contains "drift detected", "module greeting (typescript)", ".napl/src/typescript/greet.ts (edited by hand)", "recorded baseline -> current:", "      -hello", "      +hello there", "1) napl reconcile greeting", "2) napl gen typescript --module greeting --force", and "3) edit the prompt to describe the change, then napl gen typescript"
+    given: 'One ModuleDrift for module "greeting" (prompt "examples/greeting.napl", target "typescript") with a single Edited file ".napl/src/typescript/greet.ts" having a non-empty diff "-hello\n+hello there"; target "typescript".
+'
+    expect: 'Report contains "drift detected", "module greeting (typescript)", ".napl/src/typescript/greet.ts (edited by hand)", "recorded baseline -> current:", the diff lines indented six spaces ("      -hello", "      +hello there"), "1) napl reconcile greeting", "2) napl gen typescript --module greeting --force", and "3) edit the prompt to describe the change, then napl gen typescript".
+'
   - name: edited_file_without_diff_compares_hashes
-    given: Same module/file as above but diff=None, baseline=None, current=None, expected_hash=Some("aaa"), actual_hash=Some("bbb")
-    expect: 'Report contains "comparing hashes only", "recorded: aaa", and "current:  bbb" (two spaces before bbb)'
+    given: 'One Edited file with diff absent (none), expected_hash "aaa", actual_hash "bbb"; target "typescript".
+'
+    expect: 'Report contains "comparing hashes only", "recorded: aaa", and "current:  bbb" (two spaces before bbb).
+'
   - name: edited_file_with_blank_diff_compares_hashes
-    given: DriftedFile (file="greet.ts", reason=Edited, expected_hash=None, actual_hash=None, diff=Some("   \n") — whitespace only)
-    expect: 'Report contains "comparing hashes only", "recorded: (none)", and "current:  (none)"'
+    given: 'One Edited file "greet.ts" with a whitespace-only diff "   \n", and both expected_hash and actual_hash absent; target "typescript".
+'
+    expect: 'Report contains "comparing hashes only", "recorded: (none)", and "current:  (none)".
+'
   - name: missing_file_with_hash
-    given: DriftedFile (file="gone.ts", reason=Missing, expected_hash=Some("h"))
-    expect: 'Report contains "gone.ts (missing — the locked file was deleted)" and "recorded hash: h"'
+    given: 'One Missing file "gone.ts" with expected_hash "h"; target "typescript".
+'
+    expect: 'Report contains "gone.ts (missing — the locked file was deleted)" and "recorded hash: h".
+'
   - name: missing_file_without_hash_has_no_recorded_line
-    given: DriftedFile (file="gone.ts", reason=Missing, expected_hash=None)
-    expect: Report does not contain the substring "recorded hash:"
+    given: 'One Missing file "gone.ts" with expected_hash absent; target "typescript".
+'
+    expect: Report does not contain "recorded hash:".
   - name: header_and_resolutions_use_target
-    given: One ModuleDrift with target "typescript" and one Missing file with no hash, formatted with target "typescript"
-    expect: Report starts with "BLOCKED  drift detected — cannot run 'napl gen typescript' while generated files have hand edits that are not reflected in any prompt.\n\n"
+    given: 'One ModuleDrift with a single Missing file; target "typescript".
+'
+    expect: "Report starts with \"BLOCKED  drift detected — cannot run 'napl gen typescript' while generated files have hand edits that are not reflected in any prompt.\\n\\n\" (target substituted, followed by a blank line).\n"
   - name: multiple_modules_each_get_full_block
-    given: Two ModuleDrift entries (module "a" and module "b"), each with target "typescript", prompt_file "examples/<module>.napl", and one Missing file "x.ts" with no hash
-    expect: Report contains "module a (typescript)", "module b (typescript)", "napl reconcile a", and "napl reconcile b"
+    given: 'Two ModuleDrifts, modules "a" and "b", each with one Missing file, target "typescript".
+'
+    expect: 'Report contains "module a (typescript)", "module b (typescript)", "napl reconcile a", and "napl reconcile b" — each module gets its own full block.
+'
   - name: drift_reason_and_drifted_file_support_equality_and_copy
-    given: A DriftReason::Edited value copied to another binding, and compared against DriftReason::Missing; a DriftedFile value cloned
-    expect: The copied DriftReason equals the original; Edited does not equal Missing; the cloned DriftedFile equals the original
+    given: "A DriftReason copied by value; two Edited/Missing reasons compared; a DriftedFile cloned.\n"
+    expect: Copied reason equals its source, Edited does not equal Missing, and a cloned DriftedFile equals the original (equality and copy supported).

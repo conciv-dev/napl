@@ -2,15 +2,29 @@ module: schemas_lock
 target: rust
 entries:
   - promptLines:
-      - 10
-      - 32
-    kind: note
-    message: Diff only shows lib.rs; crate/workspace wiring (Cargo.toml, sibling path dep) isn't visible to confirm.
-    reasoning: "Prompt requires creating schemas_lock/Cargo.toml with a path dependency on ../extensions, and touching nothing else. The provided change list only contains schemas_lock/src/lib.rs — no Cargo.toml content was shown, so the package name, path dependency declaration, and workspace membership can't be verified from what was given, even though the agent's final message claims the whole workspace builds and tests pass.\n"
+      - 64
+      - 67
+    kind: no-op
+    message: NO CHANGES — existing schemas_lock code already satisfies whole prompt per agent.
+    reasoning: Prompt diff empty. Agent reports every type, constant, validator, and resolver already present and 20/20 tests pass from workspace root, so no edits produced. Cannot independently confirm the pre-existing source matches the contract, but nothing in the prompt was actionable as a change.
   - promptLines:
-      - 69
-      - 69
+      - 64
+      - 64
+    kind: ambiguity
+    message: parse_lock error type written as `Result<HlLock, _>` — concrete error type left unspecified.
+    reasoning: The signature uses a placeholder `_` for the error type. Prompt never names an error type (custom enum, String, serde_json::Error, Box<dyn Error>, etc.). Whatever the existing code uses was accepted, but the contract does not pin it, so callers cannot rely on a stable error type.
+    suggestion: "State the concrete error type, e.g. `parse_lock(raw: &str) -> Result<HlLock, LockError>` and define LockError, or explicitly say the error type is unconstrained."
+  - promptLines:
+      - 42
+      - 43
+    kind: ambiguity
+    message: AgentPreset derive set underspecified — only serialize/deserialize + case named; Clone/PartialEq/Copy unstated.
+    reasoning: Backend (line 41) is explicitly 'comparable and copyable', but AgentPreset only gets serde + lowercase casing. AgentConfig embeds AgentPreset and default_agent_config returns one, so extra derives (Clone/PartialEq) are likely needed. Prompt leaves which traits AgentPreset derives open.
+    suggestion: For AgentPreset, list the required derives explicitly (e.g. also comparable and copyable) as done for Backend.
+  - promptLines:
+      - 44
+      - 48
     kind: assumption
-    message: Empty-model check treats only the literal empty string as invalid, not whitespace-only strings.
-    reasoning: "\"model must not be empty\" was implemented as `lock.model.is_empty()`, which only rejects the exact empty string \"\". A whitespace-only model like \" \" passes validation. The prompt doesn't address whitespace, so this literal interpretation was assumed to be correct.\n"
-    suggestion: model must not be empty or whitespace-only — reject after trimming.
+    message: AgentConfig derives not spelled out; assumed matching serde + clone semantics needed by resolvers/defaults.
+    reasoning: Line 36 says 'deriving the serde traits noted' but AgentConfig's clause only calls out serde behavior (skip when None, deny_unknown_fields) without naming Clone/PartialEq. resolve_agent_config returns AgentConfig by value and default_agent_config constructs one, implying Clone is expected. The exact derive set was left to the implementer.
+    suggestion: Enumerate AgentConfig's required derives (Serialize, Deserialize, Clone, and any comparison traits) explicitly.

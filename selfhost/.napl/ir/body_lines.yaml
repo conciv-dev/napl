@@ -2,60 +2,60 @@ module: body_lines
 deps: []
 types:
   - name: PromptBody
-    description: "Value holding the prose body of a prompt document: 'body_start_line' (absolute 0-based document line index where the body begins) and 'lines' (the body's lines, in order, as owned strings)."
+    description: "The prose body of a prompt document, split into lines, with the absolute document line at which the body begins. Has two public fields: \"body_start_line\", a 0-based absolute document line index where the body starts, and \"lines\", the body's lines in order as owned strings."
 functions:
   - name: prompt_body_lines
     signature: "prompt_body_lines(raw: string) -> PromptBody"
-    behavior: Splits raw document text into lines on newline characters, stripping a trailing carriage return from each line so CRLF and LF documents split identically; splitting never drops a line (no trailing newline still yields the last line, a trailing newline yields a final empty line). Frontmatter is recognized when the first line, compared after stripping trailing whitespace, equals '---' and some later line, compared the same way, also equals '---'. When both delimiters are present, body_start_line is the index of the first line after the closing '---' and lines is everything after it; if the closing delimiter is the last line, lines is a single-element list containing an empty string. When the first line is not '---', or no closing '---' exists after it, body_start_line is 0 and lines is the entire document's lines.
+    behavior: 'Splits the raw document into lines on the newline character, stripping a trailing carriage return from each line so Windows (CRLF) and Unix (LF) endings yield identical lines; splitting never drops a line, so a document with no trailing newline still yields its last line and one ending in a newline yields a final empty line. Recognises frontmatter when the first line, compared after ignoring trailing whitespace, is exactly "---" and some later line, also compared ignoring trailing whitespace, is exactly "---". When both delimiters are present, the body is everything after the closing "---": "body_start_line" is the index of the first line after that closing delimiter and "lines" holds the remaining lines. When the first line is not "---" or no closing "---" is found, there is no frontmatter: "body_start_line" is 0 and "lines" is the whole document. When frontmatter is immediately followed by nothing, the body is exactly one line: the empty string.'
   - name: body_line_for_doc_line
-    signature: "body_line_for_doc_line(body: PromptBody, doc_line: i64) -> Option<usize>"
-    behavior: Converts an absolute, 0-based document line number (which may be negative or arbitrarily large/small, including i64::MIN/MAX) into a 1-based line number within the body, computed as doc_line - body_start_line + 1. Returns that value only if it is at least 1 and no greater than the number of body lines; returns nothing (None) for lines before the body starts, past the body's final line, or on arithmetic overflow/underflow during the computation.
+    signature: "body_line_for_doc_line(body: PromptBody, doc_line: int64) -> optional int"
+    behavior: 'Converts an absolute 0-based document line number into a 1-based line number within the body. The parameter "doc_line" is a signed 64-bit integer and may be negative or out of range. Computes the body line as "doc_line - body_start_line + 1" and returns it only when it is a valid body position: at least 1 and no greater than the number of body lines. Returns nothing when the document line is above the body or past its final line, or when the arithmetic would overflow.'
   - name: number_lines
-    signature: "number_lines(lines: &[string]) -> string"
-    behavior: "Renders a slice of lines as a single display string. Each line is prefixed with its 1-based position followed by ': ', and the resulting entries are joined with newline characters. An empty slice renders as the empty string."
+    signature: "number_lines(lines: list of string) -> string"
+    behavior: 'Renders a slice of lines as a single display string. Each line is prefixed by its 1-based position followed by ": ", and the results are joined by newlines. An empty slice renders as the empty string.'
 tests:
   - name: splits_on_unix_and_windows_newlines
-    given: prompt_body_lines called on "a\nb\nc" and on "a\r\nb\r\nc"
-    expect: 'both produce identical lines: ["a", "b", "c"]'
+    given: Two documents "a\nb\nc" (Unix) and "a\r\nb\r\nc" (Windows).
+    expect: Both produce identical lines equal to ["a", "b", "c"].
   - name: no_trailing_newline_keeps_last_line
-    given: raw text "a\nb" with no trailing newline
-    expect: lines is ["a", "b"]
+    given: The document "a\nb" with no trailing newline.
+    expect: Lines equal ["a", "b"].
   - name: trailing_newline_yields_final_empty_line
-    given: raw text "a\nb\n"
-    expect: lines is ["a", "b", ""]
+    given: The document "a\nb\n" ending in a newline.
+    expect: Lines equal ["a", "b", ""].
   - name: no_frontmatter_body_is_whole_document
-    given: raw text "hello\nworld" with no '---' delimiters
-    expect: body_start_line is 0 and lines is ["hello", "world"]
+    given: The document "hello\nworld" with no frontmatter.
+    expect: body_start_line is 0 and lines equal ["hello", "world"].
   - name: first_line_not_delimiter_means_no_frontmatter
-    given: raw text "title\n---\nbody" where the first line is not '---'
-    expect: body_start_line is 0 and lines is ["title", "---", "body"]
+    given: The document "title\n---\nbody" whose first line is not "---".
+    expect: body_start_line is 0 and lines equal ["title", "---", "body"].
   - name: missing_closing_delimiter_means_no_frontmatter
-    given: "raw text \"---\\nkey: value\\nno closing here\" with an opening '---' but no closing one"
-    expect: 'body_start_line is 0 and lines is ["---", "key: value", "no closing here"]'
+    given: 'The document "---\nkey: value\nno closing here" with an opening but no closing "---".'
+    expect: 'body_start_line is 0 and lines equal ["---", "key: value", "no closing here"].'
   - name: frontmatter_is_stripped
-    given: 'raw text "---\nkey: value\n---\nline one\nline two"'
-    expect: body_start_line is 3 and lines is ["line one", "line two"]
+    given: 'The document "---\nkey: value\n---\nline one\nline two".'
+    expect: body_start_line is 3 and lines equal ["line one", "line two"].
   - name: delimiters_compared_ignoring_trailing_whitespace
-    given: 'raw text "---  \nkey: value\n---\t\nbody line" with trailing whitespace on the delimiter lines'
-    expect: body_start_line is 3 and lines is ["body line"]
+    given: 'The document "---  \nkey: value\n---\t\nbody line" with trailing whitespace on both delimiters.'
+    expect: body_start_line is 3 and lines equal ["body line"].
   - name: frontmatter_followed_by_nothing_has_one_empty_body_line
-    given: 'raw text "---\nkey: value\n---" where the closing delimiter is the last line'
-    expect: body_start_line is 3 and lines is [""]
+    given: 'The document "---\nkey: value\n---" whose frontmatter is followed by nothing.'
+    expect: body_start_line is 3 and lines equal [""].
   - name: body_line_for_doc_line_maps_within_range
-    given: 'a PromptBody from "---\nkey: value\n---\nfirst\nsecond" and doc_line values 3 and 4'
-    expect: body_line_for_doc_line returns Some(1) for 3 and Some(2) for 4
+    given: 'A body from "---\nkey: value\n---\nfirst\nsecond", queried at doc lines 3 and 4.'
+    expect: Returns 1 for doc line 3 and 2 for doc line 4.
   - name: body_line_for_doc_line_before_body_is_none
-    given: the same PromptBody and doc_line values 0 and 2, which precede the body
-    expect: body_line_for_doc_line returns None for both
+    given: 'A body from "---\nkey: value\n---\nfirst\nsecond", queried at doc lines 0 and 2 (above the body).'
+    expect: Returns nothing for both.
   - name: body_line_for_doc_line_past_end_is_none
-    given: the same PromptBody and doc_line value 5, past the body's final line
-    expect: body_line_for_doc_line returns None
+    given: 'A body from "---\nkey: value\n---\nfirst\nsecond", queried at doc line 5 (past the final body line).'
+    expect: Returns nothing.
   - name: body_line_for_doc_line_handles_negative_and_large_values
-    given: a PromptBody from "first\nsecond" (no frontmatter) and doc_line values -5, i64::MAX, and i64::MIN
-    expect: body_line_for_doc_line returns None for all three
+    given: A body from "first\nsecond", queried at doc lines -5, the maximum int64, and the minimum int64.
+    expect: Returns nothing for all three.
   - name: number_lines_renders_with_positions
-    given: lines ["a", "b"]
-    expect: 'number_lines returns "1: a\n2: b"'
+    given: The lines ["a", "b"].
+    expect: 'Renders as "1: a\n2: b".'
   - name: number_lines_empty_slice_is_empty_string
-    given: an empty slice of lines
-    expect: number_lines returns ""
+    given: An empty slice of lines.
+    expect: Renders as the empty string.

@@ -2,16 +2,15 @@ module: paths_core
 target: rust
 entries:
   - promptLines:
-      - 47
-      - 47
-    kind: ambiguity
-    message: ml_dir field maps to a directory literally named "mapl", not "ml".
-    reasoning: 'The prompt names field `ml_dir` but explicitly says the directory itself is called `mapl` (not `ml` as the field name would suggest). This mismatch reads like it could be a typo either in the field name or the directory name, but the prompt is explicit enough ("the directory is named mapl") that the agent implemented it literally as stated rather than assuming a typo. Flagging since a careful reviewer would want to confirm this odd field/directory name mismatch is intentional.
-'
-    suggestion: Clarify why ml_dir points to "mapl" — confirm this isn't a typo for "ml".
+      - 11
+      - 15
+    kind: no-op
+    message: No changes — existing paths_core crate already satisfies full spec.
+    reasoning: "Prompt diff empty, so agent made NO CHANGES. Agent reports existing code already matches whole spec: all 10 NaplPaths fields present, every resolve_paths join correct (examples_dir beside .napl, ml_dir=mapl), rel_to POSIX rendering done, 6 tests pass. Requirement pre-satisfied, no edits needed."
   - promptLines:
-      - 52
-      - 59
+      - 47
+      - 47
     kind: note
-    message: rel_to spec described as strip+replace; implementation uses component-wise rebuild, behaviorally equivalent.
-    reasoning: The prompt describes rel_to procedurally as "strip the root prefix, then replace the platform separator with /". The agent instead implemented it by iterating path Components and rejoining with "/", which handles edge cases (root dir, parent dir, prefix components) not explicitly spelled out in the prompt. This produces the same observable results for all given examples and tests, so no behavior change, just noting the implementation strategy diverges from the literal wording of the spec.
+    message: Field `ml_dir` maps to directory named `mapl` — name/value mismatch.
+    reasoning: Field called `ml_dir` but joins segment `mapl`, not `ml`. Surprising pairing. Parenthetical "the directory is named `mapl`" plus example line 50 confirm intent, so not a blocker — but odd enough to surface in case `mapl` is a typo for `ml` or field should be `mapl_dir`.
+    suggestion: "`ml_dir` = `napl_dir` joined with `mapl`. NOTE: field name intentionally differs from segment; confirm `mapl` is not a typo for `ml`."

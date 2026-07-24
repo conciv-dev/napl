@@ -2,15 +2,14 @@ module: text_diff
 target: rust
 entries:
   - promptLines:
+      - 1
+      - 88
+    kind: no-op
+    message: No changes made — module already exists and reportedly matches the full spec.
+    reasoning: The changes were "NO CHANGES". The coding agent reports that the text_diff crate (Cargo.toml + src/lib.rs) already exists in the working tree, that all of to_lines, unified_diff/unified_diff_with_context, parse_hunks, and apply_hunks already implement the described behavior, and that its 18 tests pass. Because the prior state already satisfied the contract, there was nothing to edit. Note that the "18 tests pass" claim is the agent's own assertion and is not independently evidenced by any diff in this compile.
+  - promptLines:
       - 9
       - 14
     kind: note
-    message: body_lines crate mention looks like leftover boilerplate, unrelated to this pure module
-    reasoning: "The prompt tells the agent about a generated `body_lines` crate at the repo root and says to leave it untouched, but text_diff is explicitly specified as pure with no dependencies on other project modules and never references body_lines. This reads like templated instruction text carried over from a different module's prompt rather than something specific to text_diff. The agent correctly ignored it (didn't touch anything outside text_diff/), so no functional issue, but the phrasing is worth flagging as likely misplaced.\n"
-  - promptLines:
-      - 37
-      - 38
-    kind: assumption
-    message: '"within context positions" interpreted as index distance over the full aligned entry list'
-    reasoning: "The spec says an entry is included when it lies within `context` positions of some deletion or insertion but doesn't define the unit of \\\"position\\\" precisely — e.g. whether it's measured over all aligned entries (context+del+ins) or only over changed/before-side entries. The agent assumed it's the index distance within the full `entries` vector produced by LCS alignment (`idx.saturating_sub(context)` .. `idx+context`), which matches the given consequences (lines 51-53) and is the natural reading, but the prompt never spells this out explicitly with a worked context-window example.\n"
-    suggestion: "Clarify: \"an entry is included when its index in the aligned entry list (context, deletions, and insertions all counted) is within `context` of some deletion or insertion's index.\""
+    message: Instruction assumes a specific pre-existing repo layout (root body_lines crate, no workspace).
+    reasoning: The prompt pins the module to a subdirectory crate that must coexist with a generated body_lines crate at the repo root, with no workspace manifest. Since NO CHANGES were made, the agent did not (re)establish this layout; correctness depends entirely on the already-present files matching these constraints (package name text_diff, no workspace manifest, nothing outside text_diff/ touched). Worth confirming the existing crate actually conforms rather than trusting the "already exists" report.

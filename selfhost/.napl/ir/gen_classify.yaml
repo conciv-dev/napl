@@ -1,63 +1,58 @@
 module: gen_classify
 deps: []
-types: []
-functions:
+types:
   - name: SOURCE_FILE_EXTENSIONS
-    signature: "const SOURCE_FILE_EXTENSIONS: [&str; 7]"
-    behavior: 'Public constant array of recognized source-file extensions, each including leading dot, in exactly this order: ".ts", ".tsx", ".js", ".jsx", ".css", ".html", ".rs".
-'
+    description: 'Public constant array of recognized source-file extensions, each including its leading dot, in exactly this order: ".ts", ".tsx", ".js", ".jsx", ".css", ".html", ".rs".'
+functions:
   - name: is_source_file
-    signature: "is_source_file(rel_to_target: &str) -> bool"
-    behavior: 'Pure function. Input is a path relative to the generation target directory. Computes base name as substring after last "/" (or whole string if no "/"). If base name ends with ".config.ts", ".config.tsx", ".config.js", or ".config.jsx", returns false. Else finds last "." in base name; if none, returns false. Else extension is substring from that last "." to end (inclusive of dot); returns true iff extension is one of SOURCE_FILE_EXTENSIONS, false otherwise. No I/O, no side effects.
-'
+    signature: "(rel_to_target: string) -> boolean"
+    behavior: Pure. Decides whether a path relative to the target directory names a source file to be numbered for attribution. Takes the base name (substring after the last "/", or the whole string when no "/"). Returns false if the base name ends with any config suffix (".config.ts", ".config.tsx", ".config.js", ".config.jsx"). Returns false if the base name has no ".". Otherwise the extension is the base name from its last "." to the end (including the dot); returns true if that extension is one of SOURCE_FILE_EXTENSIONS, else false.
   - name: first_meaningful_line
-    signature: "first_meaningful_line(body: &str) -> String"
-    behavior: 'Pure function deriving a one-line description from a prompt body. Splits body on "\n". For each line in order: strips one trailing "\r" if present, strips all leading "#" characters, trims leading/trailing whitespace. Returns first resulting non-empty string, capped to first 120 Unicode characters (by char count, not bytes). If every line yields empty after stripping/trimming (including when body is empty), returns literal string "(no description)".
-'
+    signature: "(body: string) -> string"
+    behavior: 'Pure. Derives a one-line description from a prompt body. Splits body on "\n". For each line in order: strips a single trailing "\r" if present, strips all leading "#" characters, then trims leading and trailing whitespace. Returns the first non-empty result, capped to at most the first 120 Unicode characters. If no line yields a non-empty result, returns the literal "(no description)".'
   - name: split_body_lines
-    signature: "split_body_lines(content: &str) -> Vec<String>"
-    behavior: 'Pure function splitting content into CRLF-aware lines. Splits content on "\n"; for each resulting piece, strips a single trailing "\r" if present; collects pieces as owned Strings preserving order. Empty input string yields a single-element vector containing one empty string. A trailing "\n" produces a final empty-string element.
-'
+    signature: "(content: string) -> list of string"
+    behavior: Pure. Splits content into CRLF-aware lines for numbering. Splits on "\n"; for each piece strips a single trailing "\r" if present; collects results as owned strings. Empty string yields one empty line; a trailing newline yields a final empty line.
 tests:
   - name: source_file_extensions_order
-    given: SOURCE_FILE_EXTENSIONS constant
-    expect: equals [".ts", ".tsx", ".js", ".jsx", ".css", ".html", ".rs"] in that exact order
+    given: The SOURCE_FILE_EXTENSIONS constant.
+    expect: Equals exactly [".ts", ".tsx", ".js", ".jsx", ".css", ".html", ".rs"].
   - name: is_source_file_recognizes_extensions
-    given: paths "src/lib.rs", "app.tsx", "page.html", "style.css", "index.js", "index.jsx", "index.ts"
-    expect: is_source_file returns true for all
+    given: Paths "src/lib.rs", "app.tsx", "page.html", "style.css", "index.js", "index.jsx", "index.ts".
+    expect: Each returns true.
   - name: is_source_file_rejects_config_suffixes
-    given: '"vite.config.ts", "vite.config.tsx", "vite.config.js", "vite.config.jsx", "path/to/vite.config.ts"'
-    expect: is_source_file returns false for all
+    given: Paths "vite.config.ts", "vite.config.tsx", "vite.config.js", "vite.config.jsx", "path/to/vite.config.ts".
+    expect: Each returns false.
   - name: is_source_file_rejects_unrecognized_extension
-    given: '"README.md"'
-    expect: is_source_file returns false
+    given: Path "README.md".
+    expect: Returns false.
   - name: is_source_file_rejects_no_extension
-    given: '"noext"'
-    expect: is_source_file returns false
+    given: Path "noext".
+    expect: Returns false.
   - name: is_source_file_uses_base_name_after_last_slash
-    given: '"a/b/c/main.rs" and "a/b/c/noext"'
-    expect: is_source_file returns true for "a/b/c/main.rs" and false for "a/b/c/noext"
+    given: Paths "a/b/c/main.rs" and "a/b/c/noext".
+    expect: '"a/b/c/main.rs" returns true; "a/b/c/noext" returns false.'
   - name: first_meaningful_line_strips_heading_markers
-    given: '"# Title\n\nBody line" and "### Deep\nmore"'
-    expect: returns "Title" and "Deep" respectively
+    given: Bodies "# Title\n\nBody line" and "### Deep\nmore".
+    expect: Returns "Title" and "Deep" respectively.
   - name: first_meaningful_line_whitespace_only_body
-    given: '"   \n\t\n  "'
-    expect: returns "(no description)"
+    given: Body "   \n\t\n  " of only whitespace lines.
+    expect: Returns "(no description)".
   - name: first_meaningful_line_caps_at_120_chars
-    given: a body of 200 "x" characters on one line
-    expect: result has exactly 120 characters, all "x"
+    given: A body of 200 "x" characters.
+    expect: Returns exactly 120 characters, all "x".
   - name: first_meaningful_line_empty_body
-    given: '""'
-    expect: returns "(no description)"
+    given: The empty string.
+    expect: Returns "(no description)".
   - name: first_meaningful_line_strips_trailing_cr
-    given: '"# Title\r\nmore"'
-    expect: returns "Title"
+    given: Body "# Title\r\nmore".
+    expect: Returns "Title".
   - name: split_body_lines_handles_crlf_and_lf
-    given: '"a\r\nb\nc"'
-    expect: returns ["a", "b", "c"]
+    given: Content "a\r\nb\nc".
+    expect: Returns ["a", "b", "c"].
   - name: split_body_lines_empty_string
-    given: '""'
-    expect: returns [""]
+    given: The empty string.
+    expect: Returns [""] (one empty line).
   - name: split_body_lines_trailing_newline_yields_final_empty_line
-    given: '"x\r\n"'
-    expect: returns ["x", ""]
+    given: Content "x\r\n".
+    expect: Returns ["x", ""].

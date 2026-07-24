@@ -4,6 +4,29 @@ entries:
   - promptLines:
       - 1
       - 86
+    kind: no-op
+    message: No changes produced — existing generated code already satisfies the full spec.
+    reasoning: 'The changes were "NO CHANGES". The coding agent reports the prompt diff was empty and the existing schemas_attribution crate already realizes every requirement (types, validators, lookup, lenient line-range normalization), with all 13 tests passing. So nothing needed to be regenerated. No-op is because the requirement was already met by existing code, not because the instruction was unintelligible.
+'
+  - promptLines:
+      - 57
+      - 57
+    kind: ambiguity
+    message: Error type of validate_attribution is left as `_` — concrete error type unspecified.
+    reasoning: 'The signature is written `Result<Attribution, _>` with a placeholder error type. The prompt never says what the error type should be (a custom enum, serde_json::Error, String, a boxed error, etc.), only that malformed input is a deserialization error and validation failures are "an error, not a panic". Whatever concrete type the existing code uses was an unconstrained choice.
+'
+    suggestion: 'Specify the error type explicitly, e.g. "returns Result<Attribution, E>" and define E (for example a String message, or a named error enum with Deserialize vs Validation variants).
+'
+  - promptLines:
+      - 64
+      - 68
+    kind: ambiguity
+    message: parse_attribution_entries error type also unspecified (`_` placeholder).
+    reasoning: "Same open question as validate_attribution: the `Result<Vec<AttributionEntry>, _>` error type is a placeholder. It is unclear whether it must match validate_attribution's error type or may differ. The existing code's choice was unconstrained by the prompt.\n"
+    suggestion: State the error type and whether both validators share one error type.
+  - promptLines:
+      - 61
+      - 62
     kind: note
-    message: Prompt fully implemented, no ambiguity found worth flagging.
-    reasoning: Agent created schemas_attribution/{Cargo.toml,src/lib.rs} with AttributionEntry, Attribution, validate_attribution, parse_attribution_entries, entries_at_body_line exactly matching spec — camelCase rename, note default, entries default, malformed-vs-missing-file error split, non-array returns empty list, inclusive containment lookup. 13 tests cover all documented behaviors including the worked example. No deviations to note.
+    message: Deserialization-vs-validation error boundary is described by example only.
+    reasoning: The prompt distinguishes "structurally malformed" (deserialize error, e.g. 1.5) from rejected values (empty/missing file). Both are reported as errors and the observable Result contract is the same, so callers cannot tell them apart unless the error type carries that distinction — which the prompt does not require. Worth confirming whether the two error categories must be separately identifiable.

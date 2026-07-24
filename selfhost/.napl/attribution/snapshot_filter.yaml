@@ -3,44 +3,132 @@ target: rust
 entries:
   - promptLines:
       - 20
+      - 20
+    file: snapshot_filter/src/lib.rs
+    lines:
+      - 7
+      - 12
+    note: public SnapshotFilter struct with four rule sets
+  - promptLines:
+      - 22
+      - 23
+    file: snapshot_filter/src/lib.rs
+    lines:
+      - 8
+      - 8
+    note: excluded directory names field
+  - promptLines:
+      - 24
+      - 25
+    file: snapshot_filter/src/lib.rs
+    lines:
+      - 9
+      - 9
+    note: excluded file names field
+  - promptLines:
+      - 26
+      - 29
+    file: snapshot_filter/src/lib.rs
+    lines:
+      - 10
+      - 10
+    note: excluded root-only file names field
+  - promptLines:
+      - 30
+      - 31
+    file: snapshot_filter/src/lib.rs
+    lines:
+      - 11
+      - 11
+    note: excluded suffixes field
+  - promptLines:
+      - 33
       - 34
     file: snapshot_filter/src/lib.rs
     lines:
-      - 5
-      - 12
-    note: SnapshotFilter struct with four rule sets
+      - 8
+      - 11
+    note: hash sets for names, vector for suffixes
   - promptLines:
-      - 36
+      - 38
+      - 39
+    file: snapshot_filter/src/lib.rs
+    lines:
+      - 15
+      - 20
+    note: make_filter signature in parameter order
+  - promptLines:
+      - 40
       - 40
     file: snapshot_filter/src/lib.rs
     lines:
-      - 14
-      - 27
-    note: make_filter builds struct from four lists
+      - 21
+      - 26
+    note: copies entries into filter, no I/O
   - promptLines:
       - 42
       - 46
     file: snapshot_filter/src/lib.rs
     lines:
-      - 30
+      - 31
       - 33
-    note: is_excluded_dir exact-match check
+    note: is_excluded_dir exact whole-name match
   - promptLines:
       - 48
+      - 55
+    file: snapshot_filter/src/lib.rs
+    lines:
+      - 37
+      - 41
+    note: is_excluded_file OR of rules
+  - promptLines:
+      - 52
+      - 52
+    file: snapshot_filter/src/lib.rs
+    lines:
+      - 38
+      - 38
+    note: plain file name match
+  - promptLines:
+      - 53
+      - 54
+    file: snapshot_filter/src/lib.rs
+    lines:
+      - 39
+      - 39
+    note: root-only match only when at_root
+  - promptLines:
+      - 55
+      - 55
+    file: snapshot_filter/src/lib.rs
+    lines:
+      - 40
+      - 40
+    note: suffix ends_with match
+  - promptLines:
+      - 57
       - 58
     file: snapshot_filter/src/lib.rs
     lines:
-      - 35
-      - 41
-    note: is_excluded_file plain/root/suffix rule logic
+      - 39
+      - 39
+    note: root-only ignored when at_root false
+  - promptLines:
+      - 62
+      - 63
+    file: snapshot_filter/src/lib.rs
+    lines:
+      - 52
+      - 59
+    note: worked-example filter setup
   - promptLines:
       - 65
       - 66
     file: snapshot_filter/src/lib.rs
     lines:
-      - 61
-      - 79
-    note: dir exact match tests, incl. non-match/no suffix-prefix
+      - 62
+      - 72
+    note: dir match tests
   - promptLines:
       - 67
       - 68
@@ -48,7 +136,7 @@ entries:
     lines:
       - 81
       - 86
-    note: plain file rule test regardless of depth
+    note: plain file rule test
   - promptLines:
       - 69
       - 69
@@ -64,7 +152,7 @@ entries:
     lines:
       - 95
       - 99
-    note: root-only rule applies at root test
+    note: root-only at root test
   - promptLines:
       - 71
       - 72
@@ -72,7 +160,7 @@ entries:
     lines:
       - 101
       - 105
-    note: root-only rule ignored below root test
+    note: root-only below root test
   - promptLines:
       - 73
       - 73
@@ -81,19 +169,3 @@ entries:
       - 107
       - 112
     note: no matching rule test
-  - promptLines:
-      - 62
-      - 63
-    file: snapshot_filter/src/lib.rs
-    lines:
-      - 48
-      - 59
-    note: worked_filter test fixture matching worked-decisions example
-  - promptLines:
-      - 33
-      - 33
-    file: snapshot_filter/src/lib.rs
-    lines:
-      - 3
-      - 11
-    note: internal repr uses HashSet for names, Vec for suffixes

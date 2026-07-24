@@ -363,6 +363,31 @@ code passes that module's hand-written unit corpus under the shared equivalence
 harness. Byte-identity is never required. The campaign is complete when the
 generated toolchain can regenerate itself and still pass every corpus.
 
+### THE FIXPOINT — REACHED (2026-07-24)
+
+All **36 self-host modules** (23 `napl-core` + 13 `napl-cli` pure cores) were
+force-regenerated from prose with the stage1 binary (coding engine: **opus**), in
+dependency order; the toolchain was rebuilt from the regenerated crates (**stage2**);
+and the full gate battery passed against stage2:
+
+- Conformance **47/47 byte-identical** (goldens untouched) · Equivalence **226/226**
+  · `cargo test --workspace` **245/245** · clippy **clean** · `napl status`
+  **36/36 clean** · generated-workspace `cargo test` **419/419**.
+- **Every module converged on code-gen attempt 1; escape-hatch list empty.**
+- Every force-regen was a **byte-identical no-op** (`gen(src) == src`, verified: all
+  36 journal entries recorded 0 file patches), so stage2 is bit-identical to stage1 —
+  the generated source is a **literal fixed point** of the generator, stronger than
+  the behavioral fixpoint the criterion requires.
+- Two prompts were tightened first (step 0): `blame_render` now owns the exhaustive
+  `JournalMode::Move → "move"` arm; `schemas_frontmatter` promotes the optional
+  `crate:` key into the strict schema as `crate_name: Option<String>`
+  (`discovery::declared_crate` now reads the strict parse). See `selfhost.md` →
+  "THE FIXPOINT" for the per-module table, the shape-change-cascade finding, and the
+  rust-final boundary.
+
+Self-hosting is demonstrated end-to-end; **rust-final deletion is unblocked** (the
+still-hand-written I/O shell + adapters + lsp server are catalogued in `selfhost.md`).
+
 ## Escape-hatch list
 
 Modules that stay hand-written because current stage0 + prompt cannot reproduce
@@ -379,6 +404,9 @@ prompt drives a passing generation.
   the hatch.
 - **Phase 2 swap-in:** *(empty)* — batch-1's five pure cores all swapped in with
   conformance 40/40 byte-identical.
+- **Fixpoint run (2026-07-24):** *(empty)* — all 36 modules force-regenerated under
+  the opus engine, every one on attempt 1, byte-identical no-ops; stage2 passed the
+  full battery (conformance 47/47, equivalence 226/226). No module left stale.
 
 ## Layout note (RESOLVED in slice 2 — Cargo workspace)
 

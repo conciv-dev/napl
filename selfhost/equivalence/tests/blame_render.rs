@@ -36,6 +36,7 @@ fn mode_str_maps_every_variant() {
     assert_eq!(mode_str(JournalMode::Full), "full");
     assert_eq!(mode_str(JournalMode::Incremental), "incremental");
     assert_eq!(mode_str(JournalMode::Reconcile), "reconcile");
+    assert_eq!(mode_str(JournalMode::Move), "move");
 }
 
 #[test]

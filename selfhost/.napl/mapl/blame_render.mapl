@@ -2,15 +2,22 @@ module: blame_render
 target: rust
 entries:
   - promptLines:
-      - 28
-      - 33
-    kind: assumption
-    message: "JournalEntry test fixture includes a `prompt_hash: String` field not mentioned in the prompt."
-    reasoning: "The prompt says JournalEntry's \"fields include\" gen, timestamp, module, target, prompt_diff, mode, and files — wording that implies the list is non-exhaustive. The agent's test helper constructs entries with an extra `prompt_hash: String` field, assuming this extra field exists on the real schemas_journal::JournalEntry struct and just wasn't called out since it's irrelevant to rendering. This is a reasonable read of \"fields include\" but was never confirmed against the actual sibling crate.\n"
-    suggestion: "List JournalEntry's full field set explicitly (or say \"at least these fields, plus possibly others you can ignore\") so implementers don't have to guess whether unlisted fields exist.\n"
-  - promptLines:
       - 11
       - 16
+    kind: no-op
+    message: Crate said to be "created" but agent made NO CHANGES — module already present and matching spec.
+    reasoning: 'The prompt reads as a creation task ("Create this module as its own member crate ... blame_render/Cargo.toml and blame_render/src/lib.rs"), yet the agent produced NO CHANGES, reporting that the code already exists, matches every function spec exactly, and all 10 tests pass. Nothing was written because the requirement was already satisfied by pre-existing source. Worth confirming the crate truly exists at blame_render/ and that `cargo test` from the workspace root passes, since a creation prompt yielding zero diff is surprising.
+'
+  - promptLines:
+      - 84
+      - 88
     kind: note
-    message: Cargo.toml contents (package name, path deps, workspace registration) aren't shown in the diff, only lib.rs.
-    reasoning: The prompt requires creating blame_render/Cargo.toml with path dependencies on ../blame and ../schemas_journal, and running `cargo test` from the workspace root. The provided change list only shows lib.rs; Cargo.toml's contents weren't surfaced for review, so correctness of the manifest (package name, path deps, workspace member registration) is taken on the agent's final-message claim that "10 tests pass" rather than directly verified here.
+    message: prompt_diff emptiness uses trimmed check here, but why_line relies on blame::first_prompt_diff_line's own empty result.
+    reasoning: 'render_blame_gen decides "initial generation" by trimming surrounding whitespace on entry.prompt_diff (line 84), while why_line (lines 57-59) decides emptiness from the return of blame::first_prompt_diff_line without an explicit trim. The two "empty" notions are defined by different mechanisms; they likely agree but are not the same test. Since NO CHANGES were made this was not exercised — flagging so the author confirms both paths behave as intended.
+'
+  - promptLines:
+      - 86
+      - 88
+    kind: assumption
+    message: Trailing newline in a non-empty prompt_diff yields a final two-space line — confirm this is intended output.
+    reasoning: Line 87-88 states that splitting prompt_diff on "\n" and prefixing each piece with two spaces means "a trailing newline in the diff yields a final `  ` two-space line." This produces a dangling two-space line in the rendered block. The prompt asserts it explicitly, so it was treated as intended rather than an oversight, but it is unusual output worth a second look.

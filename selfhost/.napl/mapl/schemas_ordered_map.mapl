@@ -2,15 +2,14 @@ module: schemas_ordered_map
 target: rust
 entries:
   - promptLines:
-      - 13
-      - 18
-    kind: ambiguity
-    message: Prompt says leave workspace root manifest alone, but a new member crate normally must be registered in the root Cargo.toml to be picked up by `cargo test` from the workspace root.
-    reasoning: The prompt instructs not to touch anything outside schemas_ordered_map/ and to leave the root manifest owned by the toolchain untouched, yet also requires `cargo test` to pass from the workspace root. If the root manifest uses explicit `members` (rather than a wildcard/glob that already covers new subdirectories), the new crate would not be included in the workspace build without editing that file. The diff provided only shows lib.rs, not Cargo.toml or any root manifest change, so it's unclear how this was reconciled — likely the workspace already glob-matches subdirectories, but this was assumed rather than confirmed against the actual root manifest content.
-    suggestion: Clarify whether the workspace root manifest already auto-discovers new member crates (e.g. via a `members = ["*"]` glob) or whether adding the new crate path to `members` is permitted as the one necessary exception to 'touch nothing outside schemas_ordered_map/'.
+      - 1
+      - 63
+    kind: no-op
+    message: No changes made — agent reports existing code already satisfies the full prompt.
+    reasoning: "The prompt diff was \"NO CHANGES\". The coding agent claims the pre-existing source in schemas_ordered_map/ already implements the entire contract: OrderedMap<V>, Default/new, all query/mutation methods, iter/keys/values, serde Serialize/Deserialize, PartialEq, and the three worked-behavior cases. It reports `cargo test -p schemas_ordered_map` passing 9/9. Nothing was produced because there was nothing left to build. Note: the agent's claim rests on the test run; it did not show the existing source, so the human cannot independently confirm every listed method exists from this record alone — verify by reading schemas_ordered_map/src/lib.rs if certainty matters."
   - promptLines:
-      - 16
-      - 17
+      - 18
+      - 18
     kind: note
-    message: Only src/lib.rs was shown in the change list; schemas_ordered_map/Cargo.toml's contents (dependencies, edition, package name) were not visible to confirm correctness.
-    reasoning: The prompt requires a new Cargo.toml with package name schemas_ordered_map and serde/serde_json dependencies. The provided change listing only includes lib.rs, so the crate's manifest content (versions, feature flags like serde's 'derive' — explicitly noted by the agent as not needed) could not be independently verified from the given diff, only asserted by the agent's final message.
+    message: '"Ensure cargo test passes from the workspace root" verified only via -p flag, not a root-level full run.'
+    reasoning: The prompt asks that `cargo test` pass from the workspace root before finishing. The agent ran `cargo test -p schemas_ordered_map` (package-scoped), not a bare `cargo test` at the root. For a pure single-crate addition these are effectively equivalent, but they are not identical — a bare root run also exercises other workspace members. Recorded as a minor gap between the literal instruction and what was verified.

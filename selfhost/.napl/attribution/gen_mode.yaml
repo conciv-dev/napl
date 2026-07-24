@@ -3,60 +3,60 @@ target: rust
 entries:
   - promptLines:
       - 18
+      - 18
+    file: gen_mode/src/lib.rs
+    lines:
+      - 18
+      - 23
+    note: can_incremental signature with four bool params
+  - promptLines:
+      - 20
       - 26
     file: gen_mode/src/lib.rs
     lines:
-      - 17
-      - 25
-    note: can_incremental predicate logic
-  - promptLines:
-      - 21
-      - 21
-    file: gen_mode/src/lib.rs
-    lines:
-      - 19
-      - 19
-    note: full param
-  - promptLines:
-      - 22
-      - 22
-    file: gen_mode/src/lib.rs
-    lines:
-      - 20
-      - 20
-    note: has_target_record param
-  - promptLines:
-      - 23
-      - 23
-    file: gen_mode/src/lib.rs
-    lines:
-      - 21
-      - 21
-    note: unattributed_is_true param
-  - promptLines:
       - 24
       - 24
-    file: gen_mode/src/lib.rs
-    lines:
-      - 22
-      - 22
-    note: has_prompt_hash_at_gen param
+    note: returns AND of not-full, has-record, not-unattributed, has-hash
   - promptLines:
       - 30
       - 34
     file: gen_mode/src/lib.rs
     lines:
-      - 6
+      - 8
       - 15
-    note: FullModeReason enum with three variants
+    note: public enum with three full-mode reason variants
   - promptLines:
-      - 36
-      - 45
+      - 31
+      - 31
     file: gen_mode/src/lib.rs
     lines:
-      - 27
+      - 9
+      - 10
+    note: NoPriorOnDisk variant
+  - promptLines:
+      - 32
+      - 32
+    file: gen_mode/src/lib.rs
+    lines:
+      - 11
+      - 12
+    note: ForcedFull variant
+  - promptLines:
+      - 33
+      - 33
+    file: gen_mode/src/lib.rs
+    lines:
+      - 13
+      - 14
+    note: NoPriorGen variant
+  - promptLines:
+      - 36
       - 39
-    note: full_mode_message rendering per reason
+    file: gen_mode/src/lib.rs
+    lines:
+      - 28
+      - 29
+    note: full_mode_message match on reason
   - promptLines:
       - 41
       - 42
@@ -64,7 +64,7 @@ entries:
     lines:
       - 30
       - 33
-    note: no-prior-on-disk message text
+    note: no-prior-on-disk status line
   - promptLines:
       - 43
       - 43
@@ -72,7 +72,7 @@ entries:
     lines:
       - 34
       - 34
-    note: forced-full message text
+    note: forced-full status line
   - promptLines:
       - 44
       - 44
@@ -80,44 +80,20 @@ entries:
     lines:
       - 35
       - 37
-    note: no-prior-gen message text
+    note: no-prior-gen status line
   - promptLines:
       - 46
-      - 54
+      - 46
     file: gen_mode/src/lib.rs
     lines:
       - 42
-      - 46
-    note: incremental_mode_message formatting with em dash
+      - 42
+    note: incremental_mode_message signature
   - promptLines:
-      - 1
-      - 8
-    file: gen_mode/src/lib.rs
-    lines:
-      - 1
-      - 4
-    note: module purpose doc comment
-  - promptLines:
-      - 20
-      - 26
-    file: gen_mode/src/lib.rs
-    lines:
-      - 52
-      - 80
-    note: tests covering can_incremental branches
-  - promptLines:
-      - 41
-      - 44
-    file: gen_mode/src/lib.rs
-    lines:
-      - 82
-      - 104
-    note: tests covering full_mode_message variants
-  - promptLines:
-      - 46
+      - 48
       - 54
     file: gen_mode/src/lib.rs
     lines:
-      - 106
-      - 120
-    note: tests covering incremental_mode_message
+      - 43
+      - 45
+    note: format incremental line with em dash and both counts

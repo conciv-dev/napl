@@ -26,6 +26,8 @@ pub struct Frontmatter {
     pub targets: Vec<String>,
     #[serde(default)]
     pub tests: Vec<PromptTest>,
+    #[serde(default, rename = "crate")]
+    pub crate_name: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -181,7 +183,25 @@ mod tests {
         assert!(parsed.frontmatter.deps.is_empty());
         assert!(parsed.frontmatter.targets.is_empty());
         assert!(parsed.frontmatter.tests.is_empty());
+        assert_eq!(parsed.frontmatter.crate_name, None);
         assert_eq!(parsed.body, "Body here.\n");
+    }
+
+    #[test]
+    fn parses_crate_key_into_crate_name() {
+        let raw = "---\nmodule: alpha\ncrate: shared\n---\nBody.\n";
+        let parsed = parse_frontmatter(raw).expect("should parse");
+
+        assert_eq!(parsed.frontmatter.module, "alpha");
+        assert_eq!(parsed.frontmatter.crate_name, Some("shared".to_string()));
+    }
+
+    #[test]
+    fn crate_name_defaults_to_none_when_absent() {
+        let raw = "---\nmodule: solo\n---\nBody here.\n";
+        let parsed = parse_frontmatter(raw).expect("should parse");
+
+        assert_eq!(parsed.frontmatter.crate_name, None);
     }
 
     #[test]

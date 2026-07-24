@@ -391,6 +391,7 @@ mod tests {
             deps: deps.into_iter().map(|s| s.to_string()).collect(),
             targets: Vec::new(),
             tests: Vec::new(),
+            crate_name: None,
         }
     }
 

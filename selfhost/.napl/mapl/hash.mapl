@@ -2,20 +2,15 @@ module: hash
 target: rust
 entries:
   - promptLines:
-      - 9
-      - 13
-    kind: note
-    message: New crate laid out exactly as spec'd; body_lines untouched, no workspace manifest added.
-    reasoning: Prompt gave explicit paths (hash/Cargo.toml, hash/src/lib.rs) and constraints (no workspace manifest, don't touch outside hash/). Agent followed precisely — nothing left to infer.
+      - 1
+      - 33
+    kind: no-op
+    message: No changes — hash crate already present and matching target, all 5 tests pass.
+    reasoning: Prompt diff was empty. The agent reports the hash crate (hash/Cargo.toml, hash/src/lib.rs) already exists and satisfies every requirement — SHA-256 content_hash, lowercase 64-char hex, deterministic/distinguishing properties — and that all 5 tests pass from inside hash/. Nothing needed to be written or edited, so no source lines changed.
   - promptLines:
-      - 15
-      - 20
-    kind: assumption
-    message: Implemented via sha2 crate's Sha256::digest + per-byte hex format, matching example vector.
-    reasoning: Prompt gives one example (hello -> digest) but doesn't mandate exact code shape. Agent chose sha2 crate and format!("{byte:02x}") collect — standard, verified against given vector.
-  - promptLines:
-      - 22
-      - 27
-    kind: note
-    message: Test suite covers determinism, distinguishing inputs, and 64-char lowercase hex shape as separate tests.
-    reasoning: Prompt lists three properties; agent wrote one test per property plus the known vector, satisfying "cargo test passes" requirement.
+      - 32
+      - 32
+    kind: ambiguity
+    message: Stray `</content>` tag in prompt body looks like an accidental insertion.
+    reasoning: Line 32 is a lone `</content>` closing tag with no matching opening tag and no connection to the surrounding Markdown spec. It reads like leftover markup that leaked into the prompt body during authoring, not an intended instruction. It was ignored during compile.
+    suggestion: Delete line 32 — the prompt body should end at line 31.

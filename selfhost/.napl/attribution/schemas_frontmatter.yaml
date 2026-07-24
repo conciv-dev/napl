@@ -2,218 +2,186 @@ module: schemas_frontmatter
 target: rust
 entries:
   - promptLines:
-      - 1
+      - 5
       - 6
     file: schemas_frontmatter/src/lib.rs
     lines:
       - 5
-      - 9
-    note: serde/serde_yaml deps, empty-mapping default helper
+      - 5
+    note: brings in serde Deserialize
   - promptLines:
       - 21
-      - 23
+      - 21
     file: schemas_frontmatter/src/lib.rs
     lines:
       - 11
-      - 18
-    note: PromptTest struct with given/expect defaulting to empty mapping
+      - 13
+    note: PromptTest struct with public name field
+  - promptLines:
+      - 22
+      - 23
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 14
+      - 17
+    note: given/expect Values defaulting to empty mapping
+  - promptLines:
+      - 22
+      - 23
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 7
+      - 9
+    note: default empty YAML mapping helper
+  - promptLines:
+      - 19
+      - 19
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 11
+      - 11
+    note: derives Deserialize and PartialEq for equality
+  - promptLines:
+      - 24
+      - 24
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 20
+      - 22
+    note: Frontmatter struct with public module field
   - promptLines:
       - 24
       - 26
     file: schemas_frontmatter/src/lib.rs
     lines:
-      - 20
-      - 29
-    note: Frontmatter struct with defaulted list fields
+      - 23
+      - 28
+    note: deps/targets/tests default empty
   - promptLines:
       - 27
-      - 28
-    file: schemas_frontmatter/src/lib.rs
-    lines:
-      - 31
-      - 35
-    note: ParsedPrompt struct
-  - promptLines:
-      - 39
-      - 41
-    file: schemas_frontmatter/src/lib.rs
-    lines:
-      - 37
-      - 43
-    note: error enum for missing frontmatter/invalid yaml/empty module/bad test field
-  - promptLines:
-      - 39
-      - 41
-    file: schemas_frontmatter/src/lib.rs
-    lines:
-      - 45
-      - 61
-    note: Display/Error impls for FrontmatterError
-  - promptLines:
       - 32
-      - 37
     file: schemas_frontmatter/src/lib.rs
     lines:
-      - 63
-      - 91
-    note: split_delimiters implements opening/closing --- delimiter scan
-  - promptLines:
-      - 39
-      - 41
-    file: schemas_frontmatter/src/lib.rs
-    lines:
-      - 64
-      - 67
-    note: missing opening delimiter is an error
-  - promptLines:
-      - 39
-      - 41
-    file: schemas_frontmatter/src/lib.rs
-    lines:
-      - 86
-      - 89
-    note: no closing --- line found is an error
-  - promptLines:
-      - 58
-      - 61
-    file: schemas_frontmatter/src/lib.rs
-    lines:
-      - 93
-      - 100
-    note: strip_leading_blank_line removes single leading blank line from body
-  - promptLines:
-      - 48
-      - 49
-    file: schemas_frontmatter/src/lib.rs
-    lines:
-      - 102
-      - 103
-    note: split off yaml/body, missing frontmatter is error
-  - promptLines:
-      - 50
-      - 51
-    file: schemas_frontmatter/src/lib.rs
-    lines:
-      - 105
-      - 115
-    note: empty/null yaml treated as empty mapping
-  - promptLines:
-      - 52
-      - 53
-    file: schemas_frontmatter/src/lib.rs
-    lines:
-      - 117
-      - 118
-    note: deserialize mapping into Frontmatter with defaults
-  - promptLines:
-      - 54
-      - 55
-    file: schemas_frontmatter/src/lib.rs
-    lines:
-      - 120
-      - 122
-    note: require non-empty module string
-  - promptLines:
-      - 56
-      - 57
-    file: schemas_frontmatter/src/lib.rs
-    lines:
-      - 124
-      - 137
-    note: validate given/expect are YAML mappings per test
-  - promptLines:
-      - 58
-      - 61
-    file: schemas_frontmatter/src/lib.rs
-    lines:
-      - 139
-      - 139
-    note: apply body cleanup
-  - promptLines:
-      - 102
-      - 103
-    file: schemas_frontmatter/src/lib.rs
-    lines:
-      - 141
-      - 141
-    note: return ParsedPrompt on success
-  - promptLines:
-      - 65
-      - 81
-    file: schemas_frontmatter/src/lib.rs
-    lines:
-      - 149
-      - 173
-    note: worked example test - full frontmatter with test case
-  - promptLines:
-      - 82
-      - 83
-    file: schemas_frontmatter/src/lib.rs
-    lines:
-      - 176
-      - 185
-    note: minimal frontmatter with defaults test
-  - promptLines:
-      - 21
-      - 23
-    file: schemas_frontmatter/src/lib.rs
-    lines:
-      - 187
-      - 195
-    note: given/expect default to empty mapping test
-  - promptLines:
-      - 84
-      - 85
-    file: schemas_frontmatter/src/lib.rs
-    lines:
-      - 197
-      - 216
-    note: rejects missing frontmatter, missing module, empty module tests
-  - promptLines:
-      - 39
-      - 41
-    file: schemas_frontmatter/src/lib.rs
-    lines:
-      - 218
-      - 223
-    note: rejects missing closing delimiter test
-  - promptLines:
-      - 56
-      - 57
-    file: schemas_frontmatter/src/lib.rs
-    lines:
-      - 225
-      - 243
-    note: rejects non-mapping given/expect tests
-  - promptLines:
-      - 86
-      - 87
-    file: schemas_frontmatter/src/lib.rs
-    lines:
-      - 245
-      - 250
-    note: strips single leading blank line test
-  - promptLines:
-      - 58
-      - 61
-    file: schemas_frontmatter/src/lib.rs
-    lines:
-      - 252
-      - 257
-    note: does not strip body without leading blank line test
+      - 29
+      - 30
+    note: crate_name optional, renamed from crate key, defaults None
   - promptLines:
       - 33
       - 34
     file: schemas_frontmatter/src/lib.rs
     lines:
-      - 259
-      - 265
-    note: CRLF line ending handling test
+      - 33
+      - 37
+    note: ParsedPrompt with frontmatter and body
   - promptLines:
-      - 50
-      - 51
+      - 45
+      - 47
     file: schemas_frontmatter/src/lib.rs
     lines:
-      - 267
-      - 272
-    note: empty yaml block still requires module test
+      - 39
+      - 45
+    note: error enum returned instead of panic
+  - promptLines:
+      - 38
+      - 39
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 66
+      - 69
+    note: strips opening --- with CRLF or LF
+  - promptLines:
+      - 40
+      - 41
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 72
+      - 86
+    note: scans for closing --- line, splits yaml/body
+  - promptLines:
+      - 42
+      - 43
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 79
+      - 85
+    note: yaml text before, body after consumed newline
+  - promptLines:
+      - 45
+      - 47
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 88
+      - 91
+    note: no closing delimiter is an error
+  - promptLines:
+      - 49
+      - 52
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 104
+      - 105
+    note: parse_frontmatter entry, splits delimiters
+  - promptLines:
+      - 54
+      - 55
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 105
+      - 105
+    note: missing frontmatter propagates error
+  - promptLines:
+      - 56
+      - 57
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 107
+      - 117
+    note: empty/null YAML treated as empty mapping
+  - promptLines:
+      - 58
+      - 59
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 119
+      - 120
+    note: deserializes mapping into Frontmatter
+  - promptLines:
+      - 60
+      - 61
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 122
+      - 124
+    note: rejects empty module
+  - promptLines:
+      - 62
+      - 63
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 126
+      - 139
+    note: requires given/expect to be mappings
+  - promptLines:
+      - 64
+      - 67
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 95
+      - 102
+    note: strips single leading blank line from body
+  - promptLines:
+      - 64
+      - 67
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 141
+      - 141
+    note: applies body cleanup
+  - promptLines:
+      - 51
+      - 52
+    file: schemas_frontmatter/src/lib.rs
+    lines:
+      - 143
+      - 143
+    note: returns ParsedPrompt on success

@@ -2,37 +2,37 @@ module: watch_filter
 target: rust
 entries:
   - promptLines:
-      - 3
-      - 8
-    file: watch_filter/src/lib.rs
-    lines:
-      - 1
-      - 3
-    note: module intent/header, pure predicate, no I/O deps
-  - promptLines:
-      - 12
-      - 17
-    file: watch_filter/src/lib.rs
-    lines:
-      - 1
-      - 1
-    note: workspace member crate location marker (generated-file banner)
-  - promptLines:
       - 21
-      - 25
+      - 22
     file: watch_filter/src/lib.rs
     lines:
       - 5
       - 6
-    note: public IGNORED_DIRS constant, exact order
+    note: public constant array of ignored dir names in exact order
   - promptLines:
-      - 27
-      - 28
+      - 22
+      - 22
     file: watch_filter/src/lib.rs
     lines:
-      - 8
+      - 6
+      - 6
+    note: node_modules, .napl, .git in order
+  - promptLines:
+      - 23
+      - 25
+    file: watch_filter/src/lib.rs
+    lines:
+      - 12
+      - 17
+    note: any path component matching ignored name at any depth ignores path
+  - promptLines:
+      - 27
+      - 27
+    file: watch_filter/src/lib.rs
+    lines:
       - 10
-    note: is_ignored function signature and doc comment
+      - 10
+    note: is_ignored function signature
   - promptLines:
       - 29
       - 30
@@ -40,39 +40,47 @@ entries:
     lines:
       - 11
       - 11
-    note: strip root prefix, fallback to unchanged path
+    note: strip root prefix, fall back to path unchanged if not prefixed
   - promptLines:
-      - 30
+      - 31
       - 32
     file: watch_filter/src/lib.rs
     lines:
       - 12
-      - 18
-    note: check any component matches ignored dir names as strings
+      - 17
+    note: return true when any component equals an ignored name
   - promptLines:
-      - 36
+      - 32
+      - 32
+    file: watch_filter/src/lib.rs
+    lines:
+      - 15
+      - 15
+    note: compare component name as string
+  - promptLines:
+      - 38
       - 38
     file: watch_filter/src/lib.rs
     lines:
-      - 30
+      - 29
       - 32
-    note: node_modules component ignored test
+    note: test node_modules component ignored
   - promptLines:
-      - 36
+      - 39
       - 39
     file: watch_filter/src/lib.rs
     lines:
       - 34
       - 37
-    note: .napl component ignored test
+    note: test .napl component ignored
   - promptLines:
-      - 36
+      - 40
       - 40
     file: watch_filter/src/lib.rs
     lines:
       - 39
       - 42
-    note: .git component ignored test
+    note: test .git component ignored
   - promptLines:
       - 41
       - 42
@@ -80,7 +88,7 @@ entries:
     lines:
       - 44
       - 47
-    note: nested ignored dir at any depth test
+    note: test nested .napl at any depth
   - promptLines:
       - 43
       - 44
@@ -88,7 +96,7 @@ entries:
     lines:
       - 49
       - 52
-    note: .napl file extension not a directory match test
+    note: test .napl file extension not a directory match
   - promptLines:
       - 45
       - 45
@@ -96,20 +104,4 @@ entries:
     lines:
       - 54
       - 57
-    note: plain source file not ignored test
-  - promptLines:
-      - 29
-      - 30
-    file: watch_filter/src/lib.rs
-    lines:
-      - 59
-      - 63
-    note: path not under root used unchanged test
-  - promptLines:
-      - 21
-      - 22
-    file: watch_filter/src/lib.rs
-    lines:
-      - 65
-      - 68
-    note: constant order assertion test
+    note: test plain source file not ignored

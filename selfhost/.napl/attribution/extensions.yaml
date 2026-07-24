@@ -8,7 +8,7 @@ entries:
     lines:
       - 3
       - 4
-    note: canonical prompt extension constant
+    note: canonical prompt extension .napl constant
   - promptLines:
       - 22
       - 22
@@ -16,7 +16,7 @@ entries:
     lines:
       - 6
       - 7
-    note: canonical machine extension constant
+    note: canonical machine extension .mapl constant
   - promptLines:
       - 23
       - 24
@@ -24,15 +24,15 @@ entries:
     lines:
       - 9
       - 10
-    note: machine alias robot-face emoji constant
+    note: machine alias dot + robot emoji U+1F916
   - promptLines:
       - 28
-      - 32
+      - 31
     file: extensions/src/lib.rs
     lines:
       - 12
       - 20
-    note: curated single-person emoji aliases in codepoint order
+    note: curated six single-person emoji aliases in codepoint order
   - promptLines:
       - 31
       - 32
@@ -40,7 +40,7 @@ entries:
     lines:
       - 22
       - 25
-    note: default_prompt_aliases returns curated set as owned strings
+    note: default_prompt_aliases returns curated as owned strings
   - promptLines:
       - 36
       - 38
@@ -48,7 +48,7 @@ entries:
     lines:
       - 27
       - 35
-    note: prompt_extensions builds canonical plus given or curated aliases
+    note: prompt_extensions with canonical first then aliases or curated
   - promptLines:
       - 39
       - 40
@@ -56,7 +56,7 @@ entries:
     lines:
       - 37
       - 40
-    note: machine_extensions returns canonical then emoji alias
+    note: machine_extensions lists .mapl then emoji alias
   - promptLines:
       - 44
       - 45
@@ -64,7 +64,15 @@ entries:
     lines:
       - 42
       - 45
-    note: is_prompt_file suffix test over prompt_extensions
+    note: is_prompt_file suffix test over prompt extensions
+  - promptLines:
+      - 49
+      - 49
+    file: extensions/src/lib.rs
+    lines:
+      - 44
+      - 44
+    note: plain suffix test via ends_with
   - promptLines:
       - 46
       - 47
@@ -72,47 +80,15 @@ entries:
     lines:
       - 47
       - 50
-    note: is_machine_file suffix test over machine_extensions
-  - promptLines:
-      - 49
-      - 55
-    file: extensions/src/lib.rs
-    lines:
-      - 43
-      - 44
-    note: exact whole-codepoint suffix match, no partial composite match
-  - promptLines:
-      - 51
-      - 53
-    file: extensions/src/lib.rs
-    lines:
-      - 134
-      - 139
-    note: test for composite emoji sequence not matching single alias
-  - promptLines:
-      - 54
-      - 54
-    file: extensions/src/lib.rs
-    lines:
-      - 142
-      - 146
-    note: test robot emoji is machine not prompt
+    note: is_machine_file suffix test over machine extensions
   - promptLines:
       - 57
       - 58
     file: extensions/src/lib.rs
     lines:
       - 30
-      - 33
-    note: explicit alias override replaces curated aliases entirely
-  - promptLines:
-      - 57
-      - 58
-    file: extensions/src/lib.rs
-    lines:
-      - 126
-      - 131
-    note: test override excludes curated aliases
+      - 31
+    note: override branch uses only given aliases
   - promptLines:
       - 62
       - 65
@@ -120,4 +96,4 @@ entries:
     lines:
       - 52
       - 59
-    note: machine_extension_for_prompt mirrors prompt spelling, static str return
+    note: machine_extension_for_prompt mirrors napl vs emoji spelling

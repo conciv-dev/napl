@@ -6,20 +6,26 @@ types: []
 functions:
   - name: reconstruct_file_content
     signature: "reconstruct_file_content(entries: &[schemas_journal::JournalEntry], file_path: &str) -> Option<String>"
-    behavior: "Pure, no filesystem access. Reconstructs the baseline content of file_path by replaying its recorded patches across entries in ascending gen order. Does not assume entries arrive pre-sorted; sorts a borrowed view and does not mutate the caller's slice. Starts with no content. For each entry in gen order, if that entry's files contains one whose path equals file_path, applies that file's patch (parsed into hunks, then applied) to the current accumulated content (empty string if none yet), and the result becomes the new accumulated content. Entries/files with non-matching paths are ignored. After processing all entries, returns the final accumulated content, or None if no entry ever contained a file matching file_path.\n"
+    behavior: "Pure function (no filesystem access) that reconstructs the baseline content the toolchain last wrote for `file_path` by replaying its recorded journal patches in ascending `gen` order. Precondition: `entries` may arrive unsorted and must not be mutated (order a borrowed view, not the caller's slice). Postcondition: entries are processed oldest `gen` first; for each entry, the file whose `path` equals `file_path` (if any) has its `patch` parsed into hunks and applied to the content accumulated so far (the empty string when nothing has been accumulated yet), and the result becomes the new current content. Returns the accumulated content after walking every entry, or `None` if no entry ever contained a file matching `file_path`. Files in an entry whose path differs from `file_path` are ignored.\n"
 tests:
   - name: replays_two_patches_in_gen_order
-    given: two entries in ascending gen order for path "a.rs", first patch inserting "line one", second appending "line two"
-    expect: reconstruct_file_content returns Some("line one\nline two")
+    given: 'Two entries for path "a.rs" — gen 1 inserting "line one" into empty content, gen 2 appending "line two".
+'
+    expect: Some("line one\nline two").
   - name: sorts_out_of_order_entries_without_mutating_input
-    given: two entries for path "a.rs" passed in descending gen order (gen 2 then gen 1)
-    expect: reconstruct_file_content returns Some("line one\nline two") as if sorted ascending, and the original entries slice/vec is left unchanged
+    given: 'The same two "a.rs" entries supplied in reverse gen order (gen 2 before gen 1), with the input slice cloned beforehand.
+'
+    expect: 'Returns Some("line one\nline two") (replayed in ascending gen order) and the input slice is unchanged from its original clone.
+'
   - name: returns_none_for_untouched_path
-    given: one entry touching only "a.rs"
-    expect: reconstruct_file_content(entries, "b.rs") returns None
+    given: A single entry touching "a.rs", queried for path "b.rs".
+    expect: None (no entry touched the queried path).
   - name: ignores_files_from_other_entries_with_different_paths
-    given: a single entry whose files list contains both "a.rs" (patch producing "content a") and "b.rs" (patch producing "content b")
-    expect: reconstruct_file_content for "a.rs" returns Some("content a") and for "b.rs" returns Some("content b"), each unaffected by the other's patch
+    given: 'One entry (gen 1) containing two files — "a.rs" reconstructing to "content a" and "b.rs" reconstructing to "content b".
+'
+    expect: 'Querying "a.rs" returns Some("content a") and querying "b.rs" returns Some("content b"); each path uses only its own matching file.
+'
   - name: three_entries_apply_in_ascending_gen_order
-    given: three entries for "a.rs" with gens 3, 1, 2 (out of order) building "" -> "v1" -> "v1\nv2" -> "v1\nv2\nv3"
-    expect: reconstruct_file_content returns Some("v1\nv2\nv3"), confirming patches applied strictly by ascending gen regardless of input order
+    given: 'Three "a.rs" entries provided out of order (gen 3, gen 1, gen 2), each appending one line building v1 → v1\nv2 → v1\nv2\nv3.
+'
+    expect: Some("v1\nv2\nv3"), confirming ascending gen ordering.

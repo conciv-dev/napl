@@ -2,23 +2,8 @@ module: prompts
 target: rust
 entries:
   - promptLines:
-      - 12
-      - 16
-    kind: assumption
-    message: Assumed the workspace root Cargo.toml already includes `prompts` as a member (e.g. via a wildcard) since the prompt forbids touching the root manifest.
-    reasoning: The prompt says the root manifest is owned by the toolchain and must be left alone, but never states how a brand-new `prompts/` member crate becomes part of the workspace so that `cargo test` from the root picks it up. The agent created `prompts/Cargo.toml` and `prompts/src/lib.rs` without touching the root manifest, relying on the root already being configured to auto-include new member directories. This worked (final message reports `cargo test --workspace` passing), but the prompt itself never states this precondition explicitly.
-    suggestion: Note explicitly that the root manifest already globs in all top-level crate directories as workspace members, so no root edits are ever needed for new modules.
-  - promptLines:
-      - 20
-      - 23
-    kind: assumption
-    message: Path-dependency versions/editions for the four sibling crates were left unspecified, so the agent picked reasonable defaults.
-    reasoning: The prompt requires adding path dependencies on `schemas_frontmatter`, `schemas_line_range`, `schemas_attribution`, and `targets` but gives no guidance on version numbers, `edition`, or other Cargo.toml metadata for the new `prompts` crate. The agent had to choose these values itself; since tests pass this is likely fine, but it's a decision the prompt left open.
-    suggestion: Specify the Rust edition and any version/feature conventions new member crates in this workspace should use, or state that they should mirror an existing sibling crate's Cargo.toml.
-  - promptLines:
-      - 73
-      - 73
-    kind: ambiguity
-    message: '"three-plus lines" is an unusual, slightly confusing way to describe the empty-line + heading + one-per-dep bullet list.'
-    reasoning: "Item 10 says 'Only if `deps` is non-empty, three-plus lines: (empty), then ..., then one `- {dep.module}: {dep.summary}` per `DepSummary`.' The phrase 'three-plus lines' is not itself a content instruction but a meta-comment about line count, which reads oddly inline with the other purely content-descriptive bullets in this list. It was still parsed correctly (agent implemented empty line + heading + one bullet per dep), but the phrasing stands out as different in kind from surrounding bullets."
-    suggestion: "Drop the line-count aside and just state the sequence: '(empty), then the heading line, then one `- {dep.module}: {dep.summary}` line per `DepSummary`.'"
+      - 1
+      - 8
+    kind: no-op
+    message: No edits made — existing prompts/src/lib.rs already satisfies the full spec.
+    reasoning: The change summary is "NO CHANGES". The agent reported the prompt diff was empty (no behavior change) and that the existing prompts crate already implements every builder, constant, and the last_chars helper exactly as specified, with 18 passing tests. Because this is a pure-restatement compile of an already-implemented module, there was nothing to add or edit. No source drift was reported, so the no-op is the correct outcome rather than a missed requirement.

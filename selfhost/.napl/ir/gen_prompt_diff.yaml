@@ -5,14 +5,14 @@ types: []
 functions:
   - name: compute_prompt_diff
     signature: "compute_prompt_diff(prior_body: Option<&str>, body: &str) -> String"
-    behavior: "Pure function, no I/O. Returns unified diff text describing change in prompt body since last successful generation. If prior_body is Some(prior) and prior differs from body, returns the unified diff (via incremental::diff_body_lines(prior, body).unified) between prior and body. If prior_body is None, or prior_body is Some(prior) with prior == body, returns an empty string.\n"
+    behavior: "Pure function (no filesystem, no process spawning) that derives the unified prompt diff recorded in a journal entry. Postcondition: when prior_body is Some(prior) and prior differs from body, returns diff_body_lines(prior, body).unified (the unified field of the sibling incremental module's body-line diff between prior and current bodies). Otherwise — when prior_body is None, or the prior body equals the current body — returns the empty string. Does not reimplement diffing; delegates to incremental::diff_body_lines.\n"
 tests:
   - name: no_prior_body_returns_empty
-    given: prior_body = None, body = "body"
-    expect: returns ""
+    given: prior_body is None and body is "body"
+    expect: returns empty string ""
   - name: unchanged_body_returns_empty
-    given: prior_body = Some("body"), body = "body"
-    expect: returns "" (bodies equal)
+    given: prior_body is Some("body") equal to body "body"
+    expect: returns empty string ""
   - name: changed_body_returns_unified_diff
-    given: prior_body = Some("old line"), body = "new line"
-    expect: returns diff_body_lines("old line", "new line").unified, and result is non-empty
+    given: prior_body is Some("old line") and body is "new line"
+    expect: returns diff_body_lines("old line", "new line").unified, which is non-empty

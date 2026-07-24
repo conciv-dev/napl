@@ -2,15 +2,20 @@ module: schemas_frontmatter
 target: rust
 entries:
   - promptLines:
-      - 54
-      - 55
-    kind: assumption
-    message: Missing `module` key and empty `module` value surface as different error variants.
-    reasoning: "Prompt states both 'no module key' and 'module set to \"\"' are simply 'an error' without saying whether they must share an error variant. The agent implemented `EmptyModule` only for the explicit empty-string case (checked after deserialization) while a missing `module` key fails earlier during serde's struct deserialization and surfaces as `InvalidYaml` (since `module: String` has no `#[serde(default)]`). The agent's own test `rejects_missing_module_key` confirms it expects `InvalidYaml(_)`, not a distinct 'missing module' variant. This is a reasonable reading of 'non-empty string' as a type+content constraint, but the prompt doesn't say the two cases should produce visibly different error kinds."
-    suggestion: State explicitly whether a missing `module` key and an empty `module` value should map to the same error variant or may differ, e.g. 'both cases must return FrontmatterError::EmptyModule' or 'either case may surface as a YAML deserialization error.'
-  - promptLines:
-      - 10
+      - 8
       - 15
+    kind: no-op
+    message: No edits made — module crate already exists and fully realizes the prompt.
+    reasoning: 'The agent reported "NO CHANGES": the schemas_frontmatter crate, its Cargo.toml, and src/lib.rs already exist and implement every requirement (delimiter split, parse_frontmatter, field defaults, crate_name rename/Option default, mapping validation, body cleaning). All 15 tests pass from the workspace root, so the contract was already satisfied by existing source and no new code was needed.'
+  - promptLines:
+      - 64
+      - 67
+    kind: assumption
+    message: Body blank-line stripping wording resolved via the worked example.
+    reasoning: '"whitespace that runs up to and including a newline" is slightly ambiguous about whether trailing spaces before the newline count and whether only one line is stripped. The behavior was pinned by the worked examples (lines 92-93), where a single leading blank line after the closing delimiter is stripped to yield `Actual body.\n`. No change was required since existing code already matched.'
+  - promptLines:
+      - 40
+      - 43
     kind: note
-    message: No visible change to `schemas_frontmatter/Cargo.toml`, though the prompt requires it.
-    reasoning: The prompt requires creating `schemas_frontmatter/Cargo.toml` with package name `schemas_frontmatter` as part of this module. Only `schemas_frontmatter/src/lib.rs` appears in the recorded changes. The agent's final message claims the whole workspace builds and tests pass ('cargo test' green, 13 tests), which is only possible if a valid Cargo.toml exists, so it was presumably created or already present but not captured in the diff shown here.
+    message: Closing-delimiter trailing line-ending consumption interacts with body stripping.
+    reasoning: The split consumes one trailing line ending after the closing `---`, and then the body-cleaning step may strip a further leading blank line. The two rules compound (one newline eaten by the split, a second blank line potentially removed by cleaning). Existing code already reproduces the worked examples, so this is noted for the author's awareness, not a defect.

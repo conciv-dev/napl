@@ -3,6 +3,7 @@ dist/
 .turbo/
 *.tsbuildinfo
 .idea/
+.playwright-cli/
 
 # Release binaries dropped into platform packages at publish time
 npm/binary-*/napl

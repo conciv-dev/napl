@@ -2,8 +2,14 @@ module: gen_prompt_diff
 target: rust
 entries:
   - promptLines:
-      - 36
-      - 40
+      - 31
+      - 43
+    kind: no-op
+    message: No changes — existing lib.rs already implements compute_prompt_diff exactly as specified.
+    reasoning: "The agent reported NO CHANGES, stating the current src/lib.rs already matches the target: an Option<&str> match returning diff_body_lines(prior, body).unified when prior differs from body, and an empty string when prior_body is None or prior equals body. It also reported all 3 tests pass. The specified behavior (including the three examples in lines 42-43) was already satisfied, so no edits were required."
+  - promptLines:
+      - 14
+      - 15
     kind: note
-    message: Match logic straightforward, mirrors spec exactly.
-    reasoning: Code use match with guard `Some(prior) if prior != body => ... , _ => empty`. Covers all 3 cases stated (None; Some equal; Some differ) correctly, no gaps found.
+    message: Agent claims tests pass but final message does not show verification output.
+    reasoning: The prompt requires `cargo test` to pass from the workspace root before finishing. The agent asserts 'All 3 tests pass,' but no command output or evidence was included in the changes record. Since nothing was modified, prior passing state is plausible, but the pass claim is unverified in what was surfaced.

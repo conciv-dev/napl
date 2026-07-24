@@ -2,21 +2,21 @@ module: schemas_ir
 target: rust
 entries:
   - promptLines:
-      - 21
-      - 21
-    kind: assumption
-    message: IrTest/Ir only derive PartialEq, not Eq, since they hold serde_json::Value.
-    reasoning: Prompt says all types 'support equality comparison' without specifying PartialEq vs Eq. IrType/IrFunction (pure Strings) derive PartialEq+Eq, but IrTest/Ir contain serde_json::Value, which has no Eq impl, so only PartialEq could be derived for them. Agent assumed this relaxation was acceptable rather than flagging a conflict.
-    suggestion: Note that types containing serde_json::Value need only derive PartialEq (Value has no Eq), while pure-string types should derive both PartialEq and Eq.
+      - 10
+      - 17
+    kind: no-op
+    message: No changes made — crate schemas_ir/ already exists and matches full prompt.
+    reasoning: Changes were "NO CHANGES". Agent reports schemas_ir/Cargo.toml and schemas_ir/src/lib.rs already present, all types, validate_ir, and both semantic rules already implemented, and all 10 tests passing from workspace root. Prompt fully satisfied by pre-existing source; nothing to compile.
   - promptLines:
       - 21
       - 21
     kind: assumption
-    message: Added Debug and Clone derives beyond what prompt required.
-    reasoning: Prompt only asked for Deserialize and equality comparison. Agent additionally derived Debug and Clone on all types for ergonomics (e.g. test assertions, error messages), which is a reasonable but unrequested addition.
+    message: '"support equality comparison" taken as deriving PartialEq (and Eq where valid) on all IR types.'
+    reasoning: Prompt says types must "support equality comparison" without naming a trait. Standard Rust reading is `#[derive(PartialEq)]`. Note serde_json::Value fields (given/expect) only implement PartialEq, not Eq, so IrTest/Ir cannot derive Eq; existing code presumably derives PartialEq only. Flagged since prompt did not specify which equality trait.
+    suggestion: All of these derive `serde::Deserialize` and `PartialEq`.
   - promptLines:
-      - 36
-      - 47
-    kind: assumption
-    message: Error type shape (enum with Deserialize/EmptyModule/InvalidTestValue variants) was invented, not specified.
-    reasoning: Prompt only requires validate_ir return 'an error on failure (an error value, never a panic)' without specifying its structure. Agent designed a custom IrValidationError enum with Display/Error impls and a field name in InvalidTestValue; a different but equally valid error shape (e.g. a single String error) could have been chosen instead.
+      - 44
+      - 46
+    kind: note
+    message: Rule 3 (given/expect must be object or string) is stricter than the empty-object default in the types.
+    reasoning: Type layer (lines 26-27) defaults omitted given/expect to `{}` and accepts any Value; validator rule 3 then narrows accepted non-default values to object or string only. The two layers are consistent (an omitted field becomes `{}`, which is an object and passes), but the split responsibility is worth noting so a reader does not expect rule 3 to also reject the defaulted case.

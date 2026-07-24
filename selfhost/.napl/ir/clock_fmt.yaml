@@ -3,31 +3,30 @@ deps: []
 types: []
 functions:
   - name: iso_from_millis
-    signature: "iso_from_millis(millis: u64) -> String"
-    behavior: 'Pure function, no I/O. Interprets millis as milliseconds elapsed since Unix epoch (1970-01-01T00:00:00.000Z) in UTC, using the proleptic Gregorian calendar. Returns a string formatted exactly as "{year:04}-{month:02}-{day:02}T{hour:02}:{minute:02}:{second:02}.{ms:03}Z", with every numeric field zero-padded to its fixed width and a literal trailing "Z" (no other timezone offset). Accepts any u64 value (including 0 and very large values corresponding to far-future years); years are rendered with at least 4 digits. Deterministic: same input always yields same output; does not read the system clock or any external state.
-'
+    signature: "iso_from_millis(millis: unsigned 64-bit integer) -> string"
+    behavior: 'Pure function, no I/O and no system-clock or environment access. Interprets `millis` as milliseconds elapsed since the Unix epoch (1970-01-01T00:00:00.000Z) in UTC and returns the corresponding proleptic-Gregorian calendar timestamp. Splits the input into a millisecond remainder (millis mod 1000), whole seconds, minutes, hours, and whole days since epoch; the day count is converted to a civil (year, month, day) date. Postcondition: returns a string formatted exactly as `{year:04}-{month:02}-{day:02}T{hour:02}:{minute:02}:{second:02}.{ms:03}Z`, every field zero-padded to fixed width, with a literal `T` separator and a trailing `Z` (UTC, no other timezone offset). Examples that hold to the byte: input 0 -> "1970-01-01T00:00:00.000Z"; input 1784764800000 -> "2026-07-23T00:00:00.000Z"; input 1234 -> "1970-01-01T00:00:01.234Z".'
 tests:
   - name: epoch_is_zero
-    given: millis = 0
+    given: iso_from_millis(0)
     expect: '"1970-01-01T00:00:00.000Z"'
   - name: known_date_in_2026
-    given: millis = 1_784_764_800_000
+    given: iso_from_millis(1784764800000)
     expect: '"2026-07-23T00:00:00.000Z"'
   - name: sub_second_remainder
-    given: millis = 1_234
+    given: iso_from_millis(1234)
     expect: '"1970-01-01T00:00:01.234Z"'
   - name: one_full_day
-    given: millis = 86_400_000
+    given: iso_from_millis(86400000)
     expect: '"1970-01-02T00:00:00.000Z"'
   - name: end_of_february_leap_year
-    given: millis = 951_782_400_000
+    given: iso_from_millis(951782400000)
     expect: '"2000-02-29T00:00:00.000Z"'
   - name: year_boundary
-    given: millis = 946_684_799_999
+    given: iso_from_millis(946684799999)
     expect: '"1999-12-31T23:59:59.999Z"'
   - name: padding_for_single_digit_fields
-    given: millis = 981_173_106_007
+    given: iso_from_millis(981173106007)
     expect: '"2001-02-03T04:05:06.007Z"'
   - name: far_future_four_digit_year
-    given: millis = 253_402_300_799_000
+    given: iso_from_millis(253402300799000)
     expect: '"9999-12-31T23:59:59.000Z"'

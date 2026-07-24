@@ -2,16 +2,8 @@ module: body_lines
 target: rust
 entries:
   - promptLines:
-      - 9
-      - 12
-    kind: assumption
-    message: Assumed the workspace root Cargo.toml already auto-discovers members (e.g. via a glob), so no edit to the root manifest was needed to register the new crate.
-    reasoning: "The prompt says the root manifest is \"owned by the toolchain — leave it alone\" and to \"touch nothing outside body_lines/\", but a new member crate typically must be listed in the workspace's `[workspace.members]` array to be built as part of the workspace. The agent's reported change set doesn't show any root Cargo.toml edit, implying it assumed the root manifest already picks up new crates automatically (e.g. `members = [\"*\"]`). If that assumption is wrong, the crate may not actually be wired into the workspace build.\n"
-    suggestion: 'Clarify whether the root Cargo.toml already globs in new member crates, or whether this task is expected to also add an entry there (and if so, note that as an exception to "leave it alone").
-'
-  - promptLines:
-      - 9
-      - 12
-    kind: note
-    message: Reported change set lists only src/lib.rs, not body_lines/Cargo.toml, even though the final message claims both were created.
-    reasoning: 'The final message states "body_lines crate done: `body_lines/Cargo.toml` + `body_lines/src/lib.rs`", but the numbered change list provided only shows the contents of lib.rs. This is likely just an omission in what was surfaced for review rather than a real gap, but it means the Cargo.toml contents (package name, edition, dependencies) were not independently verifiable from the given change listing.'
+      - 1
+      - 59
+    kind: no-op
+    message: No changes made — existing body_lines crate already matches the full prompt spec.
+    reasoning: "The agent reported \"NO CHANGES\": the body_lines member crate (Cargo.toml, src/lib.rs) and all four described items — line splitting with CR stripping, prompt_body_lines/PromptBody, body_line_for_doc_line, and number_lines — already exist and satisfy the prompt exactly, with all 15 tests passing. Nothing needed to be produced. No independent verification of the \"already matches\" claim is possible from the diff alone; it rests on the agent's test run."

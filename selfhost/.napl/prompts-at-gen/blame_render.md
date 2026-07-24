@@ -29,8 +29,8 @@ path dependencies on them in your `Cargo.toml`:
   struct (fields include `gen: i64`, `timestamp: String`, `module: String`,
   `target: String`, `prompt_diff: String`, `mode: JournalMode`, and `files:
   Vec<JournalFile>` where each `JournalFile` has a `path: String` field) and its
-  public `JournalMode` enum (variants `Full`, `Incremental`, `Reconcile`). Do not
-  reimplement them.
+  public `JournalMode` enum (variants `Full`, `Incremental`, `Reconcile`,
+  `Move`). Do not reimplement them.
 
 Depending on a sibling by path only reads it; leave both sibling crates
 untouched.
@@ -38,7 +38,10 @@ untouched.
 ## `mode_str(mode: JournalMode) -> &'static str`
 
 Map a journal mode to its lowercase label: `Full` → `"full"`, `Incremental` →
-`"incremental"`, `Reconcile` → `"reconcile"`.
+`"incremental"`, `Reconcile` → `"reconcile"`, `Move` → `"move"`. The `Move`
+variant records a location-heal (a generated file moved to track a renamed
+prompt); it renders as the lowercase label `"move"`, and the match over
+`JournalMode` is exhaustive so every variant — including `Move` — is handled.
 
 ## `format_blame_row(entry: &BlameLine) -> String`
 

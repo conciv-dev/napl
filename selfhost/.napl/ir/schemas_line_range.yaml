@@ -1,58 +1,60 @@
 module: schemas_line_range
-deps: []
+deps:
+  - serde
+  - serde_json
 types:
   - name: LineRange
-    description: "Value type for inclusive 1-based line range. Fields: start (u32), end (u32). Constructible via new(start, end). Supports equality comparison and clone/copy semantics (two ranges equal iff same start and end). Implements deserialization from JSON via a custom lenient Deserialize."
+    description: A value type for a 1-based inclusive line range with two public unsigned 32-bit integer fields, "start" and "end". Supports equality comparison and copy/clone so two ranges with the same endpoints compare equal.
 functions:
-  - name: LineRange::new
+  - name: new
     signature: "new(start: u32, end: u32) -> LineRange"
-    behavior: Constructs a LineRange with given start and end. No validation performed (validation only applies to the deserializer path).
-  - name: LineRange::deserialize
-    signature: "deserialize<D: Deserializer>(deserializer: D) -> Result<LineRange, D::Error>"
-    behavior: "Lenient deserializer accepting three JSON shapes and normalizing to a LineRange: (1) a bare number n -> range n..=n; (2) a one-element array [n] -> range n..=n; (3) a two-element array [a, b] -> range with start=a, end=b. Every numeric line value must be an integer at least 1: value 0 is rejected (bare or in array); a number with nonzero fractional part is rejected (bare or in array); a number with zero fractional part (e.g. 2.0) is accepted and treated as its integer value. Arrays with 0, or 3+ elements are rejected. Any other JSON type (string, boolean, object) is rejected. On any rejection, returns an Err rather than panicking; exact error message is unspecified."
+    behavior: Constructs a LineRange with the given start and end endpoints, stored verbatim. No validation is performed by the constructor itself.
+  - name: deserialize
+    signature: "deserialize(input: Deserializer) -> Result<LineRange, Error>"
+    behavior: 'Lenient deserializer accepting three JSON shapes and normalizing to start/end. A bare number "n" yields the range n..=n. A one-element array "[n]" yields n..=n. A two-element array "[a, b]" yields start a and end b. Every line number must be an integer of at least 1: the value 0 is rejected (bare or in-array), a number with a nonzero fractional part is rejected (bare or in-array), and a number whose fractional part is zero is accepted as that integer (so 2.0 becomes 2..=2). Arrays with zero or three-or-more elements are rejected. Values of any other type (string, boolean, object) and negative numbers are rejected. Rejection returns an error, never a panic.'
 tests:
   - name: new_constructor_and_equality
-    given: LineRange::new(1, 3) compared to another LineRange::new(1, 3), and a copy of the first
-    expect: Both are equal to each other; start == 1 and end == 3; copy equals original
+    given: Two LineRange values built via new(1, 3), plus a copy of one.
+    expect: They compare equal; start is 1 and end is 3; the copy equals the original.
   - name: bare_number_becomes_single_line_range
-    given: JSON input "5"
-    expect: Deserializes to LineRange::new(5, 5)
+    given: The JSON "5".
+    expect: Deserializes to LineRange::new(5, 5).
   - name: one_element_array_becomes_single_line_range
-    given: JSON input "[5]"
-    expect: Deserializes to LineRange::new(5, 5)
+    given: The JSON "[5]".
+    expect: Deserializes to LineRange::new(5, 5).
   - name: two_element_array_becomes_range
-    given: JSON input "[2, 7]"
-    expect: Deserializes to LineRange::new(2, 7)
+    given: The JSON "[2, 7]".
+    expect: Deserializes to LineRange::new(2, 7).
   - name: bare_zero_is_rejected
-    given: JSON input "0"
-    expect: Deserialization returns an error
+    given: The JSON "0".
+    expect: Deserialization returns an error.
   - name: zero_in_array_is_rejected
-    given: JSON input "[0, 2]"
-    expect: Deserialization returns an error
+    given: The JSON "[0, 2]".
+    expect: Deserialization returns an error.
   - name: fractional_bare_number_is_rejected
-    given: JSON input "1.5"
-    expect: Deserialization returns an error
+    given: The JSON "1.5".
+    expect: Deserialization returns an error.
   - name: fractional_number_in_array_is_rejected
-    given: JSON input "[1.5, 2]"
-    expect: Deserialization returns an error
+    given: The JSON "[1.5, 2]".
+    expect: Deserialization returns an error.
   - name: whole_valued_float_is_accepted
-    given: JSON input "2.0"
-    expect: Deserializes to LineRange::new(2, 2)
+    given: The JSON "2.0".
+    expect: Deserializes to LineRange::new(2, 2).
   - name: three_element_array_is_rejected
-    given: JSON input "[1, 2, 3]"
-    expect: Deserialization returns an error
+    given: The JSON "[1, 2, 3]".
+    expect: Deserialization returns an error.
   - name: empty_array_is_rejected
-    given: JSON input "[]"
-    expect: Deserialization returns an error
+    given: The JSON "[]".
+    expect: Deserialization returns an error.
   - name: string_is_rejected
-    given: JSON input "\"nope\""
-    expect: Deserialization returns an error
+    given: The JSON string "nope".
+    expect: Deserialization returns an error.
   - name: boolean_is_rejected
-    given: JSON input "true"
-    expect: Deserialization returns an error
+    given: The JSON "true".
+    expect: Deserialization returns an error.
   - name: object_is_rejected
-    given: 'JSON input "{\"start\": 1, \"end\": 2}"'
-    expect: Deserialization returns an error
+    given: The JSON object with keys "start" and "end".
+    expect: Deserialization returns an error.
   - name: negative_number_is_rejected
-    given: JSON input "-1"
-    expect: Deserialization returns an error
+    given: The JSON "-1".
+    expect: Deserialization returns an error.

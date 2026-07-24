@@ -3,23 +3,14 @@ target: rust
 entries:
   - promptLines:
       - 11
-      - 14
-    kind: ambiguity
-    message: Unclear how the new crate joins the workspace without touching the root manifest.
-    reasoning: "The prompt says the workspace root Cargo.toml is owned by the toolchain and must be left alone, but a new member crate under clock_fmt/ normally must be registered in the root manifest's `[workspace.members]` (or matched by a glob) for `cargo test` to discover and run it from the workspace root. The prompt gives no guidance on whether the root manifest already globs in new crates or whether the agent should have edited it despite the \"leave it alone\" instruction. The provided change list only shows clock_fmt/src/lib.rs — no Cargo.toml (workspace or crate-level) is shown, so it's unclear whether crate registration was actually handled.\n"
-    suggestion: 'Clarify whether the workspace root already auto-includes new member crates (e.g. via a `clock_fmt/*` glob) or whether the agent is expected to add a members entry despite the "leave it alone" instruction.
+      - 15
+    kind: no-op
+    message: No changes made — existing source already matches the prompt byte-for-byte.
+    reasoning: 'Changes were "NO CHANGES". Agent reports the clock_fmt crate already exists and iso_from_millis matches the spec exactly, with all 8 tests passing (including the three worked examples). The prompt is clear and fully specified — exact format string, split algorithm, no-external-crate constraint, and byte-exact examples all given. Nothing was left open to decide, so no edit was warranted. The three worked examples (lines 39-41) are internally consistent: day 20657 since epoch does resolve to 2026-07-23, and the second/ms splits check out.
 '
   - promptLines:
-      - 30
-      - 35
+      - 15
+      - 15
     kind: note
-    message: Civil-date algorithm implemented matches the well-known Howard Hinnant days-to-civil formula.
-    reasoning: 'The prompt asks for "a standard days-since-epoch to civil-date algorithm" without naming one. The agent used the widely-used Howard Hinnant `civil_from_days` algorithm, which is a reasonable and correct choice satisfying the worked examples, including the leap-year (2000-02-29) and century-rule cases implied by "proleptic Gregorian calendar."
-'
-  - promptLines:
-      - 19
-      - 19
-    kind: assumption
-    message: No overflow handling specified for millis near u64::MAX; agent left it unguarded.
-    reasoning: "`iso_from_millis` takes u64 with no stated bound other than the far-future test case (year 9999). The days computation casts to i64 and could overflow/panic for truly enormous u64 inputs beyond that range. The prompt's examples stop at year 9999, so the agent implicitly assumed inputs stay within a sane range and did not add explicit overflow guards.\n"
-    suggestion: State the valid input range (e.g. "millis will not exceed the value for year 9999") or specify desired behavior (panic, saturate, error) for out-of-range input.
+    message: "\"cargo test passes\" claim is unverified by this layer — trust the agent's test run."
+    reasoning: Line 15 requires `cargo test` to pass from the workspace root. The agent asserts all 8 tests pass, but the machine layer sees only the prompt body and a NO-CHANGES diff, not the test output. Flagging so the human knows the pass claim rests on the agent's report, not on a diff-visible change.

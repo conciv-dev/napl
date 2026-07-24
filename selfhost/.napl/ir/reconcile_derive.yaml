@@ -3,30 +3,36 @@ deps:
   - drift
   - prompts
   - text_diff
-types: []
+types:
+  - name: DriftedFile
+    description: "Consumed from the drift module (not defined here). A drifted file record with fields: file (String, path relative to project root), reason (DriftReason), current (optional String, current on-disk content if present), and diff (optional String, baseline-to-current unified diff if one was computed)."
+  - name: DriftReason
+    description: "Consumed from the drift module. Enumerates why a file drifted: Edited (a file changed by hand) or Missing (a locked file was deleted)."
+  - name: ReconcileFile
+    description: Consumed from the prompts module. A per-file input to the reconcile task with fields file (String) and diff (String).
 functions:
   - name: editable_drifted
-    signature: "editable_drifted(files: &[DriftedFile]) -> Vec<&DriftedFile>"
-    behavior: "Pure function. Given a slice of drifted files, returns references to the subset that qualifies for reconcile: entries whose reason is Edited and whose current content is Some. Excludes Missing entries and Edited entries with current == None. Preserves original relative order. Does not mutate input. No I/O.\n"
+    signature: "editable_drifted(files: list<DriftedFile>) -> list<ref DriftedFile>"
+    behavior: "Returns references to the subset of files eligible to fold back into the prompt, preserving the original input order. A file is kept exactly when its reason is Edited AND its current content is Some. Missing files are dropped (deleted, nothing to accept as baseline), and Edited files whose current is None are dropped (content unavailable). Pure: no filesystem or process access. Given [a.ts(edited,current), b.ts(missing), c.ts(edited,no current), d.ts(edited,current)] the result is [a.ts, d.ts]."
   - name: build_reconcile_files
-    signature: "build_reconcile_files(files: &[DriftedFile]) -> Vec<ReconcileFile>"
-    behavior: "Pure function. Applies the same editability rule as editable_drifted, preserving order, and maps each qualifying DriftedFile to a ReconcileFile. ReconcileFile.file is copied from the drifted file's file field. ReconcileFile.diff is the drifted file's diff when Some (used verbatim, unmodified); when diff is None, it is computed as unified_diff(\"\", current) where current is the drifted file's current content (empty string if current is None, though editable entries always have Some current). Files that are Missing or Edited-without- current contribute nothing to the result. Empty input or input with no qualifying files yields an empty vector. No I/O, no mutation of input.\n"
+    signature: "build_reconcile_files(files: list<DriftedFile>) -> list<ReconcileFile>"
+    behavior: Builds one ReconcileFile per editable drifted file (same editability rule and order as editable_drifted). For each editable file, file is the drifted file's file; diff is the drifted file's recorded diff when Some (used verbatim), otherwise unified_diff("", current) where a None current is treated as the empty string (an editable file always has Some current). Non-editable files contribute nothing, so input containing only a Missing file and an Edited file with no current yields an empty list. Pure.
 tests:
-  - name: editable_drifted_keeps_edited_with_current_in_order
-    given: a list [a.ts (Edited, current=Some), b.ts (Missing), c.ts (Edited, current=None), d.ts (Edited, current=Some)]
-    expect: editable_drifted returns [a.ts, d.ts] in that order
-  - name: editable_drifted_empty_when_none_qualify
-    given: a list [a.ts (Missing), b.ts (Edited, current=None)]
-    expect: editable_drifted returns an empty vector
-  - name: build_reconcile_files_uses_recorded_diff_verbatim
-    given: a single Edited file a.ts with current=Some("a content") and diff=Some("PRERECORDED DIFF")
-    expect: build_reconcile_files returns one ReconcileFile with file="a.ts" and diff="PRERECORDED DIFF" unchanged
-  - name: build_reconcile_files_computes_diff_when_missing
-    given: a single Edited file a.ts with current=Some("new content") and diff=None
-    expect: build_reconcile_files returns one ReconcileFile whose diff equals unified_diff("", "new content")
-  - name: build_reconcile_files_skips_missing_and_contentless_files
-    given: a list [a.ts (Missing), b.ts (Edited, current=None)]
-    expect: build_reconcile_files returns an empty vector
-  - name: build_reconcile_files_preserves_order
-    given: a list [a.ts (Edited, current=Some("a"), diff=Some("diff a")), skip.ts (Missing), b.ts (Edited, current=Some("b"), diff=Some("diff b"))]
-    expect: build_reconcile_files returns ReconcileFiles for a.ts then b.ts, in that order
+  - name: editable_drifted keeps edited-with-current in order
+    given: files = [a.ts(edited, current="a content"), b.ts(missing), c.ts(edited, no current), d.ts(edited, current="d content")]
+    expect: editable_drifted returns files with names [a.ts, d.ts] in that order.
+  - name: editable_drifted empty when none qualify
+    given: files = [a.ts(missing), b.ts(edited, no current)]
+    expect: editable_drifted returns an empty list.
+  - name: build_reconcile_files uses recorded diff verbatim
+    given: files = [a.ts(edited, current="a content", diff="PRERECORDED DIFF")]
+    expect: one ReconcileFile with file == "a.ts" and diff == "PRERECORDED DIFF".
+  - name: build_reconcile_files computes diff when missing
+    given: files = [a.ts(edited, current="new content", diff=None)]
+    expect: one ReconcileFile whose diff == unified_diff("", "new content").
+  - name: build_reconcile_files skips missing and contentless files
+    given: files = [a.ts(missing), b.ts(edited, no current)]
+    expect: build_reconcile_files returns an empty list.
+  - name: build_reconcile_files preserves order
+    given: files = [a.ts(edited, current="a", diff="diff a"), skip.ts(missing), b.ts(edited, current="b", diff="diff b")]
+    expect: result ReconcileFiles have files [a.ts, b.ts] in that order.

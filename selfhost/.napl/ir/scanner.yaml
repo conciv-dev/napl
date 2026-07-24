@@ -2,60 +2,57 @@ module: scanner
 deps: []
 types:
   - name: Position
-    description: Zero-based source position with line (line index, counted by \n splits) and character (UTF-16 code unit offset within that line). Equality and copy supported.
+    description: A zero-based document location with a line (count of lines from 0) and a character (count of UTF-16 code units within that line). Value type supporting equality and copy.
   - name: Span
-    description: Inclusive-in-spirit range from a start Position to an end Position. Equality and copy supported.
+    description: A source range with a start and end Position, inclusive in spirit on both ends. Value type supporting equality and copy.
   - name: RegionSpan
-    description: "A region that may or may not be present in the document: present (bool) and span (Span, set only when present)."
+    description: A possibly-absent document region, with a present flag and an optional Span that is set when present is true.
   - name: FrontmatterKeyToken
-    description: "A frontmatter key occurrence: key (the key name string) and key_span (span covering just the key text, not the colon)."
+    description: A frontmatter key occurrence, with the key string and a key_span covering the key text (colon excluded).
   - name: ModuleValueToken
-    description: "The scalar value of the `module:` frontmatter key: value (unquoted string) and span (covering just the value text)."
+    description: The resolved value of the module key, with the value string and its Span.
   - name: DepSource
-    description: "Enum distinguishing which frontmatter key a dependency token came from: Deps (from `deps:`) or Extends (from `extends:`). Equality and copy supported."
+    description: Enum distinguishing where a dependency was declared; variants Deps and Extends. Value type supporting equality and copy.
   - name: DepToken
-    description: "A single dependency value: value (unquoted string), span (covering just the value text), and source (DepSource indicating origin key)."
+    description: A single dependency entry, with the value string, its Span, and a source (DepSource) indicating deps vs extends origin.
   - name: RefToken
-    description: "An `@module/ref` mention found in the body: module (the reference name after `@`, without the `@`) and span (covering the whole `@name` token including the `@`)."
+    description: An in-body @module/ref mention, with the referenced module string and the Span of the whole @name token.
   - name: ScanResult
-    description: "The full scan output for a document: frontmatter (RegionSpan), body (RegionSpan), keys (list of FrontmatterKeyToken in document order), module_value (optional ModuleValueToken), deps (list of DepToken in document order), refs (list of RefToken in document order)."
+    description: The complete scan output — frontmatter and body RegionSpans, a list of FrontmatterKeyTokens, an optional ModuleValueToken, a list of DepTokens, and a list of RefTokens.
   - name: Target
-    description: "A resolved navigation target at a position, one of: ModuleValue { module, span } — the module: value; Dep { module, span, source } — a dependency entry; Ref { module, span } — a body @-reference. Equality supported."
+    description: Enum of a resolvable navigation target under a position; variants ModuleValue{module,span}, Dep{module,span,source}, and Ref{module,span}. Supports equality.
 functions:
   - name: scan
     signature: "scan(text: string) -> ScanResult"
-    behavior: "Pure function with no I/O. Splits text into lines on '\\n', stripping a single trailing '\\r' from each line (CRLF/LF equivalence); a trailing newline yields a final empty line. Detects a frontmatter block: present when the first line (trimmed at the end) is exactly '---' and some line at index >= 1 (trimmed at the end) is also exactly '---' (the first such line is the closing delimiter). If frontmatter is found: frontmatter region spans from (1,0) to (close-1, UTF-16 length of that last inner line), or (1,0)-(1,0) if there are no inner lines. Inner lines (indices 1..close-1) are scanned in order for frontmatter keys, module value, and deps (see scanning rules below), tracking open block-list state across lines within a single key's scope (cleared whenever a new key line is seen). Body region: if a line exists at index close+1, body spans from (close+1, 0) to (last line index, UTF-16 length of last line) and is present; otherwise body is absent. Refs are scanned only over body lines starting at close+1. If frontmatter is not found: frontmatter region is absent; body is present (whenever at least one line exists) spanning (0,0) to (last line index, UTF-16 length of last line); refs are scanned over all lines starting at line 0.\nKey line detection: a line matches a key when it starts with one or more of [A-Za-z0-9_-] followed immediately by ':'; the key is that run of characters. Each key line produces a FrontmatterKeyToken with key_span (line, 0)-(line, UTF-16 length of key), and clears any pending open block-list state. key_end_char = UTF-16 length of key + 1 (column just past the colon).\nScalar value extraction (used for `module:` and single-value `deps:`/`extends:`): take the substring after the colon; measure leading whitespace in UTF-16 units; trim it. If the trimmed result is empty, no value token is produced. Otherwise the value starts at key_end_char + leading-whitespace-units; if the trimmed text is wrapped in a single matching pair of ASCII quotes (' or \"), strip them and shift the start by 1; the span end is start + UTF-16 length of the (unquoted) value.\n`module:` produces module_value via the scalar rule.\n`deps:` / `extends:` produce DepToken entries tagged with source Deps/Extends respectively:\n  - if the trimmed after-colon text starts with '[', treat as an inline list:\n    take the substring between the first '[' and the last ']' (or to end of\n    line if no ']'); base column = key_end_char + UTF-16 offset of '[' in the\n    after-colon text + 1; split the inner text on ',' into maximal runs not\n    containing ',', '[', ']'; for each non-empty (after trimming trailing\n    whitespace) item, strip surrounding quotes, compute start = base column +\n    UTF-16 offset of the item within the inner text (+1 if quotes were\n    stripped), end = start + UTF-16 length of value, and emit a DepToken.\n  - if the after-colon text is empty, mark this key as an open block list\n    for following lines (until the next key line).\n  - otherwise, extract a single scalar dep value via the scalar rule.\n\nBlock list items: while a block list is open and a line is not itself a key line, a line matching optional leading whitespace + '-' + one-or-more spaces + rest is a list item. Its value start column = UTF-16 indent units + 1 + number of spaces after the dash; the rest is trimmed and quote-stripped (shifting start by 1 if quoted); end = start + UTF-16 length of value. Emits a DepToken with the remembered source. A dash immediately followed by non-whitespace (or end of line) is not a list item.\nRef scanning: on each scanned line, '@' followed by one or more of [A-Za-z0-9_/-] starts a reference; module is that following run of characters; span runs from the '@' column to that column + UTF-16 length of '@' plus the name. A lone '@' not followed by a reference character is not a reference. Column tracking throughout uses UTF-16 code unit counts, not bytes or scalar values.\n"
+    behavior: "Pure; no I/O. Splits text into lines on newline, stripping a single trailing carriage return per segment so CRLF and LF behave identically (a trailing newline yields a final empty line). Detects a frontmatter block when the first line (trailing-whitespace-trimmed) equals exactly '---' and a later line (from line 1 on, trailing-trimmed) also equals '---' as the closing delimiter; inner lines are 1..close-1. When frontmatter exists, frontmatter region is present spanning (1,0) to (close-1, UTF-16 length of the last inner line), or (1,0)-(1,0) when there are no inner lines; the body begins at line close+1 and, when that line exists, spans (close+1,0) to (last line, UTF-16 length of last line), else the body is absent. With no frontmatter, frontmatter is absent and body is present whenever at least one line exists, spanning (0,0) to (last line, UTF-16 length of last line). Walks inner frontmatter lines to emit FrontmatterKeyTokens (key matches ^[A-Za-z0-9_-]+:), resolves module: as a scalar ModuleValueToken, and emits DepTokens from deps:/extends: whether inline list ([...] split on commas), single scalar, or block-list items (^\\s*-\\s+...). Scalar/list/item values measure leading whitespace in UTF-16 units and strip a single pair of matching surrounding ASCII quotes, shifting the start by one unit when stripped. Scans @module/ref mentions only within the body region (from close+1, or from line 0 when no frontmatter); a reference is an @ followed by one or more of [A-Za-z0-9_/-], its module being that run and its span covering the whole @name token in UTF-16 columns; a bare @ is not a reference. Returns the assembled ScanResult."
   - name: find_target_at_position
-    signature: "find_target_at_position(scan: ScanResult, position: Position) -> Target | None"
-    behavior: "Pure function with no I/O. Returns the first token whose span contains position, checked in this precedence order: the module_value (if any), then each entry of deps in document order, then each entry of refs in document order. A span contains a position when the position is not before the span's start and not after the span's end (both endpoints inclusive), comparing by line first and then character. Returns the corresponding Target variant (ModuleValue, Dep with its source, or Ref) wrapping the matched token's value and span. Returns None/nothing if no token's span contains the position.\n"
+    signature: "find_target_at_position(scan: ScanResult, position: Position) -> Option<Target>"
+    behavior: "Returns the token whose span contains position, tested in precedence order: the module value first, then each dep in order, then each ref in order. A span contains a position when the position is not before the span start nor after the span end, comparing line then character, inclusive on both ends. Returns nothing when no token contains the position."
 tests:
   - name: main_doc_module_value
-    given: "The reference document with frontmatter `module: auth/session` on line 1, scanned"
-    expect: module_value.value == 'auth/session' and its span is (1,8)-(1,20)
+    given: The main reference document is scanned.
+    expect: module_value is present with value 'auth/session' and span (1,8)-(1,20).
   - name: main_doc_deps
-    given: "The reference document with `deps: [auth/tokens, auth/users]` on line 2, scanned"
-    expect: "deps has 2 entries: 'auth/tokens' (source Deps, span (2,7)-(2,18)) and 'auth/users' (span start (2,20), end (2,30))"
+    given: The main reference document is scanned.
+    expect: Exactly two deps; first value 'auth/tokens', source Deps, span (2,7)-(2,18); second value 'auth/users' with start (2,20) and end (2,30).
   - name: main_doc_refs
-    given: The reference document's body containing '@auth/tokens', '@auth/users', '@auth/session'
-    expect: refs module names in order are ['auth/tokens','auth/users','auth/session'] and the first ref's span is (7,21)-(7,33)
+    given: The main reference document is scanned.
+    expect: Body refs are 'auth/tokens', 'auth/users', 'auth/session' in order, with the first spanning (7,21)-(7,33).
   - name: main_doc_regions
-    given: The reference document, scanned
-    expect: frontmatter is present with span start (1,0) and end on line 3; body is present with span start on line 5
+    given: The main reference document is scanned.
+    expect: Frontmatter present, starting at (1,0) with end on line 3; body present, starting on line 5.
   - name: main_doc_find_target
-    given: The reference document scanned, then find_target_at_position at (1,10), (2,10), (7,25)
-    expect: (1,10) resolves to ModuleValue 'auth/session'; (2,10) resolves to Dep 'auth/tokens' with source Deps; (7,25) resolves to Ref 'auth/tokens'
-  - name: main_doc_find_target_miss
-    given: The reference document scanned, find_target_at_position at (5,0)
-    expect: returns nothing (no token contains that position)
-  - name: block_list_deps
-    given: "Document '---\\nmodule: a\\ndeps:\\n  - one\\n  - \"two/x\"\\nextends: base\\n---\\nbody\\n'"
-    expect: deps are, in order, deps:'one' (span start (3,4), end (3,7)), deps:'two/x' (start (4,5)), extends:'base' (start (5,9))
-  - name: empty_inline_list
-    given: "Document '---\\nmodule: greeting\\ndeps: []\\n---\\nbody\\n'"
-    expect: deps is empty and module_value.value == 'greeting'
-  - name: astral_char_before_ref
-    given: "Document '---\\nmodule: m\\n---\\n😀😀@auth/x\\n' (two astral emoji, each 2 UTF-16 units, before '@')"
-    expect: one ref 'auth/x' with span start (3,4) and end (3,11)
-  - name: bmp_char_before_ref
-    given: "Document '---\\nmodule: m\\n---\\né@x/y\\n' (one BMP 'é', 1 UTF-16 unit, before '@')"
-    expect: one ref with span start (3,1)
+    given: The main reference document is scanned and positions (1,10), (2,10), (7,25), (5,0) are resolved.
+    expect: (1,10) yields ModuleValue 'auth/session'; (2,10) yields Dep 'auth/tokens' with source Deps; (7,25) yields Ref 'auth/tokens'; (5,0) yields nothing.
+  - name: block_list_document
+    given: "The document '---\\nmodule: a\\ndeps:\\n  - one\\n  - \"two/x\"\\nextends: base\\n---\\nbody\\n' is scanned."
+    expect: Deps are, by source, deps:one, deps:two/x, extends:base; 'one' spans (3,4)-(3,7), 'two/x' starts at (4,5), and 'base' starts at (5,9).
+  - name: empty_inline_deps
+    given: "The document '---\\nmodule: greeting\\ndeps: []\\n---\\nbody\\n' is scanned."
+    expect: There are no deps and module_value is 'greeting'.
+  - name: astral_prefix_ref
+    given: "The document '---\\nmodule: m\\n---\\n😀😀@auth/x\\n' (two astral emoji before the @) is scanned."
+    expect: One ref 'auth/x' starting at (3,4) and ending at (3,11), each emoji counting as 2 UTF-16 units.
+  - name: bmp_prefix_ref
+    given: "The document '---\\nmodule: m\\n---\\né@x/y\\n' (one BMP é before the @) is scanned."
+    expect: The ref starts at (3,1), the é counting as 1 UTF-16 unit.

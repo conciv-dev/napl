@@ -2,13 +2,21 @@ module: schemas_lock
 target: rust
 entries:
   - promptLines:
-      - 1
+      - 6
       - 6
     file: schemas_lock/src/lib.rs
     lines:
-      - 1
       - 3
-    note: module header, pure serde-based types
+      - 3
+    note: brings in serde derive traits
+  - promptLines:
+      - 25
+      - 27
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 138
+      - 138
+    note: calls extensions crate default_prompt_aliases
   - promptLines:
       - 38
       - 41
@@ -16,7 +24,7 @@ entries:
     lines:
       - 11
       - 16
-    note: Backend enum, kebab-case, derives
+    note: Backend enum, kebab-case, copy/eq derives
   - promptLines:
       - 42
       - 43
@@ -24,7 +32,7 @@ entries:
     lines:
       - 18
       - 24
-    note: AgentPreset enum, lowercase
+    note: AgentPreset enum, lowercase serde
   - promptLines:
       - 44
       - 48
@@ -34,13 +42,53 @@ entries:
       - 32
     note: AgentConfig struct, deny_unknown_fields, optional command
   - promptLines:
+      - 45
+      - 46
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 30
+      - 31
+    note: command skipped when None, defaults None
+  - promptLines:
+      - 46
+      - 48
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 27
+      - 27
+    note: deny unknown fields
+  - promptLines:
       - 49
-      - 53
+      - 50
     file: schemas_lock/src/lib.rs
     lines:
       - 34
-      - 43
-    note: HlLock struct fields incl camelCase promptAliases, backend default
+      - 36
+    note: HlLock struct with model String
+  - promptLines:
+      - 50
+      - 50
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 37
+      - 38
+    note: backend defaults to claude-cli when absent
+  - promptLines:
+      - 51
+      - 52
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 39
+      - 40
+    note: promptAliases camelCase key, omitted when absent
+  - promptLines:
+      - 53
+      - 53
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 41
+      - 42
+    note: optional agent omitted when absent
   - promptLines:
       - 50
       - 50
@@ -48,7 +96,7 @@ entries:
     lines:
       - 45
       - 47
-    note: default backend value fn for serde default
+    note: default_backend_value helper
   - promptLines:
       - 57
       - 57
@@ -80,23 +128,15 @@ entries:
     lines:
       - 49
       - 54
-    note: default_agent_config fn
+    note: "default_agent_config: claude preset, no command"
   - promptLines:
       - 64
       - 67
     file: schemas_lock/src/lib.rs
     lines:
       - 113
-      - 118
-    note: parse_lock deserializes then validates model
-  - promptLines:
-      - 69
-      - 69
-    file: schemas_lock/src/lib.rs
-    lines:
-      - 59
-      - 59
-    note: EmptyModel error variant
+      - 114
+    note: parse_lock deserializes JSON, error not panic
   - promptLines:
       - 69
       - 69
@@ -104,7 +144,7 @@ entries:
     lines:
       - 116
       - 118
-    note: empty model check
+    note: empty model is validation error
   - promptLines:
       - 70
       - 70
@@ -112,7 +152,7 @@ entries:
     lines:
       - 120
       - 126
-    note: validate each prompt alias
+    note: validate each prompt alias if present
   - promptLines:
       - 71
       - 71
@@ -120,15 +160,15 @@ entries:
     lines:
       - 128
       - 130
-    note: validate agent config if present
+    note: validate agent if present
   - promptLines:
-      - 75
-      - 82
+      - 64
+      - 64
     file: schemas_lock/src/lib.rs
     lines:
-      - 5
-      - 5
-    note: ZWJ constant used in alias validation
+      - 132
+      - 132
+    note: returns validated lock
   - promptLines:
       - 77
       - 77
@@ -144,7 +184,15 @@ entries:
     lines:
       - 87
       - 90
-    note: 1-2 code points after dot check
+    note: 1 or 2 code points after dot
+  - promptLines:
+      - 80
+      - 82
+    file: schemas_lock/src/lib.rs
+    lines:
+      - 5
+      - 5
+    note: ZWJ constant U+200D
   - promptLines:
       - 80
       - 82
@@ -152,15 +200,7 @@ entries:
     lines:
       - 91
       - 93
-    note: reject ZWJ in alias
-  - promptLines:
-      - 83
-      - 94
-    file: schemas_lock/src/lib.rs
-    lines:
-      - 83
-      - 95
-    note: is_valid_prompt_alias function
+    note: reject aliases containing ZWJ
   - promptLines:
       - 91
       - 92
@@ -176,31 +216,7 @@ entries:
     lines:
       - 103
       - 109
-    note: claude/codex presets must not have command
-  - promptLines:
-      - 87
-      - 95
-    file: schemas_lock/src/lib.rs
-    lines:
-      - 97
-      - 111
-    note: validate_agent_config function
-  - promptLines:
-      - 65
-      - 66
-    file: schemas_lock/src/lib.rs
-    lines:
-      - 56
-      - 63
-    note: LockError variants covering parse/validation failures
-  - promptLines:
-      - 65
-      - 66
-    file: schemas_lock/src/lib.rs
-    lines:
-      - 65
-      - 81
-    note: Display/Error impls for LockError
+    note: claude/codex must not carry command
   - promptLines:
       - 100
       - 102
@@ -208,7 +224,7 @@ entries:
     lines:
       - 135
       - 139
-    note: resolve_prompt_aliases uses override or extensions default
+    note: resolve_prompt_aliases override or curated default
   - promptLines:
       - 103
       - 104
@@ -216,12 +232,4 @@ entries:
     lines:
       - 141
       - 143
-    note: resolve_agent_config uses override or default_agent_config
-  - promptLines:
-      - 21
-      - 32
-    file: schemas_lock/src/lib.rs
-    lines:
-      - 138
-      - 138
-    note: calls sibling extensions crate's default_prompt_aliases
+    note: resolve_agent_config override or default

@@ -2,22 +2,14 @@ module: incremental
 target: rust
 entries:
   - promptLines:
-      - 21
-      - 22
-    kind: ambiguity
-    message: '"do not... depend on any hand-written crate" is oddly worded and its scope is unclear.'
-    reasoning: "The instruction to add path deps on the two sibling crates and not reimplement their logic makes sense, but the trailing clause \"or depend on any hand-written crate\" reads as an odd, out-of-place insertion — it's unclear what \"hand-written\" is meant to contrast with (generated vs. authored code?), and whether it bans any crates.io dependency beyond the two named siblings, or something else entirely. The agent treated it as reinforcing \"use only the two generated sibling crates, plus std\" and added no other dependencies, which satisfies the plain reading but the phrase itself is worth the author's attention.\n"
-    suggestion: Depend only on these two sibling crates (plus the standard library) — do not add any other crate dependency.
+      - 1
+      - 82
+    kind: no-op
+    message: No changes — prompt unchanged since prior compile, existing code already satisfies it.
+    reasoning: Agent reported "Empty prompt diff, code already matches prompt. All 11 tests pass." This is an incremental regeneration where the prompt body did not differ from the previously compiled version, so the existing `incremental/` crate (BodyLineDiff, diff_body_lines, select_intersecting_entries, incremental_unlock_list) already implements every requirement and its test suite passes. No edits were warranted.
   - promptLines:
       - 53
-      - 55
-    kind: assumption
-    message: '"within 3 of a change" was interpreted as operation-index distance, not line-number distance.'
-    reasoning: "The hunk-grouping rule says a hunk covers every operation within 3 of a change, and hunks merge/split based on run width, but it doesn't explicitly state whether \"within 3\" is measured in diff-operation index or in body line number (these usually coincide for equal runs but could diverge with runs of consecutive inserts/deletes). The agent implemented it as operation-index distance (`idx.saturating_sub(CONTEXT)` / `idx + CONTEXT` over the ops array, merging when `lo <= last_hi + 1`), which matches the worked examples in the tests (6-line gap merges, wider gaps split) but is one of a few defensible readings.\n"
-    suggestion: "Clarify: within 3 diff-operations (not source line numbers) of a changed (deletion/insertion) operation."
-  - promptLines:
-      - 48
-      - 50
+      - 62
     kind: note
-    message: Delete/insert tie-break implemented via LCS-table comparison, not explicitly spelled out in prompt.
-    reasoning: The prompt states that on a free choice, deletion is preferred over insertion, without specifying the mechanism. The agent implemented this by choosing Delete whenever `table[i+1][j] >= table[i][j+1]` (ties go to delete), which the `prefers_deletion_on_free_choice` test confirms produces the intended result. Purely a note on the implementation choice, no ambiguity in the required behavior itself.
+    message: Unified-diff hunk-grouping rules were not exercised by new work but carry latent ambiguity.
+    reasoning: The spec for grouping operations into hunks ("a hunk covers every operation within 3 of a change; a purely-equal run wider than the context splits hunks") is prose that admits more than one boundary interpretation at hunk edges and around adjacent changes. Since no changes were made, the existing implementation's interpretation stands unverified against any new intent — worth confirming against the passing tests if hunk boundaries matter.

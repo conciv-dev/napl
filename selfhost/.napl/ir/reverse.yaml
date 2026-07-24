@@ -5,91 +5,85 @@ deps:
   - body_lines
 types:
   - name: GeneratedPathInfo
-    description: "Result of splitting a generated file path into the target module name and the path relative to that target's source root. Fields: target (string), target_rel_path (string). Comparable, cloneable.\n"
+    description: Comparable, cloneable record splitting a generated file path into a "target" string (the module directory) and a "target_rel_path" string (the path within that target).
   - name: AttributionSource
-    description: "One module's attribution data together with the prompt files that contributed to it. Fields: module (string), target (string), entries (list of AttributionEntry), prompt_files (list of string). Comparable, cloneable.\n"
+    description: "Comparable, cloneable record of one module's attribution: \"module\" string, \"target\" string, \"entries\" as a list of AttributionEntry, and \"prompt_files\" as a list of prompt-file path strings contributing to it."
   - name: ReverseMatch
-    description: "One resolved match between a code range and the prompt span behind it. Fields: module (string), target (string), prompt_file (string), note (string), prompt_lines (LineRange), code_lines (LineRange). Comparable, cloneable.\n"
-  - name: AttributionEntry (re-exported from schemas_attribution)
-    description: "Mapping entry used as-is from schemas_attribution: prompt_lines (LineRange, JSON key promptLines), file (string), lines (LineRange), note (string).\n"
-  - name: LineRange (re-exported from schemas_line_range)
-    description: "Inclusive 1-based line range used as-is from schemas_line_range, with start/end (u32) and a new(start, end) constructor. Comparable, copyable.\n"
+    description: 'Comparable, cloneable record linking one code range to the prompt span behind it: "module" string, "target" string, "prompt_file" string, "note" string, "prompt_lines" LineRange, and "code_lines" LineRange.'
 functions:
+  - name: GENERATED_PREFIX
+    signature: constant string = ".napl/src/"
+    behavior: Public string constant naming the prefix every generated file path carries.
+  - name: DRIFT_LENS_PREFIX
+    signature: constant string = "DRIFT — edits here are not reflected in any prompt"
+    behavior: Public string constant used as the drift lens title prefix.
   - name: parse_generated_path
-    signature: "parse_generated_path(rel_full: string) -> Option<GeneratedPathInfo>"
-    behavior: "Normalizes backslashes to forward slashes, then strips the GENERATED_PREFIX (\".napl/src/\") from the start. Returns None if the prefix is absent. Of the remainder, the text up to the first '/' becomes target and the rest becomes target_rel_path. Returns None if there is no '/' after the prefix, if target is empty (e.g. a leading '/' right after the prefix), or if target_rel_path is empty. Otherwise returns Some(GeneratedPathInfo { target, target_rel_path }).\n"
+    signature: "(rel_full: string) -> Optional<GeneratedPathInfo>"
+    behavior: Normalizes backslashes to forward slashes, strips GENERATED_PREFIX, then takes text up to the first "/" as target and the remainder as target_rel_path. Returns none when the prefix is absent, when there is no "/" after it, when the target is empty (leading slash), or when the target-relative path is empty; otherwise returns the split info.
   - name: reverse_matches
-    signature: "reverse_matches(sources: list<AttributionSource>, target: string, target_rel_path: string, code_line: Option<u32>) -> list<ReverseMatch>\n"
-    behavior: "Filters sources to those whose target field equals the given target. Within each, filters entries to those whose file equals target_rel_path, and, when code_line is Some, further to entries whose lines range contains that line inclusive (line >= lines.start and line <= lines.end). When code_line is None, no line filtering is applied. For each surviving entry, emits one ReverseMatch per prompt file in the source's prompt_files, carrying the source's module and target, that prompt file, the entry's note, prompt_lines, and lines (as code_lines). Preserves order: sources, then entries within a source, then prompt files within an entry. Returns an empty list if nothing matches.\n"
+    signature: "(sources: list<AttributionSource>, target: string, target_rel_path: string, code_line: Optional<u32>) -> list<ReverseMatch>"
+    behavior: For each source whose target equals target, for each entry whose file equals target_rel_path, and (when code_line is present) whose lines range contains that line inclusively, emits one ReverseMatch per prompt file in prompt_files. Each match carries the source's module and target, the prompt file, the entry's note, the entry's prompt_lines, and the entry's lines as code_lines. A none code_line returns all matching entries regardless of line. Order follows sources, then entries, then prompt files.
   - name: prompt_absolute_lines
-    signature: "prompt_absolute_lines(body_start_line: usize, prompt_lines: LineRange) -> (usize, usize)\n"
-    behavior: "Converts a body-relative 1-based prompt line range into an absolute 0-based document line pair: (body_start_line + prompt_lines.start - 1, body_start_line + prompt_lines.end - 1). Pure arithmetic conversion, no validation of ordering or bounds.\n"
+    signature: "(body_start_line: usize, prompt_lines: LineRange) -> (usize, usize)"
+    behavior: Converts body-relative 1-based prompt lines to absolute 0-based document lines as (body_start_line + start - 1, body_start_line + end - 1). E.g. (12, [7,7]) yields (18,18); (3, [1,1]) yields (3,3).
   - name: match_prompt_lines
-    signature: "match_prompt_lines(body: PromptBody, prompt_lines: LineRange) -> (usize, usize)"
-    behavior: "Equivalent to prompt_absolute_lines(body.body_start_line, prompt_lines); converts prompt_lines using the given prompt body's body_start_line.\n"
+    signature: "(body: PromptBody, prompt_lines: LineRange) -> (usize, usize)"
+    behavior: Performs the same body-relative to absolute conversion as prompt_absolute_lines using body.body_start_line as the offset.
   - name: is_file_drifted
-    signature: "is_file_drifted(recorded_hash: Option<string>, actual_hash: string) -> bool"
-    behavior: "Returns true if a hash was recorded and it differs from actual_hash; returns false if no hash was recorded (None), regardless of actual_hash.\n"
+    signature: "(recorded_hash: Optional<string>, actual_hash: string) -> bool"
+    behavior: When a hash was recorded, returns whether it differs from the actual hash; when none was recorded, returns false.
   - name: code_lens_title
-    signature: "code_lens_title(prompt_basename: string, absolute_line: usize, note: string) -> string\n"
-    behavior: 'When note is empty, returns "⇠ {prompt_basename}:{absolute_line}" (glyph U+21E0 followed by a space). When note is non-empty, returns "⇠ {prompt_basename}:{absolute_line} — {note}" (title followed by space, em-dash U+2014, space, then note).
-'
+    signature: "(prompt_basename: string, absolute_line: usize, note: string) -> string"
+    behavior: When note is empty, returns "⇠ {prompt_basename}:{absolute_line}"; otherwise returns "⇠ {prompt_basename}:{absolute_line} — {note}". The leading glyph is U+21E0 and the separator is space, em-dash (U+2014), space.
   - name: dedupe_matches
-    signature: "dedupe_matches(matches: list<ReverseMatch>) -> list<ReverseMatch>"
-    behavior: "Returns matches with duplicates removed, keeping only the first match seen for each distinct (prompt_file, prompt_lines.start, prompt_lines.end) span. Later matches sharing a span with an earlier one are dropped. Relative order of kept matches is preserved.\n"
+    signature: "(matches: list<ReverseMatch>) -> list<ReverseMatch>"
+    behavior: Keeps the first match for each distinct (prompt_file, prompt_lines.start, prompt_lines.end) span, dropping later duplicates while preserving order.
 tests:
   - name: parses_a_generated_path
-    given: rel_full = ".napl/src/typescript/src/greeting.ts"
-    expect: 'Some(GeneratedPathInfo { target: "typescript", target_rel_path: "src/greeting.ts" })'
+    given: parse_generated_path(".napl/src/typescript/src/greeting.ts")
+    expect: Some with target "typescript" and target_rel_path "src/greeting.ts".
   - name: normalizes_backslashes
-    given: rel_full = ".napl\src\typescript\src\greeting.ts"
-    expect: 'Some(GeneratedPathInfo { target: "typescript", target_rel_path: "src/greeting.ts" })'
+    given: parse_generated_path(".napl\\src\\typescript\\src\\greeting.ts") with backslash separators
+    expect: Some with target "typescript" and target_rel_path "src/greeting.ts".
   - name: none_without_trailing_path
-    given: rel_full = ".napl/src/typescript" (no slash after prefix remainder)
-    expect: None
+    given: parse_generated_path(".napl/src/typescript") with no trailing path
+    expect: None.
   - name: none_without_prefix
-    given: rel_full = "examples/greeting.napl" or "src/greeting.ts"
-    expect: None
+    given: parse_generated_path("examples/greeting.napl") and parse_generated_path("src/greeting.ts")
+    expect: None for both.
   - name: none_with_empty_target
-    given: rel_full = ".napl/src//src/greeting.ts" (leading slash right after prefix)
-    expect: None
+    given: parse_generated_path(".napl/src//src/greeting.ts") with a leading slash after the prefix
+    expect: None.
   - name: none_with_empty_rel_path
-    given: rel_full = ".napl/src/typescript/" (nothing after the slash)
-    expect: None
+    given: parse_generated_path(".napl/src/typescript/") with an empty relative path
+    expect: None.
   - name: reverse_matches_filters_by_target_and_file
-    given: 'two sources: one module "greeting" target "rust" with an entry for "src/lib.rs" noted "builds greeting"; one module "other" target "typescript" with an entry for "src/lib.rs" noted "wrong target"; query target "rust", target_rel_path "src/lib.rs", code_line None
-'
-    expect: one match, module "greeting", note "builds greeting"
+    given: 'Two sources: one target "rust" with an entry for "src/lib.rs" noted "builds greeting", one target "typescript"; query target "rust", file "src/lib.rs", code_line none.'
+    expect: Exactly one match with module "greeting" and note "builds greeting".
   - name: reverse_matches_none_code_line_ignores_line_filter
-    given: 'one source target "rust" with two entries for "src/lib.rs" at different line ranges (5-5 and 10-12); code_line None
-'
-    expect: both entries produce matches (2 total)
+    given: One source with two entries for "src/lib.rs"; query target "rust", file "src/lib.rs", code_line none.
+    expect: Two matches (line filter ignored).
   - name: reverse_matches_some_code_line_filters_by_containment
-    given: 'same two entries (lines 5-5 note "a", lines 10-12 note "b"); code_line Some(11) then code_line Some(6)
-'
-    expect: 'Some(11) yields one match with note "b"; Some(6) yields an empty list
-'
+    given: One source with entries at lines [5,5] note "a" and [10,12] note "b"; query code_line 11, then code_line 6.
+    expect: code_line 11 yields one match with note "b"; code_line 6 yields no matches.
   - name: reverse_matches_emits_one_per_prompt_file
-    given: 'one source with one entry for "src/lib.rs" and prompt_files ["p1.napl", "p2.napl"]; code_line None
-'
-    expect: 'two matches, in order, with prompt_file "p1.napl" then "p2.napl"
-'
+    given: One source with a single matching entry and prompt_files ["p1.napl", "p2.napl"].
+    expect: Two matches with prompt_file "p1.napl" then "p2.napl".
   - name: prompt_absolute_lines_converts_body_relative_to_absolute
-    given: (body_start_line=12, prompt_lines=[7,7]); (12, [3,4]); (3, [1,1])
-    expect: (18, 18); (14, 15); (3, 3) respectively
+    given: prompt_absolute_lines(12, [7,7]), (12, [3,4]), and (3, [1,1]).
+    expect: (18,18), (14,15), and (3,3) respectively.
   - name: match_prompt_lines_uses_body_start_line
-    given: "a prompt body parsed from frontmatter+body text with body_start_line 3; prompt_lines [1,1] then [2,2]\n"
-    expect: (3, 3) then (4, 4)
+    given: 'A PromptBody from "---\nkey: value\n---\nfirst\nsecond" with body_start_line 3; convert [1,1] and [2,2].'
+    expect: body_start_line is 3; [1,1] yields (3,3) and [2,2] yields (4,4).
   - name: is_file_drifted_detects_hash_mismatch
-    given: (Some("abc"), "def"); (Some("abc"), "abc"); (None, "abc")
-    expect: true; false; false respectively
+    given: is_file_drifted(Some("abc"), "def"), (Some("abc"), "abc"), and (None, "abc").
+    expect: true, false, and false respectively.
   - name: code_lens_title_without_note
-    given: prompt_basename "greeting.napl", absolute_line 18, note ""
-    expect: '"⇠ greeting.napl:18"'
+    given: code_lens_title("greeting.napl", 18, "")
+    expect: '"⇠ greeting.napl:18".'
   - name: code_lens_title_with_note
-    given: prompt_basename "greeting.napl", absolute_line 18, note "builds the greeting"
-    expect: '"⇠ greeting.napl:18 — builds the greeting"'
+    given: code_lens_title("greeting.napl", 18, "builds the greeting")
+    expect: '"⇠ greeting.napl:18 — builds the greeting".'
   - name: dedupe_matches_keeps_first_occurrence_per_span
-    given: 'three matches for prompt_file "p.napl": two sharing prompt_lines [2,2] (notes "first" then "duplicate"), one with prompt_lines [3,3] (note "different span")
-'
-    expect: 'two matches remain, in order: note "first" (kept first for [2,2]), note "different span"'
+    given: 'Three matches: two with prompt_lines [2,2] (notes "first" and "duplicate") and one with [3,3] (note "different span").'
+    expect: 'Two matches kept: note "first" then note "different span".'

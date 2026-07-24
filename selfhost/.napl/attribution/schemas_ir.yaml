@@ -2,77 +2,125 @@ module: schemas_ir
 target: rust
 entries:
   - promptLines:
+      - 6
+      - 8
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 3
+      - 4
+    note: brings in serde Deserialize and serde_json Value
+  - promptLines:
+      - 21
+      - 21
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 7
+      - 7
+    note: derives Deserialize and equality for IrType
+  - promptLines:
       - 23
       - 23
     file: schemas_ir/src/lib.rs
     lines:
-      - 7
+      - 8
       - 11
-    note: IrType struct fields
+    note: IrType with name and description fields
+  - promptLines:
+      - 21
+      - 21
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 13
+      - 13
+    note: derives Deserialize and equality for IrFunction
   - promptLines:
       - 24
       - 24
     file: schemas_ir/src/lib.rs
     lines:
-      - 13
+      - 14
       - 18
-    note: IrFunction struct fields
+    note: IrFunction with name, signature, behavior fields
+  - promptLines:
+      - 26
+      - 27
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 20
+      - 22
+    note: default helper producing empty JSON object
+  - promptLines:
+      - 21
+      - 21
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 24
+      - 24
+    note: derives Deserialize and equality for IrTest
+  - promptLines:
+      - 25
+      - 25
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 26
+      - 26
+    note: IrTest name field
   - promptLines:
       - 25
       - 27
     file: schemas_ir/src/lib.rs
     lines:
-      - 20
-      - 31
-    note: IrTest struct with default empty-object given/expect
+      - 27
+      - 30
+    note: given/expect as Value defaulting to empty object
+  - promptLines:
+      - 21
+      - 21
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 33
+      - 33
+    note: derives Deserialize and equality for Ir
+  - promptLines:
+      - 28
+      - 28
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 35
+      - 35
+    note: Ir module string field
   - promptLines:
       - 28
       - 31
     file: schemas_ir/src/lib.rs
     lines:
-      - 33
-      - 44
-    note: Ir struct with defaulted list fields
-  - promptLines:
-      - 21
-      - 21
-    file: schemas_ir/src/lib.rs
-    lines:
-      - 7
-      - 7
-    note: derive Deserialize + equality on IrType
-  - promptLines:
-      - 21
-      - 21
-    file: schemas_ir/src/lib.rs
-    lines:
-      - 13
-      - 13
-    note: derive Deserialize + equality on IrFunction
-  - promptLines:
-      - 21
-      - 21
-    file: schemas_ir/src/lib.rs
-    lines:
-      - 24
-      - 24
-    note: derive Deserialize + equality on IrTest
-  - promptLines:
-      - 21
-      - 21
-    file: schemas_ir/src/lib.rs
-    lines:
-      - 33
-      - 33
-    note: derive Deserialize + equality on Ir
+      - 36
+      - 43
+    note: deps/types/functions/tests list fields defaulting empty
   - promptLines:
       - 35
       - 36
     file: schemas_ir/src/lib.rs
     lines:
+      - 46
+      - 66
+    note: error type returned on failure instead of panic
+  - promptLines:
+      - 44
+      - 46
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 68
+      - 70
+    note: "predicate: value is JSON object or string"
+  - promptLines:
+      - 33
+      - 36
+    file: schemas_ir/src/lib.rs
+    lines:
       - 72
-      - 74
-    note: validate_ir signature and deserialize step
+      - 72
+    note: validate_ir takes Value, returns Result<Ir, error>
   - promptLines:
       - 38
       - 41
@@ -80,7 +128,7 @@ entries:
     lines:
       - 73
       - 74
-    note: deserialize rejects wrong-shaped/missing required fields
+    note: deserialize value into Ir, rejecting wrong shapes
   - promptLines:
       - 42
       - 43
@@ -88,60 +136,76 @@ entries:
     lines:
       - 76
       - 78
-    note: reject empty/missing module
+    note: reject empty module
   - promptLines:
       - 44
       - 46
     file: schemas_ir/src/lib.rs
     lines:
-      - 68
+      - 80
       - 93
-    note: enforce given/expect must be object or string
+    note: reject test given/expect that aren't object or string
   - promptLines:
-      - 36
+      - 35
       - 36
     file: schemas_ir/src/lib.rs
     lines:
-      - 46
-      - 66
-    note: error type, never panics, implements Display/Error
+      - 95
+      - 95
+    note: return parsed Ir on success
   - promptLines:
       - 50
       - 53
     file: schemas_ir/src/lib.rs
     lines:
-      - 104
+      - 103
       - 120
-    note: worked example - minimal function validates
+    note: "test: minimal function validates with empty lists"
   - promptLines:
       - 54
+      - 54
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 122
+      - 126
+    note: "test: missing module rejected"
+  - promptLines:
+      - 54
+      - 55
+    file: schemas_ir/src/lib.rs
+    lines:
+      - 128
+      - 133
+    note: "test: empty module rejected"
+  - promptLines:
+      - 55
       - 56
     file: schemas_ir/src/lib.rs
     lines:
-      - 123
+      - 135
       - 142
-    note: worked example - missing/empty module and incomplete function rejected
+    note: "test: incomplete function rejected"
   - promptLines:
       - 57
       - 58
     file: schemas_ir/src/lib.rs
     lines:
-      - 145
+      - 144
       - 152
-    note: worked example - expect string preserved
+    note: "test: expect string preserved"
   - promptLines:
       - 59
       - 60
     file: schemas_ir/src/lib.rs
     lines:
-      - 155
+      - 154
       - 163
-    note: worked example - given defaults to empty object
+    note: "test: given defaults to empty object"
   - promptLines:
-      - 6
-      - 8
+      - 44
+      - 46
     file: schemas_ir/src/lib.rs
     lines:
-      - 3
-      - 4
-    note: serde/serde_json dependency usage, Value for given/expect
+      - 165
+      - 199
+    note: "tests: non-object/non-string given/expect rejected"

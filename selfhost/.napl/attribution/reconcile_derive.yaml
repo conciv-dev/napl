@@ -2,109 +2,13 @@ module: reconcile_derive
 target: rust
 entries:
   - promptLines:
-      - 39
-      - 39
+      - 1
+      - 8
     file: reconcile_derive/src/lib.rs
     lines:
-      - 15
-      - 17
-    note: editable_drifted signature and body
-  - promptLines:
-      - 41
-      - 45
-    file: reconcile_derive/src/lib.rs
-    lines:
-      - 9
-      - 11
-    note: "editability predicate: Edited + current is_some"
-  - promptLines:
-      - 41
-      - 47
-    file: reconcile_derive/src/lib.rs
-    lines:
-      - 15
-      - 17
-    note: filter drifted files preserving order
-  - promptLines:
-      - 46
-      - 47
-    file: reconcile_derive/src/lib.rs
-    lines:
-      - 62
-      - 76
-    note: "test: editable_drifted keeps edited-with-current in order"
-  - promptLines:
-      - 43
-      - 45
-    file: reconcile_derive/src/lib.rs
-    lines:
-      - 78
-      - 83
-    note: "test: empty when none qualify"
-  - promptLines:
-      - 49
-      - 49
-    file: reconcile_derive/src/lib.rs
-    lines:
-      - 20
-      - 20
-    note: build_reconcile_files signature
-  - promptLines:
-      - 51
-      - 52
-    file: reconcile_derive/src/lib.rs
-    lines:
-      - 21
-      - 23
-    note: reuses editable_drifted for same eligibility/order
-  - promptLines:
-      - 54
-      - 54
-    file: reconcile_derive/src/lib.rs
-    lines:
-      - 24
-      - 24
-    note: file field copied verbatim
-  - promptLines:
-      - 55
-      - 58
-    file: reconcile_derive/src/lib.rs
-    lines:
-      - 25
-      - 28
-    note: "diff: recorded diff or fallback unified_diff of current"
-  - promptLines:
-      - 60
-      - 62
-    file: reconcile_derive/src/lib.rs
-    lines:
-      - 86
-      - 94
-    note: "test: recorded diff used verbatim"
-  - promptLines:
-      - 62
-      - 63
-    file: reconcile_derive/src/lib.rs
-    lines:
-      - 96
-      - 104
-    note: "test: computed diff when missing"
-  - promptLines:
-      - 63
-      - 65
-    file: reconcile_derive/src/lib.rs
-    lines:
-      - 107
-      - 111
-    note: "test: skips missing/contentless files, empty vector"
-  - promptLines:
-      - 51
-      - 52
-    file: reconcile_derive/src/lib.rs
-    lines:
-      - 113
-      - 127
-    note: "test: build_reconcile_files preserves order"
+      - 1
+      - 3
+    note: module doc describing pure reconcile derivation core
   - promptLines:
       - 25
       - 30
@@ -112,7 +16,7 @@ entries:
     lines:
       - 5
       - 5
-    note: import drift's DriftReason and DriftedFile
+    note: import DriftReason and DriftedFile from drift crate
   - promptLines:
       - 31
       - 32
@@ -120,7 +24,7 @@ entries:
     lines:
       - 6
       - 6
-    note: import prompts' ReconcileFile
+    note: import ReconcileFile from prompts crate
   - promptLines:
       - 33
       - 34
@@ -128,12 +32,52 @@ entries:
     lines:
       - 7
       - 7
-    note: import text_diff's unified_diff
+    note: import unified_diff from text_diff crate
   - promptLines:
-      - 1
-      - 8
+      - 42
+      - 45
     file: reconcile_derive/src/lib.rs
     lines:
-      - 1
-      - 3
-    note: "module doc: pure derivation core description"
+      - 9
+      - 11
+    note: "editability rule: Edited reason and current is Some"
+  - promptLines:
+      - 39
+      - 43
+    file: reconcile_derive/src/lib.rs
+    lines:
+      - 15
+      - 17
+    note: editable_drifted filters editable files preserving order
+  - promptLines:
+      - 49
+      - 52
+    file: reconcile_derive/src/lib.rs
+    lines:
+      - 20
+      - 22
+    note: build_reconcile_files maps over editable drifted files
+  - promptLines:
+      - 54
+      - 54
+    file: reconcile_derive/src/lib.rs
+    lines:
+      - 24
+      - 24
+    note: file field is drifted file's file
+  - promptLines:
+      - 55
+      - 58
+    file: reconcile_derive/src/lib.rs
+    lines:
+      - 25
+      - 28
+    note: diff uses recorded diff or computes unified_diff from current
+  - promptLines:
+      - 59
+      - 65
+    file: reconcile_derive/src/lib.rs
+    lines:
+      - 29
+      - 31
+    note: collect resulting ReconcileFile vector

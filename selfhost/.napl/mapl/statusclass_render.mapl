@@ -2,8 +2,15 @@ module: statusclass_render
 target: rust
 entries:
   - promptLines:
-      - 1
-      - 69
+      - 9
+      - 16
+    kind: no-op
+    message: No changes made — existing statusclass_render crate already matches full spec.
+    reasoning: Agent reported the prompt diff was empty and the existing code already realizes the entire spec (FileStatus enum, StatusEntry struct, line() padding/format, is_error() gate), with all 9 tests passing. No edits were needed, so nothing was produced. This is a re-compile of an already-satisfied contract, not a failure to understand or act.
+  - promptLines:
+      - 28
+      - 33
     kind: note
-    message: Prompt fully clear, spec map straight to Rust code 1:1.
-    reasoning: Enum variants, labels, struct fields, line() format, is_error() rules all spelled exact with byte examples. Agent build match, tests match examples verbatim. No gap found.
+    message: '"lowercase-ish label" is loose phrasing but disambiguated by the explicit table.'
+    reasoning: The word "lowercase-ish" is vague on its own (DRIFT is uppercase), but the per-variant table on lines 30-33 fixes each label exactly, so there is no real ambiguity for the machine to resolve. Flagging only so the author knows the adjective carries no independent meaning.
+    suggestion: "Each variant has a fixed **label** used when rendering:"

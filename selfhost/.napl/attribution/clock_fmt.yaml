@@ -3,30 +3,54 @@ target: rust
 entries:
   - promptLines:
       - 19
-      - 21
+      - 20
     file: clock_fmt/src/lib.rs
     lines:
       - 22
-      - 24
-    note: parses millis into ms remainder and total seconds
+      - 22
+    note: "iso_from_millis(millis: u64) -> String signature"
   - promptLines:
       - 23
+      - 23
+    file: clock_fmt/src/lib.rs
+    lines:
+      - 34
+      - 36
+    note: exact ISO-8601 format string
+  - promptLines:
+      - 25
       - 28
     file: clock_fmt/src/lib.rs
     lines:
       - 34
       - 36
-    note: zero-padded ISO-8601 format string with literal T, Z
+    note: zero-padded fixed-width fields with literal T, :, ., Z
   - promptLines:
       - 30
-      - 32
+      - 31
     file: clock_fmt/src/lib.rs
     lines:
       - 23
+      - 24
+    note: split millis into ms remainder and whole seconds
+  - promptLines:
+      - 31
+      - 32
+    file: clock_fmt/src/lib.rs
+    lines:
+      - 25
       - 30
-    note: splits millis into seconds/ms remainder, days and time-of-day fields
+    note: whole days and within-day hours/minutes/seconds
   - promptLines:
       - 33
+      - 33
+    file: clock_fmt/src/lib.rs
+    lines:
+      - 32
+      - 32
+    note: whole-day count to civil date
+  - promptLines:
+      - 30
       - 35
     file: clock_fmt/src/lib.rs
     lines:
@@ -34,21 +58,13 @@ entries:
       - 19
     note: days-since-epoch to civil (year, month, day) algorithm
   - promptLines:
-      - 33
-      - 35
-    file: clock_fmt/src/lib.rs
-    lines:
-      - 32
-      - 32
-    note: converts day count to civil date via civil_from_days
-  - promptLines:
       - 39
       - 39
     file: clock_fmt/src/lib.rs
     lines:
-      - 44
+      - 43
       - 46
-    note: test epoch is zero
+    note: epoch=0 -> 1970-01-01T00:00:00.000Z test
   - promptLines:
       - 40
       - 40
@@ -56,7 +72,7 @@ entries:
     lines:
       - 48
       - 51
-    note: test known 2026 date
+    note: 2026 known date test
   - promptLines:
       - 41
       - 41
@@ -64,12 +80,4 @@ entries:
     lines:
       - 53
       - 56
-    note: test sub-second remainder
-  - promptLines:
-      - 3
-      - 7
-    file: clock_fmt/src/lib.rs
-    lines:
-      - 21
-      - 22
-    note: pure formatting function signature, no I/O
+    note: sub-second remainder 1234 test

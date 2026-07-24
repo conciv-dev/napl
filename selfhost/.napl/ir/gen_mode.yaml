@@ -2,19 +2,17 @@ module: gen_mode
 deps: []
 types:
   - name: FullModeReason
-    description: "Enum of reasons a full (non-incremental) generation was chosen. Exactly three variants: NoPriorOnDisk (no prior prompt body or attribution on disk to diff against), ForcedFull (caller forced full generation via --full), NoPriorGen (no prior successful gen for this target).\n"
+    description: "Enumeration of the three mutually exclusive reasons a full (non-incremental) generation was chosen. Exactly three variants: NoPriorOnDisk (no prior prompt body or attribution on disk to diff against), ForcedFull (caller forced a full generation with --full), and NoPriorGen (no prior successful gen for this target)."
 functions:
   - name: can_incremental
     signature: "can_incremental(full: bool, has_target_record: bool, unattributed_is_true: bool, has_prompt_hash_at_gen: bool) -> bool"
-    behavior: "Pure predicate deciding whether an incremental update is possible. Returns true iff all of: full is false, has_target_record is true, unattributed_is_true is false, and has_prompt_hash_at_gen is true. Returns false if any one condition fails. No side effects.\n"
+    behavior: "Pure predicate deciding whether an incremental update is possible. Returns true exactly when all hold: full is false, has_target_record is true, unattributed_is_true is false, and has_prompt_hash_at_gen is true (i.e. !full && has_target_record && !unattributed_is_true && has_prompt_hash_at_gen). If any single condition fails, returns false. No side effects."
   - name: full_mode_message
     signature: "full_mode_message(reason: FullModeReason) -> String"
-    behavior: 'Renders the fixed status line for a given full-mode reason. Each returned string begins with two leading spaces. Mapping: NoPriorOnDisk -> "  mode: full (no prior prompt body or attribution on disk to diff against)"; ForcedFull -> "  mode: full (forced --full)"; NoPriorGen -> "  mode: full (no prior successful gen for this target)".
-'
+    behavior: "Maps a FullModeReason to its exact status line, each beginning with two leading spaces. NoPriorOnDisk -> '  mode: full (no prior prompt body or attribution on disk to diff against)'; ForcedFull -> '  mode: full (forced --full)'; NoPriorGen -> '  mode: full (no prior successful gen for this target)'."
   - name: incremental_mode_message
     signature: "incremental_mode_message(changed_lines: usize, affected_regions: usize) -> String"
-    behavior: 'Renders the incremental status line, substituting the two counts verbatim. Begins with two leading spaces, contains an em dash (—, U+2014), format: "  mode: INCREMENTAL — <changed_lines> changed prompt line(s), <affected_regions> owned region(s) affected". No validation of counts; any usize value is rendered as-is, including 0.
-'
+    behavior: "Renders the incremental status line with both counts substituted. Begins with two leading spaces and uses an em dash (U+2014). Result is exactly '  mode: INCREMENTAL — <changed_lines> changed prompt line(s), <affected_regions> owned region(s) affected'. Counts render verbatim, including zero."
 tests:
   - name: can_incremental_true_when_all_conditions_hold
     given: full=false, has_target_record=true, unattributed_is_true=false, has_prompt_hash_at_gen=true
@@ -35,17 +33,17 @@ tests:
     given: full=true, has_target_record=false, unattributed_is_true=true, has_prompt_hash_at_gen=false
     expect: returns false
   - name: full_mode_message_no_prior_on_disk
-    given: reason=NoPriorOnDisk
-    expect: '"  mode: full (no prior prompt body or attribution on disk to diff against)"'
+    given: reason = NoPriorOnDisk
+    expect: "'  mode: full (no prior prompt body or attribution on disk to diff against)'"
   - name: full_mode_message_forced_full
-    given: reason=ForcedFull
-    expect: '"  mode: full (forced --full)"'
+    given: reason = ForcedFull
+    expect: "'  mode: full (forced --full)'"
   - name: full_mode_message_no_prior_gen
-    given: reason=NoPriorGen
-    expect: '"  mode: full (no prior successful gen for this target)"'
+    given: reason = NoPriorGen
+    expect: "'  mode: full (no prior successful gen for this target)'"
   - name: incremental_mode_message_renders_counts
     given: changed_lines=3, affected_regions=2
-    expect: '"  mode: INCREMENTAL — 3 changed prompt line(s), 2 owned region(s) affected"'
+    expect: "'  mode: INCREMENTAL — 3 changed prompt line(s), 2 owned region(s) affected'"
   - name: incremental_mode_message_zero_counts
     given: changed_lines=0, affected_regions=0
-    expect: '"  mode: INCREMENTAL — 0 changed prompt line(s), 0 owned region(s) affected"'
+    expect: "'  mode: INCREMENTAL — 0 changed prompt line(s), 0 owned region(s) affected'"

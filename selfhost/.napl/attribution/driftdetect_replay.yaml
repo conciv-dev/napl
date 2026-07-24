@@ -2,45 +2,29 @@ module: driftdetect_replay
 target: rust
 entries:
   - promptLines:
-      - 3
-      - 8
+      - 38
+      - 38
     file: driftdetect_replay/src/lib.rs
     lines:
-      - 1
-      - 7
-    note: module doc summarizing pure baseline-reconstruction role
-  - promptLines:
-      - 27
-      - 31
-    file: driftdetect_replay/src/lib.rs
-    lines:
-      - 9
-      - 9
-    note: import JournalEntry from schemas_journal sibling crate
-  - promptLines:
-      - 32
-      - 34
-    file: driftdetect_replay/src/lib.rs
-    lines:
-      - 22
-      - 23
-    note: use text_diff parse_hunks/apply_hunks to apply recorded patch
-  - promptLines:
-      - 36
-      - 39
-    file: driftdetect_replay/src/lib.rs
-    lines:
-      - 11
       - 14
-    note: function signature and doc for reconstruct_file_content
+      - 14
+    note: "reconstruct_file_content signature: entries slice + file_path, returns Option<String>"
   - promptLines:
       - 41
       - 42
     file: driftdetect_replay/src/lib.rs
     lines:
       - 15
+      - 15
+    note: borrow view of entries without mutating caller's slice
+  - promptLines:
+      - 41
+      - 42
+    file: driftdetect_replay/src/lib.rs
+    lines:
       - 16
-    note: sort borrowed view of entries by ascending gen without mutating input
+      - 16
+    note: sort borrowed view by ascending gen
   - promptLines:
       - 43
       - 43
@@ -51,57 +35,57 @@ entries:
     note: start with no content (None)
   - promptLines:
       - 44
-      - 47
+      - 44
     file: driftdetect_replay/src/lib.rs
     lines:
       - 19
-      - 24
-    note: find matching file per entry, apply patch to current content
+      - 20
+    note: walk entries in gen order, find file whose path equals file_path
   - promptLines:
-      - 48
-      - 49
+      - 46
+      - 46
     file: driftdetect_replay/src/lib.rs
     lines:
-      - 26
-      - 26
-    note: return accumulated content or None
+      - 21
+      - 21
+    note: take current content or empty string when none yet
   - promptLines:
-      - 51
-      - 53
-    file: driftdetect_replay/src/lib.rs
-    lines:
-      - 52
-      - 62
-    note: test replays two patches in gen order to expected content
-  - promptLines:
-      - 41
-      - 42
-    file: driftdetect_replay/src/lib.rs
-    lines:
-      - 64
-      - 76
-    note: test sorts out-of-order entries without mutating caller slice
-  - promptLines:
-      - 48
-      - 49
-    file: driftdetect_replay/src/lib.rs
-    lines:
-      - 78
-      - 82
-    note: test returns None for untouched path
-  - promptLines:
-      - 44
+      - 46
       - 47
     file: driftdetect_replay/src/lib.rs
     lines:
-      - 84
-      - 102
-    note: test ignores files with different paths within/between entries
+      - 22
+      - 22
+    note: parse patch into hunks
   - promptLines:
-      - 41
-      - 51
+      - 47
+      - 47
     file: driftdetect_replay/src/lib.rs
     lines:
-      - 104
-      - 115
-    note: test three entries apply in ascending gen order regardless of input order
+      - 23
+      - 23
+    note: apply hunks, result becomes new current content
+  - promptLines:
+      - 48
+      - 49
+    file: driftdetect_replay/src/lib.rs
+    lines:
+      - 26
+      - 26
+    note: return accumulated content, or None if path never touched
+  - promptLines:
+      - 27
+      - 31
+    file: driftdetect_replay/src/lib.rs
+    lines:
+      - 9
+      - 9
+    note: depend on schemas_journal JournalEntry type
+  - promptLines:
+      - 32
+      - 34
+    file: driftdetect_replay/src/lib.rs
+    lines:
+      - 22
+      - 23
+    note: use text_diff parse_hunks and apply_hunks

@@ -2,15 +2,14 @@ module: extensions
 target: rust
 entries:
   - promptLines:
-      - 36
-      - 40
-    kind: assumption
-    message: Return types for prompt_extensions/machine_extensions left unspecified; agent picked Vec<String> vs Vec<&'static str>.
-    reasoning: "Prompt says prompt_extensions(aliases) \"returns\" a list and machine_extensions() \"returns\" a list but never states element ownership. Agent made prompt_extensions return Vec<String> (owned, since it must merge borrowed aliases with owned defaults) but machine_extensions return Vec<&'static str> (borrowed, since both entries are static). This split is reasonable but not dictated by the prompt, and callers unifying the two lists would need to know this.\n"
-    suggestion: State explicitly whether prompt_extensions and machine_extensions return owned Strings or &'static str slices.
-  - promptLines:
-      - 10
+      - 9
       - 15
+    kind: no-op
+    message: Prompt asks to create a new `extensions/` crate, yet agent made NO CHANGES.
+    reasoning: Prompt instructs creating a new, separate Rust library crate (extensions/Cargo.toml + extensions/src/lib.rs) with cargo test passing. Agent produced NO CHANGES, claiming the source already matches target behavior exactly and 13 tests pass. This means the extensions crate must already exist fully implemented in the working tree — the compile was a verification, not a build. Worth confirming the pre-existing crate genuinely covers every clause here (canonical constants, six curated aliases in codepoint order, optional-alias override rule, whole-codepoint suffix matching, machine_extension_for_prompt mirroring) rather than trusting a passing test count alone.
+  - promptLines:
+      - 36
+      - 38
     kind: note
-    message: Crate scaffold (Cargo.toml, no workspace manifest, root untouched) matches instructions per agent's final message.
-    reasoning: Only src/lib.rs changes were included in the diff shown; the agent's final message states Cargo.toml was also created and the root body_lines crate and workspace manifest constraints were respected. Recorded as a note since compliance can't be directly verified from the supplied change listing.
+    message: Empty explicit alias list vs. omitted list — treated as distinct cases.
+    reasoning: prompt_extensions distinguishes "a list is supplied" (use given aliases) from "none supplied" (use six curated). An explicitly-supplied empty list therefore yields only canonical .napl with no aliases, matching the line 57-58 override rule where only .napl plus overrides match. Since no changes were made, verify the pre-existing code models the option as Some(empty)-vs-None rather than treating empty and absent identically.

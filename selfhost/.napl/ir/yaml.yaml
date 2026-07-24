@@ -6,175 +6,66 @@ deps:
   - schemas_ml
 types:
   - name: Yaml
-    description: "Value model for a YAML node, used to build documents before rendering. Variants: Null; Bool(bool); Int(i64); Float(f64); Str(String); Seq(list of Yaml, ordered); Map(ordered list of (String key, Yaml value) pairs preserving insertion order). Derives Debug, Clone, PartialEq."
+    description: "Public value model enum (Debug, Clone, PartialEq) representing a YAML node. Variants: Null; Bool(bool); Int(i64); Float(f64); Str(String); Seq(list of Yaml); Map(ordered list of (String key, Yaml value) pairs whose key insertion order is preserved)."
 functions:
   - name: to_yaml_document
-    signature: "to_yaml_document(node: &Yaml) -> String"
-    behavior: Renders a whole YAML value as a document string ending with a trailing newline. Non-empty Map renders as block mapping entries at indent 0; empty Map renders inline as "{}". Non-empty Seq renders as block sequence items at indent 0; empty Seq renders inline as "[]". Any scalar node renders as its single scalar line. Body lines are joined with "\n" and a final "\n" is appended.
+    signature: "(node: &Yaml) -> String"
+    behavior: "Renders a whole node as a block-style YAML document with a trailing newline. A non-empty map renders as block entries at indent 0; an empty map renders inline as '{}'. A non-empty sequence renders as block items at indent 0; an empty sequence renders inline as '[]'. Any other (scalar) node renders as its single scalar line. Body lines are joined by newline, then one final newline is appended. Block map entries emit '{key}: {scalar}' for scalar/empty-container values, or '{key}:' followed by the nested block indented by +2 for non-empty containers. Block sequence items emit '- {scalar}' for scalars, fold a non-empty map's first line into '- ', and emit '-' followed by an indented block for nested non-empty sequences. Each nesting level adds 2 spaces."
   - name: line_range
-    signature: "line_range(range: LineRange) -> Yaml"
-    behavior: Builds Yaml::Seq([Int(range.start), Int(range.end)]) from an inclusive 1-based LineRange, converting both u32 endpoints to Int.
+    signature: "(range: LineRange) -> Yaml"
+    behavior: "Builds a two-element Seq of Int values: the range start and end (each u32 endpoint rendered as an Int)."
   - name: attribution_to_yaml
-    signature: "attribution_to_yaml(attribution: &Attribution) -> String"
-    behavior: Renders an Attribution as a YAML document Map with keys in order module (string), target (string), entries (sequence of Maps, each with keys promptLines = line_range(prompt_lines), file (string), lines = line_range(lines), note (string), in that order). Byte-for-byte matches eemeli/yaml block-style output for this shape.
+    signature: "(attribution: &Attribution) -> String"
+    behavior: "Renders the attribution as a YAML document Map with keys in order: module (string), target (string), entries (a sequence). Each entry is a Map with keys in order: promptLines (line_range of prompt_lines), file (string), lines (line_range of lines), note (string). Output ends with a trailing newline."
   - name: ml_to_yaml
-    signature: "ml_to_yaml(ml: &Ml) -> String"
-    behavior: 'Renders an Ml as a YAML document Map with keys module, target, entries (in order). Each entry is a Map with keys promptLines = line_range(prompt_lines), kind (Ambiguity->"ambiguity", Assumption->"assumption", Note->"note", NoOp->"no-op"), message, reasoning, and suggestion included only when Some. Empty entries list renders inline as entries: [].'
+    signature: "(ml: &Ml) -> String"
+    behavior: "Renders the machine-layer document as a Map with keys module, target, entries. Each entry is a Map with keys in order: promptLines (line_range), kind (kind string where Ambiguity maps to 'ambiguity', Assumption to 'assumption', Note to 'note', NoOp to 'no-op'), message, reasoning, and suggestion only when the suggestion is present. An empty entries list renders inline as 'entries: []'. Trailing newline."
   - name: ir_to_yaml
-    signature: "ir_to_yaml(ir: &Ir) -> String"
-    behavior: Renders an Ir as a YAML document Map with keys module (string), deps (sequence of strings), types (sequence of Maps with name/description), functions (sequence of Maps with name/signature/behavior), tests (sequence of Maps with name, given, expect, where given/expect are each converted from serde_json::Value via json_to_yaml). Empty sequences render inline as [].
+    signature: "(ir: &Ir) -> String"
+    behavior: "Renders the IR as a Map with keys in order: module (string), deps (sequence of strings), types (sequence of Maps with name/description), functions (sequence of Maps with name/signature/behavior), tests (sequence of Maps with name/given/expect where given and expect are serde_json Values converted via json_to_yaml). Empty sequences render inline as '[]'. Trailing newline."
   - name: json_to_yaml
-    signature: "json_to_yaml(value: &serde_json::Value) -> Yaml"
-    behavior: "Converts a serde_json::Value to the Yaml value model: JSON null -> Null; bool -> Bool; number that is an exact i64 -> Int, otherwise -> Float of its f64 value; string -> Str; array -> Seq of recursively converted items; object -> Map of recursively converted entries, preserving original key insertion order."
-  - name: render_string_scalar (string scalar rendering rule)
-    signature: "render_string_scalar(s: &str) -> String"
-    behavior: "Empty string renders as two double quotes. A non-empty plain-representable string (per the plain-representability rule: no leading/trailing whitespace, no newline/control chars, first char not one of the block/flow indicator chars, leading '-'/'?'/':' must be followed by a non-space second char, no \": \" substring, no trailing ':', no \" #\" substring, and it must not resolve as a core-schema null/bool/int/float literal) renders verbatim unquoted. Otherwise, if it contains a double-quote and no apostrophe, it is wrapped single-quoted with apostrophes doubled. Otherwise it is wrapped double-quoted with \\\", \\\\, \\n, \\t, \\r escaped and other characters passed through."
-  - name: render_scalar (non-string scalar rendering rule)
-    signature: "render_scalar(node: &Yaml) -> String"
-    behavior: 'Non-container Yaml renders to its scalar text: Null -> "null"; Bool -> "true"/"false"; Int -> decimal form; Float -> Rust f64 to_string form; Str -> per the string scalar rendering rule.'
-  - name: block map/sequence emission rule
-    signature: emit_map/emit_seq(entries_or_items, indent) -> Vec<String>
-    behavior: 'Block map emission: for each (key, value) in order, a non-empty Seq or Map value emits "{indent}{key}:" followed by the value rendered as a nested block at indent+2; any other value emits "{indent}{key}: {scalar}" on one line, with empty Seq as [] and empty Map as {}. Block sequence emission: a non-empty Map item is rendered as a nested block at indent+2 then its first line has its indent+2 leading spaces stripped and "{indent}- " prepended, remaining lines unchanged; a non-empty Seq item emits "{indent}-" followed by the inner sequence block at indent+2; any other item emits "{indent}- {scalar}" with the same empty-container inlining rules. Indentation increases by 2 spaces per nesting level.'
+    signature: "(value: &serde_json::Value) -> Yaml"
+    behavior: "Converts a JSON value to a Yaml value: JSON null to Null; bool to Bool; a number exactly representable as i64 to Int, otherwise Float of its f64; string to Str; array to Seq of converted items; object to Map of converted entries preserving key order."
 tests:
   - name: empty_string_is_double_quoted_empty
-    given:
-      string_scalar: ""
-    expect:
-      rendered: '""'
+    given: The empty string is rendered as a string scalar.
+    expect: It renders as two double quotes.
   - name: plain_strings_stay_plain
-    given:
-      strings:
-        - yes
-        - on
-        - Off
-        - no
-        - it's fine
-        - colon:nospace
-        - Returns the string Hello, name!
-    expect:
-      each_renders_as_itself: true
+    given: "Plain-representable strings: 'yes', 'on', 'Off', 'no', \"it's fine\", 'colon:nospace', 'Returns the string Hello, name!'."
+    expect: Each renders verbatim with no quoting.
   - name: non_plain_strings_are_quoted
-    given:
-      strings:
-        - "true"
-        - "123"
-        - "null"
-        - "~"
-        - "1.5"
-        - "0x10"
-        - ".inf"
-        - "greet(name: string): string"
-        - "a: b"
-        - "has # hash"
-        - "- dashlead"
-        - "end colon:"
-        - "#leadinghash"
-        - " leadingspace"
-        - "trailingspace "
-        - "only ' apostrophe: with colon"
-    expect:
-      each_wrapped_in_double_quotes_verbatim_inside: true
+    given: "Strings that resolve as non-strings or violate plain rules: 'true', '123', 'null', '~', '1.5', '0x10', '.inf', 'greet(name: string): string', 'a: b', 'has # hash', '- dashlead', 'end colon:', '#leadinghash', ' leadingspace', 'trailingspace ', \"only ' apostrophe: with colon\"."
+    expect: Each renders double-quoted.
   - name: double_quote_without_apostrophe_becomes_single_quoted
-    given:
-      string_scalar: '"loudly" is vague'
-    expect:
-      rendered: "'\"loudly\" is vague'"
+    given: 'A string containing a double-quote and no apostrophe, such as the value that reads: "loudly" is vague.'
+    expect: It renders single-quoted, wrapped in single quotes.
   - name: double_quoted_escapes_special_characters
-    given:
-      string_scalar: "a\nb\tc\rd\\e"
-    expect:
-      rendered: '"a\nb\tc\rd\\e"'
-  - name: double_quoted_escapes_special_characters_with_apostrophe_and_leading_quote
-    given:
-      string_scalar: "\"hi\" it's ok"
-    expect:
-      rendered: "\"\\\"hi\\\" it's ok\""
+    given: A string with newline, tab, carriage-return and backslash (a b c d e joined by those); and a string with a leading double-quote plus an apostrophe.
+    expect: Renders double-quoted with newline escaped to backslash-n, tab to backslash-t, carriage-return to backslash-r, backslash doubled, and double-quotes escaped; the apostrophe-bearing case falls to the double-quoted branch with quotes escaped.
   - name: non_string_scalars_render_directly
-    given:
-      scalars:
-        - "Null"
-        - Bool(true)
-        - Bool(false)
-        - Int(-42)
-        - Float(1.5)
-    expect:
-      rendered:
-        - "null"
-        - "true"
-        - "false"
-        - "-42"
-        - "1.5"
+    given: "Non-string scalars: Null, Bool(true), Bool(false), Int(-42), Float(1.5)."
+    expect: Render as 'null', 'true', 'false', '-42', '1.5' respectively.
   - name: document_empty_map_and_seq_are_inline
-    given:
-      nodes:
-        - Map([])
-        - Seq([])
-    expect:
-      documents:
-        - "{}\n"
-        - "[]\n"
+    given: An empty Map document and an empty Seq document.
+    expect: Render inline as '{}' and '[]', each with a trailing newline.
   - name: document_scalar_root
-    given:
-      nodes:
-        - Str("hello")
-        - Int(7)
-    expect:
-      documents:
-        - "hello\n"
-        - "7\n"
+    given: "A scalar root: Str 'hello'; and Int 7."
+    expect: "Render as the scalar line plus a trailing newline: 'hello' and '7'."
   - name: document_flat_map
-    given:
-      map:
-        a: x
-        b: 3
-    expect:
-      document: "a: x\nb: 3\n"
+    given: A Map with entries a=Str 'x' and b=Int 3.
+    expect: "Renders as two lines 'a: x' and 'b: 3' with a trailing newline."
   - name: document_nested_seq_of_maps
-    given:
-      map:
-        items:
-          - k: 1
-          - k: 2
-    expect:
-      document: "items:\n  - k: 1\n  - k: 2\n"
+    given: A Map with key 'items' whose value is a sequence of two single-key maps k=1 and k=2.
+    expect: "Renders 'items:' then '  - k: 1' and '  - k: 2', with trailing newline."
   - name: document_seq_of_seq
-    given:
-      seq:
-        -
-          - 1
-          - 2
-    expect:
-      document: "-\n  - 1\n  - 2\n"
+    given: A Seq containing one inner Seq of Int 1 and Int 2.
+    expect: Renders '-' then '  - 1' and '  - 2', with trailing newline.
   - name: attribution_matches_expected_bytes
-    given:
-      module: greeting
-      target: typescript
-      entries:
-        - promptLines:
-            - 1
-            - 1
-          file: greet.ts
-          lines:
-            - 1
-            - 1
-          note: builds the greeting string
-    expect:
-      document: "module: greeting\ntarget: typescript\nentries:\n  - promptLines:\n      - 1\n      - 1\n    file: greet.ts\n    lines:\n      - 1\n      - 1\n    note: builds the greeting string\n"
+    given: Attribution with module 'greeting', target 'typescript', one entry with promptLines [1,1], file 'greet.ts', lines [1,1], note 'builds the greeting string'.
+    expect: Byte-exact block document with module, target, and an entries sequence whose single entry nests promptLines and lines each as two block-item integers, plus file and note lines.
   - name: ml_empty_entries_render_inline
-    given:
-      module: m
-      target: t
-      entries: []
-    expect:
-      document: "module: m\ntarget: t\nentries: []\n"
+    given: An Ml with module 'm', target 't', and no entries.
+    expect: "Renders 'module: m', 'target: t', 'entries: []' with a trailing newline."
   - name: ml_entry_kinds_and_optional_suggestion
-    given:
-      kinds_map:
-        Ambiguity: ambiguity
-        Assumption: assumption
-        Note: note
-        NoOp: no-op
-      suggestion_present_iff: Some(...)
-    expect:
-      kind_field_matches_lowercase_or_hyphenated_string: true
-      suggestion_field_present_only_when_some: true
+    given: An Ml whose entries exercise the kind mappings and the optional suggestion field.
+    expect: Each entry renders promptLines, kind string, message, reasoning, and suggestion only when present.

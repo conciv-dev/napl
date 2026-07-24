@@ -1,48 +1,92 @@
 module: schemas_ir
-deps: []
+deps:
+  - serde
+  - serde_json
 types:
   - name: IrType
-    description: Struct with string fields name and description; supports equality; deserializable from JSON.
+    description: "A contract-level exported type entry. Structural record with two string fields: name and description. Supports deserialization from JSON and equality comparison."
   - name: IrFunction
-    description: Struct with string fields name, signature, and behavior; all required with no defaults; supports equality; deserializable from JSON.
+    description: "A public function/component contract entry. Structural record with three string fields: name, signature, and behavior. All three are required with no defaults. Supports deserialization and equality comparison."
   - name: IrTest
-    description: Struct with string field name, and given/expect fields holding arbitrary JSON values; given and expect each default to an empty JSON object ({}) when omitted from input; supports equality; deserializable from JSON.
+    description: A behavioral test case entry. Has a required string field name, plus two free-form JSON-value fields given and expect. When given or expect is omitted from input, each defaults to an empty JSON object ({}), never null. Supports deserialization and equality comparison.
   - name: Ir
-    description: Struct with string field module, and list fields deps (strings), types (IrType), functions (IrFunction), and tests (IrTest); all four list fields default to empty when omitted; supports equality; deserializable from JSON.
+    description: "The top-level module contract IR. Has a required string field module and four list fields that each default to empty when omitted: deps (list of strings), types (list of IrType), functions (list of IrFunction), and tests (list of IrTest). Supports deserialization and equality comparison."
   - name: IrValidationError
-    description: Error type returned by validate_ir on failure; variants cover deserialization failure (with message), empty/missing module, and a test's given or expect field having an invalid JSON type (with the test name and field name); implements standard error/display formatting; supports equality.
+    description: "Error value returned when validation fails. Distinguishes three cases: a deserialization failure carrying a message, an empty-module failure, and an invalid-test-value failure identifying the offending test name and field (given or expect). Never surfaced as a panic; renders a human-readable message."
 functions:
   - name: validate_ir
-    signature: "validate_ir(value: JSON value) -> Result<Ir, IrValidationError>"
-    behavior: "Parses an arbitrary JSON value into an Ir. Precondition: value is any JSON value. Step 1: deserializes value into Ir shape; fails with a Deserialize error if fields have wrong type/shape, e.g. a function entry missing required signature or behavior fields is rejected. Step 2: requires module to be a non-empty string; missing module or module set to \"\" fails with an EmptyModule error. Step 3: requires every test's given and expect fields to each be either a JSON object or a JSON string; any other JSON type (number, boolean, array, null) fails with an InvalidTestValue error naming the test and field. Returns Ok(Ir) with module, deps, types, functions, and tests populated (missing given/expect on a test default to empty JSON object) when all checks pass. Never panics; all failures returned as an error value."
+    signature: "validate_ir(value: JsonValue) -> Result<Ir, IrValidationError>"
+    behavior: "Parses an arbitrary JSON value into an Ir contract, enforcing semantic rules beyond type shape. Precondition: input is any JSON value. Steps and postconditions: (1) deserializes the value into Ir, rejecting inputs whose fields have wrong type or shape — e.g. a function entry missing required signature/behavior; (2) requires module to be a non-empty string, rejecting a missing or empty (\"\") module; (3) requires every test's given and expect to be either a JSON object or a JSON string, rejecting any other JSON type (number, boolean, array, null). On success returns the parsed Ir with defaults applied (empty lists, empty-object given/expect). On any failure returns an error value; never panics."
 tests:
   - name: validates_minimal_function
-    given: '{ "module": "greeting", "functions": [{ "name": "greet", "signature": "greet(name): string", "behavior": "returns Hello" }] }'
-    expect: Ok(Ir) with module == "greeting", deps/types/tests empty, functions has length 1, functions[0].name == "greet"
+    given:
+      module: greeting
+      functions:
+        - name: greet
+          signature: "greet(name): string"
+          behavior: returns Hello
+    expect: Validates successfully; result module = "greeting"; deps, types, and tests are empty; functions has length 1 with first function name = "greet".
   - name: rejects_missing_module
-    given: '{ "functions": [] }'
-    expect: Err(...)
+    given:
+      functions: []
+    expect: Rejected (error) because module field is absent.
   - name: rejects_empty_module
-    given: '{ "module": "", "functions": [] }'
-    expect: Err(IrValidationError::EmptyModule)
+    given:
+      module: ""
+      functions: []
+    expect: Rejected with the EmptyModule error because module is the empty string.
   - name: rejects_incomplete_function
-    given: '{ "module": "x", "functions": [{ "name": "f" }] }'
-    expect: Err(...) because signature and behavior are missing
+    given:
+      module: x
+      functions:
+        - name: f
+    expect: Rejected because the function entry is missing required signature and behavior.
   - name: test_expect_string_is_preserved
-    given: '{ "module": "m", "tests": [{ "name": "a", "given": { "x": 1 }, "expect": "ok" }] }'
-    expect: Ok(Ir) where tests[0].expect == JSON string "ok"
+    given:
+      module: m
+      tests:
+        - name: a
+          given:
+            x: 1
+          expect: ok
+    expect: Validates; first test's expect equals the JSON string "ok".
   - name: test_given_defaults_to_empty_object
-    given: '{ "module": "m", "tests": [{ "name": "a" }] }'
-    expect: Ok(Ir) where tests[0].given == {} and tests[0].expect == {}
+    given:
+      module: m
+      tests:
+        - name: a
+    expect: Validates; first test's given equals the empty JSON object {} and its expect also equals {}.
   - name: rejects_non_object_non_string_given
-    given: '{ "module": "m", "tests": [{ "name": "a", "given": 42, "expect": "ok" }] }'
-    expect: Err(...) because given is a number
+    given:
+      module: m
+      tests:
+        - name: a
+          given: 42
+          expect: ok
+    expect: Rejected because given is a number, not an object or string.
   - name: rejects_non_object_non_string_expect
-    given: '{ "module": "m", "tests": [{ "name": "a", "given": {}, "expect": [1, 2] }] }'
-    expect: Err(...) because expect is an array
+    given:
+      module: m
+      tests:
+        - name: a
+          given: {}
+          expect:
+            - 1
+            - 2
+    expect: Rejected because expect is an array, not an object or string.
   - name: rejects_null_given
-    given: '{ "module": "m", "tests": [{ "name": "a", "given": null, "expect": "ok" }] }'
-    expect: Err(...) because given is null
+    given:
+      module: m
+      tests:
+        - name: a
+          given: null
+          expect: ok
+    expect: Rejected because given is null, not an object or string.
   - name: rejects_boolean_expect
-    given: '{ "module": "m", "tests": [{ "name": "a", "given": {}, "expect": true }] }'
-    expect: Err(...) because expect is a boolean
+    given:
+      module: m
+      tests:
+        - name: a
+          given: {}
+          expect: true
+    expect: Rejected because expect is a boolean, not an object or string.

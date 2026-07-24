@@ -2,61 +2,47 @@ module: statusclass_render
 deps: []
 types:
   - name: FileStatus
-    description: 'Enum classifying a prompt relative to its generated files. Variants: Clean (locked, attributed, prompt matches last gen), PromptStale (not generated, or prompt changed since gen), Drift (a generated file was edited or deleted), Unattributed (generated files exist but attribution failed). Each variant maps to a fixed display label: Clean -> "clean", PromptStale -> "prompt-stale", Drift -> "DRIFT" (uppercase, error state), Unattributed -> "unattributed". Supports equality comparison and copying.
-'
+    description: 'Enumeration classifying a prompt relative to its generated files. Value semantics (copyable, equatable). Exactly four variants, each with a fixed render label: Clean (locked, attributed, prompt matches last gen; label "clean"), PromptStale (not generated, or prompt changed since gen; label "prompt-stale"), Drift (a generated file was edited or deleted; label "DRIFT", uppercased as an error state), Unattributed (generated files exist but attribution failed; label "unattributed").'
   - name: StatusEntry
-    description: "Struct representing one classified prompt ready to render as a status line. Fields: file (string, prompt path relative to project root), status (FileStatus), detail (string, human-facing detail, possibly empty). Supports equality comparison.\n"
+    description: "A classified prompt ready to render as one status line. Fields: file (the prompt path relative to the project root), status (a FileStatus), detail (a human-facing detail string, possibly empty). Value semantics (equatable)."
 functions:
   - name: FileStatus.label
-    signature: "label(self: FileStatus) -> string"
-    behavior: 'Returns the fixed display label for the status: "clean" for Clean, "prompt-stale" for PromptStale, "DRIFT" for Drift, "unattributed" for Unattributed. Pure, total function with no side effects.
-'
+    signature: "(status: FileStatus) -> String"
+    behavior: 'Returns the fixed render label for the status: Clean->"clean", PromptStale->"prompt-stale", Drift->"DRIFT", Unattributed->"unattributed". Total; one label per variant.'
   - name: FileStatus.is_error
-    signature: "is_error(self: FileStatus) -> bool"
-    behavior: "Returns true if the status fails the CI gate (Drift or Unattributed), false otherwise (Clean or PromptStale).\n"
+    signature: "(status: FileStatus) -> Boolean"
+    behavior: "Returns true when the status fails the CI gate: true for Drift and Unattributed, false for Clean and PromptStale."
   - name: StatusEntry.line
-    signature: "line(self: StatusEntry) -> string"
-    behavior: "Renders the entry as one status line in the format \"{label:<12} {file}{suffix}\", where label is the status's fixed label left-aligned and space-padded to a minimum width of 12 columns, followed by a single space, then file. If detail is empty, suffix is empty (no trailing space, no parentheses). If detail is non-empty, suffix is \" ({detail})\" (one leading space, detail wrapped in parentheses). Labels longer than 12 characters are not truncated; exactly one separating space still follows. Pure function, no side effects.\n"
+    signature: "(entry: StatusEntry) -> String"
+    behavior: 'Renders the entry as one status line in the format "{label:<12} {file}{suffix}": the status label left-aligned and space- padded to a minimum width of 12 columns, one separating space, then file. suffix is empty when detail is empty (no trailing space, no parentheses), otherwise " ({detail})". Labels already >=12 chars get exactly one separating space. Byte-exact output.'
   - name: StatusEntry.is_error
-    signature: "is_error(self: StatusEntry) -> bool"
-    behavior: "Returns self.status.is_error() — true for Drift and Unattributed status, false for Clean and PromptStale.\n"
+    signature: "(entry: StatusEntry) -> Boolean"
+    behavior: "Delegates to the entry's status: true for Drift and Unattributed, false for Clean and PromptStale."
 tests:
   - name: labels_are_fixed
-    given: each FileStatus variant (Clean, PromptStale, Drift, Unattributed)
-    expect: 'label() returns "clean", "prompt-stale", "DRIFT", "unattributed" respectively.
-'
+    given: Each FileStatus variant.
+    expect: label() yields "clean", "prompt-stale", "DRIFT", "unattributed" respectively.
   - name: line_clean_empty_detail
-    given: 'StatusEntry{file: "examples/greeting.napl", status: Clean, detail: ""}
-'
-    expect: line() == "clean        examples/greeting.napl"
+    given: Entry with status Clean, file "examples/greeting.napl", empty detail.
+    expect: line() equals "clean        examples/greeting.napl" (5-char label padded with 7 spaces to 12, then one separating space; no suffix).
   - name: line_prompt_stale_with_detail_has_single_separator
-    given: 'StatusEntry{file: "examples/greeting.napl", status: PromptStale, detail: "never generated"}
-'
-    expect: 'line() == "prompt-stale examples/greeting.napl (never generated)"
-'
+    given: Entry with status PromptStale, file "examples/greeting.napl", detail "never generated".
+    expect: line() equals "prompt-stale examples/greeting.napl (never generated)" (12-char label, single separating space, detail in parentheses).
   - name: line_drift_with_detail
-    given: 'StatusEntry{file: "examples/greeting.napl", status: Drift, detail: "typescript: x was edited"}
-'
-    expect: 'line() == "DRIFT        examples/greeting.napl (typescript: x was edited)"
-'
+    given: 'Entry with status Drift, file "examples/greeting.napl", detail "typescript: x was edited".'
+    expect: 'line() equals "DRIFT        examples/greeting.napl (typescript: x was edited)".'
   - name: line_unattributed_with_detail
-    given: 'StatusEntry{file: "examples/greeting.napl", status: Unattributed, detail: "run napl gen typescript --force"}
-'
-    expect: 'line() == "unattributed examples/greeting.napl (run napl gen typescript --force)"
-'
+    given: Entry with status Unattributed, file "examples/greeting.napl", detail "run napl gen typescript --force".
+    expect: line() equals "unattributed examples/greeting.napl (run napl gen typescript --force)".
   - name: line_no_detail_has_no_trailing_space_or_parens
-    given: 'StatusEntry{file: "examples/greeting.napl", status: Drift, detail: ""}
-'
-    expect: 'line() == "DRIFT        examples/greeting.napl"; result does not end with a space and does not contain "("
-'
+    given: Entry with status Drift, empty detail.
+    expect: line() equals "DRIFT        examples/greeting.napl"; result does not end with a space and contains no "(".
   - name: line_exact_twelve_char_label_gets_single_separator
-    given: PromptStale label (length 12) with empty detail
-    expect: 'label length == 12; line() == "prompt-stale examples/greeting.napl"
-'
+    given: PromptStale label (exactly 12 chars); entry with empty detail.
+    expect: line() equals "prompt-stale examples/greeting.napl" (single separating space, no extra padding).
   - name: line_shorter_labels_pad_to_width_twelve
-    given: StatusEntry with status Clean and empty detail
-    expect: 'line() starts with "clean        " (5-char label padded to 12 columns plus separating space, 13 chars total)
-'
+    given: Entry with status Clean, empty detail.
+    expect: line() starts with the 13-char prefix "clean        " (label padded to 12 plus one separating space).
   - name: is_error_for_all_variants
-    given: each FileStatus variant and corresponding StatusEntry
-    expect: is_error() is false for Clean and PromptStale, true for Drift and Unattributed, consistent between FileStatus.is_error() and StatusEntry.is_error()
+    given: Each variant via both StatusEntry.is_error and FileStatus.is_error.
+    expect: false for Clean and PromptStale; true for Drift and Unattributed, in both the entry and enum forms.

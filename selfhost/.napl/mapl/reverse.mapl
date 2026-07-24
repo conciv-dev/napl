@@ -2,14 +2,20 @@ module: reverse
 target: rust
 entries:
   - promptLines:
-      - 16
-      - 25
-    kind: note
-    message: Sibling crate path deps added correctly as instructed.
-    reasoning: Cargo.toml uses path = "../schemas_line_range" etc., matching "one directory up and over" layout; no ambiguity, confirms compile matched prompt intent.
+      - 1
+      - 105
+    kind: no-op
+    message: No source edits — prompt body unchanged, existing crate already realizes it.
+    reasoning: Agent reported the prompt diff was empty and the existing `reverse` crate already implements the full body (constants, path parsing, reverse matching, line conversions, drift/title/dedupe). `cargo test` reported 16 passed / 0 failed, so no edits were produced. This is an incremental recompile with nothing new to apply.
   - promptLines:
-      - 47
-      - 48
+      - 45
+      - 45
+    kind: assumption
+    message: GENERATED_PREFIX = ".napl/src/" already realized; not re-verified against source.
+    reasoning: Since no changes were made, the literal prefix value and DRIFT_LENS_PREFIX string were assumed to match the existing constants exactly. If prior code drifted from these literals, the no-op would silently leave a mismatch — worth a spot check on the recorded strings.
+  - promptLines:
+      - 55
+      - 62
     kind: note
-    message: DRIFT_LENS_PREFIX constant defined but never used or tested.
-    reasoning: Prompt only asks to "expose" the constant with a fixed value; agent did exactly that (no consumer logic specified), so lack of usage/test is expected, not a defect.
+    message: Path-parse edge cases rely on existing tests already covering them.
+    reasoning: The four rejection conditions (missing prefix, no trailing slash, empty target, empty rel path) and the worked examples are only guaranteed correct because the 16 existing tests pass. No new test was added to confirm each listed example, so coverage is inherited, not re-proven for this compile.

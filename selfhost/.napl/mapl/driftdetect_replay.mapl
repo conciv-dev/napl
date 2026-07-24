@@ -2,20 +2,15 @@ module: driftdetect_replay
 target: rust
 entries:
   - promptLines:
-      - 21
-      - 25
-    kind: note
-    message: sibling crate paths add as path deps, no reimpl — done straight.
-    reasoning: Prompt say add path deps on schemas_journal + text_diff, use public API only. Code just `use schemas_journal::JournalEntry;` and calls `text_diff::parse_hunks`/`apply_hunks` directly, no reimpl. Clear, no guess needed.
+      - 1
+      - 53
+    kind: no-op
+    message: No changes — existing crate already implements reconstruct_file_content as specified.
+    reasoning: Agent reported the prompt diff was empty and the code already matches the target; all 5 tests pass. The driftdetect_replay crate, its Cargo.toml path deps on schemas_journal and text_diff, and the reconstruct_file_content replay logic (sort by gen, apply hunks, return Option) were already present and satisfy the contract, so no edits were needed.
   - promptLines:
-      - 41
-      - 42
-    kind: assumption
-    message: sort via Vec<&JournalEntry> collect, no mutate caller slice.
-    reasoning: Prompt say "sort a borrowed view, do not mutate caller's slice" — agent pick collecting refs into new Vec<&JournalEntry> then sort_by_key. Reasonable, tests confirm original untouched (line 65-76 test).
-  - promptLines:
-      - 38
-      - 38
-    kind: note
-    message: signature match prompt exact, type path shortened via use.
-    reasoning: Prompt spec full path `schemas_journal::JournalEntry` in signature; code use local import `JournalEntry` after `use schemas_journal::JournalEntry;` — same type, just shorter. No issue.
+      - 54
+      - 54
+    kind: ambiguity
+    message: Stray `</content>` tag at end of prompt body looks like an accidental insertion.
+    reasoning: Line 54 is a lone `</content>` closing tag with no matching opening tag anywhere in the prompt. Reads like leftover markup from an editing/templating step, not a requirement. Harmless here (no code depends on it), but worth removing so it is not mistaken for content.
+    suggestion: Delete line 54 (`</content>`).

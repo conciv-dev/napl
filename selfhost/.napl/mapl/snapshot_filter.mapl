@@ -1,3 +1,21 @@
 module: snapshot_filter
 target: rust
-entries: []
+entries:
+  - promptLines:
+      - 9
+      - 16
+    kind: no-op
+    message: Module already exists and matches spec exactly — nothing to create or edit.
+    reasoning: 'Prompt reads as a from-scratch build ("Create this module as its own member crate"), but the agent found snapshot_filter/Cargo.toml and src/lib.rs already present, already realizing the full spec: SnapshotFilter with four rule sets, make_filter in the pinned param order, exact-match is_excluded_dir, and the plain-OR-(at_root AND root-only)-OR-suffix logic in is_excluded_file. All 9 tests (including every worked-decision case) pass under `cargo test`. No source change could add behavior without violating "only the observable decisions are pinned," so nothing was produced.'
+  - promptLines:
+      - 11
+      - 15
+    kind: note
+    message: '"Touch nothing outside snapshot_filter/" was trivially satisfied — no files written at all.'
+    reasoning: The scope guard (leave the workspace root manifest alone, touch nothing outside the crate dir) held vacuously because the compile was a no-op. Worth surfacing so the human knows the constraint was honored by inaction, not by a checked edit.
+  - promptLines:
+      - 33
+      - 34
+    kind: assumption
+    message: Internal representation left to implementer; existing hash-sets + suffix vector kept as-is.
+    reasoning: Prompt explicitly leaves the internal representation open ("your choice") and pins only observable decisions. The existing code uses hash sets for the three exact-name lists and a vector for suffixes; that matches the suggested shape, so it was accepted without change rather than re-picked.

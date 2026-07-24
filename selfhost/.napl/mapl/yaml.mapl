@@ -2,22 +2,14 @@ module: yaml
 target: rust
 entries:
   - promptLines:
-      - 20
-      - 22
-    kind: ambiguity
-    message: "'any hand-written crate' is a vague, oddly-placed restriction"
-    reasoning: 'The instruction to not "depend on any hand-written crate" is unclear in scope — the crate itself is hand-written (this whole module is authored by a coding agent from a prompt), and no other hand-written crates are mentioned anywhere else in the spec. The agent reasonably interpreted this as "only depend on the four listed sibling schema crates plus serde_json, nothing else," which is what it did (Cargo.toml deps not shown but code only imports the four schemas_* crates and serde_json).
-'
-    suggestion: Depend only on the four sibling crates listed below and serde_json — no other crates.
+      - 9
+      - 15
+    kind: no-op
+    message: No source produced — module already exists and its 18 tests pass.
+    reasoning: "The prompt directs creating a new member crate (yaml/Cargo.toml, yaml/src/lib.rs) and ensuring `cargo test` passes. The coding agent reported an empty diff, claiming the code already matches the prompt and all 18 tests pass. Nothing was written because the requirement was already satisfied by pre-existing source in the workspace.\n"
   - promptLines:
-      - 81
-      - 87
+      - 1
+      - 7
     kind: note
-    message: Asymmetric .inf/.nan sign-stripping rule was implemented literally, not smoothed over
-    reasoning: "The spec deliberately distinguishes: `.inf` variants are checked against the sign-stripped body, while `.nan` variants are checked against the whole original string `s` (no sign stripping) — per line 82's exact wording \"the whole string is .nan/.NaN/.NAN\". The agent preserved this asymmetry exactly (is_core_float checks `body == \".inf\"` but `s == \".nan\"`), which is easy to miss/normalize away by mistake. Confirms this subtle distinction was intentional and honored.\n"
-  - promptLines:
-      - 54
-      - 56
-    kind: ambiguity
-    message: Parenthetical '(there are none in this branch)' reads like a stray internal note
-    reasoning: Line 55's aside about apostrophe-doubling is inert given the branch precondition (no apostrophe in this branch by construction), so it can never fire. It's not wrong, just an unusual bit of self-referential commentary embedded in a spec line rather than an example or requirement. The agent implemented the doubling logic anyway (`s.replace('\'', "''")`) as dead-but-harmless code satisfying the literal instruction, which is the safe reading.
+    message: Whole spec landed as NO CHANGES — verify the existing crate truly matches this contract.
+    reasoning: The prompt reads as a from-scratch build (value model, scalar heuristics, block-style document rendering, four serializers), yet the compile produced zero edits. If a prior build already implemented this exactly, NO CHANGES is correct; but a NO-CHANGES result for an entire module spec is worth confirming — the passing 18 tests should be checked to actually cover the byte-for-byte block-style and scalar-heuristic requirements (empty map `{}`, single-quote branch, core float/int resolution, `no-op` kind mapping) rather than a subset.

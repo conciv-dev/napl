@@ -2,13 +2,13 @@ module: guard
 target: rust
 entries:
   - promptLines:
-      - 1
+      - 5
       - 6
     file: guard/src/lib.rs
     lines:
       - 3
       - 3
-    note: serde_json import for parsing/pretty-print
+    note: imports serde_json for parsing and pretty-printing
   - promptLines:
       - 20
       - 24
@@ -16,7 +16,7 @@ entries:
     lines:
       - 5
       - 5
-    note: GUARD_DOC pinned constant
+    note: GUARD_DOC constant with trailing newline
   - promptLines:
       - 25
       - 26
@@ -24,7 +24,7 @@ entries:
     lines:
       - 7
       - 7
-    note: GUARD_FILE_NAMES pinned constant
+    note: GUARD_FILE_NAMES array [AGENTS.md, CLAUDE.md]
   - promptLines:
       - 27
       - 38
@@ -32,7 +32,7 @@ entries:
     lines:
       - 9
       - 9
-    note: PRE_COMMIT_HOOK pinned sh script
+    note: PRE_COMMIT_HOOK sh script with tabs and trailing newline
   - promptLines:
       - 39
       - 40
@@ -40,7 +40,7 @@ entries:
     lines:
       - 11
       - 11
-    note: PRE_COMMIT_HOOK_LINE constant
+    note: PRE_COMMIT_HOOK_LINE single line
   - promptLines:
       - 41
       - 42
@@ -48,15 +48,7 @@ entries:
     lines:
       - 13
       - 13
-    note: NAPL_DENY_RULES constant
-  - promptLines:
-      - 44
-      - 58
-    file: guard/src/lib.rs
-    lines:
-      - 30
-      - 42
-    note: claude_settings_snippet builds pretty-printed JSON
+    note: NAPL_DENY_RULES one-element list
   - promptLines:
       - 62
       - 65
@@ -64,7 +56,7 @@ entries:
     lines:
       - 15
       - 21
-    note: SettingsMergeAction enum with derives
+    note: SettingsMergeAction enum with four variants, Copy/Eq
   - promptLines:
       - 67
       - 70
@@ -72,23 +64,39 @@ entries:
     lines:
       - 23
       - 28
-    note: SettingsMergeResult struct
+    note: SettingsMergeResult struct with action/content/added, Eq
+  - promptLines:
+      - 44
+      - 58
+    file: guard/src/lib.rs
+    lines:
+      - 30
+      - 42
+    note: claude_settings_snippet builds pretty JSON with trailing newline
+  - promptLines:
+      - 72
+      - 73
+    file: guard/src/lib.rs
+    lines:
+      - 44
+      - 44
+    note: merge_claude_settings signature
   - promptLines:
       - 75
       - 76
     file: guard/src/lib.rs
     lines:
-      - 44
+      - 45
       - 54
-    note: no existing content -> Create
+    note: no existing content returns Create with snippet and full rule list
   - promptLines:
       - 77
       - 78
     file: guard/src/lib.rs
     lines:
-      - 56
+      - 62
       - 70
-    note: parse JSON, non-object root -> Manual
+    note: parse JSON; Manual if not parse or root not object
   - promptLines:
       - 79
       - 80
@@ -96,7 +104,7 @@ entries:
     lines:
       - 72
       - 76
-    note: permissions absent/object/other handling
+    note: "read permissions: absent empty, object use, else Manual"
   - promptLines:
       - 81
       - 82
@@ -104,68 +112,36 @@ entries:
     lines:
       - 78
       - 82
-    note: deny absent/array/other handling
+    note: "read deny: absent empty, array use, else Manual"
   - promptLines:
       - 83
-      - 88
+      - 84
     file: guard/src/lib.rs
     lines:
       - 84
-      - 112
-    note: append missing deny rules, Unchanged or Update with pretty-print
+      - 91
+    note: append missing deny rules and record added
+  - promptLines:
+      - 84
+      - 85
+    file: guard/src/lib.rs
+    lines:
+      - 93
+      - 99
+    note: nothing added returns Unchanged
+  - promptLines:
+      - 85
+      - 88
+    file: guard/src/lib.rs
+    lines:
+      - 101
+      - 111
+    note: put arrays back, pretty-print, return Update with content and added
   - promptLines:
       - 90
       - 91
     file: guard/src/lib.rs
     lines:
-      - 72
-      - 102
-    note: preserve unrelated keys/entries via map clone+insert
-  - promptLines:
-      - 95
-      - 95
-    file: guard/src/lib.rs
-    lines:
-      - 152
-      - 154
-    note: test snippet matches pinned string
-  - promptLines:
-      - 96
-      - 97
-    file: guard/src/lib.rs
-    lines:
-      - 156
-      - 162
-    note: test merge None -> Create
-  - promptLines:
-      - 98
-      - 99
-    file: guard/src/lib.rs
-    lines:
-      - 164
-      - 170
-    note: test merge snippet -> Unchanged
-  - promptLines:
-      - 100
-      - 102
-    file: guard/src/lib.rs
-    lines:
-      - 172
-      - 183
-    note: test preserves unrelated keys and allow list
-  - promptLines:
-      - 103
-      - 104
-    file: guard/src/lib.rs
-    lines:
-      - 185
-      - 209
-    note: tests for Manual on invalid json/non-object/non-array
-  - promptLines:
-      - 18
-      - 18
-    file: guard/src/lib.rs
-    lines:
-      - 5
-      - 13
-    note: public constants exposed
+      - 67
+      - 74
+    note: preserves unrelated top-level keys and existing permission entries via clone

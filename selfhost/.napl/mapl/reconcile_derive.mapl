@@ -2,15 +2,15 @@ module: reconcile_derive
 target: rust
 entries:
   - promptLines:
-      - 27
-      - 30
-    kind: assumption
-    message: DriftedFile has more fields than the prompt lists
-    reasoning: Prompt only mentions file, reason, current, diff fields on DriftedFile. Agent's test helpers reference additional fields (expected_hash, actual_hash, baseline) presumably required by the real `drift` crate struct. Assumed these exist and default to None for test fixtures rather than being told the full field list.
-    suggestion: List all public fields of DriftedFile, not just the ones this module uses.
+      - 1
+      - 66
+    kind: no-op
+    message: No changes made — existing reconcile_derive crate already matches the spec exactly.
+    reasoning: The coding agent reported NO CHANGES. Per its final message the crate already exists as a workspace member (reconcile_derive/Cargo.toml + src/lib.rs) with path dependencies on drift, prompts, and text_diff, and both editable_drifted and build_reconcile_files already implement the specified editability rule, ordering, and diff-selection behavior. All 6 existing tests pass, so no source edits were needed to satisfy the contract.
   - promptLines:
-      - 12
-      - 17
+      - 56
+      - 58
     kind: note
-    message: Cargo.toml contents not shown in change log
-    reasoning: Prompt requires reconcile_derive/Cargo.toml with path deps on drift, prompts, text_diff, and passing `cargo test` from workspace root. Only lib.rs changes were listed; Cargo.toml creation is implied by the agent's final message claiming path deps were added and tests pass, but not verifiable from the given diff.
+    message: The `None`-current fallback to `unified_diff("", "")` is unreachable by construction.
+    reasoning: "The spec both restricts build_reconcile_files to editable files (which always have `current: Some`) and then describes fallback behavior for a `None` current, noting parenthetically that this never happens. This defensive branch is dead code given the editability rule; it is harmless but cannot be exercised by any valid input, so no test can meaningfully cover it."
+    suggestion: Clarify whether the `None`-current handling is intended purely as a defensive default (document it as unreachable) or drop it, since editable files are guaranteed to have `Some` current.

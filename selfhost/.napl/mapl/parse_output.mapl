@@ -2,8 +2,21 @@ module: parse_output
 target: rust
 entries:
   - promptLines:
-      - 28
-      - 30
+      - 9
+      - 15
+    kind: no-op
+    message: No changes — parse_output crate already exists and matches the prompt.
+    reasoning: Changes were "NO CHANGES". The prompt instructs creating a new parse_output/ library crate (Cargo.toml + src/lib.rs) implementing extract_yaml. The coding agent reported the current code already satisfies the prompt body and that 10 tests pass, so nothing was edited. This is plausible if a prior compile already produced the crate; the requirement was pre-satisfied rather than un-actionable. No evidence of the existing crate's contents is shown in the diff, so the match rests entirely on the agent's assertion.
+  - promptLines:
+      - 41
+      - 41
     kind: ambiguity
-    message: "'no closing three backticks after a newline' is grammatically ambiguous."
-    reasoning: "Line 28-30 can be read two ways: (a) the opening fence line itself has no trailing newline (fence and content glued on one line), or (b) a newline exists after the opening fence but no closing"
+    message: Stray `</content>` line looks like an accidental insertion, not a requirement.
+    reasoning: Line 41 is a lone `</content>` closing tag with no matching opening tag anywhere in the prompt body. It reads like leftover markup that leaked in from a wrapping format rather than an intentional instruction. It should be ignored as prompt content, but its presence is surprising and worth confirming it was not meant to delimit something.
+    suggestion: Remove the stray `</content>` line from the prompt body.
+  - promptLines:
+      - 23
+      - 24
+    kind: assumption
+    message: Info-string 'other characters' on the opening fence are discarded up to newline.
+    reasoning: The prompt says the opening fence line may carry an info string (yaml/yml/nothing) "and possibly other characters", and that everything on that line up to and including the newline is discarded. Assumed this means the entire opening line is dropped regardless of what follows the info string, with no validation that the info string is one of the named values. Since no code was changed, this reflects the existing implementation's behavior taken as correct.

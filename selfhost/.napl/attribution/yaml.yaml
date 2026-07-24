@@ -8,7 +8,7 @@ entries:
     lines:
       - 9
       - 18
-    note: Yaml enum with variants
+    note: public Yaml enum with all variants
   - promptLines:
       - 51
       - 51
@@ -16,7 +16,7 @@ entries:
     lines:
       - 114
       - 116
-    note: empty string renders as double-quoted empty
+    note: empty string renders as two double quotes
   - promptLines:
       - 52
       - 53
@@ -24,7 +24,7 @@ entries:
     lines:
       - 117
       - 119
-    note: plain-representable strings render verbatim
+    note: plain-representable renders verbatim
   - promptLines:
       - 54
       - 56
@@ -32,7 +32,7 @@ entries:
     lines:
       - 120
       - 122
-    note: single-quote branch for double-quote without apostrophe
+    note: single-quote branch doubling apostrophes
   - promptLines:
       - 57
       - 58
@@ -40,7 +40,15 @@ entries:
     lines:
       - 123
       - 136
-    note: double-quoted escaping of special chars
+    note: double-quote branch escaping specials
+  - promptLines:
+      - 60
+      - 60
+    file: yaml/src/lib.rs
+    lines:
+      - 85
+      - 111
+    note: is_plain_representable predicate
   - promptLines:
       - 62
       - 62
@@ -48,15 +56,7 @@ entries:
     lines:
       - 86
       - 90
-    note: first/last char whitespace check
-  - promptLines:
-      - 63
-      - 64
-    file: yaml/src/lib.rs
-    lines:
-      - 23
-      - 25
-    note: control character detection
+    note: reject leading/trailing whitespace
   - promptLines:
       - 63
       - 64
@@ -64,15 +64,15 @@ entries:
     lines:
       - 91
       - 93
-    note: reject newline/control chars
+    note: reject newline or control char
   - promptLines:
-      - 65
-      - 66
+      - 63
+      - 64
     file: yaml/src/lib.rs
     lines:
-      - 20
-      - 21
-    note: plain leading indicator chars list
+      - 23
+      - 25
+    note: control-char definition
   - promptLines:
       - 65
       - 66
@@ -80,7 +80,15 @@ entries:
     lines:
       - 94
       - 96
-    note: reject leading indicator char
+    note: reject leading indicator characters
+  - promptLines:
+      - 65
+      - 66
+    file: yaml/src/lib.rs
+    lines:
+      - 20
+      - 21
+    note: leading indicator character set
   - promptLines:
       - 67
       - 69
@@ -88,7 +96,7 @@ entries:
     lines:
       - 97
       - 103
-    note: "leading -/?/: needs non-space second char"
+    note: "handle -,?,: with space second char"
   - promptLines:
       - 70
       - 71
@@ -96,7 +104,7 @@ entries:
     lines:
       - 104
       - 106
-    note: reject colon-space, trailing colon, space-hash
+    note: "reject ': ', trailing ':', ' #'"
   - promptLines:
       - 72
       - 72
@@ -104,7 +112,7 @@ entries:
     lines:
       - 107
       - 109
-    note: reject non-string-resolving values
+    note: reject non-string resolving values
   - promptLines:
       - 74
       - 76
@@ -112,15 +120,15 @@ entries:
     lines:
       - 77
       - 83
-    note: null/bool literal and core int/float resolution
+    note: resolves_as_non_string literals plus int/float
   - promptLines:
       - 78
       - 80
     file: yaml/src/lib.rs
     lines:
-      - 27
+      - 31
       - 40
-    note: core integer parsing
+    note: core integer parsing hex/oct/dec
   - promptLines:
       - 81
       - 87
@@ -128,15 +136,15 @@ entries:
     lines:
       - 42
       - 75
-    note: core float parsing
+    note: core float parsing inf/nan/mantissa/exponent
   - promptLines:
-      - 89
-      - 93
+      - 78
+      - 82
     file: yaml/src/lib.rs
     lines:
-      - 348
-      - 386
-    note: plain vs quoted string test cases
+      - 27
+      - 29
+    note: strip single leading sign
   - promptLines:
       - 95
       - 96
@@ -152,23 +160,47 @@ entries:
     lines:
       - 204
       - 215
-    note: document rendering with trailing newline
+    note: to_yaml_document joins lines with trailing newline
   - promptLines:
       - 104
       - 107
     file: yaml/src/lib.rs
     lines:
-      - 204
+      - 205
       - 211
-    note: empty/non-empty map and seq handling at root
+    note: root map/seq empty vs block vs scalar
   - promptLines:
       - 109
-      - 118
+      - 111
     file: yaml/src/lib.rs
     lines:
       - 157
-      - 177
-    note: block map emission rules
+      - 161
+    note: emit_map iterating entries with key scalar
+  - promptLines:
+      - 112
+      - 113
+    file: yaml/src/lib.rs
+    lines:
+      - 163
+      - 166
+    note: map value non-empty sequence block
+  - promptLines:
+      - 114
+      - 115
+    file: yaml/src/lib.rs
+    lines:
+      - 167
+      - 170
+    note: map value non-empty map block
+  - promptLines:
+      - 116
+      - 118
+    file: yaml/src/lib.rs
+    lines:
+      - 171
+      - 173
+    note: map value inline scalar line
   - promptLines:
       - 116
       - 118
@@ -176,15 +208,15 @@ entries:
     lines:
       - 149
       - 155
-    note: inline scalar for empty seq/map
+    note: inline_scalar empty seq/map else scalar
   - promptLines:
       - 120
-      - 129
+      - 121
     file: yaml/src/lib.rs
     lines:
       - 179
-      - 202
-    note: block sequence emission rules
+      - 183
+    note: emit_seq iterating items
   - promptLines:
       - 122
       - 125
@@ -192,7 +224,23 @@ entries:
     lines:
       - 184
       - 191
-    note: sequence item as map turns first line into dash item
+    note: seq item non-empty map turned into '- ' first line
+  - promptLines:
+      - 126
+      - 127
+    file: yaml/src/lib.rs
+    lines:
+      - 192
+      - 195
+    note: seq item non-empty sequence block
+  - promptLines:
+      - 128
+      - 129
+    file: yaml/src/lib.rs
+    lines:
+      - 196
+      - 198
+    note: seq item inline scalar dash line
   - promptLines:
       - 131
       - 131
@@ -200,7 +248,15 @@ entries:
     lines:
       - 158
       - 158
-    note: indent as spaces, 2 per level
+    note: indent spaces for map
+  - promptLines:
+      - 131
+      - 131
+    file: yaml/src/lib.rs
+    lines:
+      - 180
+      - 180
+    note: indent spaces for seq
   - promptLines:
       - 135
       - 136
@@ -211,20 +267,36 @@ entries:
     note: line_range builds Seq of two Ints
   - promptLines:
       - 138
-      - 157
+      - 143
     file: yaml/src/lib.rs
     lines:
       - 230
       - 249
-    note: attribution_to_yaml document structure
+    note: attribution_to_yaml document map
   - promptLines:
       - 159
       - 164
     file: yaml/src/lib.rs
     lines:
-      - 221
+      - 251
       - 274
-    note: ml_to_yaml with kind string mapping and optional suggestion
+    note: ml_to_yaml with optional suggestion
+  - promptLines:
+      - 161
+      - 162
+    file: yaml/src/lib.rs
+    lines:
+      - 221
+      - 228
+    note: ml kind string mapping
+  - promptLines:
+      - 163
+      - 163
+    file: yaml/src/lib.rs
+    lines:
+      - 262
+      - 264
+    note: push suggestion only when Some
   - promptLines:
       - 166
       - 171
@@ -232,7 +304,7 @@ entries:
     lines:
       - 290
       - 332
-    note: ir_to_yaml document structure
+    note: ir_to_yaml document map
   - promptLines:
       - 173
       - 176
@@ -240,4 +312,4 @@ entries:
     lines:
       - 276
       - 288
-    note: json_to_yaml conversion rules
+    note: json_to_yaml converts serde_json Value

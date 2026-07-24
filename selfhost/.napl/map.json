@@ -131,14 +131,15 @@
     },
     "schemas_frontmatter": {
       "module": "schemas_frontmatter",
-      "promptHash": "174a5adc2d3f1decc3c9e9cd830357181a4913004d843f82533cbec7dd5bfea9",
+      "promptHash": "c77ea41c79805063546319b709147272a31704fa47af9f1371f4e770d0bc7aad",
       "declaredTargets": [
         "rust"
       ],
       "targets": {
         "rust": {
-          "promptHashAtGen": "174a5adc2d3f1decc3c9e9cd830357181a4913004d843f82533cbec7dd5bfea9",
+          "promptHashAtGen": "c77ea41c79805063546319b709147272a31704fa47af9f1371f4e770d0bc7aad",
           "files": [
+            ".napl/src/rust/prompts/src/lib.rs",
             ".napl/src/rust/schemas_frontmatter/Cargo.toml",
             ".napl/src/rust/schemas_frontmatter/src/lib.rs"
           ]
@@ -467,13 +468,13 @@
     },
     "blame_render": {
       "module": "blame_render",
-      "promptHash": "24f5a9fb57c836884c5c5b671bc1f45dd69e5a592d15b00de12dfb1e0dbb3615",
+      "promptHash": "e97118c4bf71f4f22a034d9d6d1c3f196540fdcedc94fc8583fd0fdd14cc2a9a",
       "declaredTargets": [
         "rust"
       ],
       "targets": {
         "rust": {
-          "promptHashAtGen": "24f5a9fb57c836884c5c5b671bc1f45dd69e5a592d15b00de12dfb1e0dbb3615",
+          "promptHashAtGen": "e97118c4bf71f4f22a034d9d6d1c3f196540fdcedc94fc8583fd0fdd14cc2a9a",
           "files": [
             ".napl/src/rust/blame_render/Cargo.toml",
             ".napl/src/rust/blame_render/src/lib.rs"
@@ -700,7 +701,7 @@
     },
     ".napl/src/rust/schemas_frontmatter/src/lib.rs": {
       "target": "rust",
-      "hash": "af76ef7b620450b6b3b1586f06bb80ee977b819d7e351f849031a11cac90e090",
+      "hash": "fbfa5fd66f5eef749a3fb40ff973c808e168d46b4786cb3540a9aa0a156f229c",
       "prompts": [
         "schemas_frontmatter"
       ]
@@ -896,9 +897,10 @@
     },
     ".napl/src/rust/prompts/src/lib.rs": {
       "target": "rust",
-      "hash": "2b8b4a2c52bcfe5212920d7b07347e556e3d1701dd51c675a832b9d475230260",
+      "hash": "fffe55d3df5c5efdc9b086e78d351c33c9dc2afa7de02036d953c2ad101a5be8",
       "prompts": [
-        "prompts"
+        "prompts",
+        "schemas_frontmatter"
       ]
     },
     ".napl/src/rust/clock_fmt/Cargo.toml": {
